@@ -41,7 +41,7 @@ include:
     - require:
         - file: /etc/nebula/meet-{{ grains['id'] }}.crt
 
-systemd-reload-meet:
+systemd-reload-nebula-meet:
   cmd.run:
    - name: systemctl --system daemon-reload
    - onchanges:  
