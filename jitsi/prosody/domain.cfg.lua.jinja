@@ -74,8 +74,9 @@ VirtualHost "{{ jitsi.xmpp.auth_domain }}"
     }
     authentication = "internal_plain"
 
-Component "focus.{{ jitsi.public_domain }}"
-    component_secret = "{{ jitsi.jicofo.secret }}"
+-- Proxy to jicofo's user JID, so that it doesn't have to register as a component.
+Component "focus.{{ jitsi.public_domain }}" "client_proxy"
+    target_address = "{{ jitsi.jicofo.username }}@{{ jitsi.xmpp.auth_domain }}"
 
 Component "speakerstats.{{ jitsi.public_domain }}" "speakerstats_component"
     muc_component = "conference.{{ jitsi.public_domain }}"

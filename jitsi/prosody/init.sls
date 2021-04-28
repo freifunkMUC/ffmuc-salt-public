@@ -128,6 +128,10 @@ jicofo-auth:
     - name: "prosodyctl register {{ jitsi.jicofo.username }} {{ jitsi.xmpp.auth_domain }} {{ jitsi.jicofo.password }}"
     - creates: /var/lib/prosody/{{ jitsi.xmpp.auth_domain.replace('.', '%2e').replace('-', '%2d') }}/accounts/{{ jitsi.jicofo.username }}.dat
 
+jicofo-mod_roster:
+  cmd.run:
+    - name: "prosodyctl mod_roster_command subscribe focus.{{ jitsi.public_domain }} {{ jitsi.jicofo.username }}@{{ jitsi.xmpp.auth_domain }}"
+
 jvb-auth:
   cmd.run:
     - name: "prosodyctl register {{ jitsi.videobridge.username }} {{ jitsi.xmpp.auth_domain }} {{ jitsi.videobridge.password }}"
@@ -169,8 +173,10 @@ update-certificates:
 
 {% for component in [
   "mod_auth_token",
+  "mod_client_proxy",
   "mod_reload_components",
-  "mod_reload_modules" ] %}
+  "mod_reload_modules" ,
+  "mod_roster_command" ] %}
 /usr/lib/prosody/modules/{{ component }}.lua:
   file.managed:
     - source: https://hg.prosody.im/prosody-modules/raw-file/tip/{{ component }}/{{ component }}.lua
