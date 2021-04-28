@@ -26,9 +26,9 @@ jibri:
   service.running:
     - enable: True
     - require:
-      - file: /etc/jitsi/jibri/config.json
+      - file: /etc/jitsi/jibri/jibri.conf
     - watch:
-      - file: /etc/jitsi/jibri/config.json
+      - file: /etc/jitsi/jibri/jibri.conf
 
 google-chrome-stable:
   pkg.latest:
@@ -46,8 +46,11 @@ execute_chromedriver_update:
     - name: /usr/local/bin/update_chromedriver.sh
 
 /etc/jitsi/jibri/config.json:
+  file.absent
+
+/etc/jitsi/jibri/jibri.conf:
   file.managed:
-    - source: salt://jitsi/jibri/config.json.jinja
+    - source: salt://jitsi/jibri/jibri.conf.jinja
     - template: jinja
 
 {% else %}
