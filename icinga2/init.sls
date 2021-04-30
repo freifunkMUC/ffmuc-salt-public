@@ -6,8 +6,7 @@
 
 {%- if 'icinga2_server' in salt['pillar.get']('netbox:tag_list', []) %}
 # server should send states to graylog
-{%- set icinga2_features = ["gelf"] %}
-{%- set icinga2_features = ["api"] %}
+{%- set icinga2_features = ["api", "gelf"] %}
 {%- else %}
 # Nodes should accept config and commands from Icinga2 server
 {%- set icinga2_features = ["api"] %}
