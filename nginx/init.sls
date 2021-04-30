@@ -44,7 +44,7 @@ nginx-configtest:
 {% endif %}
 
 {% for module in ["http_brotli_filter_module", "http_brotli_static_module", "http_fancyindex_module"] %}
-nginx-module-{{module}}:
+nginx-module-{{ module }}:
   file.managed:
     - name: /usr/lib/nginx/modules/ngx_{{ module }}.so
     - source: https://mirror.krombel.de/nginx-{{ nginx_version }}/ngx_{{ module }}.so

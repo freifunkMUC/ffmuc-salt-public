@@ -24,7 +24,7 @@
 nebula-binary:
   file.managed:
     - name:  /usr/local/bin/nebula
-    - source: salt://nebula/files/nebula-{{grains.osarch}}
+    - source: salt://nebula/files/nebula-{{ grains.osarch }}
 #{% if salt['file.file_exists' ]('/tmp/nebula/nebula') %}
 #    - source: /tmp/nebula/nebula
 #{% endif %}

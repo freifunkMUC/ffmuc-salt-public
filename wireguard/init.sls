@@ -112,7 +112,7 @@ generate-clientkey-{{ interface }}:
 
 /etc/network/interfaces.d/{{ interface }}:
     file.managed:
-        - name: /etc/network/interfaces.d/{{ interface}}
+        - name: /etc/network/interfaces.d/{{ interface }}
         - source: salt://wireguard/interface.jinja2
         - template: jinja
         - defaults:

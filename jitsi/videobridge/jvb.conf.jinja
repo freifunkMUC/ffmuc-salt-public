@@ -70,7 +70,7 @@ videobridge {
     }
     websockets {
         enabled = true
-        domain = "{{jitsi.public_domain}}:443"
+        domain = "{{ jitsi.public_domain }}:443"
         server-id = "{{ grains.id.split('.')[0] }}"
         tls = true
     }

@@ -10,10 +10,10 @@ jitsi-meet-web-pkgs:
       - jitsi-meet-web-config: salt://jitsi/meet/jitsi-meet-web-config_{{ version }}_all.deb
 
 {% for domain in ["meet.ffmuc.net","klassenkonferenz.de"] %}
-/etc/jitsi/meet/{{domain}}-config.js:
+/etc/jitsi/meet/{{ domain }}-config.js:
   file.managed:
     - source:
-      - salt://jitsi/meet/{{domain}}-config.js.jinja
+      - salt://jitsi/meet/{{ domain }}-config.js.jinja
       - salt://jitsi/meet/domain-config.js.jinja
     - template: jinja
     - defaults:
