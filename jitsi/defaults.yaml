@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 # vim: ft=yaml
 ---
+
 jitsi:
   public_domain: example.com
   subdomains:
     - exampledomain
-  authentication: False
-  lobby_enabled: True
-  jibri_enabled: False
+  authentication: false
+  lobby_enabled: true
+  jibri_enabled: false
   conference_mapper_url: "https://meet.example.com/conferencemapper"
 
   xmpp:
@@ -65,7 +66,7 @@ jitsi:
         password: "THIS_IS_SUPER_SECRET"
 
   prosody:
-    enabled: False
+    enabled: false
 
   turn:
     secret: "THIS_IS_SUPER_SECRET_TURN"
@@ -74,7 +75,7 @@ jitsi:
         port: 443
 
   asterisk:
-    enabled: False
+    enabled: false
     jigasi_instances:
       - ip: "127.0.0.1"
         password: cccc
@@ -85,7 +86,7 @@ jitsi:
       host: sip.example.com
 
   jigasi:
-    enabled: False
+    enabled: false
     sip:
       host: "127.0.0.1"
       username: 2000

@@ -1,3 +1,5 @@
+---
+
 version: '2'
 
 services:
@@ -19,7 +21,7 @@ services:
     image: ${IMAGE_REPO}:zammad-elasticsearch${VERSION}
     restart: ${RESTART}
     volumes:
-            - /srv/docker/elasticsearch-zammad/data:/usr/share/elasticsearch/data:z
+      - /srv/docker/elasticsearch-zammad/data:/usr/share/elasticsearch/data:z
 
   zammad-init:
     command: ["zammad-init"]
@@ -31,7 +33,7 @@ services:
       - zammad-postgresql
     restart: on-failure
     volumes:
-            - /srv/docker/zammad-data:/opt/zammad:z
+      - /srv/docker/zammad-data:/opt/zammad:z
 
   zammad-memcached:
     command: ["zammad-memcached"]
@@ -56,7 +58,7 @@ services:
     image: ${IMAGE_REPO}:zammad-postgresql${VERSION}
     restart: ${RESTART}
     volumes:
-            - /srv/docker/postgresql-zammad/data:/var/lib/postgresql/data:z
+      - /srv/docker/postgresql-zammad/data:/var/lib/postgresql/data:z
 
   zammad-railsserver:
     command: ["zammad-railsserver"]
@@ -70,7 +72,7 @@ services:
       - zammad-postgresql
     restart: ${RESTART}
     volumes:
-            - /srv/docker/zammad-data:/opt/zammad:z
+      - /srv/docker/zammad-data:/opt/zammad:z
 
   zammad-scheduler:
     command: ["zammad-scheduler"]
@@ -84,7 +86,7 @@ services:
       - zammad-postgresql
     restart: ${RESTART}
     volumes:
-            - /srv/docker/zammad-data:/opt/zammad:z
+      - /srv/docker/zammad-data:/opt/zammad:z
 
   zammad-websocket:
     command: ["zammad-websocket"]
@@ -97,6 +99,4 @@ services:
       - zammad-memcached
     restart: ${RESTART}
     volumes:
-            - /srv/docker/zammad-data:/opt/zammad:z
-
-
+      - /srv/docker/zammad-data:/opt/zammad:z

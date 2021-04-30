@@ -1,3 +1,5 @@
 ---
+extends: default
 
-extends: relaxed
+rules:
+  comments: disable

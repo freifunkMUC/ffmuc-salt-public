@@ -1,9 +1,11 @@
+---
+
 # The URL to the Graylog server API.
-server_url: '{% if "meet" == grains.id.split(".")[1] %}http://10.111.0.7:9000{%else%}https://log.ov.ffmuc.net{% endif %}/api'
+server_url: '{% if "meet" == grains.id.split(".")[1] %}http://10.111.0.7:9000{%else%}https://log.ov.ffmuc.net{% endif %}/api' # yamllint disable-line rule:line-length
 
 # The API token to use to authenticate against the Graylog server API.
 # This field is mandatory
-server_api_token: "{{ salt['pillar.get']('netbox:services:log.in.ffmuc.net:custom_fields:api_token') }}"
+server_api_token: "{{ salt['pillar.get']('netbox:services:log.in.ffmuc.net:custom_fields:api_token') }}" # yamllint disable-line rule:line-length
 # The node ID of the sidecar. This can be a path to a file or an ID string.
 # If set to a file and the file doesn't exist, the sidecar will generate an
 # unique ID and writes it to the configured path.
@@ -23,13 +25,15 @@ node_name: "{{ grains['id'] }}"
 # contact the Graylog server for keep-alive and configuration update requests.
 #update_interval: 10
 
-# This configures if the sidecar should skip the verification of TLS connections.
+# This configures if the sidecar should skip the verification of
+# TLS connections.
 # Default: false
 #tls_skip_verify: false
 
 # This enables/disables the transmission of detailed sidecar information like
 # collector statues, metrics and log file lists. It can be disabled to reduce
-# load on the Graylog server if needed. (disables some features in the server UI)
+# load on the Graylog server if needed.
+# (disables some features in the server UI)
 #send_status: true
 
 # A list of directories to scan for log files. The sidecar will scan each
@@ -58,8 +62,10 @@ list_log_files: []
 # Directory where the sidecar generates configurations for collectors.
 #collector_configuration_directory: "/var/lib/graylog-sidecar/generated"
 
-# A list of binaries which are allowed to be executed by the Sidecar. An empty list disables the whitelist feature.
-# Wildcards can be used, for a full pattern description see https://golang.org/pkg/path/filepath/#Match
+# A list of binaries which are allowed to be executed by the Sidecar.
+# An empty list disables the whitelist feature.
+# Wildcards can be used, for a full pattern description
+# see https://golang.org/pkg/path/filepath/#Match
 # Example:
 #     collector_binaries_whitelist:
 #       - "/usr/bin/filebeat"
