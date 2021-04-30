@@ -262,7 +262,7 @@ Cleanup /etc/icinga2/zones.d/master/ffmuc-conf.d/hosts/generated/:
   file.managed:
     - source: salt://icinga2/mattermost-notifications.py
     - template: jinja
-    - mode: 755
+    - mode: "0755"
     - user: root
     - group: root
 

@@ -40,7 +40,7 @@ fastd:
 /etc/fastd/{{ site }}:
   file.directory:
      - makedirs: true
-     - mode: 755
+     - mode: "0755"
      - require:
        - file: /etc/fastd
 
@@ -79,6 +79,6 @@ ff_fastd_con_pkgs:
 /usr/local/bin/ff_fastd_conn:
   file.managed:
     - source: salt://fastd/ff_fastd_con
-    - mode: 755
+    - mode: "0755"
     - user: root
     - group: root

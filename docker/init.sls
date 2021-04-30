@@ -38,7 +38,7 @@ docker-pkgs:
   file.managed:
     - source: https://github.com/docker/compose/releases/download/1.29.1/docker-compose-Linux-x86_64
     - source_hash: 8097769d32e34314125847333593c8edb0dfc4a5b350e4839bef8c2fe8d09de7
-    - mode: 0755
+    - mode: "0755"
 
 {#
 # Install docker-compose via pip *shrug*

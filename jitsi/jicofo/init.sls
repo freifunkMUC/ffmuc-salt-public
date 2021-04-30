@@ -36,6 +36,6 @@ jicofo:
   file.directory:
     - user: jicofo
     - group: jitsi
-    - mode: 755
+    - mode: "0755"
 
 {% endif %}

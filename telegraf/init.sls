@@ -94,7 +94,7 @@ remove_asterisk_monitoring:
         #!/bin/sh
         # Count turn-sessions
         netstat -tn | awk '$4 ~ /:443$/{print $5}' | cut -d: -f1 | uniq | wc -l
-    - mode: 0755
+    - mode: "0755"
 
 /etc/telegraf/telegraf.d/in-coturn_sessions.conf:
   file.managed:

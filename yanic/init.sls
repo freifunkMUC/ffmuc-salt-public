@@ -69,7 +69,7 @@ yanic@{{site}}:
 /usr/local/bin/ff_merge_nodes_json:
   file.managed:
     - source: salt://yanic/ff_merge_nodes_json
-    - mode: 755
+    - mode: "0755"
 
 /etc/cron.d/ff_merge_nodes_json:
   file.managed:
