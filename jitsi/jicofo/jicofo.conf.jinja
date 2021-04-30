@@ -10,6 +10,11 @@ jicofo {
             max-check-duration = 60 seconds
         }
     }
+    conference {
+        shared-document {
+            use-random-name = false
+        }
+    }
 {%- if jitsi.jibri_enabled %}{# not working yet #}
     jibri {
         brewery-jid = "{{ jitsi.jibri.xmpp.control_muc.room_name | default(jitsi.jibri.brewery_room) }}@{{ jitsi.xmpp.brewery_domain }}"
@@ -20,7 +25,6 @@ jicofo {
         enabled = true
         id = 42
     }
-{%- if false %}{# not working yet; now handled via /etc/jitsi/jicofo/config #}
     xmpp {
         client {
             enabled = true
@@ -29,8 +33,8 @@ jicofo {
             domain = {{ jitsi.xmpp.xmpp_domain }}
             username = {{ jitsi.jicofo.username }}
             password = {{ jitsi.jicofo.password }}
+            client-proxy: focus.{{ jitsi.public_domain }}
             disable-certificate-verification = true
         }
     }
-{%- endif %}
 }
