@@ -50,7 +50,7 @@ ssh-{{ user }}:
     - home: {{ path }}
     - createhome: True
     {%- if 'system_users' in group %}
-    - groups: 
+    - groups:
       - nogroup
     - system: True
     {% else %}

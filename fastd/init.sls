@@ -56,7 +56,7 @@ fastd:
       bat_iface: bat-{{ site }}
     - require:
       - file: /etc/fastd/{{ site }}
-  
+
 # Create systemd start link
 fastd@{{ site }}:
   service.running:

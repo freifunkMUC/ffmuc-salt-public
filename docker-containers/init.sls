@@ -72,7 +72,7 @@ compose-file-{{ container }}:
 
 compose-build-{{ container }}:
   module.run:
-    - name: dockercompose.build 
+    - name: dockercompose.build
     - path: {{ containers[container]['container_dir'] }}/{{ container }}-compose.yml
     - require:
       - file: compose-file-{{ container }}

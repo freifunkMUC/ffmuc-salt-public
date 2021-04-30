@@ -59,7 +59,7 @@ ffmuc.net:
 {%- for cname in cnames %}
 {%- if 'in.ffmuc.net' not in cname %}
                 - name: {{ cname  }}
-                  content: {{ cnames[cname] }} 
+                  content: {{ cnames[cname] }}
                   salt_managed: True
                   type: CNAME
 {%- endif %}

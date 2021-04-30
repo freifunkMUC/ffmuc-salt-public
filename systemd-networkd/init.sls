@@ -1,6 +1,6 @@
 disable_netplan:
     file.managed:
-        - name: /etc/netplan/01-netcfg.yaml 
+        - name: /etc/netplan/01-netcfg.yaml
         - source: salt://systemd-networkd/files/netplan.conf
 
 systemd-networkd:

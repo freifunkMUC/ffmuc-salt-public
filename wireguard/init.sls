@@ -32,7 +32,7 @@ ifreload:
 
 bird-configure:
    cmd.wait:
-     - name: /usr/sbin/birdc configure 
+     - name: /usr/sbin/birdc configure
      - watch: []
 
 bird6-configure:

@@ -4,7 +4,7 @@ include:
 install_bird2:
     pkg.installed:
         - name: bird2
-    
+
 bird:
     service.running:
         - enable: True

@@ -7,7 +7,7 @@
 
 /etc/apt/sources.list.d/nginx.list:
   pkgrepo.managed:
-    - name: deb http://nginx.org/packages/{{ grains.os | lower}} {{ grains.oscodename }} nginx
+    - name: deb http://nginx.org/packages/{{ grains.os | lower }} {{ grains.oscodename }} nginx
     - file: /etc/apt/sources.list.d/nginx.list
     - keyserver: keys.gnupg.net
     - keyid: ABF5BD827BD9BF62
@@ -15,7 +15,7 @@
 nginx:
   pkg.installed:
     - name: nginx
-    - fromrepo: deb http://nginx.org/packages/{{ grains.os | lower}} {{ grains.oscodename }} nginx
+    - fromrepo: deb http://nginx.org/packages/{{ grains.os | lower }} {{ grains.oscodename }} nginx
     - require:
       - pkgrepo: /etc/apt/sources.list.d/nginx.list
   service.running:

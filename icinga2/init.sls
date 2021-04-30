@@ -122,7 +122,7 @@ icinga-user:
     - mode: "0700"
     - user: nagios
     - group: nagios
- 
+
 # Install host cert + key readable for icinga
 icinga2-hostcert:
   file.symlink:
@@ -149,7 +149,7 @@ icinga2-hostkey:
 icinga2-ca:
   file.symlink:
     - name: /var/lib/icinga2/certs/ca.crt
-    - target: /etc/ssl/certs/ffmuc-cacert.pem 
+    - target: /etc/ssl/certs/ffmuc-cacert.pem
     - force: True
     - require:
       - pkg: icinga2-pkg
@@ -189,7 +189,7 @@ icinga2-ca:
       - pkg: icinga2-pkg
     - watch_in:
       - service: icinga2-service
-   
+
 
 # Create directory for ffho specific configs
 /etc/icinga2/zones.d/master/ffmuc-conf.d:
