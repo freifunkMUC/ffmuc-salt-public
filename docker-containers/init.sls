@@ -64,7 +64,7 @@ compose-file-{{ container }}:
     - template: jinja
     - user: root
     - group: root
-    - mode: 600
+    - mode: "0600"
     {%- if 'credentials' in containers[container] %}
     - context:
       credentials: {{ containers[container]['credentials'] }}

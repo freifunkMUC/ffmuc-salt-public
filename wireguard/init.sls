@@ -43,7 +43,7 @@ bird6-configure:
 /etc/wireguard/keys:
     file.directory:
         - name: /etc/wireguard/keys
-        - mode: 700
+        - mode: "0700"
         - user: root
         - group: root
 

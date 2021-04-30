@@ -21,7 +21,7 @@ include:
     - makedirs: True
     - user: root
     - group: root
-    - mode: 644
+    - mode: "0644"
 
 /etc/nebula/{{ grains['id'] }}.key:
   file.managed:
@@ -29,7 +29,7 @@ include:
     - makedirs: True
     - user: root
     - group: root
-    - mode: 640
+    - mode: "0640"
 
 {% if nebula.loophole.enabled %}
 generate_ssh_host_ed25519_key:
@@ -49,7 +49,7 @@ generate_ssh_host_ed25519_key:
     - template: jinja
     - user: root
     - group: root
-    - mode: 644
+    - mode: "0644"
     - require:
         - file: /etc/nebula/{{ grains['id'] }}.crt
 

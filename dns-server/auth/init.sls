@@ -48,7 +48,7 @@ python-dnspython:
   file.directory:
     - user: bind
     - group: bind
-    - mode: 775
+    - mode: "0775"
     - require:
       - pkg: bind9
 
@@ -59,7 +59,7 @@ python-dnspython:
     - source: salt://dns-server/auth/db.in.ffmuc.net
     - user: bind
     - group: bind
-    - mode: 775
+    - mode: "0775"
     - require:
       - file: /etc/bind/zones
     - watch_in:
@@ -72,7 +72,7 @@ python-dnspython:
     - source: salt://dns-server/auth/db.ov.ffmuc.net
     - user: bind
     - group: bind
-    - mode: 775
+    - mode: "0775"
     - require:
       - file: /etc/bind/zones
     - watch_in:
@@ -85,7 +85,7 @@ python-dnspython:
     - source: salt://dns-server/auth/db.ext.ffmuc.net
     - user: bind
     - group: bind
-    - mode: 775
+    - mode: "0775"
     - require:
       - file: /etc/bind/zones
     - watch_in:
@@ -98,7 +98,7 @@ python-dnspython:
     - source: salt://dns-server/auth/db.80.10.in-addr.arpa
     - user: bind
     - group: bind
-    - mode: 775
+    - mode: "0775"
     - require:
       - file: /etc/bind/zones
     - watch_in:
@@ -111,7 +111,7 @@ python-dnspython:
     - source: salt://dns-server/auth/db.1.0.a.0.8.0.6.0.1.0.0.2.ip6.arpa
     - user: bind
     - group: bind
-    - mode: 775
+    - mode: "0775"
     - require:
       - file: /etc/bind/zones
     - watch_in:
@@ -126,7 +126,7 @@ dns-key:
     - template: jinja
     - user: bind
     - group: bind
-    - mode: 600
+    - mode: "0600"
     - require:
       - pkg: bind9
 

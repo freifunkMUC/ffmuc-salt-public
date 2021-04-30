@@ -17,7 +17,7 @@ bird2_configure:
 
 /etc/bird:
   file.directory:
-    - mode: 750
+    - mode: "0750"
     - user: bird
     - group: bird
     - require:
@@ -35,6 +35,6 @@ bird2_config:
             - service: bird
         - watch_in:
             - cmd: bird2_configure
-        - mode: 644
+        - mode: "0644"
         - user: root
         - group: bird

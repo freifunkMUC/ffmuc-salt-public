@@ -72,7 +72,7 @@ ffho-plugins:
 /etc/sudoers.d/icinga2:
   file.managed:
     - source: salt://icinga2/icinga2.sudoers
-    - mode: 0440
+    - mode: "0044"0
 
 icinga-user:
   user.present:
@@ -119,7 +119,7 @@ icinga-user:
 
 /var/lib/icinga2/certs:
   file.directory:
-    - mode: 700
+    - mode: "0700"
     - user: nagios
     - group: nagios
  
@@ -269,7 +269,7 @@ Cleanup /etc/icinga2/zones.d/master/ffmuc-conf.d/hosts/generated/:
 /etc/icinga2/conf.d/commands.conf:
   file.managed:
     - source: salt://icinga2/commands.conf
-    - mode: 644
+    - mode: "0644"
     - user: root
     - group: root
     - watch_in:
@@ -278,7 +278,7 @@ Cleanup /etc/icinga2/zones.d/master/ffmuc-conf.d/hosts/generated/:
 /etc/icinga2/conf.d/notifications.conf:
   file.managed:
     - source: salt://icinga2/notifications.conf
-    - mode: 644
+    - mode: "0644"
     - user: root
     - group: root
     - watch_in:
@@ -287,7 +287,7 @@ Cleanup /etc/icinga2/zones.d/master/ffmuc-conf.d/hosts/generated/:
 /etc/icinga2/conf.d/templates.conf:
   file.managed:
     - source: salt://icinga2/templates.conf
-    - mode: 644
+    - mode: "0644"
     - user: root
     - group: root
     - watch_in:
@@ -296,7 +296,7 @@ Cleanup /etc/icinga2/zones.d/master/ffmuc-conf.d/hosts/generated/:
 /etc/icinga2/conf.d/users.conf:
   file.managed:
     - source: salt://icinga2/users.conf.tmpl
-    - mode: 644
+    - mode: "0644"
     - user: root
     - group: root
     - template: jinja
@@ -306,7 +306,7 @@ Cleanup /etc/icinga2/zones.d/master/ffmuc-conf.d/hosts/generated/:
 /etc/icinga2/conf.d/services.conf:
   file.managed:
     - source: salt://icinga2/services.conf.tmpl
-    - mode: 644
+    - mode: "0644"
     - user: root
     - group: root
     - template: jinja

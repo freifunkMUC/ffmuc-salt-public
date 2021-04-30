@@ -22,7 +22,7 @@ fastd:
   file.directory:
     - user: root
     - group: root
-    - mode: 711
+    - mode: "0711"
   require:
     - pkg: fastd
 
