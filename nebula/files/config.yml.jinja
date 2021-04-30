@@ -167,6 +167,10 @@ firewall:
   - port: 1935
     proto: tcp
     host: any
+  # Allow connections for ldap
+  - port: 8443
+    proto: tcp
+    host: any
 {%- endif %}
 {%- if "docker05.in.ffmuc.net" == grains["id"] %}
   # Allow connections for chat.ffmuc.net
@@ -235,6 +239,9 @@ firewall:
     host: any
   # Elastiflow Logstash
   - port: 6343
+    proto: udp
+    host: any
+  - port: 9995
     proto: udp
     host: any
   # Graylog Webfrontend
