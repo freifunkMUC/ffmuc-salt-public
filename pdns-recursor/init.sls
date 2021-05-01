@@ -37,15 +37,7 @@ systemd-reload-pdns-rec:
       - service: pdns-recursor
 
 /etc/systemd/system/pdns-recursor.service.d/override.conf:
-{# {% if 'vrf_external' in salt['grains.get']('ip_interfaces') % #}
-#  file.managed:
-#    - name: /etc/systemd/system/pdns-recursor.service.d/override.conf
-#    - source: salt://pdns-recursor/pdns-recursor.override.service
-#    - template: jinja
-#    - makedirs: True
-#{% else %}#}
   file.absent
-{# % endif % #}
 
 /etc/systemd/system/pdns-recursor.service:
 {% if 'vrf_external' in salt['grains.get']('ip_interfaces') %}
