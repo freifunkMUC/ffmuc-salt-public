@@ -4,7 +4,7 @@
 jitsi:
   public_domain: example.com
   subdomains:
-    - exampledomain
+    - rshofheim
   authentication: False
   lobby_enabled: True
   jibri_enabled: False
