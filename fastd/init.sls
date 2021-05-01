@@ -48,7 +48,7 @@ fastd:
   file.managed:
     - source: salt://fastd/fastd.conf
     - template: jinja
-      secret: {{ fastd_key}}
+      secret: {{ fastd_key }}
       site: {{ site }}
       site_no: {{ sites_config[site]['site_no'] }}
       fastd_port: {{ sites_config[site]['fastd_port'] }}

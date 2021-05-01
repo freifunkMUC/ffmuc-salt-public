@@ -109,7 +109,7 @@ ssh-{{ user }}:
     - template: jinja
     - user: root
     - group: root
-    - mode: "0064"4
+    - mode: "0644"
     - require:
       - file: /root/.ssh
 

@@ -12,7 +12,7 @@ directory-{{ containers[container]['container_dir'] }}:
     - user: root
     - group: root
     - makedirs: True
-    - dir_mode: 755
+    - dir_mode: "0755"
 {% if 'git' in containers[container] %}
 git-{{ container }}:
   git.cloned:
@@ -37,7 +37,7 @@ mounts-{{ mount }}:
     - user: root
     - group: root
     - makedirs: True
-    - dir_mode: 757
+    - dir_mode: "0757"
 {% endif  %}
 {% endfor %}
 {% endif  %}
@@ -52,7 +52,7 @@ files-{{ file  }}:
     - user: root
     - group: root
     - makedirs: True
-    - dir_mode: 757
+    - dir_mode: "0757"
 {% endif  %}
 {% endfor %}
 {% endif  %}

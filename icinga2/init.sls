@@ -63,8 +63,8 @@ ffho-plugins:
   file.recurse:
     - name: /usr/local/share/monitoring-plugins/
     - source: salt://icinga2/plugins/
-    - file_mode: 755
-    - dir_mode: 755
+    - file_mode: "0755"
+    - dir_mode: "0755"
     - user: root
     - group: root
 
@@ -180,8 +180,8 @@ icinga2-ca:
   file.recurse:
     - source: salt://icinga2/commands.d
     - template: jinja
-    - file_mode: 644
-    - dir_mode: 755
+    - file_mode: "0644"
+    - dir_mode: "0755"
     - user: root
     - group: root
     - clean: true
@@ -214,8 +214,8 @@ icinga2-ca:
 /etc/icinga2/zones.d/master/ffmuc-conf.d/services:
   file.recurse:
     - source: salt://icinga2/services
-    - file_mode: 644
-    - dir_mode: 755
+    - file_mode: "0644"
+    - dir_mode: "0755"
     - user: root
     - group: root
     - clean: true
