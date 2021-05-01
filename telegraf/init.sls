@@ -65,7 +65,7 @@ add_telegraf_pdns_group:
     - contents: |
         #!/bin/bash
         asterisk -x "core show channels" | awk '/active call/ {print $1}'
-    - mode: 0750
+    - mode: "0750"
     - user: root
 
 /etc/sudoers.d/telegraf_asterisk:
@@ -94,7 +94,7 @@ remove_asterisk_monitoring:
         #!/bin/sh
         # Count turn-sessions
         netstat -tn | awk '$4 ~ /:443$/{print $5}' | cut -d: -f1 | uniq | wc -l
-    - mode: 0755
+    - mode: "0755"
 
 /etc/telegraf/telegraf.d/in-coturn_sessions.conf:
   file.managed:

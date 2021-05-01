@@ -32,7 +32,7 @@ ifreload:
 
 bird-configure:
    cmd.wait:
-     - name: /usr/sbin/birdc configure 
+     - name: /usr/sbin/birdc configure
      - watch: []
 
 bird6-configure:
@@ -43,7 +43,7 @@ bird6-configure:
 /etc/wireguard/keys:
     file.directory:
         - name: /etc/wireguard/keys
-        - mode: 700
+        - mode: "0700"
         - user: root
         - group: root
 
@@ -112,7 +112,7 @@ generate-clientkey-{{ interface }}:
 
 /etc/network/interfaces.d/{{ interface }}:
     file.managed:
-        - name: /etc/network/interfaces.d/{{ interface}}
+        - name: /etc/network/interfaces.d/{{ interface }}
         - source: salt://wireguard/interface.jinja2
         - template: jinja
         - defaults:

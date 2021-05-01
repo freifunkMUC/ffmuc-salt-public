@@ -10,7 +10,7 @@ synchronize      = "1m"
 # how often request per multicast
 collect_interval = "1m"
 # interface that has an IP in your mesh network
-interfaces       = ["{{iface}}"]
+interfaces       = ["{{ iface }}"]
 # list of sites to save stats for (empty for global only)
 sites            = []
 # define a port to listen
@@ -21,8 +21,8 @@ sites            = []
 # A little build-in webserver, which statically serves a directory.
 # This is useful for testing purposes or for a little standalone installation.
 [webserver]
-enable  = {{webserver}}
-bind    = "[{{bind_ip}}]:8080"
+enable  = {{ webserver }}
+bind    = "[{{ bind_ip }}]:8080"
 webroot = "/srv/yanic/data"
 
 
@@ -30,7 +30,7 @@ webroot = "/srv/yanic/data"
 enable        = true
 # Cache file
 # a json file to cache all data collected directly from respondd
-state_path    = "/srv/yanic/{{site}}.state"
+state_path    = "/srv/yanic/{{ site }}.state"
 # prune data in RAM, cache-file and output json files (i.e. nodes.json)
 # that were inactive for longer than
 prune_after   = "30d"
@@ -68,7 +68,7 @@ offline_after = "10m"
 # definition for the new more compressed meshviewer.json
 [[nodes.output.meshviewer-ffrgb]]
 enable   = true
-path = "/srv/yanic/data/{{site}}/meshviewer.json"
+path = "/srv/yanic/data/{{ site }}/meshviewer.json"
 
 [nodes.output.meshviewer-ffrgb.filter]
 no_owner = true
@@ -93,9 +93,9 @@ enable = true
 #        https://github.com/ffrgb/meshviewer/tree/develop
 version    = 2
 # path where to store nodes.json
-nodes_path = "/srv/yanic/data/{{site}}/nodes.json"
+nodes_path = "/srv/yanic/data/{{ site }}/nodes.json"
 # path where to store graph.json
-graph_path = "/srv/yanic/data/{{site}}/graph.json"
+graph_path = "/srv/yanic/data/{{ site }}/graph.json"
 
 [nodes.output.meshviewer.filter]
 no_owner = true
@@ -104,7 +104,7 @@ no_owner = true
 # definition for nodelist.json
 [[nodes.output.nodelist]]
 enable   = true
-path = "/srv/yanic/data/{{site}}/nodelist.json"
+path = "/srv/yanic/data/{{ site }}/nodelist.json"
 
 [nodes.output.nodelist.filter]
 no_owner = true
@@ -130,10 +130,10 @@ delete_interval = "1d"
 #   model: store the count of nodes tagged with hardware model
 [[database.connection.influxdb]]
 enable   = true
-address  = "{{influxdb.address}}"
-database = "{{influxdb.database}}"
-username = "{{influxdb.username}}"
-password = "{{influxdb.password}}"
+address  = "{{ influxdb.address }}"
+database = "{{ influxdb.database }}"
+username = "{{ influxdb.username }}"
+password = "{{ influxdb.password }}"
 
 # Tagging of the data (optional)
 [database.connection.influxdb.tags]
@@ -143,7 +143,7 @@ password = "{{influxdb.password}}"
 # some usefull e.g.:
 #system   = "productive"
 #site     = "ffhb"
-job      = "{{site}}"
+job      = "{{ site }}"
 
 # Logging
 [[database.connection.logging]]

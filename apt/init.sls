@@ -17,7 +17,7 @@ salt-repo:
     {% elif 'Raspbian' in grains.lsb_distrib_id %}
     - name: deb http://repo.saltstack.com/py3/debian/{{ grains.osmajorrelease }}/{{ grains.osarch }}/latest {{ grains.oscodename }} main
     {% else %}
-    - name: deb http://repo.saltstack.com/py3/{{ grains.lsb_distrib_id | lower }}/{{ grains.osmajorrelease }}/{{ grains.osarch }}/3000 {{ grains.oscodename }} main
+    - name: deb http://repo.saltstack.com/py3/{{ grains.lsb_distrib_id | lower }}/{{ grains.osmajorrelease }}/{{ grains.osarch }}/3000 {{ grains.oscodename }} main # noqa: 204
     {% endif %}
     - dist: {{ grains.oscodename }}
     - file: /etc/apt/sources.list.d/saltstack.list

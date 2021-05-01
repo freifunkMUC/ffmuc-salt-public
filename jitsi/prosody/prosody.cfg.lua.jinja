@@ -26,7 +26,7 @@ admins = { "{{ jitsi.jicofo.username }}@{{ jitsi.xmpp.auth_domain }}" }
 component_interface = "0.0.0.0";
 --component_ports = {{ jitsi.xmpp.port }}
 {% set nebula_ip = salt['grains.get']('ip4_interfaces:nebula1:0') %}
-interfaces = {"127.0.0.1" {% if nebula_ip %}, "{{ nebula_ip}}"{% endif %}}
+interfaces = { "127.0.0.1" {% if nebula_ip %}, "{{ nebula_ip }}"{% endif %} }
 -- disable listening for https
 https_ports = {}
 

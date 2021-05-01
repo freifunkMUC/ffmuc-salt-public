@@ -10,9 +10,8 @@ ssl-cert:
   pkg.installed
 
 update_ca_certificates:
-  cmd.wait:
+  cmd.run:
     - name: /usr/sbin/update-ca-certificates
-    - watch: []
 
 generate-dhparam:
   cmd.run:
@@ -32,7 +31,7 @@ generate-dhparam:
     - source: salt://certs/ffmuc-cacert.pem
     - user: root
     - group: root
-    - mode: 644
+    - mode: "0644"
     - watch_in:
       - cmd: update_ca_certificates
 
@@ -47,7 +46,7 @@ generate-dhparam:
         {{ cert_bundle['certificate']|indent(8) }}
     - user: root
     - group: root
-    - mode: 644
+    - mode: "0644"
 
 /etc/ssl/private/{{ grains['id'] }}.key.pem:
   file.managed:
@@ -55,7 +54,7 @@ generate-dhparam:
         {{ cert_bundle['private_key']|indent(8) }}
     - user: root
     - group: ssl-cert
-    - mode: 440
+    - mode: "0440"
     - require:
       - pkg: ssl-cert
 {% endif %}{# Certificate wont expire #}
@@ -86,8 +85,8 @@ dns_credentials:
   file.managed:
     - name: /var/lib/cache/salt/dns_plugin_credentials.ini
     - makedirs: True
-    - contents: "dns_cloudflare_api_token = {{ cloudflare_token}}"
-    - mode: 600
+    - contents: "dns_cloudflare_api_token = {{ cloudflare_token }}"
+    - mode: "0600"
 
 ffmuc-wildcard-cert:
   acme.cert:
@@ -121,7 +120,7 @@ ffmuc-wildcard-cert:
     - dns_plugin_credentials: /var/lib/cache/salt/dns_plugin_credentials.ini
     - owner: root
     - group: ssl-cert
-    - mode: 0640
+    - mode: "0640"
     #- renew: True
     - require:
         - pkg: certbot
@@ -135,9 +134,9 @@ ffmuc-wildcard-cert:
 /etc/letsencrypt/archive/:
   file.directory:
     - group: ssl-cert
-    - mode: 0750
+    - mode: "0750"
 /etc/letsencrypt/live/:
   file.directory:
     - group: ssl-cert
-    - mode: 0750
+    - mode: "0750"
 {% endif %}

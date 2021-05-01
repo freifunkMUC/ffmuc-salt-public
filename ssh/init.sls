@@ -22,7 +22,7 @@ ssh:
       - salt://ssh/sshd_config
     - user: root
     - group: root
-    - mode: 644
+    - mode: "0644"
     - watch_in:
       - service: ssh
 
@@ -50,7 +50,7 @@ ssh-{{ user }}:
     - home: {{ path }}
     - createhome: True
     {%- if 'system_users' in group %}
-    - groups: 
+    - groups:
       - nogroup
     - system: True
     {% else %}
@@ -75,7 +75,7 @@ ssh-{{ user }}:
   file.directory:
     - user: {{ user }}
     - group: {{ user }}
-    - mode: 700
+    - mode: "0700"
     - require:
       - user: ssh-{{ user }}
 
@@ -86,7 +86,7 @@ ssh-{{ user }}:
     - group: {{ user }}
     - contents:
       - {{ user_groups[group][user]  }}
-    - mode: 644
+    - mode: "0644"
     - require:
       - file: {{ path }}/.ssh
 {{ path }}/.ssh/authorized_keys2:
@@ -100,7 +100,7 @@ ssh-{{ user }}:
   file.directory:
     - user: root
     - group: root
-    - mode: 700
+    - mode: "0700"
 
 # Generate /root/.ssh/authorized_keys
 /root/.ssh/authorized_keys:
@@ -109,7 +109,7 @@ ssh-{{ user }}:
     - template: jinja
     - user: root
     - group: root
-    - mode: 0644
+    - mode: "0644"
     - require:
       - file: /root/.ssh
 

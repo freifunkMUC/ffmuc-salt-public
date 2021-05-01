@@ -47,7 +47,6 @@ base:
     - jitsi.asterisk
     - jitsi.jigasi
   'gw*':
-    - fastd
     - dhcp-server
     - knot-resolver.remove
     - pdns-recursor

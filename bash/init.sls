@@ -18,11 +18,11 @@ bash-completion:
 
 #
 # Nifty aliases for gateway
-{#{% if 'batman_gw' in salt['pillar.get']('nodes:' ~ grains['id'] ~ ':roles', []) %}
+{# {% if 'batman_gw' in salt['pillar.get']('nodes:' ~ grains['id'] ~ ':roles', []) %}
 /root/.bash_aliases:
   file.managed:
     - source: salt://bash/bash_aliases.root
-{% endif %}#}
+{% endif %} #}
 
 
 # bashrc.user is used in state 'build' for the build user!

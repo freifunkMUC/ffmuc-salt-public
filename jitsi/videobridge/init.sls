@@ -28,7 +28,7 @@ jitsi-videobridge2:
 systemd-reload-jvb:
   cmd.run:
     - name: systemctl --system daemon-reload
-    - onchanges:  
+    - onchanges:
       - file: /etc/systemd/system/jitsi-videobridge2.service.d/override.conf
     - watch_in:
       - service: jitsi-videobridge2

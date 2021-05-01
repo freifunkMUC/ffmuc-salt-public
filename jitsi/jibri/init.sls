@@ -39,7 +39,7 @@ setup_chromedriver_update_script:
   file.managed:
     - name: /usr/local/bin/update_chromedriver.sh
     - source: salt://jitsi/jibri/update_chromedriver.sh
-    - mode: 0755
+    - mode: "0755"
 
 execute_chromedriver_update:
   cmd.run:

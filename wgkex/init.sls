@@ -31,7 +31,7 @@ wgkex-service:
 systemd-reload-wgkex:
   cmd.run:
     - name: systemctl --system daemon-reload
-    - onchanges:  
+    - onchanges:
       - file: /etc/systemd/system/wgkex.service
     - watch_in:
       - service: wgkex-service

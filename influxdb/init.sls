@@ -25,7 +25,7 @@ influxdb:
     - watch:
       - file: /etc/influxdb/influxdb.conf
 
-influxdb-user: 
+influxdb-user:
   user.present:
     - name: influxdb
     - system: True

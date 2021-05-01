@@ -151,15 +151,15 @@ jibri-recorder-auth:
 {% endif %}
 
 {% for domain in [ jitsi.public_domain , jitsi.xmpp.auth_domain ] %}
-prosody-{{domain}}-cert:
+prosody-{{ domain }}-cert:
   cmd.run:
-    - name: "yes '' | /usr/bin/prosodyctl cert generate {{domain}}"
-    - creates: /var/lib/prosody/{{domain}}.crt
+    - name: "yes '' | /usr/bin/prosodyctl cert generate {{ domain }}"
+    - creates: /var/lib/prosody/{{ domain }}.crt
 
 {% for ext in ["crt", "key"] %}
-/etc/prosody/certs/{{domain}}.{{ ext }}:
+/etc/prosody/certs/{{ domain }}.{{ ext }}:
   file.symlink:
-    - target: /var/lib/prosody/{{domain}}.{{ ext }}
+    - target: /var/lib/prosody/{{ domain }}.{{ ext }}
 
 {% endfor %}{# ext #}
 {% endfor %}{# domain #}

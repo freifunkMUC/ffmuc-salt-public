@@ -7,7 +7,7 @@
 /usr/lib/rsyslog/rsyslog-rotate:
   file.managed:
     - source: salt://logrotate/rsyslog-rotate
-    - mode: 755
+    - mode: "0755"
     - makedirs: True
 
 {% endif %}

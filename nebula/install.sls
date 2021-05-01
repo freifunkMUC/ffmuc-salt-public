@@ -24,12 +24,12 @@
 nebula-binary:
   file.managed:
     - name:  /usr/local/bin/nebula
-    - source: salt://nebula/files/nebula-{{grains.osarch}}
+    - source: salt://nebula/files/nebula-{{ grains.osarch }}
 #{% if salt['file.file_exists' ]('/tmp/nebula/nebula') %}
 #    - source: /tmp/nebula/nebula
 #{% endif %}
     - user: root
     - group: root
-    - mode: 0755
+    - mode: "0755"
  #   - require:
  #       - archive: nebula-tmp-bin

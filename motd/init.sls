@@ -9,7 +9,7 @@ motd:
       - figlet
 
   cmd.run:
-    - name: echo > /etc/motd.freifunk ; figlet {{name[0]}} >> /etc/motd.freifunk; sed -i -e 's/^\(.*\)/     \1/' /etc/motd.freifunk ; sed -i -e '$s/\(.*\)/\1.{{name[1:]|join('.')}}/' /etc/motd.freifunk ; echo >> /etc/motd.freifunk
+    - name: echo > /etc/motd.freifunk ; figlet {{ name[0] }} >> /etc/motd.freifunk; sed -i -e 's/^\(.*\)/     \1/' /etc/motd.freifunk ; sed -i -e '$s/\(.*\)/\1.{{ name[1:]|join('.') }}/' /etc/motd.freifunk ; echo >> /etc/motd.freifunk # noqa: 204
     - creates: /etc/motd.freifunk
 
   file.symlink:
