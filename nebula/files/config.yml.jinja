@@ -22,7 +22,7 @@ lighthouse:
   local_allow_list:
     interfaces:
       lo: false
-{%- if 'docker' in grains.id %}{# dont filter gw*-networks#}
+{%- if 'docker' in grains.id %}{# dont filter gw*-networks #}
       'br-.*': false
 {%- endif %}
 
@@ -232,7 +232,7 @@ firewall:
     proto: tcp
     group: webfrontend
 {%- endif %}
-{%- if "docker07.in.ffmuc.net" == grains["id"]%}
+{%- if "docker07.in.ffmuc.net" == grains["id"] %}
   # Elastiflow Logstash
   - port: 2055
     proto: udp
@@ -299,7 +299,7 @@ firewall:
   - port: 5665
     proto: tcp
     host: icinga-vie01.in.ffmuc.net
-{%- if "nms.in.ffmuc.net" == grains["id"]%}
+{%- if "nms.in.ffmuc.net" == grains["id"] %}
   - port: 80
     proto: tcp
     group: webfrontend

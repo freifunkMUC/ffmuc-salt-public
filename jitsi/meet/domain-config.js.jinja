@@ -29,7 +29,7 @@ var config = {
 
     // BOSH URL. FIXME: use XEP-0156 to discover it.
     bosh: '//{{ domain }}/http-bind',
-    
+
     // WebSockets for XMPP
     websocket: 'wss://{{ domain }}/xmpp-websocket',
 
@@ -142,7 +142,7 @@ var config = {
             high: 1500000
         },
     },
-    
+
     // Enable / disable simulcast support.
     disableSimulcast: false,
 
@@ -219,11 +219,11 @@ var config = {
     // (e.g. meeting participants), based on the actual implementation
     // on the backend.
     // fileRecordingsServiceSharingEnabled: false,
-#}
+   #}
     // Whether to enable live streaming or not.
     liveStreamingEnabled: true,
     hiddenDomain: 'recorder.meet.ffmuc.net',
-{#
+   {#
     // Transcription (in interface_config, subtitles and buttons can be configured)
     // transcribingEnabled: false,
 
@@ -231,10 +231,10 @@ var config = {
     // autoCaptionOnRecord: false,
 
     // Misc
-#}
+    #}
     // Default value for the channel "last N" attribute. -1 for unlimited.
     channelLastN: 20,
-{#-
+    {#-
     // Provides a way to use different "last N" values based on the number of participants in the conference.
     // The keys in an Object represent number of participants and the values are "last N" to be used when number of
     // participants gets to or above the number.
@@ -242,7 +242,7 @@ var config = {
     // For the given example mapping, "last N" will be set to 20 as long as there are at least 5, but less than
     // 29 participants in the call and it will be lowered to 15 when the 30th participant joins. The 'channelLastN'
     // will be used as default until the first threshold is reached.
-    //#}
+    // #}
     lastNLimits: {
         5: 20,
         30: 15,
@@ -257,7 +257,7 @@ var config = {
     // Disables or enables TCC (the default is in Jicofo and set to true)
     // (draft-holmer-rmcat-transport-wide-cc-extensions-01). This setting
     // affects congestion control, it practically enables send-side bandwidth
-    // estimations.#}
+    // estimations. #}
     enableTcc: true,
 
     // Disables or enables REMB (the default is in Jicofo and set to false)
@@ -356,7 +356,7 @@ var config = {
 
     // If third party requests are disabled, no other server will be contacted.
     // This means avatars will be locally generated and callstats integration
-    // will not function.#}
+    // will not function. #}
     disableThirdPartyRequests: true,
 
 
@@ -481,7 +481,7 @@ var config = {
     //    // If specified a 'Download our apps' button will be displayed in the overflow menu with a link
     //    // to the specified URL for an app download page.
     //    downloadAppsUrl: 'https://docs.example.com/our-apps.html'
-    // }#}
+    // } #}
     enableLipSync: false,
     enableTalkWhileMuted: true,
     disableSuspendVideo: true,
