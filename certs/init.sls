@@ -86,7 +86,7 @@ dns_credentials:
   file.managed:
     - name: /var/lib/cache/salt/dns_plugin_credentials.ini
     - makedirs: True
-    - contents: "dns_cloudflare_api_token = {{ cloudflare_token}}"
+    - contents: "dns_cloudflare_api_token = {{ cloudflare_token }}"
     - mode: "0600"
 
 ffmuc-wildcard-cert:

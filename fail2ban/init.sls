@@ -9,4 +9,4 @@ fail2ban-service:
     - enable: true
     - require:
       - pkg: fail2ban-pkg
-{%endif %}
+{% endif %}
