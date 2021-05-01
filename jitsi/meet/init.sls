@@ -2,7 +2,7 @@
 # Jitsi Meet Web Package
 ###
 
-{% set version = "1.0.4628-9" %}
+{% set version = "1.0.5765-9" %}
 jitsi-meet-web-pkgs:
   pkg.installed:
     - sources:

@@ -10,19 +10,20 @@ include:
 
 jitsi-videobridge2:
   pkg.installed:
+    - version: 2.1-478-gc6da57bd-1
     - require:
       - pkgrepo: jitsi-repo
   service.running:
     - enable: True
 
-jvb-ffmuc-version:
-  pkg.installed:
-    - require:
-      - pkg: jitsi-videobridge2 # for dependencies
-    - required_in:
-      - service: jitsi-videobridge2 # only start if this version got installed
-    - sources:
-      - jitsi-videobridge2: https://download.jitsi.org/unstable/jitsi-videobridge2_2.1-411-g9754898e-1_all.deb
+#jvb-ffmuc-version:
+#  pkg.installed:
+#    - require:
+#      - pkg: jitsi-videobridge2 # for dependencies
+#    - required_in:
+#      - service: jitsi-videobridge2 # only start if this version got installed
+#    #- sources:
+#    #  - jitsi-videobridge2: https://apt.ffmuc.net/unstable/jitsi-videobridge2_2.1-411-g9754898e-1_all.deb
 
 systemd-reload-jvb:
   cmd.run:
@@ -42,7 +43,7 @@ stats.in.ffmuc.net:
     - source: salt://jitsi/videobridge/config.jinja
     - template: jinja
     - require:
-      - pkg: jvb-ffmuc-version # only start if this version got installed
+      - pkg: jitsi-videobridge2 # only start if this version got installed
     - watch_in:
       - service: jitsi-videobridge2
 
@@ -51,7 +52,7 @@ stats.in.ffmuc.net:
     - source: salt://jitsi/videobridge/jvb.conf.jinja
     - template: jinja
     - require:
-      - pkg: jvb-ffmuc-version # only start if this version got installed
+      - pkg: jitsi-videobridge2 # only start if this version got installed
     - watch_in:
       - service: jitsi-videobridge2
 
@@ -60,7 +61,7 @@ stats.in.ffmuc.net:
     - source: salt://jitsi/videobridge/sip-communicator.properties.jinja
     - template: jinja
     - require:
-      - pkg: jvb-ffmuc-version # only start if this version got installed
+      - pkg: jitsi-videobridge2 # only start if this version got installed
     - watch_in:
       - service: jitsi-videobridge2
 
@@ -69,7 +70,7 @@ stats.in.ffmuc.net:
     - source: salt://jitsi/videobridge/videobridge.rc
     - template: jinja
     - require:
-      - pkg: jvb-ffmuc-version # only start if this version got installed
+      - pkg: jitsi-videobridge2 # only start if this version got installed
     - watch_in:
       - service: jitsi-videobridge2
 
@@ -83,8 +84,8 @@ jitsi-videobridge2:
   pkg.removed
 
 /etc/systemd/system/jitsi-videobridge2.service.d:
-  file.removed
+  file.absent
 /etc/jitsi/videobridge:
-  file.removed
+  file.absent
 
 {% endif %}

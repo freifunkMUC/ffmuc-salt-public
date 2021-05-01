@@ -51,13 +51,12 @@ luarocks-{{ luapkg }}:
 prosody:
   pkg.installed:
     - name: prosody-0.11 # This is the nightly build. use "prosody" for stable
+    #- version: 1nightly123-1~buster
     - require:
       - pkgrepo: prosody-repo
   service.running:
     - enable: True
-    - reload: True
-    - require:
-      - file: remove-temporary-files
+    #- reload: True
     - watch:
       - file: /etc/prosody/prosody.cfg.lua
       - file: /etc/prosody/conf.d/{{ jitsi.public_domain }}.cfg.lua
@@ -101,6 +100,8 @@ remove-temporary-files:
     - require:
       - file: copy-prosody-plugins
       - file: patch_muc_owner_allow_kick
+    - require_in:
+      - service: prosody
 
 /etc/prosody/prosody.cfg.lua:
   file.managed:
@@ -206,11 +207,20 @@ update-certificates:
   "mod_turncredentials",
   "util.lib"] %}
 /usr/lib/prosody/modules/{{ component }}.lua:
+#/usr/share/jitsi-meet/prosody-plugins/{{ component }}.lua:
   file.managed:
     - source: https://raw.githubusercontent.com/jitsi/jitsi-meet/master/resources/prosody-plugins/{{ component }}.lua
     - skip_verify: True
     - watch_in:
       - service: prosody
-
 {% endfor %}{# for component #}
+
+#{% for component in ["mod_muc_lobby_rooms"] %}
+#/usr/share/jitsi-meet/prosody-plugins/{{ component }}.lua:
+#  file.managed:
+#    - source: salt://jitsi/prosody/modules/{{ component }}.lua
+#    - skip_verify: True
+#    - watch_in:
+#      - service: prosody
+#{% endfor %}{# for component #}
 {% endif %}{# if jitsi.prosody.enabled #}

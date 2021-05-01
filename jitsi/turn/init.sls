@@ -28,3 +28,11 @@ systemd-reload-coturn:
    - name: systemctl --system daemon-reload
    - onchanges:  
      - file: /etc/systemd/system/coturn.service.d/override.conf
+
+/etc/rsyslog.d/turnserver.conf:
+  file.managed:
+    - contents: |
+        # Managed by Salt
+        # avoid turnserver logs to fill multiple files
+        :programname,isequal,"turnserver"         /var/log/turnserver.log
+        & stop

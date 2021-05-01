@@ -6,6 +6,8 @@ jitsi-repo-key:
 jitsi-repo:
   pkgrepo.managed:
     - humanname: Jitsi Repo
-    - name: deb https://download.jitsi.org stable/
+    #- name: deb https://download.jitsi.org stable/
+    - name: deb https://apt.ffmuc.net stable/
     - file: /etc/apt/sources.list.d/jitsi-stable.list
+    #- key: https://download.jitsi.org/jitsi-key.gpg.key
     - clean_file: True
