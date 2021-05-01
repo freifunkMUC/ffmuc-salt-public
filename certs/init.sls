@@ -12,6 +12,8 @@ ssl-cert:
 update_ca_certificates:
   cmd.run:
     - name: /usr/sbin/update-ca-certificates
+    - onchanges:
+      - file: /usr/local/share/ca-certificates/ffmuc-cacert.crt
 
 generate-dhparam:
   cmd.run:
