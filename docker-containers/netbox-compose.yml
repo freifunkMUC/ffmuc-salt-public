@@ -1,3 +1,5 @@
+---
+
 version: '3'
 services:
   netbox: &netbox
@@ -7,35 +9,35 @@ services:
         - BRANCH=v2.5.13
     image: netboxcommunity/netbox:latest-ldap
     depends_on:
-    - postgres
+      - postgres
     env_file:
-    - env/netbox.env
-    - env/ldap.env
+      - env/netbox.env
+      - env/ldap.env
     volumes:
-    - /srv/docker/netbox/startup_scripts:/opt/netbox/startup_scripts:ro
-    - /srv/docker/netbox/initializers:/opt/netbox/initializers:ro
-    - /srv/docker/netbox/configuration:/etc/netbox/config:ro
-    - /srv/docker/netbox/reports:/etc/netbox/reports:ro
-    - netbox-nginx-config:/etc/netbox-nginx/
-    - netbox-static-files:/opt/netbox/netbox/static
-    - netbox-media-files:/opt/netbox/netbox/media
+      - /srv/docker/netbox/startup_scripts:/opt/netbox/startup_scripts:ro
+      - /srv/docker/netbox/initializers:/opt/netbox/initializers:ro
+      - /srv/docker/netbox/configuration:/etc/netbox/config:ro
+      - /srv/docker/netbox/reports:/etc/netbox/reports:ro
+      - netbox-nginx-config:/etc/netbox-nginx/
+      - netbox-static-files:/opt/netbox/netbox/static
+      - netbox-media-files:/opt/netbox/netbox/media
     restart: unless-stopped
   nginx:
     command: nginx -c /etc/netbox-nginx/nginx.conf
     image: nginx:1.15-alpine
     depends_on:
-    - netbox
+      - netbox
     ports:
-    - 8080:8080
+      - 8080:8080
     volumes:
-    - netbox-static-files:/opt/netbox/netbox/static:ro
-    - netbox-nginx-config:/etc/netbox-nginx/:ro
+      - netbox-static-files:/opt/netbox/netbox/static:ro
+      - netbox-nginx-config:/etc/netbox-nginx/:ro
     restart: unless-stopped
   postgres:
     image: postgres:10.4-alpine
     env_file: env/postgres.env
     volumes:
-    - /srv/docker/postgres-netbox:/var/lib/postgresql/data
+      - /srv/docker/postgres-netbox:/var/lib/postgresql/data
     restart: unless-stopped
 volumes:
   netbox-static-files:

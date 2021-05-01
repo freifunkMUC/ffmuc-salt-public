@@ -1,5 +1,8 @@
+---
+
 name: black
 
+# yamllint disable-line rule:truthy
 on: [push, pull_request]
 
 jobs:
@@ -10,4 +13,5 @@ jobs:
       - uses: actions/setup-python@v2
       - uses: psf/black@master
         with:
-            args: ". --exclude respondd/respondd-tmpl/lib/respondd_client.py --check --diff"
+          # yamllint disable-line rule:line-length
+          args: ". --exclude respondd/respondd-tmpl/lib/respondd_client.py --check --diff"
