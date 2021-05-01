@@ -120,7 +120,7 @@ ffmuc-wildcard-cert:
     - dns_plugin_credentials: /var/lib/cache/salt/dns_plugin_credentials.ini
     - owner: root
     - group: ssl-cert
-    - mode: "0064"0
+    - mode: "0640"
     #- renew: True
     - require:
         - pkg: certbot
@@ -134,9 +134,9 @@ ffmuc-wildcard-cert:
 /etc/letsencrypt/archive/:
   file.directory:
     - group: ssl-cert
-    - mode: "0075"0
+    - mode: "0750"
 /etc/letsencrypt/live/:
   file.directory:
     - group: ssl-cert
-    - mode: "0075"0
+    - mode: "0750"
 {% endif %}

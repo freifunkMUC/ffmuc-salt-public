@@ -30,7 +30,7 @@ backup-script:
   file.managed:
     - name: /usr/local/sbin/backup.sh
     - source: salt://duplicity/files/backup.sh.jinja2
-    - mode: "0075"0
+    - mode: "0750"
     - template: jinja
 
 /etc/systemd/system/ffmuc-backup.service:

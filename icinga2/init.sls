@@ -72,7 +72,7 @@ ffho-plugins:
 /etc/sudoers.d/icinga2:
   file.managed:
     - source: salt://icinga2/icinga2.sudoers
-    - mode: "0044"0
+    - mode: "0440"
 
 icinga-user:
   user.present:

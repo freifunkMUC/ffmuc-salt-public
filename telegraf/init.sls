@@ -65,7 +65,7 @@ add_telegraf_pdns_group:
     - contents: |
         #!/bin/bash
         asterisk -x "core show channels" | awk '/active call/ {print $1}'
-    - mode: "0075"0
+    - mode: "0750"
     - user: root
 
 /etc/sudoers.d/telegraf_asterisk:
