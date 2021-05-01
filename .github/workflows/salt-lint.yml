@@ -11,10 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     name: Salt Lint
     steps:
-    - uses: actions/checkout@v1
-    - name: Run salt-lint
-      uses: roaldnefs/salt-lint-action@master
-      env:
-        ACTION_STATE_FIND_PATTERN: '^.*\.(sls|jinja|j2|tmpl|tst)$'
-        ACTION_STATE_FIND_TYPE: 'regex'
-        SALT_LINT_EXTRA_PARAMS: '-v -x 205'
+      - uses: actions/checkout@v1
+      - name: Run salt-lint
+        uses: roaldnefs/salt-lint-action@master
+        env:
+          ACTION_STATE_FIND_PATTERN: '^.*\.(sls|jinja|j2|tmpl|tst)$'
+          ACTION_STATE_FIND_TYPE: 'regex'
+          SALT_LINT_EXTRA_PARAMS: '-v -x 205'
