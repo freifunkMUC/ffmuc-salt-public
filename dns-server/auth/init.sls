@@ -48,7 +48,7 @@ python-dnspython:
   file.directory:
     - user: bind
     - group: bind
-    - mode: 775
+    - mode: "0775"
     - require:
       - pkg: bind9
 
@@ -59,7 +59,7 @@ python-dnspython:
     - source: salt://dns-server/auth/db.in.ffmuc.net
     - user: bind
     - group: bind
-    - mode: 775
+    - mode: "0775"
     - require:
       - file: /etc/bind/zones
     - watch_in:
@@ -72,7 +72,7 @@ python-dnspython:
     - source: salt://dns-server/auth/db.ov.ffmuc.net
     - user: bind
     - group: bind
-    - mode: 775
+    - mode: "0775"
     - require:
       - file: /etc/bind/zones
     - watch_in:
@@ -85,7 +85,7 @@ python-dnspython:
     - source: salt://dns-server/auth/db.ext.ffmuc.net
     - user: bind
     - group: bind
-    - mode: 775
+    - mode: "0775"
     - require:
       - file: /etc/bind/zones
     - watch_in:
@@ -98,7 +98,7 @@ python-dnspython:
     - source: salt://dns-server/auth/db.80.10.in-addr.arpa
     - user: bind
     - group: bind
-    - mode: 775
+    - mode: "0775"
     - require:
       - file: /etc/bind/zones
     - watch_in:
@@ -111,7 +111,7 @@ python-dnspython:
     - source: salt://dns-server/auth/db.1.0.a.0.8.0.6.0.1.0.0.2.ip6.arpa
     - user: bind
     - group: bind
-    - mode: 775
+    - mode: "0775"
     - require:
       - file: /etc/bind/zones
     - watch_in:
@@ -126,7 +126,7 @@ dns-key:
     - template: jinja
     - user: bind
     - group: bind
-    - mode: 600
+    - mode: "0600"
     - require:
       - pkg: bind9
 
@@ -229,7 +229,9 @@ record-A-overlay-{{ node_id }}:
   {% endif %}
 
 # Create Entries in ext.ffmuc.net for each device with external IPs
-  {% if external_address is defined and external_address[node_id] | length > 0 and external_address[node_id][0] is defined and not '__data__' in external_address[node_id] %}
+  {% if external_address is defined and external_address[node_id]
+  | length > 0 and external_address[node_id][0] is defined
+  and not '__data__' in external_address[node_id] %}
 record-A-external-{{ node_id }}:
   ddns.present:
     - name: {{ node[0] }}.ext.ffmuc.net.
@@ -247,7 +249,9 @@ record-A-external-{{ node_id }}:
       - file: dns-key
   {%- endif -%}
 
-  {%- if external_address6 is defined and external_address[node_id] | length > 0 and external_address6[node_id][0] is defined and not '__data__' in external_address6[node_id] %}
+  {%- if external_address6 is defined and external_address[node_id]
+  | length > 0 and external_address6[node_id][0] is defined
+  and not '__data__' in external_address6[node_id] %}
 record-AAAA-external-{{ node_id }}:
   ddns.present:
     - name: {{ node[0] }}.ext.ffmuc.net.
