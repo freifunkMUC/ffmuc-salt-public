@@ -132,6 +132,7 @@ dns-key:
 
 # Create DNS records for each node
 {% for node_id in nodes %}
+  {%- if 'meet.ffmuc.net' not in node_id and 'lighthouse' not in node_id %}
   {%- set node = node_id | regex_search('(^\w+(-)?(\w+)?(\d+)?)') %}
   {%- set address = salt['mine.get'](node_id,'minion_address', tgt_type='glob')[node_id] %}
   {%- set address6 = salt['mine.get'](node_id,'minion_address6', tgt_type='glob')[node_id] %}
@@ -268,6 +269,7 @@ record-AAAA-external-{{ node_id }}:
       - pkg: python-dnspython
       - file: dns-key
 
+  {%- endif %}
   {%- endif %}
 {%- endfor %}{# for node_id in nodes #}
 
