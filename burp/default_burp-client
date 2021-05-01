@@ -1,8 +1,0 @@
-#
-# Burp backup defaults (Salt Managed)
-#
-# This is a POSIX shell fragment
-#
-
-# We want to run the bloody client
-RUN=yes

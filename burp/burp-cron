@@ -1,7 +1,0 @@
-#
-# Regular cron jobs for the burp package
-#
-# Run the burp client every 60 minutes + a random sleep between 0 and 2700
-# seconds (45min)  with the 'timed' option. The burp server will decide whether it is
-# yet time to do a backup or not.
-05 * * * *      root    [ -x /usr/sbin/burp ] && ( [ ! -e /etc/default/burp-client ] || /bin/grep -q -i run=yes /etc/default/burp-client ) && /usr/sbin/burp -a t -q 2700 >>/var/log/burp-client 2>&1
