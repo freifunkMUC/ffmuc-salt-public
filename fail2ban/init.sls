@@ -7,6 +7,6 @@ fail2ban-service:
   service.running:
     - name: fail2ban
     - enable: true
-    - require: 
+    - require:
       - pkg: fail2ban-pkg
-{%endif %}
+{% endif %}

@@ -22,7 +22,7 @@ fastd:
   file.directory:
     - user: root
     - group: root
-    - mode: 711
+    - mode: "0711"
   require:
     - pkg: fastd
 
@@ -40,7 +40,7 @@ fastd:
 /etc/fastd/{{ site }}:
   file.directory:
      - makedirs: true
-     - mode: 755
+     - mode: "0755"
      - require:
        - file: /etc/fastd
 
@@ -48,7 +48,7 @@ fastd:
   file.managed:
     - source: salt://fastd/fastd.conf
     - template: jinja
-      secret: {{ fastd_key}}
+      secret: {{ fastd_key }}
       site: {{ site }}
       site_no: {{ sites_config[site]['site_no'] }}
       fastd_port: {{ sites_config[site]['fastd_port'] }}
@@ -56,7 +56,7 @@ fastd:
       bat_iface: bat-{{ site }}
     - require:
       - file: /etc/fastd/{{ site }}
-  
+
 # Create systemd start link
 fastd@{{ site }}:
   service.running:
@@ -79,6 +79,6 @@ ff_fastd_con_pkgs:
 /usr/local/bin/ff_fastd_conn:
   file.managed:
     - source: salt://fastd/ff_fastd_con
-    - mode: 755
+    - mode: "0755"
     - user: root
     - group: root

@@ -13,13 +13,11 @@ locales:
       - pkg: locales
 
 locale-gen:
-  cmd.wait:
-    - watch:
+  cmd.run:
+    - onchanges:
       - file: /etc/locale.gen
 
 en_US.UTF-8:
   locale.system:
     - require:
       - file: /etc/locale.gen
-
-

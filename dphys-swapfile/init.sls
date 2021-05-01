@@ -9,5 +9,5 @@ dphys-swapfile-service:
     - name: dphys-swapfile
     - enable: true
     - watch:
-      - file: dphys-swapfile-config 
+      - file: dphys-swapfile-config
 {% endif %}

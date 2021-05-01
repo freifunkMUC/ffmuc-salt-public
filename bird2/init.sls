@@ -4,20 +4,19 @@ include:
 install_bird2:
     pkg.installed:
         - name: bird2
-    
+
 bird:
     service.running:
         - enable: True
         - running: True
 
 bird2_configure:
-  cmd.wait:
+  cmd.run:
     - name: /usr/sbin/birdc configure
-    - watch: []
 
 /etc/bird:
   file.directory:
-    - mode: 750
+    - mode: "0750"
     - user: bird
     - group: bird
     - require:
@@ -35,6 +34,6 @@ bird2_config:
             - service: bird
         - watch_in:
             - cmd: bird2_configure
-        - mode: 644
+        - mode: "0644"
         - user: root
         - group: bird

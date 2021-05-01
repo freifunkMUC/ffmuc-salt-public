@@ -63,8 +63,8 @@ ffho-plugins:
   file.recurse:
     - name: /usr/local/share/monitoring-plugins/
     - source: salt://icinga2/plugins/
-    - file_mode: 755
-    - dir_mode: 755
+    - file_mode: "0755"
+    - dir_mode: "0755"
     - user: root
     - group: root
 
@@ -72,7 +72,7 @@ ffho-plugins:
 /etc/sudoers.d/icinga2:
   file.managed:
     - source: salt://icinga2/icinga2.sudoers
-    - mode: 0440
+    - mode: "0440"
 
 icinga-user:
   user.present:
@@ -119,10 +119,10 @@ icinga-user:
 
 /var/lib/icinga2/certs:
   file.directory:
-    - mode: 700
+    - mode: "0700"
     - user: nagios
     - group: nagios
- 
+
 # Install host cert + key readable for icinga
 icinga2-hostcert:
   file.symlink:
@@ -149,7 +149,7 @@ icinga2-hostkey:
 icinga2-ca:
   file.symlink:
     - name: /var/lib/icinga2/certs/ca.crt
-    - target: /etc/ssl/certs/ffmuc-cacert.pem 
+    - target: /etc/ssl/certs/ffmuc-cacert.pem
     - force: True
     - require:
       - pkg: icinga2-pkg
@@ -180,8 +180,8 @@ icinga2-ca:
   file.recurse:
     - source: salt://icinga2/commands.d
     - template: jinja
-    - file_mode: 644
-    - dir_mode: 755
+    - file_mode: "0644"
+    - dir_mode: "0755"
     - user: root
     - group: root
     - clean: true
@@ -189,7 +189,7 @@ icinga2-ca:
       - pkg: icinga2-pkg
     - watch_in:
       - service: icinga2-service
-   
+
 
 # Create directory for ffho specific configs
 /etc/icinga2/zones.d/master/ffmuc-conf.d:
@@ -214,8 +214,8 @@ icinga2-ca:
 /etc/icinga2/zones.d/master/ffmuc-conf.d/services:
   file.recurse:
     - source: salt://icinga2/services
-    - file_mode: 644
-    - dir_mode: 755
+    - file_mode: "0644"
+    - dir_mode: "0755"
     - user: root
     - group: root
     - clean: true
@@ -262,14 +262,14 @@ Cleanup /etc/icinga2/zones.d/master/ffmuc-conf.d/hosts/generated/:
   file.managed:
     - source: salt://icinga2/mattermost-notifications.py
     - template: jinja
-    - mode: 755
+    - mode: "0755"
     - user: root
     - group: root
 
 /etc/icinga2/conf.d/commands.conf:
   file.managed:
     - source: salt://icinga2/commands.conf
-    - mode: 644
+    - mode: "0644"
     - user: root
     - group: root
     - watch_in:
@@ -278,7 +278,7 @@ Cleanup /etc/icinga2/zones.d/master/ffmuc-conf.d/hosts/generated/:
 /etc/icinga2/conf.d/notifications.conf:
   file.managed:
     - source: salt://icinga2/notifications.conf
-    - mode: 644
+    - mode: "0644"
     - user: root
     - group: root
     - watch_in:
@@ -287,7 +287,7 @@ Cleanup /etc/icinga2/zones.d/master/ffmuc-conf.d/hosts/generated/:
 /etc/icinga2/conf.d/templates.conf:
   file.managed:
     - source: salt://icinga2/templates.conf
-    - mode: 644
+    - mode: "0644"
     - user: root
     - group: root
     - watch_in:
@@ -296,7 +296,7 @@ Cleanup /etc/icinga2/zones.d/master/ffmuc-conf.d/hosts/generated/:
 /etc/icinga2/conf.d/users.conf:
   file.managed:
     - source: salt://icinga2/users.conf.tmpl
-    - mode: 644
+    - mode: "0644"
     - user: root
     - group: root
     - template: jinja
@@ -306,7 +306,7 @@ Cleanup /etc/icinga2/zones.d/master/ffmuc-conf.d/hosts/generated/:
 /etc/icinga2/conf.d/services.conf:
   file.managed:
     - source: salt://icinga2/services.conf.tmpl
-    - mode: 644
+    - mode: "0644"
     - user: root
     - group: root
     - template: jinja

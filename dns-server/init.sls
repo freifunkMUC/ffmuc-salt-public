@@ -19,6 +19,5 @@ dns_pkgs:
 
 # Reload command
 rndc-reload:
-  cmd.wait:
-    - watch: []
+  cmd.run:
     - name: /usr/sbin/rndc reload

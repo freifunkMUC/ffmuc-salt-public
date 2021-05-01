@@ -23,7 +23,7 @@ virt-pkgs:
 /etc/libvirt/hooks/qemu:
   file.managed:
     - source: salt://kvm/qemu-hook
-    - mode: 755
+    - mode: "0755"
     - require:
       - pkg: virt-pkgs
 {% endif %}

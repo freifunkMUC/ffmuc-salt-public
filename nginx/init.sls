@@ -7,7 +7,7 @@
 
 /etc/apt/sources.list.d/nginx.list:
   pkgrepo.managed:
-    - name: deb http://nginx.org/packages/{{ grains.os | lower}} {{ grains.oscodename }} nginx
+    - name: deb http://nginx.org/packages/{{ grains.os | lower }} {{ grains.oscodename }} nginx
     - file: /etc/apt/sources.list.d/nginx.list
     - keyserver: keys.gnupg.net
     - keyid: ABF5BD827BD9BF62
@@ -15,7 +15,7 @@
 nginx:
   pkg.installed:
     - name: nginx
-    - fromrepo: deb http://nginx.org/packages/{{ grains.os | lower}} {{ grains.oscodename }} nginx
+    - fromrepo: deb http://nginx.org/packages/{{ grains.os | lower }} {{ grains.oscodename }} nginx
     - require:
       - pkgrepo: /etc/apt/sources.list.d/nginx.list
   service.running:
@@ -28,7 +28,7 @@ nginx:
 
 # Test configuration before reload
 nginx-configtest:
-  cmd.wait:
+  cmd.run:
     - name: /usr/sbin/nginx -t
 
 # Disable default configuration
@@ -44,7 +44,7 @@ nginx-configtest:
 {% endif %}
 
 {% for module in ["http_brotli_filter_module", "http_brotli_static_module", "http_fancyindex_module"] %}
-nginx-module-{{module}}:
+nginx-module-{{ module }}:
   file.managed:
     - name: /usr/lib/nginx/modules/ngx_{{ module }}.so
     - source: https://mirror.krombel.de/nginx-{{ nginx_version }}/ngx_{{ module }}.so

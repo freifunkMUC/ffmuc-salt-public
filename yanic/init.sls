@@ -31,37 +31,37 @@ yanic:
 # for each site
 {% for site in salt['pillar.get']('nodes:' ~ grains['id'] ~ ':sites', []) %}
 # add webserver directory
-/srv/yanic/data/{{site}}:
+/srv/yanic/data/{{ site }}:
   file.directory:
     - require:
       - file: /srv/yanic/data
 
 # add configuration file
-/srv/yanic/{{site}}.conf:
+/srv/yanic/{{ site }}.conf:
   file.managed:
     - source: salt://yanic/yanic.conf.tmpl
     - template: jinja
     - defaults:
-      iface: "br-{{site}}"
-      site: "{{site}}"
-      webserver: "{{webserver}}"
-      bind_ip: {{bind_ip}}
-      influxdb: {{node_config.yanic.influxdb}}
+      iface: "br-{{ site }}"
+      site: "{{ site }}"
+      webserver: "{{ webserver }}"
+      bind_ip: {{ bind_ip }}
+      influxdb: {{ node_config.yanic.influxdb }}
   # the webserver should only be enabled once
   {% set webserver = "false" %}
     - require:
-      - file: /srv/yanic/data/{{site}}
+      - file: /srv/yanic/data/{{ site }}
 
 # enable the yanic service
 # and restart if configuration or binary has changed
-yanic@{{site}}:
+yanic@{{ site }}:
   service.running:
     - enable: True
     - require:
-      - file: /srv/yanic/{{site}}.conf
+      - file: /srv/yanic/{{ site }}.conf
       - file: /etc/systemd/system/yanic@.service
     - watch:
-      - file: /srv/yanic/{{site}}.conf
+      - file: /srv/yanic/{{ site }}.conf
       - file: yanic
 {% endfor %}
 
@@ -69,7 +69,7 @@ yanic@{{site}}:
 /usr/local/bin/ff_merge_nodes_json:
   file.managed:
     - source: salt://yanic/ff_merge_nodes_json
-    - mode: 755
+    - mode: "0755"
 
 /etc/cron.d/ff_merge_nodes_json:
   file.managed:

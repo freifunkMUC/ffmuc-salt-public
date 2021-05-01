@@ -12,7 +12,7 @@ directory-{{ containers[container]['container_dir'] }}:
     - user: root
     - group: root
     - makedirs: True
-    - dir_mode: 755
+    - dir_mode: "0755"
 {% if 'git' in containers[container] %}
 git-{{ container }}:
   git.cloned:
@@ -37,7 +37,7 @@ mounts-{{ mount }}:
     - user: root
     - group: root
     - makedirs: True
-    - dir_mode: 757
+    - dir_mode: "0757"
 {% endif  %}
 {% endfor %}
 {% endif  %}
@@ -52,7 +52,7 @@ files-{{ file  }}:
     - user: root
     - group: root
     - makedirs: True
-    - dir_mode: 757
+    - dir_mode: "0757"
 {% endif  %}
 {% endfor %}
 {% endif  %}
@@ -64,7 +64,7 @@ compose-file-{{ container }}:
     - template: jinja
     - user: root
     - group: root
-    - mode: 600
+    - mode: "0600"
     {%- if 'credentials' in containers[container] %}
     - context:
       credentials: {{ containers[container]['credentials'] }}
@@ -72,7 +72,7 @@ compose-file-{{ container }}:
 
 compose-build-{{ container }}:
   module.run:
-    - name: dockercompose.build 
+    - name: dockercompose.build
     - path: {{ containers[container]['container_dir'] }}/{{ container }}-compose.yml
     - require:
       - file: compose-file-{{ container }}
