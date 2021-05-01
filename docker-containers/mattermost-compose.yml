@@ -1,3 +1,5 @@
+---
+
 version: "2"
 
 
@@ -20,9 +22,9 @@ services:
       context: app
       # uncomment following lines for team edition or change UID/GID
       args:
-         - edition=team
-      #   - PUID=1000
-      #   - PGID=1000
+        - edition=team
+        # - PUID=1000
+        # - PGID=1000
     ports:
       - "8000:8000"
     restart: unless-stopped
@@ -39,9 +41,9 @@ services:
       - MM_PASSWORD={{ credentials['db_password'] }}
       - MM_DBNAME=mattermost
       - MM_SQLSETTINGS_DRIVERNAME=mysql
+      # yamllint disable-line rule:line-length
       - MM_SQLSETTINGS_DATASOURCE=mmuser:{{ credentials['db_password'] }}@tcp(db:3306)/mattermost?charset=utf8mb4,utf8&readTimeout=30s&writeTimeout=30s
-      # in case your config is not in default location
-      #- MM_CONFIG=/mattermost/config/config.json
+      #  in case your config is not in default location
+      # - MM_CONFIG=/mattermost/config/config.json
     links:
       - db:db
-
