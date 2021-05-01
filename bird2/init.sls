@@ -11,9 +11,8 @@ bird:
         - running: True
 
 bird2_configure:
-  cmd.wait:
+  cmd.run:
     - name: /usr/sbin/birdc configure
-    - watch: []
 
 /etc/bird:
   file.directory:

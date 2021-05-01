@@ -10,9 +10,8 @@ ssl-cert:
   pkg.installed
 
 update_ca_certificates:
-  cmd.wait:
+  cmd.run:
     - name: /usr/sbin/update-ca-certificates
-    - watch: []
 
 generate-dhparam:
   cmd.run:

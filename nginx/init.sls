@@ -28,7 +28,7 @@ nginx:
 
 # Test configuration before reload
 nginx-configtest:
-  cmd.wait:
+  cmd.run:
     - name: /usr/sbin/nginx -t
 
 # Disable default configuration
