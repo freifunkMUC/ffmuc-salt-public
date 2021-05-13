@@ -141,4 +141,20 @@ ffmuc-wildcard-cert:
   file.directory:
     - group: ssl-cert
     - mode: "0750"
+
+/etc/letsencrypt/renewal-hooks/deploy/01-reload-nginx.sh:
+  file.managed:
+    - contents: |
+        #!/bin/sh
+        systemctl reload nginx
+    - mode: "0750"
+    - makedirs: True
+
+/etc/letsencrypt/renewal-hooks/deploy/02-reload-dnsdist-certs.sh:
+  file.managed:
+    - contents: |
+        #!/bin/sh
+        dnsdist -e "reloadAllCertificates()"
+    - mode: "0750"
+    - makedirs: True
 {% endif %}
