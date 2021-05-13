@@ -30,6 +30,8 @@ log_format json_{{ flavor }} escape=json '{'
    '"upstream_duration":"$upstream_response_time",'
    '"http_request_method":"$request_method",'
    '"http_request_uri":"$request_uri",'
+   '"http_uri":"$uri",'
+   '"http_params":"$args",'
    '"http_referer":"$http_referer",'
    '"http_user_agent":"$http_user_agent",'
    '"http_protocol_version":"$server_protocol",'{# HTTP/1.1, HTTP/2, ... #}
