@@ -26,7 +26,7 @@ coturn:
 systemd-reload-coturn:
   cmd.run:
    - name: systemctl --system daemon-reload
-   - onchanges:  
+   - onchanges:
      - file: /etc/systemd/system/coturn.service.d/override.conf
 
 /etc/rsyslog.d/turnserver.conf:
