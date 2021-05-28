@@ -14,4 +14,4 @@ jobs:
       - uses: psf/black@main
         with:
           # yamllint disable-line rule:line-length
-          args: ". --exclude respondd/respondd-tmpl/lib/respondd_client.py --check --diff"
+          options: ". --exclude respondd/respondd-tmpl/lib/respondd_client.py --check --diff"
