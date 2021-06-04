@@ -11,7 +11,7 @@ graylog-sidecar-pkg:
 graylog-repo:
     pkgrepo.managed:
     - humanname: Graylog-Repo
-    - name: deb https://packages.graylog2.org/repo/debian/ sidecar-stable 1.0
+    - name: deb https://packages.graylog2.org/repo/debian/ sidecar-stable 1.1
     - key_url:  https://packages.graylog2.org/repo/debian/pubkey.gpg
     - file: /etc/apt/sources.list.d/graylog-sidecar.list
 
