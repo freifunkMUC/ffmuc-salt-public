@@ -10,7 +10,7 @@ include:
 
 jitsi-videobridge2:
   pkg.installed:
-    - version: 2.1-478-gc6da57bd-1
+    - version: 2.1-492-g5edaf7dd-1
     - require:
       - pkgrepo: jitsi-repo
   service.running:
