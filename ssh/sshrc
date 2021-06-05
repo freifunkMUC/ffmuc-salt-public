@@ -1,0 +1,7 @@
+#!/bin/bash
+ 
+if [ "$SSH_USER" = "" ]; then
+    logger -pauth.info "Login by unknown user as \"$USER\". \$SSH_CLIENT=$SSH_CLIENT."
+else
+    logger -pauth.info "Login by \"$SSH_USER\" as \"$USER\". \$SSH_CLIENT=$SSH_CLIENT."
+fi
