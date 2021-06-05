@@ -1,4 +1,4 @@
 {% set admins = salt['pillar.get']('netbox:config_context:ssh_user_keys:admins') %}
 {%- for admin in admins|sort -%}
-{{ admins[admin] }}
+environment="SSH_USER={{ admin }}" {{ admins[admin] }}
 {% endfor %}
