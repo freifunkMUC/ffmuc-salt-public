@@ -61,11 +61,7 @@ ssh-{{ user }}:
       - nogroup
     - system: True
     {% else %}
-    {% if 'Ubuntu' in grains.lsb_distrib_id or 'Raspbian' in grains.lsb_distrib_id %}
     - usergroup: False
-    {% else %}
-    - gid_from_name: True
-    {% endif %}
     - system: False
     {%- endif -%}
     {%- if 'admins' in group %}
@@ -98,8 +94,9 @@ ssh-{{ user }}:
       - file: {{ path }}/.ssh
 {{ path }}/.ssh/authorized_keys2:
   file.absent
-{% endfor %}
-{% endfor %}
+
+{% endfor %}{# for user #}
+{% endfor %}{# for group #}
 
 
 # Create /root/.ssh folder
