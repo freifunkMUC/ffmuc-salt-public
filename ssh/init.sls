@@ -26,6 +26,13 @@ ssh:
     - watch_in:
       - service: ssh
 
+/etc/ssh/sshrc:
+  file.managed:
+    - source:
+      - salt://ssh/sshrc
+    - user: root
+    - group: root
+    - mode: "0644"
 
 {% for group in user_groups|sort %}
 {% for user in user_groups[group]|sort %}
