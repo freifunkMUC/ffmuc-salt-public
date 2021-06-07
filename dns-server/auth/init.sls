@@ -1,5 +1,5 @@
 #
-# Authoritive FFHO DNS Server configuration (dns01/dns02 anycast)
+# Authoritive FFMUC DNS Server configuration
 #
 
 {%- if 'authorative-dns' in salt['pillar.get']('netbox:tag_list', []) -%}
