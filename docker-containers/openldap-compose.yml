@@ -7,7 +7,7 @@ services:
   openldap:
     hostname: ldap.in.ffmuc.net
     domainname: ldap.in.ffmuc.net
-    image: osixia/openldap:1.2.2
+    image: osixia/openldap:1.5.0
     ports:
       - 636:636
     environment:
@@ -31,7 +31,7 @@ services:
     restart: always
 
   phpldapadmin-service:
-    image: osixia/phpldapadmin:0.7.2
+    image: osixia/phpldapadmin:0.9.0
     environment:
       PHPLDAPADMIN_HTTPS_CRT_FILENAME: cert.pem
       PHPLDAPADMIN_HTTPS_KEY_FILENAME: privkey.pem
