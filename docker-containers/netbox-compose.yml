@@ -6,7 +6,7 @@ services:
     build:
       context: .
       args:
-        - BRANCH=v2.5.13
+        - BRANCH=v2.11.6
     image: netboxcommunity/netbox:latest-ldap
     depends_on:
       - postgres
@@ -24,7 +24,7 @@ services:
     restart: unless-stopped
   nginx:
     command: nginx -c /etc/netbox-nginx/nginx.conf
-    image: nginx:1.15-alpine
+    image: nginx:1.21-alpine
     depends_on:
       - netbox
     ports:
@@ -34,7 +34,7 @@ services:
       - netbox-nginx-config:/etc/netbox-nginx/:ro
     restart: unless-stopped
   postgres:
-    image: postgres:10.4-alpine
+    image: postgres:13.3-alpine
     env_file: env/postgres.env
     volumes:
       - /srv/docker/postgres-netbox:/var/lib/postgresql/data
