@@ -4,14 +4,13 @@ version: '2'
 services:
   # MongoDB: https://hub.docker.com/_/mongo/
   mongodb:
-    image: mongo:3
+    image: mongo:4.2
     volumes:
       - /srv/docker/mongo-graylog/data:/data/db
     restart: always
-  # Elasticsearch:
-  # https://www.elastic.co/guide/en/elasticsearch/reference/5.6/docker.html
+  # Elasticsearch: https://www.elastic.co/guide/en/elasticsearch/reference/7.10/docker.html
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.6.2
+    image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.10.2
     volumes:
       - /srv/docker/elasticsearch-graylog/data:/usr/share/elasticsearch/data:z
     environment:
@@ -27,7 +26,7 @@ services:
     restart: on-failure
     # Graylog: https://hub.docker.com/r/graylog/graylog/
   graylog:
-    image: graylog/graylog:3.2
+    image: graylog/graylog:4.0
     volumes:
       - /srv/docker/graylog/data:/usr/share/graylog/data/journal:z
       - /srv/docker/graylog/GeoLite2-City.mmdb:/etc/graylog/server/GeoLite2-City.mmdb:z
