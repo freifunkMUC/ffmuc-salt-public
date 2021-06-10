@@ -6,7 +6,7 @@ version: "2"
 services:
 
   db:
-    image: mariadb:latest
+    image: mariadb:10.5.10-focal
     restart: unless-stopped
     volumes:
       - /srv/docker/mysql-mattermost/mysql:/var/lib/mysql
