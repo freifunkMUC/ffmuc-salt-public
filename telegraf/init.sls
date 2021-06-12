@@ -186,25 +186,12 @@ remove_asterisk_monitoring:
 /etc/telegraf/telegraf.d/in-gateway-modules.conf:
 {% if 'gateway' in role or 'nextgen-gateway' in role or 'vpngw' in role %}
   file.managed:
-    - contents: |
-        [[inputs.conntrack]]
-        files = ["ip_conntrack_count","ip_conntrack_max", "nf_conntrack_count","nf_conntrack_max"]
-        dirs = ["/proc/sys/net/ipv4/netfilter","/proc/sys/net/netfilter"]
+    - source: salt://telegraf/files/in_gateway-modules.conf
 {% else %}
   file.absent:
 {% endif %}
     - watch_in:
           service: telegraf
-
-/etc/telegraf/telegraf.d/in-stats.in.ffmuc.net.conf:
-{% if 'stats.in.ffmuc.net' == grains.id %}
-  file.managed:
-    - source: salt://telegraf/files/in_stats.in.ffmuc.net.conf
-{% else %}
-  file.absent:
-{% endif %}
-    - watch_in:
-        service: telegraf
 
 /etc/telegraf/telegraf.d/in-wireguard.conf:
 {%- if 'vpngw' in role or 'nextgen-gateway' in role %}
