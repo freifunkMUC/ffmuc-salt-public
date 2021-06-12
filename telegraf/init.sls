@@ -38,8 +38,8 @@ systemd-reload-telegraf:
     - contents: |
         [Service]
         # allow fetching metrics for wireguard
-        CapabilityBoundingSet=CAP_NET_ADMIN,CAP_NET_RAW
-        AmbientCapabilities=CAP_NET_ADMIN,CAP_NET_RAW
+        CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_RAW
+        AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW
 {% else %}
   file.absent
 {% endif %}
