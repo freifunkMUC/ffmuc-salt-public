@@ -1,5 +1,5 @@
 ###
-# install jibri
+# install videobridge
 ###
 {%- from "jitsi/map.jinja" import jitsi with context %}
 

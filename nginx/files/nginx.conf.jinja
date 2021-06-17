@@ -85,6 +85,10 @@ http {
 
 	# Set hint which webfrontend is used
 	add_header X-FFMuc-Edge "{{ grains.id.split('.')[0] }}";
+	map $http_upgrade $connection_upgrade {
+		default upgrade;
+		''      close;
+	}
 
 	##
 	# Virtual Host Configs
