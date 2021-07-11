@@ -175,6 +175,10 @@ firewall:
   - port: 8443
     proto: tcp
     host: any
+  # Allow streetmap
+  - port: 8881
+    proto: tcp
+    group: webfrontend
 {%- endif %}
 {%- if "docker05.in.ffmuc.net" == grains["id"] %}
   # Allow connections for chat.ffmuc.net
