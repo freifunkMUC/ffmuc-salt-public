@@ -10,7 +10,7 @@ include:
 
 jitsi-videobridge2:
   pkg.installed:
-    - version: 2.1-492-g5edaf7dd-1
+    - version: 2.1-508-gb24f756c-1
     - require:
       - pkgrepo: jitsi-repo
   service.running:
@@ -35,7 +35,7 @@ systemd-reload-jvb:
 
 ### set static hostname and the like
 stats.in.ffmuc.net:
-  host.present:
+  host.absent:
     - ip: 10.111.0.254
 
 /etc/jitsi/videobridge/config:
