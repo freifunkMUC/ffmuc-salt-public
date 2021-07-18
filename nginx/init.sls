@@ -98,24 +98,16 @@ nginx-module-{{ module }}:
       - cmd: nginx-configtest
 {% endfor %}{# stream #}
 
-/etc/nginx/conf.d/cloudflare-realips.conf:
+{% for config in ["cloudflare-realips", "log_json"] %}
+/etc/nginx/conf.d/{{ config }}.conf:
   file.managed:
-    - source: salt://nginx/files/cloudflare-realips.conf.jinja
+    - source: salt://nginx/files/{{ config }}.conf.jinja
     - makedirs: True
     - template: jinja
     - require:
       - pkg: nginx
     - require_in:
       - service: nginx
-
-/etc/nginx/conf.d/log_json.conf:
-  file.managed:
-    - source: salt://nginx/files/log_json.conf.jinja
-    - makedirs: True
-    - template: jinja
-    - require:
-      - pkg: nginx
-    - require_in:
-      - service: nginx
+{% endfor %}{# config #}
 
 {% endif %}{# webserver in role #}
