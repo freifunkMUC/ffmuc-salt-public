@@ -13,11 +13,11 @@ salt-repo:
   pkgrepo.managed:
     - humanname: SaltStack-
     {% if 'Ubuntu' in grains.lsb_distrib_id %}
-    - name: deb http://repo.saltstack.com/py3/{{ grains.lsb_distrib_id | lower }}/{{ grains.osrelease }}/{{ grains.osarch }}/latest {{ grains.oscodename }} main
+    - name: deb [arch={{ grains.osarch }}] http://repo.saltstack.com/py3/{{ grains.lsb_distrib_id | lower }}/{{ grains.osrelease }}/{{ grains.osarch }}/latest {{ grains.oscodename }} main
     {% elif 'Raspbian' in grains.lsb_distrib_id %}
-    - name: deb http://repo.saltstack.com/py3/debian/{{ grains.osmajorrelease }}/{{ grains.osarch }}/latest {{ grains.oscodename }} main
+    - name: deb [arch={{ grains.osarch }}] http://repo.saltstack.com/py3/debian/{{ grains.osmajorrelease }}/{{ grains.osarch }}/latest {{ grains.oscodename }} main
     {% else %}
-    - name: deb http://repo.saltstack.com/py3/{{ grains.lsb_distrib_id | lower }}/{{ grains.osmajorrelease }}/{{ grains.osarch }}/3000 {{ grains.oscodename }} main # noqa: 204
+    - name: deb [arch={{ grains.osarch }}] http://repo.saltstack.com/py3/{{ grains.lsb_distrib_id | lower }}/{{ grains.osmajorrelease }}/{{ grains.osarch }}/3000 {{ grains.oscodename }} main # noqa: 204
     {% endif %}
     - dist: {{ grains.oscodename }}
     - file: /etc/apt/sources.list.d/saltstack.list

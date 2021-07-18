@@ -102,7 +102,7 @@ ffmuc-wildcard-cert:
         - "*.ffmuc.bayern"
         - "fnmuc.net"
         - "*.fnmuc.net"
-        - freie-netze.org
+        - "freie-netze.org"
         - "freifunk-muenchen.de"
         - "*.freifunk-muenchen.de"
         - "freifunk-muenchen.net"

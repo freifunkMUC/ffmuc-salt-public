@@ -14,6 +14,7 @@ graylog-repo:
     - name: deb https://packages.graylog2.org/repo/debian/ sidecar-stable 1.1
     - key_url:  https://packages.graylog2.org/repo/debian/pubkey.gpg
     - file: /etc/apt/sources.list.d/graylog-sidecar.list
+    - clean_file: True
 
 filebeat-repo:
   pkgrepo.managed:
@@ -25,10 +26,10 @@ filebeat-repo:
 {% endif %}
 
 graylog-sidecar:
-  pkg.installed
+  pkg.latest
 
 filebeat:
-  pkg.installed
+  pkg.latest
 
 {% if not salt['file.file_exists']('/etc/systemd/system/graylog-sidecar.service') %}
 graylog-sidecar-install-service:
