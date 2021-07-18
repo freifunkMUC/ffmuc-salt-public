@@ -56,5 +56,6 @@ base:
 #    - cloudflare
   'webfrontend0[3-6].in.ffmuc.net':
     - dns-server/auth
+    - pdns-recursor
   'vpn0*.in.ffmuc.net':
     - wireguard
