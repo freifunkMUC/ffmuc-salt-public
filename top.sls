@@ -57,5 +57,6 @@ base:
   'webfrontend0[3-6].in.ffmuc.net':
     - dns-server/auth
     - pdns-recursor
+    - github-downloader
   'vpn0*.in.ffmuc.net':
     - wireguard
