@@ -1,0 +1,21 @@
+#!/bin/bash
+URLS=$(curl -s https://api.github.com/repos/freifunkMUC/jitsi-meet-electron/releases/latest | jq .assets[].browser_download_url | tr -d \")
+TAG=$(curl -s https://api.github.com/repos/freifunkMUC/jitsi-meet-electron/releases/latest | jq .tag_name | tr -d \")
+
+echo "Latest tag is $TAG"
+
+FIRMWARE_DIR=/srv/www/apt.ffmuc.net/ffmeet/latest
+TEMP_DIR=/tmp/ffmeet/$TAG
+if [ ! -f $FIRMWARE_DIR/$TAG ];
+then
+        echo "Downloading firmware with tag $TAG"
+        mkdir -p $TEMP_DIR 
+        cd $TEMP_DIR
+        touch $FIRMWARE_DIR/$TAG
+        for i in $URLS;
+        do
+                wget -q $i
+        done
+        mv $TEMP_DIR/* $FIRMWARE_DIR/
+        rm -r $TEMP_DIR
+fi

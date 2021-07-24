@@ -1,0 +1,38 @@
+#!/bin/bash
+if [ -z "$1" ]
+then
+    URLS=$(curl -s https://api.github.com/repos/freifunkMUC/site-ffm/releases/latest | jq .assets[].browser_download_url | tr -d \")
+    TAG=$(curl -s https://api.github.com/repos/freifunkMUC/site-ffm/releases/latest | jq .tag_name | tr -d \")
+else
+    TAG=$1
+    ID=$(curl -s https://api.github.com/repos/freifunkMUC/site-ffm/releases | jq '.[] | "\(.tag_name) \(.id)"' | grep $1 | cut -d" " -f2 | sed 's/"//g')
+    URLS=$(curl -s https://api.github.com/repos/freifunkMUC/site-ffm/releases/$ID | jq .assets[].browser_download_url | tr -d \")
+fi
+
+
+echo "Latest tag is $TAG"
+
+FIRMWARE_DIR=/srv/www/firmware.ffmuc.net/$TAG
+TEMP_DIR=/tmp/firmware/$TAG
+if [ ! -d $FIRMWARE_DIR ];
+then
+        echo "Downloading firmware with tag $TAG"
+        mkdir -p $FIRMWARE_DIR $TEMP_DIR $TEMP_DIR/extracted
+        cd $TEMP_DIR
+        for i in $URLS;
+        do
+                wget -q $i
+        done
+        for file in `ls *.tar.gz`;
+        do
+                tar xzvf $file -C $TEMP_DIR/extracted
+        done
+        cp extracted/ar71xx-generic_output/images/sysupgrade/*manifest extracted/experimental.manifest
+        for manifest in `ls extracted/*/images/sysupgrade/*manifest | grep -v ar71xx-generic`;
+        do
+                tail -n +5 $manifest >> extracted/experimental.manifest
+        done
+        cp -r extracted/*/debug extracted/*/images/* extracted/*/packages $FIRMWARE_DIR/
+        cp extracted/experimental.manifest $FIRMWARE_DIR/sysupgrade/experimental.manifest
+        rm -r $TEMP_DIR
+fi
