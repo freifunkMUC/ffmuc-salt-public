@@ -73,7 +73,7 @@ IPv6AcceptRA=no
 {%- set link_local = salt['wireguard_v6.generate'](wireguard_public_key) %}
 
 [BridgeFDB]
-MACAddress=00:00:00:00:00
+MACAddress=00:00:00:00:00:00
 Destination={{ link_local }}
 OutgoingInterface={{ interface | regex_replace('vx-', 'wg-') }}
 VNI={{ sites[current_site]['vni'] }}
