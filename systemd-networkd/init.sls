@@ -1,3 +1,20 @@
+
+
+{% set systemd_version = "249.164.gf571d9d5f0+20.04.20210724133612" %}
+systemd-packages:
+  pkg.installed:
+    - sources:
+{% for package in [
+  "libnss-systemd",
+  "libpam-systemd",
+  "libsystemd0",
+  "libudev1",
+  "systemd-sysv",
+  "udev"
+] %}
+      - {{ package }}: https://apt.ffmuc.net/systemd-packages/{{ package }}_{{ systemd_version }}_{{ grains.osarch }}.deb
+{% endfor %}{# packages #}
+
 disable_netplan:
     file.managed:
         - name: /etc/netplan/01-netcfg.yaml
