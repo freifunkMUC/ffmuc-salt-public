@@ -12,6 +12,7 @@ systemd-packages:
   "libsystemd0",
   "libudev1",
   "systemd-sysv",
+  "systemd",
   "udev"
 ] %}
       - {{ package }}: https://apt.ffmuc.net/systemd-packages/{{ package }}_{{ systemd_version }}_{{ grains.osarch }}.deb
