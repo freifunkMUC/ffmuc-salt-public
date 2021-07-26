@@ -44,4 +44,5 @@ Local={{ salt['wireguard_v6.generate'](salt['pillar.get']('netbox:config_context
 GatewayMode=server
 RoutingAlgorithm=batman-v
 OriginatorIntervalSec=5
+HopPenalty=250
 {%- endif %}
