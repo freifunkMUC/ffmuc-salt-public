@@ -17,6 +17,16 @@ systemd-packages:
 ] %}
       - {{ package }}: https://apt.ffmuc.net/systemd-packages/{{ package }}_{{ systemd_version }}_{{ grains.osarch }}.deb
 {% endfor %}{# packages #}
+
+/etc/systemd/system/batadv-throughput.service:
+  file.managed:
+    - source: salt://systemd-networkd/files/batadv-throughput.service
+
+/usr/local/bin/batadv-througput.sh:
+  file.managed:
+    - source: salt://systemd-networkd/files/batadv-throughput.sh
+    - mode: "0750"
+
 {% endif %}{# 'nextgen-gateway' in role #}
 
 disable_netplan:
