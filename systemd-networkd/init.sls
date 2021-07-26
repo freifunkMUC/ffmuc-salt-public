@@ -27,6 +27,17 @@ systemd-packages:
     - source: salt://systemd-networkd/files/batadv-throughput.sh
     - mode: "0750"
 
+systemd-reload-batadv-throughput:
+  cmd.run:
+    - name: systemctl --system daemon-reload
+    - onchanges:
+      - file: /etc/systemd/system/batadv-throughput.service
+
+batadv-throughput.service:
+  service.enabled:
+    - require:
+      - file: /etc/systemd/system/batadv-throughput.service
+
 {% endif %}{# 'nextgen-gateway' in role #}
 
 disable_netplan:
