@@ -1,5 +1,7 @@
+{%- set role = salt['pillar.get']('netbox:role:name', salt['pillar.get']('netbox:device_role:name')) %}
 
-
+{%- if 'nextgen-gateway' in role %}
+# for gateways we need v249+ (not in upstream yet) to to configure Batman-Adv and FDB entries
 {% set systemd_version = "249.164.gf571d9d5f0+20.04.20210724133612" %}
 systemd-packages:
   pkg.installed:
@@ -14,6 +16,7 @@ systemd-packages:
 ] %}
       - {{ package }}: https://apt.ffmuc.net/systemd-packages/{{ package }}_{{ systemd_version }}_{{ grains.osarch }}.deb
 {% endfor %}{# packages #}
+{% endif %}{# 'nextgen-gateway' in role #}
 
 disable_netplan:
     file.managed:

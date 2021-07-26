@@ -34,12 +34,9 @@ Endpoint={{ node | regex_replace('in\.ffmuc\.net','ext.ffmuc.net') }}:{{ wiregua
 {%- if kind == "vxlan" %}
 {%- set sites = salt['pillar.get']('netbox:config_context:site_config') %}
 {%- set current_site = interface | regex_replace('vx-','') %}
-{%- for node,bla in salt['mine.get']('netbox:role:name:nextgen-gateway', 'minion_id', tgt_type='pillar').items() | sort %}
-{%- if grains['id'] not in node %}
 [VXLAN]
 VNI={{ sites[current_site]['vni'] }}
-{%- endif %}
-{%- endfor %}
+Local={{ salt['wireguard_v6.generate'](salt['pillar.get']('netbox:config_context:wireguard:public_key')) }}
 {%- endif %}
 
 {%- if kind == "batadv" %}
