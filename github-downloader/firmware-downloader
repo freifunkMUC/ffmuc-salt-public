@@ -27,12 +27,17 @@ then
         do
                 tar xzvf $file -C $TEMP_DIR/extracted
         done
-        cp extracted/ar71xx-generic_output/images/sysupgrade/*manifest extracted/experimental.manifest
-        for manifest in `ls extracted/*/images/sysupgrade/*manifest | grep -v ar71xx-generic`;
+        BRANCH_LIST=$(ls extracted/x86-64_output/images/sysupgrade/ | grep manifest)
+        for branch in $BRANCH_LIST; 
         do
-                tail -n +5 $manifest >> extracted/experimental.manifest
+                head -4 extracted/x86-64_output/images/sysupgrade/$branch > extracted/$branch
+                MANIFEST_LIST=$(ls extracted/*/images/sysupgrade/$branch)
+                for manifest in $MANIFEST_LIST
+                do
+                        tail -n +5 $manifest >> extracted/$branch
+                done
         done
         cp -r extracted/*/debug extracted/*/images/* extracted/*/packages $FIRMWARE_DIR/
-        cp extracted/experimental.manifest $FIRMWARE_DIR/sysupgrade/experimental.manifest
+        cp extracted/*.manifest $FIRMWARE_DIR/sysupgrade/
         rm -r $TEMP_DIR
 fi
