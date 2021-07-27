@@ -49,7 +49,6 @@ Destination={{ link_local }}/128
 {%- endif %}
 
 {%- if 'dummy-' in interface or 'vx-' in interface %}
-[Network]
 BatmanAdvanced={{ interface | regex_replace('dummy-', 'bat-') |  regex_replace('vx-', 'bat-')   }}
 {%- endif %}
 
@@ -62,22 +61,3 @@ Bridge={{ interface | regex_replace('bat-', 'br-') }}
 [Network]
 IPv6AcceptRA=no
 {%- endif %}
-
-{%- if 'vx-' in interface %}
-{%- set sites = salt['pillar.get']('netbox:config_context:site_config') %}
-{%- set current_site = interface | regex_replace('vx-','') %}
-{%- for node,bla in salt['mine.get']('netbox:role:name:nextgen-gateway', 'minion_id', tgt_type='pillar').items() | sort %}
-{%- if grains['id'] not in node %}
-{%- set wireguard_public_key = salt['mine.get'](node,'minion_wireguard_public', tgt_type='glob')[node]  %}
-{%- if wireguard_public_key %}
-{%- set link_local = salt['wireguard_v6.generate'](wireguard_public_key) %}
-
-[BridgeFDB]
-MACAddress=00:00:00:00:00:00
-Destination={{ link_local }}
-OutgoingInterface={{ interface | regex_replace('vx-', 'wg-') }}
-VNI={{ sites[current_site]['vni'] }}
-{%- endif %}{# wireguard_public_key #}
-{%- endif %}{# grains['id'] not in node #}
-{%- endfor %}{# node #}
-{%- endif %}{# 'vx-' in interface #}

@@ -38,6 +38,28 @@ batadv-throughput.service:
     - require:
       - file: /etc/systemd/system/batadv-throughput.service
 
+# workaround until https://github.com/systemd/systemd/issues/20305 is fixed
+/usr/local/bin/vxlan-fdb-fill.sh:
+  file.managed:
+    - source: salt://systemd-networkd/files/vxlan-fdb-fill.sh.j2
+    - mode: "0750"
+    - template: jinja
+
+/etc/systemd/system/vxlan-fdb-fill.service:
+  file.managed:
+    - source: salt://systemd-networkd/files/vxlan-fdb-fill.service
+
+systemd-reload-vxlan-fdb-fill:
+  cmd.run:
+    - name: systemctl --system daemon-reload
+    - onchanges:
+      - file: /etc/systemd/system/vxlan-fdb-fill.service
+
+vxlan-fdb-fill.service:
+  service.enabled:
+    - require:
+      - file: /etc/systemd/system/vxlan-fdb-fill.service
+
 {% endif %}{# 'nextgen-gateway' in role #}
 
 disable_netplan:
