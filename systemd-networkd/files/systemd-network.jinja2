@@ -49,7 +49,6 @@ Destination={{ link_local }}/128
 {%- endif %}
 
 {%- if 'dummy-' in interface or 'vx-' in interface %}
-[Network]
 BatmanAdvanced={{ interface | regex_replace('dummy-', 'bat-') |  regex_replace('vx-', 'bat-')   }}
 {%- endif %}
 

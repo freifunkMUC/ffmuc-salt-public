@@ -1,0 +1,11 @@
+[Unit]
+Description=Fills correct FDB data for vxlan interfaces
+After=network.target
+After=systemd-user-sessions.service
+After=network-online.target
+
+[Service]
+ExecStart=/usr/local/bin/vxlan-fdb-fill.sh
+
+[Install]
+WantedBy=multi-user.target

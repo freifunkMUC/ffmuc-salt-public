@@ -1,3 +1,67 @@
+{%- set role = salt['pillar.get']('netbox:role:name', salt['pillar.get']('netbox:device_role:name')) %}
+
+{%- if 'nextgen-gateway' in role %}
+# for gateways we need v249+ (not in upstream yet) to to configure Batman-Adv and FDB entries
+{% set systemd_version = "249.164.gf571d9d5f0+20.04.20210724133612" %}
+systemd-packages:
+  pkg.installed:
+    - sources:
+{% for package in [
+  "libnss-systemd",
+  "libpam-systemd",
+  "libsystemd0",
+  "libudev1",
+  "systemd-sysv",
+  "systemd",
+  "udev"
+] %}
+      - {{ package }}: https://apt.ffmuc.net/systemd-packages/{{ package }}_{{ systemd_version }}_{{ grains.osarch }}.deb
+{% endfor %}{# packages #}
+
+/etc/systemd/system/batadv-throughput.service:
+  file.managed:
+    - source: salt://systemd-networkd/files/batadv-throughput.service
+
+/usr/local/bin/batadv-througput.sh:
+  file.managed:
+    - source: salt://systemd-networkd/files/batadv-throughput.sh
+    - mode: "0750"
+
+systemd-reload-batadv-throughput:
+  cmd.run:
+    - name: systemctl --system daemon-reload
+    - onchanges:
+      - file: /etc/systemd/system/batadv-throughput.service
+
+batadv-throughput.service:
+  service.enabled:
+    - require:
+      - file: /etc/systemd/system/batadv-throughput.service
+
+# workaround until https://github.com/systemd/systemd/issues/20305 is fixed
+/usr/local/bin/vxlan-fdb-fill.sh:
+  file.managed:
+    - source: salt://systemd-networkd/files/vxlan-fdb-fill.sh.j2
+    - mode: "0750"
+    - template: jinja
+
+/etc/systemd/system/vxlan-fdb-fill.service:
+  file.managed:
+    - source: salt://systemd-networkd/files/vxlan-fdb-fill.service
+
+systemd-reload-vxlan-fdb-fill:
+  cmd.run:
+    - name: systemctl --system daemon-reload
+    - onchanges:
+      - file: /etc/systemd/system/vxlan-fdb-fill.service
+
+vxlan-fdb-fill.service:
+  service.enabled:
+    - require:
+      - file: /etc/systemd/system/vxlan-fdb-fill.service
+
+{% endif %}{# 'nextgen-gateway' in role #}
+
 disable_netplan:
     file.managed:
         - name: /etc/netplan/01-netcfg.yaml

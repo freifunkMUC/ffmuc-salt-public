@@ -1,0 +1,11 @@
+[Unit]
+Description=batadv-throughput.service
+After=network.target
+After=systemd-user-sessions.service
+After=network-online.target
+
+[Service]
+ExecStart=/usr/local/bin/batadv-througput.sh
+
+[Install]
+WantedBy=multi-user.target
