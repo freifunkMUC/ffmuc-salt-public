@@ -105,6 +105,7 @@ filter EXTERNAL6_OUT {
 {%- if iface == uplink_vlan['interface'] %}
 {%- for ipaddress in interfaces[iface]['ipaddresses'] %}
 {%- if ipaddress['family']['value'] == 4 %}
+router id {{ ipaddress['address'].split('/')[0] }};
 protocol bgp {{ iface }}_v4 {
         description "Uplink";
         local {{ ipaddress['address'].split('/')[0] }} as {{ uplink_vlan['local_asn'] }};
