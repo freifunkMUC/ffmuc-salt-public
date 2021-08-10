@@ -52,6 +52,7 @@ base:
     - pdns-recursor
     - radvd
     - respondd
+    - systemd-networkd
 #  'webfrontend03.in.ffmuc.net':
 #    - cloudflare
   'webfrontend0[3-6].in.ffmuc.net':

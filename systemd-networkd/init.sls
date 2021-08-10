@@ -2,7 +2,8 @@
 
 {%- if 'nextgen-gateway' in role %}
 # for gateways we need v249+ (not in upstream yet) to to configure Batman-Adv and FDB entries
-{% set systemd_version = "249.164.gf571d9d5f0+20.04.20210724133612" %}
+{% set systemd_nightly_buildid = "21960774" %}
+{% set systemd_version = "249.287.g84817bfdb3+20.04.20210808175006" %}
 systemd-packages:
   pkg.installed:
     - sources:
@@ -15,7 +16,7 @@ systemd-packages:
   "systemd",
   "udev"
 ] %}
-      - {{ package }}: https://apt.ffmuc.net/systemd-packages/{{ package }}_{{ systemd_version }}_{{ grains.osarch }}.deb
+      - {{ package }}: https://code.launchpad.net/~ubuntu-support-team/+archive/ubuntu/systemd/+build/{{ systemd_nightly_buildid }}/+files/{{ package }}_{{ systemd_version }}_{{ grains.osarch }}.deb
 {% endfor %}{# packages #}
 
 /etc/systemd/system/batadv-throughput.service:
@@ -40,14 +41,10 @@ batadv-throughput.service:
 
 # workaround until https://github.com/systemd/systemd/issues/20305 is fixed
 /usr/local/bin/vxlan-fdb-fill.sh:
-  file.managed:
-    - source: salt://systemd-networkd/files/vxlan-fdb-fill.sh.j2
-    - mode: "0750"
-    - template: jinja
+  file.absent
 
 /etc/systemd/system/vxlan-fdb-fill.service:
-  file.managed:
-    - source: salt://systemd-networkd/files/vxlan-fdb-fill.service
+  file.absent
 
 systemd-reload-vxlan-fdb-fill:
   cmd.run:
@@ -56,9 +53,7 @@ systemd-reload-vxlan-fdb-fill:
       - file: /etc/systemd/system/vxlan-fdb-fill.service
 
 vxlan-fdb-fill.service:
-  service.enabled:
-    - require:
-      - file: /etc/systemd/system/vxlan-fdb-fill.service
+  service.disabled
 
 {% endif %}{# 'nextgen-gateway' in role #}
 
