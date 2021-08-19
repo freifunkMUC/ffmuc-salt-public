@@ -14,9 +14,6 @@ addAction(RegexRule(".*\\.(10|168\\.192|(1[6-9]|2[0-9]|3[0-1])\\.172)\\.in-addr\
 addLocal("0.0.0.0")
 addLocal("::")
 
--- limit resolving on Port 53 to "ffmuc-domains"
--- addAction(AndRule({NotRule(makeRule({"ffmuc.net"})), NotRule(makeRule({"127.0.0.1","::1","10.80.0.0/16","10.8.0.0/23","5.1.66.0/24","185.150.99.0/24","2001:678:e68::/48","2001:678:ed0::/48"})), DSTPortRule(53)}), DropAction())
-
 {%- if 'webfrontend' in grains.id %}
 ssl_cert="/etc/letsencrypt/live/ffmuc.net/fullchain.pem"
 ssl_key="/etc/letsencrypt/live/ffmuc.net/privkey.pem"
@@ -46,6 +43,9 @@ addDNSCryptBind("[::]:8443", "2.dnscrypt-cert.ffmuc.net", "/run/dnsdist/resolver
 
 -- set number of queries to be allowed per second from an IP but exclude localhost
 addAction(AndRule({MaxQPSIPRule(300), NotRule(OrRule({makeRule("127.0.0.1"), makeRule("::1")}))}), DropAction())
+{% else %}
+-- limit resolving on Port 53 to "ffmuc-domains"
+addAction(AndRule({NotRule(makeRule({"ffmuc.net"})), NotRule(makeRule({"127.0.0.1","::1","10.80.0.0/16","10.8.0.0/23","5.1.66.0/24","185.150.99.0/24","2001:678:e68::/48","2001:678:ed0::/48"})), DSTPortRule(53)}), DropAction())
 {% endif %}{# webfrontend in grains.id #}
 
 {%- if 'muc01' in salt['pillar.get']('netbox:site:slug') %}

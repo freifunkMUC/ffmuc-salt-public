@@ -24,6 +24,7 @@ dnsdist:
       - file: dnsdist-service-override
     - watch:
       - file: dnsdist-service-override
+      - file: /etc/dnsdist/dnsdist.conf
 
 /etc/dnsdist/dnsdist.conf:
   file.managed:
