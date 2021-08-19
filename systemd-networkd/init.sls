@@ -74,10 +74,10 @@ generate_initrd:
         - watch: []
 
 systemd-networkd-reload:
-  cmd.wait:
+  cmd.run:
     - name: networkctl reload
     - runas: root
-    - watch: []
+    - onchanges: []
     - require:
       - service: systemd-networkd
 
@@ -170,3 +170,4 @@ systemd-networkd-reload:
       - cmd: systemd-networkd-reload
 {% endif %}
 {% endfor %}
+
