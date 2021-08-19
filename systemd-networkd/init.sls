@@ -72,6 +72,14 @@ generate_initrd:
         - name: update-initramfs -k all -u
         - watch: []
 
+systemd-networkd-reload:
+  cmd.wait:
+    - name: networkctl reload
+    - runas: root
+    - watch: []
+    - require:
+      - service: systemd-networkd
+
 # Rename interfaces to corresponding vlans based on mac address
 {%- set interfaces = salt['pillar.get']('netbox:interfaces') %}
 {%- set gateway = salt['pillar.get']('netbox:config_context:network:gateway') %}
@@ -86,7 +94,8 @@ generate_initrd:
       mac: {{ interfaces[iface]['mac_address'] }}
       desc: {{ interfaces[iface]['description'] }}
     - watch_in:
-          cmd: generate_initrd
+      - cmd: generate_initrd
+      - cmd: systemd-networkd-reload
 {% endif %}
 
 {% set id = 10 %}
@@ -99,6 +108,8 @@ generate_initrd:
       interface: {{ iface }}
       desc: {{ interfaces[iface]['description'] }}
       kind: "dummy"
+    - watch_in:
+      - cmd: systemd-networkd-reload
 {% set id = 20 %}
 {% elif "wg" in iface %}
 /etc/systemd/network/30-{{ iface }}.netdev:
@@ -108,6 +119,8 @@ generate_initrd:
       interface: {{ iface }}
       desc: {{ interfaces[iface]['description'] }}
       kind: "wireguard"
+    - watch_in:
+      - cmd: systemd-networkd-reload
 {% set id = 30 %}
 {% elif "vx" in iface %}
 /etc/systemd/network/40-{{ iface }}.netdev:
@@ -117,6 +130,8 @@ generate_initrd:
       interface: {{ iface }}
       desc: {{ interfaces[iface]['description'] }}
       kind: "vxlan"
+    - watch_in:
+      - cmd: systemd-networkd-reload
 {% set id = 40 %}
 {% elif "bat" in iface %}
 /etc/systemd/network/50-{{ iface }}.netdev:
@@ -126,6 +141,8 @@ generate_initrd:
       interface: {{ iface }}
       desc: {{ interfaces[iface]['description'] }}
       kind: "batadv"
+    - watch_in:
+      - cmd: systemd-networkd-reload
 {% set id = 50 %}
 {% elif "br" in iface %}
 /etc/systemd/network/60-{{ iface }}.netdev:
@@ -135,6 +152,8 @@ generate_initrd:
       interface: {{ iface }}
       desc: {{ interfaces[iface]['description'] }}
       kind: "bridge"
+    - watch_in:
+      - cmd: systemd-networkd-reload
 {% set id = 60 %}
 {% endif %}
 # Generate network files for each interface we have in netbox
@@ -146,5 +165,7 @@ generate_initrd:
       desc: {{ interfaces[iface]['description'] }}
       ipaddresses: {{ interfaces[iface]['ipaddresses'] }}
       gateway: {{ gateway }}
+    - watch_in:
+      - cmd: systemd-networkd-reload
 {% endif %}
 {% endfor %}
