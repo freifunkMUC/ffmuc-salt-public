@@ -1,0 +1,12 @@
+watch:
+  workers: 20
+  schedule: "0 */6 * * *"
+
+providers:
+  docker:
+    watchStopped: true
+    watchByDefault: true
+
+notif:
+  slack:
+    webhookURL: {{ salt["pillar.get"]("netbox:config_context:docker:diun:webhookURL", "") }}
