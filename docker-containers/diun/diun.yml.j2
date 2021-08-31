@@ -1,3 +1,5 @@
+---
+
 watch:
   workers: 20
   schedule: "0 */6 * * *"
@@ -9,4 +11,4 @@ providers:
 
 notif:
   slack:
-    webhookURL: {{ salt["pillar.get"]("netbox:config_context:docker:diun:webhookURL", "") }}
+    webhookURL: {{ salt["pillar.get"]("netbox:config_context:docker:diun:webhookURL", "") }}

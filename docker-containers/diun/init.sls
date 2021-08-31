@@ -3,13 +3,13 @@
 
 /srv/docker/diun/docker-compose.yml:
   file.managed:
-    - source: salt://docker-containers/diun/docker-compose.yml
+    - source: salt://docker-containers/diun/docker-compose.yml.j2
     - makedirs: True
     - template: jinja
 
 /srv/docker/diun/diun.yml:
   file.managed:
-    - source: salt://docker-containers/diun/diun.yml
+    - source: salt://docker-containers/diun/diun.yml.j2
     - makedirs: True
     - template: jinja
 
@@ -17,14 +17,14 @@
   file.directory
 
 start-diun:
-  cmd.wait:
+  cmd.run:
     - name: docker-compose up -d
     - cwd: /srv/docker/diun
     - require:
         - file: /srv/docker/diun/docker-compose.yml
         - file: /srv/docker/diun/diun.yml
         - file: /srv/docker/diun/data
-    - watch:
+    - onchanges:
         - file: /srv/docker/diun/docker-compose.yml
         - file: /srv/docker/diun/diun.yml
 {% endif %}
