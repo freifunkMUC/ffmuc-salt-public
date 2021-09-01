@@ -18,7 +18,7 @@
 
 start-diun:
   cmd.run:
-    - name: docker-compose up -d
+    - name: docker-compose down && docker-compose up -d
     - cwd: /srv/docker/diun
     - require:
         - file: /srv/docker/diun/docker-compose.yml
