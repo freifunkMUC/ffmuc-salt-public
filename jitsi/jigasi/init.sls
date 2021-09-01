@@ -7,6 +7,8 @@ include:
 
 jigasi:
   pkg.installed:
+    - version: {{ jitsi.jigasi.version }}
+    - hold: True
     - require:
       - pkgrepo: jitsi-repo
   service.running:

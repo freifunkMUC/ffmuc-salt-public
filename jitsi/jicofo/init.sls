@@ -7,7 +7,8 @@ include:
 
 jicofo:
   pkg.installed:
-    - version: 1.0-740-1
+    - version: {{ jitsi.jicofo.version }}
+    - hold: True
     - require:
       - pkgrepo: jitsi-repo
   service.running:

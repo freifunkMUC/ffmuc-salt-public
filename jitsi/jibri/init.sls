@@ -23,6 +23,8 @@ jibri:
   pkg.installed:
     - require:
       - pkgrepo: jitsi-repo
+    - version: {{ jitsi.jibri.version }}
+    - hold: True
   service.running:
     - enable: True
     - require:

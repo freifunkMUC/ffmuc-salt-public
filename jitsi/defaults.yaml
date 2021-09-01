@@ -11,6 +11,9 @@ jitsi:
   jibri_enabled: false
   conference_mapper_url: "https://meet.example.com/conferencemapper"
 
+  meet:
+    enabled: true
+    version: 1.0.5765-9
   xmpp:
     # for shardingaware components
     shard-example:
@@ -26,6 +29,7 @@ jitsi:
 
   jicofo:
     enabled: false
+    version: 1.0-740-1
     opts: ""
     username: "focus"
     password: "THIS_IS_SUPER_SECRET_JICOFO"
@@ -34,6 +38,7 @@ jitsi:
 
   videobridge:
     enabled: false
+    version: 2.1-533-g2703e2d0-1
     username: "jvb"
     password: "THIS_IS_SUPER_SECRET_JVB"
     brewery_room: JvbBrewery
@@ -47,6 +52,7 @@ jitsi:
 
   jibri:
     enabled: false
+    version: 8.0-93-g51fe7a2-1
     brewery_room: JibriBrewery
     recording_directory: /tmp/recordings
     finalize_recording_script_path: /bin/true
@@ -67,6 +73,7 @@ jitsi:
 
   prosody:
     enabled: false
+    version: 1nightly136-1~buster
 
   turn:
     secret: "THIS_IS_SUPER_SECRET_TURN"
@@ -87,6 +94,7 @@ jitsi:
 
   jigasi:
     enabled: false
+    version: 1.1-178-g3c53cf6-1
     sip:
       host: "127.0.0.1"
       username: 2000

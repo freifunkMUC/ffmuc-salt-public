@@ -51,7 +51,8 @@ luarocks-{{ luapkg }}:
 prosody:
   pkg.installed:
     - name: prosody-0.11 # This is the nightly build. use "prosody" for stable
-    #- version: 1nightly123-1~buster
+    - version: {{ jitsi.prosody.version }}
+    - hold: True
     - require:
       - pkgrepo: prosody-repo
   service.running:

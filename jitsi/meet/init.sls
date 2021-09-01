@@ -1,13 +1,16 @@
 ###
 # Jitsi Meet Web Package
 ###
+{%- from "jitsi/map.jinja" import jitsi with context %}
 
-{% set version = "1.0.5765-9" %}
+{% if jitsi.meet.enabled %}
+
 jitsi-meet-web-pkgs:
   pkg.installed:
     - sources:
-      - jitsi-meet-web: salt://jitsi/meet/jitsi-meet-web_{{ version }}_all.deb
-      - jitsi-meet-web-config: salt://jitsi/meet/jitsi-meet-web-config_{{ version }}_all.deb
+      - jitsi-meet-web: salt://jitsi/meet/jitsi-meet-web_{{ jitsi.meet.version }}_all.deb
+      - jitsi-meet-web-config: salt://jitsi/meet/jitsi-meet-web-config_{{ jitsi.meet.version }}_all.deb
+    - hold: True
 
 {% for domain in ["meet.ffmuc.net","klassenkonferenz.de"] %}
 /etc/jitsi/meet/{{ domain }}-config.js:
