@@ -20,3 +20,5 @@ mqtt:
   tls: False
   broker_port: 1883 
   keepalive: 5
+domain_prefix: ffmuc_
+log_level: DEBUG
