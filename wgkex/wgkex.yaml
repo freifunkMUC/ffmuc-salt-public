@@ -21,4 +21,16 @@ mqtt:
   broker_port: 1883
   keepalive: 5
 domain_prefix: ffmuc_
-log_level: INFO
+logging_config:
+    formatters:
+      standard:
+        format: '%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s'
+    handlers:
+      console:
+        class: logging.StreamHandler
+        formatter: standard
+    root:
+      handlers:
+      - console
+      level: INFO
+    version: 1
