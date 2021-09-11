@@ -1,7 +1,7 @@
 [Unit]
 Description=Wireguard Key Exchange Worker
 Documentation=https://github.com/freifunkMUC/wgkex
-After=network.target
+After=network-online.target
 
 [Service]
 User=wgkex
