@@ -95,6 +95,7 @@ addAction({'bbs','chan','cyb','dns.opennic.glue','dyn','epic','geek','gopher','i
 -- add cache for X possible entries
 pc = newPacketCache(1000000)
 getPool(""):setCache(pc)
+getPool("auth"):setCache(pc)
 
 {%- set dnsdist_webserver = salt["pillar.get"]("netbox:config_context:dnsdist:webserver", []) %}
 {%- if "bind" in dnsdist_webserver %}
