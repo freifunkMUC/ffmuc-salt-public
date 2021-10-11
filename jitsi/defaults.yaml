@@ -12,7 +12,7 @@ jitsi:
   conference_mapper_url: "https://meet.example.com/conferencemapper"
 
   meet:
-    enabled: true
+    enabled: false
     version: 1.0.5765-9
   xmpp:
     # for shardingaware components

@@ -110,7 +110,6 @@ var interfaceConfig = {
      * Hide the logo on the deep linking pages.
      */
     HIDE_DEEP_LINKING_LOGO: false,
-    filmStripOnly: false,
 
     /**
      * Hide the invite prompt in the header when alone in the meeting.
@@ -162,7 +161,7 @@ var interfaceConfig = {
     // has a suboptimal experience. Browsers which are not listed as optimal or
     // unsupported are considered suboptimal. Valid values are:
     // chrome, chromium, edge, electron, firefox, nwjs, opera, safari
-    OPTIMAL_BROWSERS: ['chrome', 'chromium', 'nwjs', 'electron', 'safari', 'firefox'],
+    OPTIMAL_BROWSERS: [ 'chrome', 'chromium', 'nwjs', 'electron', 'safari', 'firefox' ],
 
     POLICY_LOGO: null,
     PROVIDER_NAME: 'Jitsi',
@@ -175,7 +174,14 @@ var interfaceConfig = {
     RECENT_LIST_ENABLED: true,
     REMOTE_THUMBNAIL_RATIO: 1, // 1:1
 
-    SETTINGS_SECTIONS: [ 'devices', 'language', 'moderator', 'profile', 'calendar' ],
+    SETTINGS_SECTIONS: [ 'devices', 'language', 'moderator', 'profile', 'calendar', 'sounds' ],
+
+    /**
+     * Specify which sharing features should be displayed. If the value is not set
+     * all sharing features will be shown. You can set [] to disable all.
+     */
+    // SHARING_FEATURES: ['email', 'url', 'dial-in', 'embed'],
+
     SHOW_BRAND_WATERMARK: false,
 
     /**
@@ -198,25 +204,6 @@ var interfaceConfig = {
 
     TOOLBAR_ALWAYS_VISIBLE: false,
 
-    /**
-     * The name of the toolbar buttons to display in the toolbar, including the
-     * "More actions" menu. If present, the button will display. Exceptions are
-     * "livestreaming" and "recording" which also require being a moderator and
-     * some values in config.js to be enabled. Also, the "profile" button will
-     * not display for users with a JWT.
-     * Notes:
-     * - it's impossible to choose which buttons go in the "More actions" menu
-     * - it's impossible to control the placement of buttons
-     * - 'desktop' controls the "Share your screen" button
-     */
-    //TOOLBAR_BUTTONS: [
-    //    'microphone', 'camera', 'closedcaptions', 'desktop', 'embedmeeting', 'fullscreen',
-    //    'fodeviceselection', 'hangup', 'profile', 'chat', 'recording',
-    //    'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand',
-    //    'videoquality', 'filmstrip', 'invite', 'feedback', 'stats', 'shortcuts',
-    //    'tileview', 'download', 'help', 'mute-everyone', 'e2ee', 'security'
-    //],
-
     TOOLBAR_TIMEOUT: 4000,
 
     // Browsers, in addition to those which do not fully support WebRTC, that
@@ -231,7 +218,8 @@ var interfaceConfig = {
     // Determines how the video would fit the screen. 'both' would fit the whole
     // screen, 'height' would fit the original video height to the height of the
     // screen, 'width' would fit the original video width to the width of the
-    // screen respecting ratio.
+    // screen respecting ratio, 'nocrop' would make the video as large as
+    // possible and preserve aspect ratio without cropping.
     VIDEO_LAYOUT_FIT: 'both',
 
     /**

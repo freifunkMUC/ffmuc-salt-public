@@ -31,3 +31,5 @@ jitsi-meet-web-pkgs:
 /etc/jitsi/meet/numbers.json:
   file.managed:
     - source: salt://jitsi/meet/numbers.json
+
+{% endif %}
