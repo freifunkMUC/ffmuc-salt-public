@@ -23,7 +23,6 @@ Unattended-Upgrade::Package-Blacklist {
 	"libc6-dev";
 	"libc6-i686";
 	"bird";
-	"fastd";
 	"batman-adv-dkms";
 	"systemd";
 	"linux-image-generic";
