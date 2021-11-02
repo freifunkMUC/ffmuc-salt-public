@@ -5,7 +5,7 @@ then
     TAG=$(curl -s https://api.github.com/repos/freifunkMUC/site-ffm/releases/latest | jq .tag_name | tr -d \")
 else
     TAG=$1
-    ID=$(curl -s https://api.github.com/repos/freifunkMUC/site-ffm/releases | jq '.[] | "\(.tag_name) \(.id)"' | grep $1 | cut -d" " -f2 | sed 's/"//g')
+    ID=$(curl -s https://api.github.com/repos/freifunkMUC/site-ffm/releases | jq '.[] | "\(.tag_name) \(.id)"' | grep \"$1\  | cut -d" " -f2 | sed 's/"//g')
     URLS=$(curl -s https://api.github.com/repos/freifunkMUC/site-ffm/releases/$ID | jq .assets[].browser_download_url | tr -d \")
 fi
 
