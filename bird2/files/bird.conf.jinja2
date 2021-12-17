@@ -11,7 +11,7 @@ protocol direct {
         ipv4;                   # Connect to default IPv4 table
         ipv6;                   # ... and to default IPv6 table
 }
-{%- if 'nextgen-gateway' in salt['pillar.get']('netbox:role:name') %}
+{%- if 'nextgen-gateway' in salt['pillar.get']('netbox:role:name') or 'roadwarrior' in salt['pillar.get']('netbox:role:name') %}
 {%- for iface in interfaces|sort %}
 {%- if 'br' in iface %}
 {%- for ipaddress in interfaces[iface]['ipaddresses'] %}
@@ -22,6 +22,7 @@ protocol direct {
 {%- endif %}{# 'br' in iface #}
 {%- endfor %}{# iface in interfaces #}
 {%- set nat66 = salt['pillar.get']('netbox:config_context:network:nat66_pool') %}
+{%- set additional_v6_prefix = salt['pillar.get']('netbox:config_context:network:additional_v6_prefix') %}
 {%- if nat66 %}
 protocol static {
         ipv6;
@@ -29,7 +30,10 @@ protocol static {
 }
 {%- do prefixes_v6.append(nat66) %}
 {%- endif %}{# nat66 #}
-{%- endif %}{# 'nextgen-gateway' in salt['pillar.get']('netbox:role:name') #}
+{%- if additional_v6_prefix %}
+{%- do prefixes_v6.append(additional_v6_prefix) %}
+{%- endif %}{# additional_v6_prefix #}
+{%- endif %}{# 'nextgen-gateway' in salt['pillar.get']('netbox:role:name') or 'roadwarrior' in salt['pillar.get']('netbox:role:name') #}
 
 {%- for iface in interfaces|sort %}
 {%- if 'dummy' in iface %}
