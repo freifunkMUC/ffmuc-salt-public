@@ -23,15 +23,15 @@ mqtt:
   keepalive: 5
 domain_prefix: ffmuc_
 logging_config:
-    formatters:
-      standard:
-        format: '%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s'
+  formatters:
+    standard:
+      format: '%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s'
+  handlers:
+    console:
+      class: logging.StreamHandler
+      formatter: standard
+  root:
     handlers:
-      console:
-        class: logging.StreamHandler
-        formatter: standard
-    root:
-      handlers:
       - console
-      level: INFO
-    version: 1
+    level: INFO
+  version: 1
