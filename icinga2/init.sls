@@ -19,14 +19,14 @@ include:
 icinga2-repo:
   pkgrepo.managed:
     {% if grains.osfullname in 'Raspbian' %}
-    - name: deb http://packages.icinga.com/raspbian icinga-{{ grains.oscodename }} main
+    - name: deb https://packages.icinga.com/raspbian icinga-{{ grains.oscodename }} main
     {% elif grains.osfullname in 'Ubuntu' %}
-    - name: deb http://packages.icinga.com/{{ grains.lsb_distrib_id | lower }} icinga-{{ grains.oscodename }} main
+    - name: deb [arch={{ grains.osarch }}] https://packages.icinga.com/{{ grains.lsb_distrib_id | lower }} icinga-{{ grains.oscodename }} main
     {% else %}
-    - name: deb http://packages.icinga.com/debian icinga-{{ grains.oscodename }} main
+    - name: deb https://packages.icinga.com/debian icinga-{{ grains.oscodename }} main
     {% endif %}
     - file: /etc/apt/sources.list.d/icinga2.list
-    - key_url: http://packages.icinga.org/icinga.key
+    - key_url: https://packages.icinga.org/icinga.key
 
 # Install icinga2 package
 {% set node_config = salt['pillar.get']('nodes:' ~ grains.id, {}) %}
