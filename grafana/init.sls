@@ -7,7 +7,7 @@ grafana:
 # add Grafana Repo
   pkgrepo.managed:
     - humanname: Grafana Repo
-    - name: deb https://packages.grafana.com/oss/deb stable main
+    - name: deb [arch={{ grains.osarch }}] https://packages.grafana.com/oss/deb stable main
     - file: /etc/apt/sources.list.d/grafana.list
     - key_url: https://packages.grafana.com/gpg.key
 # install grafana

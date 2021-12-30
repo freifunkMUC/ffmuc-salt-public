@@ -8,7 +8,7 @@ docker-repo:
   pkgrepo.managed:
     - comments: "# Docker.io"
     - human_name: Docker.io repository
-    - name: "deb https://download.docker.com/linux/{{ grains.lsb_distrib_id | lower }}  {{ grains.oscodename }} stable"
+    - name: "deb [arch={{ grains.osarch }}] https://download.docker.com/linux/{{ grains.lsb_distrib_id | lower }}  {{ grains.oscodename }} stable"
     - dist: {{ grains.oscodename }}
     - file: /etc/apt/sources.list.d/docker.list
     - key_url: https://download.docker.com/linux/{{ grains.lsb_distrib_id | lower }}/gpg
@@ -36,8 +36,8 @@ docker-pkgs:
 
 /usr/local/bin/docker-compose:
   file.managed:
-    - source: https://github.com/docker/compose/releases/download/1.29.2/docker-compose-Linux-x86_64
-    - source_hash: f3f10cf3dbb8107e9ba2ea5f23c1d2159ff7321d16f0a23051d68d8e2547b323
+    - source: https://github.com/docker/compose/releases/download/v2.2.2/docker-compose-linux-x86_64
+    - source_hash: 92551cd3d22b41536ce8345fe06795ad0d08cb3c17b693ecbfe41176e501bfd4
     - mode: "0755"
 
 {#
