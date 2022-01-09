@@ -172,6 +172,17 @@ systemd-networkd-reload:
     - watch_in:
       - cmd: systemd-networkd-reload
 {% set id = 60 %}
+{% elif "gre" in iface %}
+/etc/systemd/network/70-{{ iface }}.netdev:
+  file.managed:
+    - source: salt://systemd-networkd/files/systemd-netdev.jinja2
+    - template: jinja
+      interface: {{ iface }}
+      desc: {{ interfaces[iface]['description'] }}
+      kind: "gre"
+    - watch_in:
+      - cmd: systemd-networkd-reload
+{% set id = 70 %}
 {% endif %}
 # Generate network files for each interface we have in netbox
 /etc/systemd/network/{{ id }}-{{ iface }}.network:

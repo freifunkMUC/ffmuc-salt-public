@@ -46,3 +46,9 @@ RoutingAlgorithm=batman-v
 OriginatorIntervalSec=5
 HopPenalty=250
 {%- endif %}
+
+{%- if kind == "gre" %}
+[Tunnel]
+Remote=salt['pillar.get']('netbox:interfaces:gre-ffhl:description')
+Local=salt['pillar.get']('netbox:interfaces:dummy0:ipaddresses:1:address')
+{%- endif %}
