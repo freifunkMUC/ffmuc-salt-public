@@ -11,7 +11,7 @@ graylog-sidecar-pkg:
 graylog-repo:
     pkgrepo.managed:
     - humanname: Graylog-Repo
-    - name: deb https://packages.graylog2.org/repo/debian/ sidecar-stable 1.1
+    - name: deb [arch={{ grains.osarch }}] https://packages.graylog2.org/repo/debian/ sidecar-stable 1.1
     - key_url:  https://packages.graylog2.org/repo/debian/pubkey.gpg
     - file: /etc/apt/sources.list.d/graylog-sidecar.list
     - clean_file: True
@@ -19,7 +19,7 @@ graylog-repo:
 filebeat-repo:
   pkgrepo.managed:
     - humanname: Elastic-Repo
-    - name: deb https://artifacts.elastic.co/packages/oss-7.x/apt stable main
+    - name: deb [arch={{ grains.osarch }}] https://artifacts.elastic.co/packages/oss-7.x/apt stable main
     - key_url:  https://artifacts.elastic.co/GPG-KEY-elasticsearch
     - file: /etc/apt/sources.list.d/elastic-7.x.list
 
