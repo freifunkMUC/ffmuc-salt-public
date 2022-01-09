@@ -1,6 +1,22 @@
 {%- set role = salt['pillar.get']('netbox:role:name', salt['pillar.get']('netbox:device_role:name')) %}
 
 {%- if 'nextgen-gateway' in role %}
+/usr/src/batman-adv-2021.5/dkms.conf:
+  file.managed:
+    - contents: |
+        PACKAGE_NAME=batman-adv
+        PACKAGE_VERSION=2021.5
+
+        DEST_MODULE_LOCATION=/extra
+        BUILT_MODULE_NAME=batman-adv
+        BUILT_MODULE_LOCATION=net/batman-adv
+
+        MAKE="'make' KERNELPATH=${kernel_source_dir}"
+        CLEAN="'make' clean"
+
+        AUTOINSTALL="yes"
+    - require_in: systemd-packages
+
 # for gateways we need v249+ (not in upstream yet) to to configure Batman-Adv and FDB entries
 {% set systemd_nightly_buildid = "21960774" %}
 {% set systemd_version = "249.287.g84817bfdb3+20.04.20210808175006" %}
@@ -17,7 +33,7 @@ systemd-packages:
   "udev"
 ] %}
     #- {{ package }}: https://code.launchpad.net/~ubuntu-support-team/+archive/ubuntu/systemd/+build/{{ systemd_nightly_buildid }}/+files/{{ package }}_{{ systemd_version }}_{{ grains.osarch }}.deb
-    - {{ package }}: https://apt.ffmuc.net/systemd-packages/{{ package }}_{{ systemd_version }}_{{ grains.osarch }}.deb
+      - {{ package }}: https://apt.ffmuc.net/systemd-packages/{{ package }}_{{ systemd_version }}_{{ grains.osarch }}.deb
 {% endfor %}{# packages #}
 
 /etc/systemd/system/batadv-throughput.service:
