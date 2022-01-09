@@ -47,8 +47,8 @@ OriginatorIntervalSec=5
 HopPenalty=250
 {%- endif %}
 
-{%- if kind == "gre" %}
+{%- if kind == "ip6gre" %}
 [Tunnel]
 Remote={{ desc }}
-Local=salt['pillar.get']('netbox:interfaces:dummy0:ipaddresses:1:address')
+Local=any
 {%- endif %}

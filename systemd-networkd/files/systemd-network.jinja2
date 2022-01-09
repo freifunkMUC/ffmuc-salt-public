@@ -1,4 +1,6 @@
 {%- set interface_details = salt['pillar.get']('netbox:interfaces:' ~ interface) %}
+{%- set uplink_iface = salt['pillar.get']('netbox:config_context:network:uplink_vlan:interface') %}
+{%- set peering = salt['pillar.get']('netbox:config_context:peering', None) %}
 #
 # {{ interface }} / {{ desc }}
 #
@@ -48,6 +50,7 @@ Destination={{ link_local }}/128
 {%- endfor %}
 {%- endif %}
 
+
 {%- if 'dummy-' in interface or 'vx-' in interface %}
 BatmanAdvanced={{ interface | regex_replace('dummy-', 'bat-') |  regex_replace('vx-', 'bat-')   }}
 {%- endif %}
@@ -60,6 +63,13 @@ Bridge={{ interface | regex_replace('bat-', 'br-') }}
 {%- if 'br-' in interface %}
 [Network]
 IPv6AcceptRA=no
+{%- endif %}
+
+{%- if interface == uplink_iface and peering %}
+{%- for gre, details in peering.items() %}
+[Network]
+Tunnel=ip6gre-{{ gre }}
+{%- endfor %}
 {%- endif %}
 
 {%- if 'vx-' in interface %}
