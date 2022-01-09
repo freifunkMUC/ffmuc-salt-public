@@ -49,6 +49,6 @@ HopPenalty=250
 
 {%- if kind == "gre" %}
 [Tunnel]
-Remote=salt['pillar.get']('netbox:interfaces:gre-ffhl:description')
+Remote={{ desc }}
 Local=salt['pillar.get']('netbox:interfaces:dummy0:ipaddresses:1:address')
 {%- endif %}
