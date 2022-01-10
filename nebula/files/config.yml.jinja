@@ -153,6 +153,10 @@ firewall:
   - port: 8084
     proto: tcp
     group: webfrontend
+  # Allow connections for matomo.ffmuc.net
+  - port: 8092
+    proto: tcp
+    group: webfrontend
   # Allow connections for ldap
   - port: 636
     proto: tcp
@@ -237,6 +241,25 @@ firewall:
     group: webfrontend
   # Allow connections for byro (static)
   - port: 8346
+    proto: tcp
+    group: webfrontend
+  # Allow connections for omada controller
+  - port: 8043
+    proto: tcp
+    group: webfrontend
+  - port: 29810
+    proto: udp
+    group: webfrontend
+  - port: 29811
+    proto: tcp
+    group: webfrontend
+  - port: 29812
+    proto: tcp
+    group: webfrontend
+  - port: 29813
+    proto: tcp
+    group: webfrontend
+  - port: 29814
     proto: tcp
     group: webfrontend
 {%- endif %}
