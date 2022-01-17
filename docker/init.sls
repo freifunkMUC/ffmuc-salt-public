@@ -39,15 +39,4 @@ docker-pkgs:
     - source: https://github.com/docker/compose/releases/download/v2.2.3/docker-compose-linux-x86_64
     - source_hash: f15a7cd54a85f760a8ece92da63fb85b93036c72ead8056391b8a3fe9dc73134
     - mode: "0755"
-
-{#
-# Install docker-compose via pip *shrug*
-python-pip:
-  pkg.installed
-
-docker-compose:
-  pip.installed:
-    - require:
-      - pkg: python-pip
-#}
 {% endif  %}
