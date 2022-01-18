@@ -7,9 +7,9 @@ end
 --- now the real config
 
 setACL({'0.0.0.0/0', '::/0'})
--- drop ANY queries sent over udp , not useful for DoT and DoH only servers.
-addAction(AndRule({QTypeRule(DNSQType.ANY), TCPRule(false)}), DropAction())
-addAction(RegexRule(".*\\.(10|168\\.192|(1[6-9]|2[0-9]|3[0-1])\\.172)\\.in-addr\\.arpa$"), DropAction())
+-- respond to ANY queries sent over UDP with the TC bit set, shunting to TCP.
+addAction(AndRule({QTypeRule(DNSQType.ANY), TCPRule(false)}), TCAction())
+addAction(RegexRule(".*\\.(10|168\\.192|(1[6-9]|2[0-9]|3[0-1])\\.172)\\.in-addr\\.arpa$"), RCodeAction(DNSRCode.NXDOMAIN))
 
 addLocal("0.0.0.0")
 addLocal("::")
