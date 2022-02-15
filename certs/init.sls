@@ -38,7 +38,7 @@ generate-dhparam:
       - cmd: update_ca_certificates
 
 {%- set cert_validity = salt['cmd.run']('openssl x509 -noout -checkend 2592000 -in /etc/ssl/certs/'~ grains['id']  ~'.cert.pem') %}
-{%- if salt["network.ping"]("ca.ov.ffmuc.net", return_boolean=True) %}
+{%- if salt["network.ping"]("ca.ov.ffmuc.net", return_boolean=True, timeout=10) %}
 {% if 'Certificate will not expire' not in cert_validity %}
 {%- set cert_bundle = salt['cfssl_certs.request_cert']('https://ca.ov.ffmuc.net', grains['id']) %}
 # Install found certificates
@@ -66,8 +66,46 @@ generate-dhparam:
 {% set cloudflare_token = salt['pillar.get']('netbox:config_context:cloudflare:api_token') %}
 {% if ("webserver-external" in role or "jitsi meet" in role) and cloudflare_token %}
 
+{# old behaviour. Got disabled as for DoT it got necessary to set the preferred-chain to ISRG Root X1
+   which is only possible with a more up to date version than available in ubuntu standard package repository.
 certbot:
   pkg.installed
+
+certbot-dns-cloudflare:
+  pip.installed:
+    - require:
+      - pkg: python3-pip
+
+New behaviour can be manually setup via
+
+  apt install snapd
+  snap install core # update core
+  snap install --classic certbot
+  snap set certbot trust-plugin-with-root=ok
+  snap install certbot-dns-cloudflare
+
+As snap is not possible to be managed with salt natively but should be coming
+in next release proper rollout via salt is blocked on this issue:
+https://github.com/saltstack/salt/issues/58132
+#}
+
+snapd:
+  pkg.installed
+
+certbot:
+  pkg.removed:
+    - name: certbot
+  cmd.run:
+    - name: snap install --classic certbot
+    - creates: /snap/bin/certbot
+    - require:
+        - pkg: snapd
+
+fix_permissions_for_certbot_plugin:
+  cmd.run:
+    - name: snap set certbot trust-plugin-with-root=ok
+    - require:
+       - cmd: certbot
 
 python3-pip:
   pkg.installed
@@ -79,9 +117,14 @@ acme-client:
       - pkg: python3-pip
 
 certbot-dns-cloudflare:
-  pip.installed:
+  pip.removed:
+    - name: certbot-dns-cloudflare
+  cmd.run:
+    - name: snap install certbot-dns-cloudflare
+    - creates: /snap/certbot-dns-cloudflare/current/setup.py
     - require:
-      - pkg: python3-pip
+       - cmd: certbot
+       - cmd: fix_permissions_for_certbot_plugin
 
 dns_credentials:
   file.managed:
@@ -127,8 +170,8 @@ ffmuc-wildcard-cert:
     - mode: "0640"
     #- renew: True
     - require:
-        - pkg: certbot
-        - pip: certbot-dns-cloudflare
+        - cmd: certbot
+        - cmd: certbot-dns-cloudflare
         - pip: acme-client
         - file: dns_credentials
 
