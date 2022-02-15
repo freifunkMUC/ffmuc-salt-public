@@ -1,4 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/python3
+
+# https://github.com/Reamer/icinga2-mattermost @0bdc87f885095687aef05af85d7887061de102a6
 
 # Copyright (c) 2015 NDrive SA
 #
@@ -22,10 +24,17 @@
 
 import argparse
 import json
-import urllib
-import urllib2
 
-VERSION = "1.0.0"
+try:
+    import urllib.request as urllib_request
+except ImportError:
+    import urllib2 as urllib_request
+try:
+    import urllib.parse as urllib_parse
+except ImportError:
+    import urllib as urllib_parse
+
+VERSION = "1.2.0"
 
 TEMPLATE_HOST = (
     "__{notificationtype}__ {hostalias} is {hoststate} - {hostoutput}"  # noqa
@@ -50,6 +59,8 @@ def parse():
     parser.add_argument("--servicedesc", help="Service Description")
     parser.add_argument("--servicestate", help="Service State")
     parser.add_argument("--serviceoutput", help="Service Output")
+    parser.add_argument("--author", help="Author")
+    parser.add_argument("--comment", help="Comment")
     parser.add_argument("--oneline", action="store_true", help="Print only one line")
     parser.add_argument(
         "--version",
@@ -79,10 +90,14 @@ def make_data(args):
 
     # Emojis
 
-    text = emoji(args.notificationtype) + template.format(**vars(args))
+    text = emoji(args.notificationtype) + " " + template.format(**vars(args))
 
     if args.oneline:
         text = text.splitlines()[0]
+    if args.author:
+        text += " authored by " + args.author
+    if args.comment:
+        text += " commented with " + args.comment
 
     payload = {"username": args.username, "icon_url": args.iconurl, "text": text}
 
@@ -94,9 +109,9 @@ def make_data(args):
 
 
 def request(url, data):
-    rawdata = urllib.urlencode(data)
-    req = urllib2.Request(url, rawdata)
-    response = urllib2.urlopen(req)
+    rawdata = urllib_parse.urlencode(data).encode("utf-8")
+    req = urllib_request.Request(url, rawdata)
+    response = urllib_request.urlopen(req)
     return response.read()
 
 
@@ -104,4 +119,4 @@ if __name__ == "__main__":
     args = parse()
     data = make_data(args)
     response = request(args.url, data)
-    print response
+    print(response.decode("utf-8"))

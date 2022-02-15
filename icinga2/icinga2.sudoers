@@ -6,10 +6,7 @@
 Defaults: nagios lecture=never
 
 # Network basics (IP, conntrack, routing)
-nagios	ALL=NOPASSWD:	/usr/local/share/monitoring-plugins/check_ifupdown2
 nagios	ALL=NOPASSWD:	/usr/local/share/monitoring-plugins/check_conntrack_size
-nagios	ALL=NOPASSWD:	/usr/local/share/monitoring-plugins/check_bird_ospf
-nagios	ALL=NOPASSWD:	/usr/local/share/monitoring-plugins/check_bird_bgp
 
 # DHCP
 nagios  ALL=NOPASSWD:	/usr/local/sbin/dhcpd-pool
