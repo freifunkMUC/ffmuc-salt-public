@@ -17,6 +17,7 @@ videobridge {
                     muc_jids = "{{ jitsi.videobridge.brewery_room }}@{{ jitsi.xmpp[shard].brewery_domain }}"
                     muc_nickname = "{{ jitsi.xmpp.muc_nickname }}"
                     disable_certificate_verification = true
+                    security_mode = "ifpossible"
                 }
     {%- endif %}
 {%- endfor %}
@@ -26,7 +27,7 @@ videobridge {
     http-servers {
         public {
             # TODO: Split this to own var 
-            host = {{ jitsi.videobridge.octo.ip_addr }}
+            host = {{ jitsi.videobridge.octo.ip_addr | default("127.0.0.1")}}
             port = 9090
         }
         private {

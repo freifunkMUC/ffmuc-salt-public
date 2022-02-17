@@ -64,16 +64,18 @@ prosody:
 
 {# download and extract prosody plugins of jitsi #}
 download-jitsi-meet-prosody:
-  pkg.downloaded:
-    - name: jitsi-meet-prosody
+  file.managed:
+    - source: https://download.jitsi.org/unstable/jitsi-meet-prosody_1.0.5622-1_all.deb
+    - skip_verify: True
+    - name: /var/cache/apt/archives/jitsi-meet-prosody.deb
     - required_in:
       - cmd: extract_prosody_modules
 
 extract_prosody_modules:
   cmd.run:
-    - name: dpkg -x /var/cache/apt/archives/jitsi-meet-prosody*.deb /tmp/jitsi-prosody-modules
+    - name: dpkg -x /var/cache/apt/archives/jitsi-meet-prosody.deb /tmp/jitsi-prosody-modules
     - require:
-      - pkg: download-jitsi-meet-prosody
+      - file: download-jitsi-meet-prosody
 
 copy-prosody-plugins:
   file.rename:
@@ -95,7 +97,7 @@ patch_muc_owner_allow_kick:
 remove-temporary-files:
   file.absent:
     - names:
-      - /var/cache/apt/archives/jitsi-meet-prosody*.deb
+      - /var/cache/apt/archives/jitsi-meet-prosody.deb
       - /tmp/jitsi-prosody-modules
       - /usr/share/jitsi-meet/prosody-plugins/muc_owner_allow_kick.patch
     - require:
@@ -200,6 +202,8 @@ update-certificates:
   "mod_muc_domain_mapper",
   "mod_conference_duration",
   "mod_conference_duration_component",
+  "mod_jitsi_session",
+  "mod_muc_breakout_rooms",
   "mod_muc_lobby_rooms",
   "mod_muc_meeting_id",
   "mod_smacks",

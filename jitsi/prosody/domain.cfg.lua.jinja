@@ -24,6 +24,7 @@ VirtualHost "{{ jitsi.xmpp.xmpp_domain }}"
         "bosh";
         "websocket";
         {% if jitsi.lobby_enabled %}"muc_lobby_rooms";{% endif %}
+        {% if jitsi.breakout_enabled %}"muc_breakout_rooms";{% endif %}
         "ping"; -- Enable mod_ping
         "conference_duration";
         "speakerstats";
@@ -32,6 +33,7 @@ VirtualHost "{{ jitsi.xmpp.xmpp_domain }}"
     lobby_muc = "lobby.{{ jitsi.public_domain }}"
     main_muc = "conference.{{ jitsi.public_domain }}"
     {%- endif %}
+    {% if jitsi.breakout_enabled %}breakout_rooms_muc = "breakout.{{ jitsi.public_domain }}"{% endif %}
     c2s_require_encryption = false
     app_id = ""
     app_secret = ""
@@ -58,6 +60,19 @@ Component "conference.{{ domain }}.{{ jitsi.public_domain }}" "muc"
     muc_room_locking = false
     muc_room_default_public_jids = true
 {% endfor %}
+
+{% if jitsi.breakout_enabled %}
+Component "breakout.{{ jitsi.public_domain }}" "muc"
+    restrict_room_creation = true
+    storage = "memory"
+    modules_enabled = {
+        "muc_meeting_id";
+        "muc_domain_mapper";
+    }
+    admins = { "{{ jitsi.jicofo.username }}@{{ jitsi.xmpp.auth_domain }}" }
+    muc_room_locking = false
+    muc_room_default_public_jids = true
+{% endif %}
 
 -- internal muc component
 Component "internal.auth.{{ jitsi.public_domain }}" "muc"
