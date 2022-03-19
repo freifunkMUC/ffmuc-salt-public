@@ -12,7 +12,8 @@ providers:
 notif:
   slack:
     webhookURL: {{ salt["pillar.get"]("netbox:config_context:docker:diun:webhookURL", "") }}
+    renderFields : false
     templateBody: |
       {% raw -%}
-      Docker tag `{{ .Entry.Image }}` {{ if (eq .Entry.Status "new") }}newly added{{ else }}updated{{ end }}.
+      {{ .Meta.Hostname }}: `{{ .Entry.Image }}` {{ if (eq .Entry.Status "new") }}newly added{{ else }}updated{{ end }}.
       {%- endraw %}
