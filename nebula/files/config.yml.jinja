@@ -193,6 +193,10 @@ firewall:
   - port: 8089
     proto: tcp
     group: webfrontend
+  # Allow connections for cryptpad.ffmuc.net
+  - port: 8011
+    proto: tcp
+    group: webfrontend
   # Allow connections for tickets.ffmuc.net
   - port: 8002
     proto: tcp
