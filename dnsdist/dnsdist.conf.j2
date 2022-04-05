@@ -99,7 +99,7 @@ newServer({address="[2a03:4000:28:365::1]:53", name="v6.ns28.opennic", pool="ope
 addAction({'bbs','chan','cyb','dns.opennic.glue','dyn','epic','geek','gopher','indy','libre','neo','null','o','opennic.glue','oss','oz','parody','pirate'}, PoolAction("opennic"), {name="Redirect-OpenNIC"})
 
 -- add cache for X possible entries
-pc = newPacketCache(3000000)
+pc = newPacketCache(4000000)
 getPool(""):setCache(pc)
 getPool("auth"):setCache(pc)
 
