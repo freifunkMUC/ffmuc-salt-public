@@ -27,7 +27,7 @@ videobridge {
     http-servers {
         public {
             # TODO: Split this to own var 
-            host = {{ jitsi.videobridge.octo.ip_addr | default("127.0.0.1")}}
+            host = {{ jitsi.videobridge.octo.ip_addr | default("127.0.0.1") }}
             port = 9090
         }
         private {

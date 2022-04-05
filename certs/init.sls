@@ -154,6 +154,10 @@ ffmuc-wildcard-cert:
         - "*.xn--freifunk-mnchen-8vb.de"
         - "muenchen.freifunk.net"
         - "*.muenchen.freifunk.net"
+        - "xn--mnchen-3ya.freifunk.net"
+        - "*.xn--mnchen-3ya.freifunk.net"
+        - "augsburg.freifunk.net"
+        - "*.augsburg.freifunk.net"
   {% else %}{# "jitsi meet" in role #}
     - name: meet.ffmuc.net
     - aliases:

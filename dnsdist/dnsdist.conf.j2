@@ -8,8 +8,8 @@ end
 
 setACL({'0.0.0.0/0', '::/0'})
 -- respond to ANY queries sent over UDP with the TC bit set, shunting to TCP.
-addAction(AndRule({QTypeRule(DNSQType.ANY), TCPRule(false)}), TCAction())
-addAction(RegexRule(".*\\.(10|168\\.192|(1[6-9]|2[0-9]|3[0-1])\\.172)\\.in-addr\\.arpa$"), RCodeAction(DNSRCode.NXDOMAIN))
+addAction(AndRule({QTypeRule(DNSQType.ANY), TCPRule(false)}), TCAction(), {name="Shunt-ANY-to-TCP"})
+addAction(RegexRule(".*\\.(10|168\\.192|(1[6-9]|2[0-9]|3[0-1])\\.172)\\.in-addr\\.arpa$"), RCodeAction(DNSRCode.NXDOMAIN), {name="RFC1918-PTR-NXDOMAIN"})
 
 addLocal("0.0.0.0")
 addLocal("::")
@@ -42,10 +42,10 @@ addDNSCryptBind("0.0.0.0:8443", "2.dnscrypt-cert.ffmuc.net", "/run/dnsdist/resol
 addDNSCryptBind("[::]:8443", "2.dnscrypt-cert.ffmuc.net", "/run/dnsdist/resolver.cert", "/run/dnsdist/resolver.key", { reusePort=true })
 
 -- set number of queries to be allowed per second from an IP but exclude localhost
-addAction(AndRule({MaxQPSIPRule(500), NotRule(OrRule({makeRule("127.0.0.1"), makeRule("::1")}))}), DropAction())
+addAction(AndRule({MaxQPSIPRule(500), NotRule(OrRule({makeRule("127.0.0.1"), makeRule("::1")}))}), DropAction(), {name="Drop-Max-QPS-IP"})
 {% else %}
 -- limit resolving on Port 53 to "ffmuc-domains"
-addAction(AndRule({NotRule(makeRule({"ffmuc.net"})), NotRule(makeRule({"127.0.0.1","::1","10.80.0.0/16","10.8.0.0/23","5.1.66.0/24","185.150.99.0/24","2001:678:e68::/48","2001:678:ed0::/48"})), DSTPortRule(53)}), DropAction())
+addAction(AndRule({NotRule(makeRule({"ffmuc.net"})), NotRule(makeRule({"127.0.0.1","::1","10.80.0.0/16","10.8.0.0/23","5.1.66.0/24","185.150.99.0/24","2001:678:e68::/48","2001:678:ed0::/48"})), DSTPortRule(53)}), DropAction(), {name="Drop-Gateway-Foreign-Source"})
 {% endif %}{# webfrontend in grains.id #}
 
 {%- if 'muc01' in salt['pillar.get']('netbox:site:slug') %}
@@ -78,16 +78,16 @@ newServer({address="1.1.1.1", name="anycastCF", pool="auth"})
   {%- endif %}{# site #}
 {%- endif %}{# authoritative #}
 
-addAction({'in.ffmuc.net.', 'ov.ffmuc.net'}, PoolAction("auth"))
-addAction({'ffmuc.net'}, PoolAction("auth"))
-addAction({'ffmuc.bayern'}, PoolAction("auth"))
-addAction({'fnmuc.net'}, PoolAction("auth"))
+addAction({'in.ffmuc.net.', 'ov.ffmuc.net'}, PoolAction("auth"), {name="Redirect-Auth"})
+addAction({'ffmuc.net'}, PoolAction("auth"), {name="Redirect-Auth"})
+addAction({'ffmuc.bayern'}, PoolAction("auth"), {name="Redirect-Auth"})
+addAction({'fnmuc.net'}, PoolAction("auth"), {name="Redirect-Auth"})
 addAction({'freewifi.bayern'}, PoolAction("auth"))
-addAction({'freifunk-muenchen.de', 'xn--freifunk-mnchen-8vb.de.'}, PoolAction("auth"))
-addAction({'freifunk-muenchen.net'}, PoolAction("auth"))
+addAction({'freifunk-muenchen.de', 'xn--freifunk-mnchen-8vb.de.'}, PoolAction("auth"), {name="Redirect-Auth"})
+addAction({'freifunk-muenchen.net'}, PoolAction("auth"), {name="Redirect-Auth"})
 
 {#- some stats #}
-addAction({'in-addr.arpa'}, NoneAction())
+addAction({'in-addr.arpa', 'ip6.arpa'}, NoneAction(), {name="RDNS"})
 
 -- OpenNIC
 newServer({address="89.163.140.67:53", name="v4.ns22.de.opennic", pool="opennic"})
@@ -96,10 +96,10 @@ newServer({address="88.198.92.222:53", name="v4.ns25.opennic", pool="opennic"})
 newServer({address="[2a01:4f8:1c0c:82c0::1]:53", name="v6.ns25.opennic", pool="opennic"})
 newServer({address="94.16.114.254:53", name="v4.ns28.opennic", pool="opennic"})
 newServer({address="[2a03:4000:28:365::1]:53", name="v6.ns28.opennic", pool="opennic"})
-addAction({'bbs','chan','cyb','dns.opennic.glue','dyn','epic','geek','gopher','indy','libre','neo','null','o','opennic.glue','oss','oz','parody','pirate'}, PoolAction("opennic"))
+addAction({'bbs','chan','cyb','dns.opennic.glue','dyn','epic','geek','gopher','indy','libre','neo','null','o','opennic.glue','oss','oz','parody','pirate'}, PoolAction("opennic"), {name="Redirect-OpenNIC"})
 
 -- add cache for X possible entries
-pc = newPacketCache(3000000)
+pc = newPacketCache(4000000)
 getPool(""):setCache(pc)
 getPool("auth"):setCache(pc)
 
