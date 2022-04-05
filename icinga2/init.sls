@@ -27,6 +27,7 @@ icinga2-repo:
     {% endif %}
     - file: /etc/apt/sources.list.d/icinga2.list
     - key_url: https://packages.icinga.org/icinga.key
+    - clean_file: True
 
 # Install icinga2 package
 {% set node_config = salt['pillar.get']('nodes:' ~ grains.id, {}) %}
