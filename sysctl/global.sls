@@ -112,3 +112,8 @@ net.ipv4.tcp_congestion_control:
   sysctl.present:
     - value: bbr
     - config: /etc/sysctl.d/10-bbr-congestion.conf
+
+net.core.default_qdisc:
+  sysctl.present:
+    - value: fq
+    - config: /etc/sysctl.d/10-bbr-congestion.conf
