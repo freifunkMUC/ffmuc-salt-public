@@ -47,8 +47,9 @@ dbr:excludeRange({"127.0.0.1/32", "::1/128" })
 dbr:setRCodeRate(DNSRCode.NXDOMAIN, 20, 10, "Exceeded NXD rate", 60)
 dbr:setQTypeRate(DNSQType.PTR, 20, 10, "Exceeded PTR rate", 60)
 dbr:setQueryRate(500, 1, "Exceeded query rate", 60)
-dbr:apply()
-
+function maintenance()
+   dbr:apply()
+end
 -- Raise ringbuffer size
 setRingBuffersSize(100000)
 {% else %}
