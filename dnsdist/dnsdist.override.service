@@ -3,10 +3,10 @@ User=_dnsdist
 Group=_dnsdist
 # let systemd create /run/dnsdist
 RuntimeDirectory=dnsdist
-ExecStart=
 ExecStart=/usr/bin/dnsdist --supervised --disable-syslog
 LimitNOFILE=500000
 LimitNPROC=500000
 
-AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_NET_RAW
-CapabilityBoundingSet=CAP_NET_RAW
+LimitMEMLOCK=infinity
+AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_NET_RAW CAP_SYS_ADMIN
+CapabilityBoundingSet=CAP_NET_RAW CAP_SYS_ADMIN
