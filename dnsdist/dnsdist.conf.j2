@@ -42,14 +42,18 @@ addDNSCryptBind("0.0.0.0:8443", "2.dnscrypt-cert.ffmuc.net", "/run/dnsdist/resol
 addDNSCryptBind("[::]:8443", "2.dnscrypt-cert.ffmuc.net", "/run/dnsdist/resolver.cert", "/run/dnsdist/resolver.key", { reusePort=true })
 
 -- keep BPF capabilities
-addCapabilitiesToRetain("CAP_BPF")
+addCapabilitiesToRetain("CAP_SYS_ADMIN")
+
+-- enable ebpf
+bpf = newBPFFilter(1024, 1024, 1024)
+setDefaultBPFFilter(bpf)
 
 -- set number of queries to be allowed per second from an IP but exclude localhost
 dbr = dynBlockRulesGroup()
 dbr:excludeRange({"127.0.0.1/32", "::1/128" })
-dbr:setRCodeRate(DNSRCode.NXDOMAIN, 20, 10, "Exceeded NXD rate", 60)
-dbr:setQTypeRate(DNSQType.PTR, 20, 10, "Exceeded PTR rate", 60)
-dbr:setQueryRate(500, 1, "Exceeded query rate", 60)
+dbr:setRCodeRate(DNSRCode.NXDOMAIN, 20, 10, "Exceeded NXD rate", 60, DNSAction.Drop)
+dbr:setQTypeRate(DNSQType.PTR, 20, 10, "Exceeded PTR rate", 60, DNSAction.Drop)
+dbr:setQueryRate(500, 1, "Exceeded query rate", 60, DNSAction.Drop)
 function maintenance()
    dbr:apply()
 end
