@@ -3,6 +3,7 @@ User=_dnsdist
 Group=_dnsdist
 # let systemd create /run/dnsdist
 RuntimeDirectory=dnsdist
+ExecStart=
 ExecStart=/usr/bin/dnsdist --supervised --disable-syslog
 LimitNOFILE=500000
 LimitNPROC=500000
