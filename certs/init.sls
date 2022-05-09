@@ -189,7 +189,7 @@ augsburg.freifunk.net-cert:
     - require:
         - cmd: certbot
         - pip: acme-client
- 
+
 /etc/letsencrypt/renewal-hooks/deploy/01-reload-nginx.sh:
   file.managed:
     - contents: |
