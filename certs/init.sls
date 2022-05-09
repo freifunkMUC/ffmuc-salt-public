@@ -156,8 +156,6 @@ ffmuc-wildcard-cert:
         - "*.muenchen.freifunk.net"
         - "xn--mnchen-3ya.freifunk.net"
         - "*.xn--mnchen-3ya.freifunk.net"
-        - "augsburg.freifunk.net"
-        - "*.augsburg.freifunk.net"
   {% else %}{# "jitsi meet" in role #}
     - name: meet.ffmuc.net
     - aliases:
@@ -179,6 +177,19 @@ ffmuc-wildcard-cert:
         - pip: acme-client
         - file: dns_credentials
 
+augsburg.freifunk.net-cert:
+  acme.cert:
+  {% if "webserver-external" in role %}
+    - name: augsburg.freifunk.net
+    - email: hilfe@ffmuc.bayern
+    - owner: root
+    - group: ssl-cert
+    - mode: "0640"
+    #- renew: True
+    - require:
+        - cmd: certbot
+        - pip: acme-client
+    
 /etc/letsencrypt/renewal-hooks/deploy/01-reload-nginx.sh:
   file.managed:
     - contents: |
