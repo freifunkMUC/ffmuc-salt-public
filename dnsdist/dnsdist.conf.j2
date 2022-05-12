@@ -40,6 +40,10 @@ end
 -- listen for DNSCrypt
 addDNSCryptBind("0.0.0.0:8443", "2.dnscrypt-cert.ffmuc.net", "/run/dnsdist/resolver.cert", "/run/dnsdist/resolver.key", { reusePort=true })
 addDNSCryptBind("[::]:8443", "2.dnscrypt-cert.ffmuc.net", "/run/dnsdist/resolver.cert", "/run/dnsdist/resolver.key", { reusePort=true })
+{% else %}
+-- limit resolving on Port 53 to "ffmuc-domains"
+addAction(AndRule({NotRule(makeRule({"ffmuc.net"})), NotRule(makeRule({"127.0.0.1","::1","10.80.0.0/16","10.8.0.0/23","5.1.66.0/24","185.150.99.0/24","2001:678:e68::/48","2001:678:ed0::/48"})), DSTPortRule(53)}), DropAction(), {name="Drop-Gateway-Foreign-Source"})
+{% endif %}{# webfrontend in grains.id #}
 
 -- keep BPF capabilities
 addCapabilitiesToRetain("CAP_SYS_ADMIN")
@@ -59,10 +63,6 @@ function maintenance()
 end
 -- Raise ringbuffer size
 setRingBuffersSize(100000)
-{% else %}
--- limit resolving on Port 53 to "ffmuc-domains"
-addAction(AndRule({NotRule(makeRule({"ffmuc.net"})), NotRule(makeRule({"127.0.0.1","::1","10.80.0.0/16","10.8.0.0/23","5.1.66.0/24","185.150.99.0/24","2001:678:e68::/48","2001:678:ed0::/48"})), DSTPortRule(53)}), DropAction(), {name="Drop-Gateway-Foreign-Source"})
-{% endif %}{# webfrontend in grains.id #}
 
 {%- if 'muc01' in salt['pillar.get']('netbox:site:slug') %}
 newServer({address="10.8.0.39:1653", name="web05", weight=3, retries=2, id="7cd4655e-071e-4a9a-9623-834ba49ea472"})
@@ -94,13 +94,7 @@ newServer({address="1.1.1.1", name="anycastCF", pool="auth"})
   {%- endif %}{# site #}
 {%- endif %}{# authoritative #}
 
-addAction({'in.ffmuc.net.', 'ov.ffmuc.net'}, PoolAction("auth"), {name="Redirect-Auth"})
-addAction({'ffmuc.net'}, PoolAction("auth"), {name="Redirect-Auth"})
-addAction({'ffmuc.bayern'}, PoolAction("auth"), {name="Redirect-Auth"})
-addAction({'fnmuc.net'}, PoolAction("auth"), {name="Redirect-Auth"})
-addAction({'freewifi.bayern'}, PoolAction("auth"))
-addAction({'freifunk-muenchen.de', 'xn--freifunk-mnchen-8vb.de.'}, PoolAction("auth"), {name="Redirect-Auth"})
-addAction({'freifunk-muenchen.net'}, PoolAction("auth"), {name="Redirect-Auth"})
+addAction({'in.ffmuc.net', 'ov.ffmuc.net', 'ffmuc.net', 'ffmuc.bayern', 'fnmuc.net', 'freewifi.bayern', 'freifunk-muenchen.de', 'xn--freifunk-mnchen-8vb.de.', 'freifunk-muenchen.net'}, PoolAction("auth"), {name="Redirect-Auth"})
 
 {#- some stats #}
 addAction({'in-addr.arpa', 'ip6.arpa'}, NoneAction(), {name="RDNS"})
