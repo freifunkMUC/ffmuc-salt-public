@@ -187,7 +187,7 @@ ffmuc-non-wildcard-cert:
     - owner: root
     - group: ssl-cert
     - mode: "0640"
-    - 
+    - http_01_port: 9999
     #- renew: True
     - require:
         - cmd: certbot
