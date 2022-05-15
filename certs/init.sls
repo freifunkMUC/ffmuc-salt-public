@@ -152,10 +152,6 @@ ffmuc-wildcard-cert:
         - "*.freifunk-muenchen.net"
         - "xn--freifunk-mnchen-8vb.de"
         - "*.xn--freifunk-mnchen-8vb.de"
-        - "muenchen.freifunk.net"
-        - "*.muenchen.freifunk.net"
-        - "xn--mnchen-3ya.freifunk.net"
-        - "*.xn--mnchen-3ya.freifunk.net"
   {% else %}{# "jitsi meet" in role #}
     - name: meet.ffmuc.net
     - aliases:
@@ -177,14 +173,21 @@ ffmuc-wildcard-cert:
         - pip: acme-client
         - file: dns_credentials
 
-augsburg.freifunk.net-cert:
+ffmuc-non-wildcard-cert:
   acme.cert:
   {% if "webserver-external" in role %}
-    - name: augsburg.freifunk.net
+    - name: muenchen.freifunk.net
+    - aliases:
+        - "www.muenchen.freifunk.net"
+        - "xn--mnchen-3ya.freifunk.net"
+        - "www.xn--mnchen-3ya.freifunk.net"
+        - "augsburg.freifunk.net"
+        - "www.augsburg.freifunk.net"
     - email: hilfe@ffmuc.bayern
     - owner: root
     - group: ssl-cert
     - mode: "0640"
+    - 
     #- renew: True
     - require:
         - cmd: certbot
