@@ -36,7 +36,7 @@ docker-pkgs:
 
 /usr/local/bin/docker-compose:
   file.managed:
-    - source: https://github.com/docker/compose/releases/download/v2.2.3/docker-compose-linux-x86_64
-    - source_hash: f15a7cd54a85f760a8ece92da63fb85b93036c72ead8056391b8a3fe9dc73134
+    - source: https://github.com/docker/compose/releases/download/v2.5.0/docker-compose-linux-x86_64
+    - source_hash: 6296d17268c77a7159f57f04ed26dd2989f909c58cca4d44d1865f28bd27dd67
     - mode: "0755"
 {% endif  %}
