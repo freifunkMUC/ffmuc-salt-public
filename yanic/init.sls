@@ -12,7 +12,7 @@
 yanic:
   pkg.installed:
     - sources:
-      - yanic: http://apt.ffmuc.net/yanic-0.0.2-17.deb
+      - yanic: https://apt.ffmuc.net/yanic_1.2.1-1_amd64.deb
 
 # copy systemd yanic@.service
 /etc/systemd/system/yanic@.service:
