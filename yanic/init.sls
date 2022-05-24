@@ -2,6 +2,9 @@
 # yanic
 #
 
+{% set tags = salt['pillar.get']('netbox:tag_list', []) %}
+{% if "yanic" in tags %}
+
 # add yanic directory
 /srv/yanic:
   file.directory:
@@ -36,3 +39,5 @@ yanic:
     - template: jinja
     - require:
       - file: /srv/yanic
+
+{% endif %}{# yanic in tags #}
