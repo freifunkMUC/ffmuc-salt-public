@@ -29,14 +29,6 @@ enable  = false
 bind    = "127.0.0.1:8080"
 webroot = "/var/www/html/meshviewer"
 
-[[nodes.output.geojson]]
-enable   = true
-path = "/srv/yanic/nodes.geojson"
-
-[[nodes.output.nodelist]]
-enable   = true
-path = "/srv/yanic/nodelist.json"
-
 [nodes]
 # Cache file
 # a json file to cache all data collected directly from respondd
@@ -53,6 +45,14 @@ offline_after = "10m"
 [[nodes.output.meshviewer-ffrgb]]
 enable   = true
 path = "/srv/yanic/meshviewer.json"
+
+[[nodes.output.geojson]]
+enable   = true
+path = "/srv/yanic/nodes.geojson"
+
+[[nodes.output.nodelist]]
+enable   = true
+path = "/srv/yanic/nodelist.json"
 
 [database]
 # this will send delete commands to the database to prune data

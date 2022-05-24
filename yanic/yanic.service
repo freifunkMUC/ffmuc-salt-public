@@ -1,5 +1,6 @@
 [Unit]
 Description=yanic
+After=network.service
 
 [Service]
 Type=simple

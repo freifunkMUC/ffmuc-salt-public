@@ -27,7 +27,7 @@ yanic:
   file.managed:
     - source: salt://yanic/yanic.service
     - require:
-      - file: yanic
+      - pkg: yanic
 
 # add configuration file
 /etc/yanic.conf:
