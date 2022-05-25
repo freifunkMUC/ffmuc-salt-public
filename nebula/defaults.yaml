@@ -14,6 +14,9 @@ nebula:
     host: "[::]"
     port: 0
 
+  handshakes:
+    retries: 20
+
   loophole:
     enabled: false
     ssh_keys:

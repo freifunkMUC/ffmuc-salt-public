@@ -73,7 +73,7 @@ tun:
 
 handshakes:
   try_interval: 100ms
-  retries: 15
+  retries: {{ nebula.handshakes.retries }}
   wait_rotation: 5
   trigger_buffer: 64
 
