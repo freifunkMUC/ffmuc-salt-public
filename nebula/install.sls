@@ -14,6 +14,14 @@ nebula-pkg:
       - nebula: https://github.com/krombel/nebula/releases/download/v{{ nebula.version }}/nebula-linux-{{ grains.osarch }}.deb
     {% endif %}
 
+systemd-restart-nebula:
+  service.dead:
+   - name: nebula
+   - onchanges:
+     - pkg: nebula-pkg
+   - require:
+     - cmd: systemd-reload-nebula
+
 # cleanup for migration file => deb
 systemd-reload-nebula:
   cmd.run:
