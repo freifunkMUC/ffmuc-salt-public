@@ -3,7 +3,7 @@
 ---
 nebula:
   enabled: false
-  version: 1.3.0
+  version: 1.5.2-2
 
   am_lighthouse: false
   lighthouses:
@@ -11,7 +11,7 @@ nebula:
       - "192.168.42.42:4242"
   interface: nebula0
   listen:
-    host: 0.0.0.0
+    host: "[::]"
     port: 0
 
   loophole:
