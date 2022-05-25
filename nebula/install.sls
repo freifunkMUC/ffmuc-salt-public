@@ -15,12 +15,14 @@ nebula-pkg:
     {% endif %}
 
 systemd-restart-nebula:
-  service.restart:
-   - name: nebula
-   - onchanges:
-     - pkg: nebula-pkg
-   - require:
-     - cmd: systemd-reload-nebula
+  service.running:
+    - name: nebula
+    - onchanges:
+      - pkg: nebula-pkg
+    - watch:
+      - pkg: nebula-pkg
+    -require:
+      - pkg: nebula-pkg
 
 # cleanup for migration file => deb
 systemd-reload-nebula:
