@@ -15,7 +15,7 @@ nebula-pkg:
     {% endif %}
 
 systemd-restart-nebula:
-  service.dead:
+  service.restart:
    - name: nebula
    - onchanges:
      - pkg: nebula-pkg
