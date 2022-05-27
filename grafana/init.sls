@@ -3,13 +3,20 @@
 #
 {% if 'grafana_server' in salt['pillar.get']('netbox:tag_list', []) %}
 
+grafana-repo-key:
+  cmd.run:
+    - name: "curl https://packages.grafana.com/gpg.key | gpg --dearmor > /usr/share/keyrings/grafana-keyring.gpg"
+    - creates: /usr/share/keyrings/grafana-keyring.gpg
+
 grafana:
 # add Grafana Repo
   pkgrepo.managed:
     - humanname: Grafana Repo
-    - name: deb [arch={{ grains.osarch }}] https://packages.grafana.com/oss/deb stable main
+    - name: deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/grafana-keyring.gpg] https://packages.grafana.com/oss/deb stable main
     - file: /etc/apt/sources.list.d/grafana.list
-    - key_url: https://packages.grafana.com/gpg.key
+    - clean_file: True
+    - require:
+      - cmd: grafana-repo-key
 # install grafana
   pkg.installed:
     - name: grafana

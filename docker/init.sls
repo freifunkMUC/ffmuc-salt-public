@@ -4,14 +4,21 @@
 {%- set role = salt['pillar.get']('netbox:role:name', salt['pillar.get']('netbox:device_role:name')) %}
 
 {% if 'docker' in role or 'mailserver' in role or 'roadwarrior' in role %}
+docker-repo-key:
+  cmd.run:
+    - name: "curl https://download.docker.com/linux/{{ grains.lsb_distrib_id | lower }}/gpg | gpg --dearmor > /usr/share/keyrings/docker-keyring.gpg"
+    - creates: /usr/share/keyrings/docker-keyring.gpg
+
 docker-repo:
   pkgrepo.managed:
     - comments: "# Docker.io"
     - human_name: Docker.io repository
-    - name: "deb [arch={{ grains.osarch }}] https://download.docker.com/linux/{{ grains.lsb_distrib_id | lower }}  {{ grains.oscodename }} stable"
+    - name: "deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/docker-keyring.gpg] https://download.docker.com/linux/{{ grains.lsb_distrib_id | lower }}  {{ grains.oscodename }} stable"
     - dist: {{ grains.oscodename }}
     - file: /etc/apt/sources.list.d/docker.list
-    - key_url: https://download.docker.com/linux/{{ grains.lsb_distrib_id | lower }}/gpg
+    - clean_file: True
+    - require:
+      - cmd: docker-repo-key
 
 docker-pkgs:
   pkg.installed:

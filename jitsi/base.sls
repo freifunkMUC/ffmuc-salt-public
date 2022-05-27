@@ -1,13 +1,13 @@
 jitsi-repo-key:
   cmd.run:
-    - name: "wget https://download.jitsi.org/jitsi-key.gpg.key -qO - | apt-key add -"
-    - unless: 'gpg2 /etc/apt/trusted.gpg | grep FFD65A0DA2BEBDEB73D44C8BB4D2D216F1FD7806'
+    - name: "curl https://download.jitsi.org/jitsi-key.gpg.key | sudo sh -c 'gpg --dearmor > /usr/share/keyrings/jitsi-keyring.gpg'"
+    - creates: /usr/share/keyrings/jitsi-keyring.gpg
 
 jitsi-repo:
   pkgrepo.managed:
     - humanname: Jitsi Repo
-    - name: deb https://download.jitsi.org stable/
-    #- name: deb https://apt.ffmuc.net stable/
+    - name: deb [signed-by=/usr/share/keyrings/jitsi-keyring.gpg] https://download.jitsi.org stable/
     - file: /etc/apt/sources.list.d/jitsi-stable.list
-    #- key: https://download.jitsi.org/jitsi-key.gpg.key
     - clean_file: True
+    - require:
+      - cmd: jitsi-repo-key
