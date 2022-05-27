@@ -27,7 +27,7 @@ lighthouse:
 {%- endif %}
 
 listen:
-  host: {{ nebula.listen.host }}
+  host: "{{ nebula.listen.host }}"
   port: {{ nebula.listen.port }}
 
 punchy:
@@ -73,7 +73,7 @@ tun:
 
 handshakes:
   try_interval: 100ms
-  retries: 20
+  retries: {{ nebula.handshakes.retries }}
   wait_rotation: 5
   trigger_buffer: 64
 

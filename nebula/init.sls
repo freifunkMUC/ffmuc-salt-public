@@ -53,19 +53,6 @@ generate_ssh_host_ed25519_key:
     - require:
         - file: /etc/nebula/{{ grains['id'] }}.crt
 
-systemd-reload-nebula:
-  cmd.run:
-   - name: systemctl --system daemon-reload
-   - onchanges:
-     - file: nebula-service-file
-
-nebula-service-file:
-  file.managed:
-    - source: salt://nebula/files/nebula.service
-    - name: /etc/systemd/system/nebula.service
-    - require:
-        - file: /etc/nebula/{{ grains['id'] }}.crt
-
 nebula-service:
   service.running:
     - enable: True
@@ -73,11 +60,10 @@ nebula-service:
     - reload: True
     - name: nebula
     - require:
-        - file: nebula-service-file
         - file: /etc/nebula/config.yml
         - file: /etc/nebula/{{ grains['id'] }}.crt
         - file: /etc/nebula/{{ grains['id'] }}.key
-        - file: nebula-binary
+        - pkg: nebula-pkg
     - watch:
         - file: /etc/nebula/config.yml
 
