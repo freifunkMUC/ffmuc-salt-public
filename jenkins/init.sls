@@ -10,7 +10,7 @@
 {% if 'buildserver' in role %}
 jenkins-repo-key:
   cmd.run:
-    - name: "curl https://pkg.jenkins.io/debian/jenkins.io.key | gpg --dearmor > /usr/share/keyrings/jenkins-keyring.gpg"
+    - name: "curl https://pkg.jenkins.io/debian/jenkins.io.key | gpg --dearmor -o /usr/share/keyrings/jenkins-keyring.gpg"
     - creates: /usr/share/keyrings/jenkins-keyring.gpg
 
 jenkins:

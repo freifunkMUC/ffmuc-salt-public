@@ -4,7 +4,7 @@
 {%- if 'influxdb_server' in salt['pillar.get']('netbox:tag_list', []) %}
 influxdb-repo-key:
   cmd.run:
-    - name: "curl https://repos.influxdata.com/influxdb.key | gpg --dearmor > /usr/share/keyrings/influxdb-keyring.gpg"
+    - name: "curl https://repos.influxdata.com/influxdb.key | gpg --dearmor -o /usr/share/keyrings/influxdb-keyring.gpg"
     - creates: /usr/share/keyrings/influxdb-keyring.gpg
 
 influxdb-repo:

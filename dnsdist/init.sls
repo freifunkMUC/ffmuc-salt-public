@@ -5,7 +5,7 @@
 
 dnsdist-repo-key:
   cmd.run:
-    - name: "curl https://repo.powerdns.com/FD380FBB-pub.asc | gpg --dearmor > /usr/share/keyrings/powerdns-keyring.gpg"
+    - name: "curl https://repo.powerdns.com/FD380FBB-pub.asc | gpg --dearmor -o /usr/share/keyrings/powerdns-keyring.gpg"
     - creates: /usr/share/keyrings/powerdns-keyring.gpg
 
 dnsdist-repo:

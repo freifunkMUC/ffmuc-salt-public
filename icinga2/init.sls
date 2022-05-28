@@ -18,7 +18,7 @@ include:
 
 icinga2-repo-key:
   cmd.run:
-    - name: "curl https://packages.icinga.org/icinga.key | gpg --dearmor > /usr/share/keyrings/icinga2-keyring.gpg"
+    - name: "curl https://packages.icinga.org/icinga.key | gpg --dearmor -o /usr/share/keyrings/icinga2-keyring.gpg"
     - creates: /usr/share/keyrings/icinga2-keyring.gpg
 
 icinga2-repo:

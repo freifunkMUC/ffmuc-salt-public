@@ -7,7 +7,7 @@
 
 nginx-repo-key:
   cmd.run:
-    - name: "curl https://nginx.org/keys/nginx_signing.key | gpg --dearmor > /usr/share/keyrings/nginx-archive-keyring.gpg"
+    - name: "curl https://nginx.org/keys/nginx_signing.key | gpg --dearmor -o /usr/share/keyrings/nginx-archive-keyring.gpg"
     - creates: /usr/share/keyrings/nginx-archive-keyring.gpg
 
 /etc/apt/sources.list.d/nginx.list:
@@ -21,7 +21,6 @@ nginx-repo-key:
 nginx:
   pkg.installed:
     - name: nginx
-    - fromrepo: deb http://nginx.org/packages/{{ grains.os | lower }} {{ grains.oscodename }} nginx
     - require:
       - pkgrepo: /etc/apt/sources.list.d/nginx.list
   service.running:

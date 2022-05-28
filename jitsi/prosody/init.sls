@@ -7,7 +7,7 @@
 
 prosody-repo-key:
   cmd.run:
-    - name: "curl https://prosody.im/files/prosody-debian-packages.key | gpg --dearmor > /usr/share/keyrings/prosody-keyring.gpg"
+    - name: "curl https://prosody.im/files/prosody-debian-packages.key | gpg --dearmor -o /usr/share/keyrings/prosody-keyring.gpg"
     - creates: /usr/share/keyrings/prosody-keyring.gpg
 
 prosody-repo:
