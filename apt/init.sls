@@ -9,19 +9,31 @@
 /etc/apt/sources.list.d/repo_saltstack_com_apt_debian_9_amd64_latest.list:
   file.absent
 
+salt-repo-key:
+  file.managed:
+    - name: /usr/share/keyrings/salt-archive-keyring.gpg
+    {% if 'Ubuntu' in grains.lsb_distrib_id %}
+    - source: https://repo.saltproject.io/py3/{{ grains.lsb_distrib_id | lower }}/{{ grains.osrelease }}/{{ grains.osarch }}/latest/salt-archive-keyring.gpg
+    {% elif 'Raspbian' in grains.lsb_distrib_id %}
+    - source: http://repo.saltstack.io/py3/debian/{{ grains.osmajorrelease }}/{{ grains.osarch }}/latest/salt-archive-keyring.gpg
+    {% else %}
+    - source: http://repo.saltstack.io/py3/{{ grains.lsb_distrib_id | lower }}/{{ grains.osmajorrelease }}/{{ grains.osarch }}/latest/salt-archive-keyring.gpg # noqa: 204
+    {% endif %}
+    - skip_verify: True
+
 salt-repo:
   pkgrepo.managed:
-    - humanname: SaltStack-
     {% if 'Ubuntu' in grains.lsb_distrib_id %}
-    - name: deb [arch={{ grains.osarch }}] http://repo.saltstack.com/py3/{{ grains.lsb_distrib_id | lower }}/{{ grains.osrelease }}/{{ grains.osarch }}/latest {{ grains.oscodename }} main
+    - name: deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/salt-archive-keyring.gpg] http://repo.saltstack.io/py3/{{ grains.lsb_distrib_id | lower }}/{{ grains.osrelease }}/{{ grains.osarch }}/latest {{ grains.oscodename }} main
     {% elif 'Raspbian' in grains.lsb_distrib_id %}
-    - name: deb [arch={{ grains.osarch }}] http://repo.saltstack.com/py3/debian/{{ grains.osmajorrelease }}/{{ grains.osarch }}/latest {{ grains.oscodename }} main
+    - name: deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/salt-archive-keyring.gpg] http://repo.saltstack.io/py3/debian/{{ grains.osmajorrelease }}/{{ grains.osarch }}/latest {{ grains.oscodename }} main
     {% else %}
-    - name: deb [arch={{ grains.osarch }}] http://repo.saltstack.com/py3/{{ grains.lsb_distrib_id | lower }}/{{ grains.osmajorrelease }}/{{ grains.osarch }}/3000 {{ grains.oscodename }} main # noqa: 204
+    - name: deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/salt-archive-keyring.gpg] http://repo.saltstack.io/py3/{{ grains.lsb_distrib_id | lower }}/{{ grains.osmajorrelease }}/{{ grains.osarch }}/latest {{ grains.oscodename }} main # noqa: 204
     {% endif %}
-    - dist: {{ grains.oscodename }}
     - file: /etc/apt/sources.list.d/saltstack.list
     - clean_file: True
+    - require:
+      - file: salt-repo-key
 
 /etc/cron.d/apt:
   file.managed:

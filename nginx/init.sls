@@ -5,12 +5,18 @@
 {% set tags = salt['pillar.get']('netbox:tag_list', []) %}
 {% if "webserver" in role or "webserver" in tags %}
 
+nginx-repo-key:
+  cmd.run:
+    - name: "curl https://nginx.org/keys/nginx_signing.key | gpg --dearmor > /usr/share/keyrings/nginx-archive-keyring.gpg"
+    - creates: /usr/share/keyrings/nginx-archive-keyring.gpg
+
 /etc/apt/sources.list.d/nginx.list:
   pkgrepo.managed:
-    - name: deb http://nginx.org/packages/{{ grains.os | lower }} {{ grains.oscodename }} nginx
+    - name: deb [signed-by=/usr/share/keyrings/nginx-archive-keyring.gpg] http://nginx.org/packages/{{ grains.os | lower }} {{ grains.oscodename }} nginx
     - file: /etc/apt/sources.list.d/nginx.list
-    - keyserver: keys.gnupg.net
-    - keyid: ABF5BD827BD9BF62
+    - clean_file: True
+    - require:
+      - cmd: nginx-repo-key
 
 nginx:
   pkg.installed:

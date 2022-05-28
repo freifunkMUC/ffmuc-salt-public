@@ -16,7 +16,7 @@ influxdb-repo-key:
 influxdb-repo:
   pkgrepo.managed:
     - humanname: Jitsi Repo
-    - name: deb https://repos.influxdata.com/{{ grains.lsb_distrib_id | lower }} {{ grains.oscodename }} stable
+    - name: deb [signed-by=/usr/share/keyrings/influxdb-keyring.gpg] https://repos.influxdata.com/{{ grains.lsb_distrib_id | lower }} {{ grains.oscodename }} stable
     - file: /etc/apt/sources.list.d/influxdb.list
     - clean_file: True
     - require:
