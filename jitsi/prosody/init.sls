@@ -5,13 +5,19 @@
 
 {% if jitsi.prosody.enabled %}
 
+prosody-repo-key:
+  cmd.run:
+    - name: "curl https://prosody.im/files/prosody-debian-packages.key | gpg --dearmor -o /usr/share/keyrings/prosody-keyring.gpg"
+    - creates: /usr/share/keyrings/prosody-keyring.gpg
+
 prosody-repo:
   pkgrepo.managed:
     - humanname: Prosody
-    - name: deb http://packages.prosody.im/debian {{ grains.oscodename }} main
+    - name: deb [signed-by=/usr/share/keyrings/prosody-keyring.gpg] http://packages.prosody.im/debian {{ grains.oscodename }} main
     - file: /etc/apt/sources.list.d/prosody.list
-    - key_url: https://prosody.im/files/prosody-debian-packages.key
     - clean_file: True
+    - require:
+      - cmd: prosody-repo-key
 
 prosody-dependencies:
   pkg.installed:

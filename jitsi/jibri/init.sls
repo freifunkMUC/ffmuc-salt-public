@@ -8,12 +8,19 @@
 include:
   - jitsi.base
 
+google-chrome-repo-key:
+  cmd.run:
+    - name: "curl https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/google-chrome-keyring.gpg"
+    - creates: /usr/share/keyrings/google-chrome-keyring.gpg
+
 google-chrome-repo:
   pkgrepo.managed:
     - humanname: Google Chrome Repo
-    - name: deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main
+    - name: deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main
     - file: /etc/apt/sources.list.d/google-chrome.list
-    - key_url: https://dl-ssl.google.com/linux/linux_signing_key.pub
+    - clean_file: True
+    - require:
+      - cmd: google-chrome-repo-key
 
 snd_aloop:
   kmod.present:

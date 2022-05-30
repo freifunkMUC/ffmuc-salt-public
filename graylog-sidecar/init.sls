@@ -8,20 +8,33 @@ graylog-sidecar-pkg:
 
 {% else %}{# if grains.osfullname in 'Raspbian' #}
 
+graylog-repo-key:
+  cmd.run:
+    - name: "curl https://packages.graylog2.org/repo/debian/pubkey.gpg | gpg --dearmor -o /usr/share/keyrings/graylog-keyring.gpg"
+    - creates: /usr/share/keyrings/graylog-keyring.gpg
+
 graylog-repo:
     pkgrepo.managed:
     - humanname: Graylog-Repo
-    - name: deb [arch={{ grains.osarch }}] https://packages.graylog2.org/repo/debian/ sidecar-stable 1.1
-    - key_url:  https://packages.graylog2.org/repo/debian/pubkey.gpg
+    - name: deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/graylog-keyring.gpg] https://packages.graylog2.org/repo/debian/ sidecar-stable 1.1
     - file: /etc/apt/sources.list.d/graylog-sidecar.list
     - clean_file: True
+    - require:
+      - cmd: graylog-repo-key
+
+elasticsearch-repo-key:
+  cmd.run:
+    - name: "curl https://artifacts.elastic.co/GPG-KEY-elasticsearch | gpg --dearmor -o /usr/share/keyrings/elasticsearch-keyring.gpg"
+    - creates: /usr/share/keyrings/elasticsearch-keyring.gpg
 
 filebeat-repo:
   pkgrepo.managed:
     - humanname: Elastic-Repo
-    - name: deb [arch={{ grains.osarch }}] https://artifacts.elastic.co/packages/oss-7.x/apt stable main
-    - key_url:  https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    - name: deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/elasticsearch-keyring.gpg] https://artifacts.elastic.co/packages/oss-7.x/apt stable main
     - file: /etc/apt/sources.list.d/elastic-7.x.list
+    - clean_file: True
+    - require:
+      - cmd: elasticsearch-repo-key
 
 {% endif %}
 

@@ -16,18 +16,24 @@ include:
   - apt
   - sudo
 
+icinga2-repo-key:
+  cmd.run:
+    - name: "curl https://packages.icinga.org/icinga.key | gpg --dearmor -o /usr/share/keyrings/icinga2-keyring.gpg"
+    - creates: /usr/share/keyrings/icinga2-keyring.gpg
+
 icinga2-repo:
   pkgrepo.managed:
     {% if grains.osfullname in 'Raspbian' %}
-    - name: deb https://packages.icinga.com/raspbian icinga-{{ grains.oscodename }} main
+    - name: deb [signed-by=/usr/share/keyrings/icinga2-keyring.gpg] https://packages.icinga.com/raspbian icinga-{{ grains.oscodename }} main
     {% elif grains.osfullname in 'Ubuntu' %}
-    - name: deb [arch={{ grains.osarch }}] https://packages.icinga.com/{{ grains.lsb_distrib_id | lower }} icinga-{{ grains.oscodename }} main
+    - name: deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/icinga2-keyring.gpg] https://packages.icinga.com/{{ grains.lsb_distrib_id | lower }} icinga-{{ grains.oscodename }} main
     {% else %}
-    - name: deb https://packages.icinga.com/debian icinga-{{ grains.oscodename }} main
+    - name: deb [signed-by=/usr/share/keyrings/icinga2-keyring.gpg] https://packages.icinga.com/debian icinga-{{ grains.oscodename }} main
     {% endif %}
     - file: /etc/apt/sources.list.d/icinga2.list
-    - key_url: https://packages.icinga.org/icinga.key
     - clean_file: True
+    - require:
+      - cmd: icinga2-repo-key
 
 # Install icinga2 package
 {% set node_config = salt['pillar.get']('nodes:' ~ grains.id, {}) %}
