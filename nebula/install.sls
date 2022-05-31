@@ -21,7 +21,7 @@ systemd-restart-nebula:
       - pkg: nebula-pkg
     - watch:
       - pkg: nebula-pkg
-    -require:
+    - require:
       - pkg: nebula-pkg
 
 # cleanup for migration file => deb
