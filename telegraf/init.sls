@@ -51,7 +51,7 @@ systemd-reload-telegraf:
   file.absent
 {% endif %}
 
-{% if salt["service.enabled"]("pdns-recursor") and 'dnsdist' in tags and false %}{# broken #}
+{% if salt["service.enabled"]("pdns-recursor") and 'dnsdist' in tags %}
 add_telegraf_pdns_group:
   group.present:
     - name: pdns
@@ -181,7 +181,7 @@ remove_asterisk_monitoring:
           service: telegraf
 
 /etc/telegraf/telegraf.d/in-powerdns_recursor.conf:
-{% if salt["service.available"]("pdns-recursor") and false %}{# not working #}
+{% if salt["service.available"]("pdns-recursor") %}
   file.managed:
     - source: salt://telegraf/files/in_powerdns_recursor.conf
 {% else %}

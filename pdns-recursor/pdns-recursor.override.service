@@ -19,3 +19,5 @@ ProtectKernelTunables=false
 ProtectSystem=false
 #RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
 RestrictAddressFamilies=
+# Give pdns group write access to /run/pdns-recursor so Telegraf can create read sockets
+RuntimeDirectoryMode=0775
