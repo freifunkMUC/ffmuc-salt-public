@@ -51,14 +51,6 @@ systemd-reload-telegraf:
   file.absent
 {% endif %}
 
-{% if salt["service.enabled"]("pdns-recursor") and 'dnsdist' in tags %}
-add_telegraf_pdns_group:
-  group.present:
-    - name: pdns
-    - addusers:
-      - telegraf
-{% endif %}
-
 /etc/telegraf/telegraf.conf:
   file.managed:
     - source: salt://telegraf/files/telegraf.conf
