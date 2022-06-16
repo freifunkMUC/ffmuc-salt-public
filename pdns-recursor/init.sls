@@ -24,7 +24,6 @@ pdns-recursor:
     - enable: True
     - restart: True
     - require:
-      - file: /etc/systemd/system/pdns-recursor.service.d/override.conf
       - file: /etc/powerdns/recursor.conf
     - watch:
       - file: /etc/powerdns/recursor.conf
@@ -36,15 +35,8 @@ systemd-resolved:
 systemd-reload-pdns-rec:
   cmd.run:
     - name: systemctl --system daemon-reload
-    - onchanges:
-      - file: /etc/systemd/system/pdns-recursor.service.d/override.conf
     - watch_in:
       - service: pdns-recursor
-
-/etc/systemd/system/pdns-recursor.service.d/override.conf:
-  file.managed:
-    - source: salt://pdns-recursor/pdns-recursor.override.service
-    - template: jinja
 
 /etc/powerdns/recursor.conf:
   file.managed:

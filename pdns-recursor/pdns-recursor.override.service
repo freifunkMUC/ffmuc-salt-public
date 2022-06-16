@@ -1,3 +1,0 @@
-[Service]
-# Give pdns group write access to /run/pdns-recursor so Telegraf can create read sockets
-RuntimeDirectoryMode=0775
