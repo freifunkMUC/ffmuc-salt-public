@@ -32,12 +32,6 @@ systemd-resolved:
   service.dead:
     - enable: False
 
-systemd-reload-pdns-rec:
-  cmd.run:
-    - name: systemctl --system daemon-reload
-    - watch_in:
-      - service: pdns-recursor
-
 /etc/powerdns/recursor.conf:
   file.managed:
     - source: salt://pdns-recursor/recursor.conf
