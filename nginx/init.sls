@@ -115,4 +115,8 @@ nginx-module-{{ module }}:
       - service: nginx
 {% endfor %}{# config #}
 
+/etc/logrotate.d/z_nginx:
+  file.managed:
+    - source: salt://nginx/files/logrotate.conf
+
 {% endif %}{# webserver in role #}
