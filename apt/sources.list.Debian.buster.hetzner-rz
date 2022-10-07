@@ -3,8 +3,10 @@
 #
 
 deb http://mirror.hetzner.de/debian/packages buster main contrib non-free
-deb http://mirror.hetzner.de/debian/security buster/updates main contrib non-free
 deb http://mirror.hetzner.de/debian/packages buster-updates main contrib non-free
+deb http://mirror.hetzner.de/debian/packages buster-backports main contrib non-free
+
+deb http://mirror.hetzner.de/debian/security buster/updates main contrib non-free
 
 # buster-backports, previously on backports.debian.org
 deb	http://deb.debian.org/debian/ buster-backports main contrib non-free

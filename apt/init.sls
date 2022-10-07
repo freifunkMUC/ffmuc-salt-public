@@ -11,6 +11,12 @@
 /etc/apt/sources.list.d/repo_saltstack_com_apt_debian_9_amd64_latest.list:
   file.absent
 
+# as configured in sources.list so duplicate
+/etc/apt/sources.list.d/hetzner-mirror.list:
+  file.absent
+/etc/apt/sources.list.d/hetzner-security-updates.list:
+  file.absent
+
 salt-repo-key:
   file.managed:
     - name: /usr/share/keyrings/salt-archive-keyring.gpg
