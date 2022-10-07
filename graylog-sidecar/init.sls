@@ -9,14 +9,14 @@ graylog-sidecar-pkg:
 {% else %}{# if grains.osfullname in 'Raspbian' #}
 
 graylog-repo-key:
-  cmd.run:
-    - name: "curl https://packages.graylog2.org/repo/debian/pubkey.gpg | gpg --dearmor -o /usr/share/keyrings/graylog-keyring.gpg"
-    - creates: /usr/share/keyrings/graylog-keyring.gpg
+  file.managed:
+    - name: /usr/share/keyrings/graylog-keyring.gpg
+    - source: salt://graylog-sidecar/graylog-keyring.gpg
 
 graylog-repo:
     pkgrepo.managed:
     - humanname: Graylog-Repo
-    - name: deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/graylog-keyring.gpg] https://packages.graylog2.org/repo/debian/ sidecar-stable 1.1
+    - name: deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/graylog-keyring.gpg] https://packages.graylog2.org/repo/debian/ sidecar-stable 1.2
     - file: /etc/apt/sources.list.d/graylog-sidecar.list
     - clean_file: True
     - require:
