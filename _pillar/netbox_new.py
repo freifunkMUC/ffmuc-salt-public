@@ -1,10 +1,10 @@
-
 from __future__ import absolute_import, print_function, unicode_literals
 import logging
 import six
 
 # Import Salt libs
 import salt.utils.http
+
 log = logging.getLogger(__name__)
 
 
@@ -135,6 +135,6 @@ def ext_pillar_test(minion_id, pillar, *args, **kwargs):
             }
         }
     """
-    response = salt.utils.http.query(api_url,
-        method="POST", data=graphql, header_dict=headers, decode=True
+    response = salt.utils.http.query(
+        api_url, method="POST", data=graphql, header_dict=headers, decode=True
     )
