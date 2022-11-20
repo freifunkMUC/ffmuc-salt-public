@@ -3,15 +3,15 @@
 graylog-sidecar-pkg:
   pkg.installed:
     - sources:
-      - graylog-sidecar: http://apt.ffmuc.net/graylog-sidecar_1.1.0-0.SNAPSHOT_armhf.deb
+      - graylog-sidecar: https://github.com/Graylog2/collector-sidecar/releases/download/1.2.0/graylog-sidecar_1.2.0-1_armv7.deb
       - filebeat: https://apt.ffmuc.net/filebeat-oss-8.0.0-SNAPSHOT-armhf.deb
 
 {% else %}{# if grains.osfullname in 'Raspbian' #}
 
 graylog-repo-key:
-  file.managed:
-    - name: /usr/share/keyrings/graylog-keyring.gpg
-    - source: salt://graylog-sidecar/graylog-keyring.gpg
+    cmd.run:
+      - name: "curl https://packages.graylog2.org/repo/debian/keyring.gpg | gpg --dearmor -o /usr/share/keyrings/graylog-keyring.gpg"
+      - creates: /usr/share/keyrings/graylog-keyring.gpg
 
 graylog-repo:
     pkgrepo.managed:
