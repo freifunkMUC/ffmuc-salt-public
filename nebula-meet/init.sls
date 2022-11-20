@@ -11,9 +11,10 @@ include:
 /etc/nebula-meet/ca.crt:
   file.managed:
     - source: salt://nebula-meet/cert/ca.crt
-    - require:
-        - file: /etc/nebula-meet/config.yml
-        - file: /etc/nebula-meet/{{ grains['id'] }}.crt
+    - makedirs: True
+    - user: root
+    - group: root
+    - mode: "0644"
 
 /etc/nebula-meet/{{ grains['id'] }}.crt:
   file.managed:
@@ -51,7 +52,9 @@ generate_ssh_host_ed25519_key:
     - group: root
     - mode: "0644"
     - require:
+        - file: /etc/nebula-meet/ca.crt
         - file: /etc/nebula-meet/{{ grains['id'] }}.crt
+        - file: /etc/nebula-meet/{{ grains['id'] }}.key
 
 systemd-reload-nebula-meet:
   cmd.run:
@@ -64,22 +67,21 @@ nebula-meet-service-file:
     - source: salt://nebula-meet/files/nebula.service
     - name: /etc/systemd/system/nebula-meet.service
     - require:
-        - file: /etc/nebula-meet/{{ grains['id'] }}.crt
+        - file: /etc/nebula-meet/config.yml
 
 nebula-meet-service:
   service.running:
     - enable: True
     - running: True
-    - reload: True
+    #- reload: True
     - name: nebula-meet
     - require:
       - file: nebula-meet-service-file
       - file: /etc/nebula-meet/config.yml
-      - file: /etc/nebula-meet/{{ grains['id'] }}.crt
-      - file: /etc/nebula-meet/{{ grains['id'] }}.key
-      - file: nebula-binary
+      - pkg: nebula-pkg
     - watch:
         - file: /etc/nebula-meet/config.yml
+        - cmd: systemd-reload-nebula-meet
 
 {% else %}
 {# remove old config to allow migration to new file destination #}
