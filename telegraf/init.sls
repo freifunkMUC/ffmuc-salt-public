@@ -211,4 +211,14 @@ remove_asterisk_monitoring:
     - watch_in:
         service: telegraf
 
+/etc/telegraf/telegraf.d/in-nodes-online.conf:
+{% if "yanic" in tags %}
+  file.managed:
+    - source: salt://telegraf/files/in_nodes-online.conf
+{% else %}
+  file.absent:
+{% endif %}
+    - watch_in:
+          service: telegraf
+
 {% endif %}{# if telegraf in tags #}
