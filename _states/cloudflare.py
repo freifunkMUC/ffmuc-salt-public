@@ -235,7 +235,6 @@ class Record(
 
 
 class Zone(object):
-
     ZONES_URI_TEMPLATE = "https://api.cloudflare.com/client/v4/zones/{zone_id}"
     RECORDS_URI_TEMPLATE = "https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records?page={page}&per_page=50"
 
