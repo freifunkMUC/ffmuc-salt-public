@@ -15,7 +15,7 @@
         - source: salt://wireguard/export/wg.jinja2
         - template: jinja
         - defaults:
-          network_id: {{ network_id }}
+            network_id: {{ network_id }}
           client_name: {{ client_name }}
         - require:
            - file: /etc/wireguard/export/{{ client_name }}
@@ -27,7 +27,7 @@
         - source: salt://wireguard/export/ebgp4.jinja2
         - template: jinja
         - defaults:
-          network_id: {{ network_id }}
+            network_id: {{ network_id }}
         - require:
            - file: /etc/wireguard/export/{{ client_name }}
 
@@ -36,7 +36,7 @@
         - source: salt://wireguard/export/ebgp6.jinja2
         - template: jinja
         - defaults:
-          network_id: {{ network_id }}
+            network_id: {{ network_id }}
         - require:
            - file: /etc/wireguard/export/{{ client_name }}
 {% endif %}{# grains.id == vpn01 #}

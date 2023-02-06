@@ -28,7 +28,7 @@ python-dnspython:
     - source: salt://dns-server/auth/named.conf.options
     - template: jinja
     - defaults:
-      listening_port: {{ listening_port }}
+        listening_port: {{ listening_port }}
     - require:
       - pkg: bind9
     - watch_in:

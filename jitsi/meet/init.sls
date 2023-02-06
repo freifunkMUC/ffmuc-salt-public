@@ -20,7 +20,7 @@ jitsi-meet-web-pkgs:
       - salt://jitsi/meet/domain-config.js.jinja
     - template: jinja
     - defaults:
-      domain: {{ domain }}
+        domain: {{ domain }}
 {% endfor %}
 
 /usr/share/jitsi-meet/interface_config.js:

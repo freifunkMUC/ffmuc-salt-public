@@ -25,7 +25,7 @@ python3-netifaces:
     - source: salt://respondd/alias.json
     - template: jinja
     - defaults:
-      site: {{ site }}
+        site: {{ site }}
     - watch_in:
         - service: respondd@{{ site }}
 
@@ -34,7 +34,7 @@ python3-netifaces:
     - source: salt://respondd/config.json
     - template: jinja
     - defaults:
-      site: {{ site }}
+        site: {{ site }}
     - watch_in:
         - service: respondd@{{ site }}
 
@@ -43,8 +43,8 @@ python3-netifaces:
     - source: salt://respondd/respondd-tmpl/lib/respondd_client.py
     - template: jinja
     - defaults:
-      site: {{ site }}
-      id: {{ salt['pillar.get']('netbox:config_context:site_config:{{ site }}:site_no')  }}
+        site: {{ site }}
+        id: {{ salt['pillar.get']('netbox:config_context:site_config:{{ site }}:site_no')  }}
     - watch_in:
         - service: respondd@{{ site }}
 
