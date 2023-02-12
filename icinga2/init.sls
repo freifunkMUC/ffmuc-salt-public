@@ -255,8 +255,8 @@ Cleanup /etc/icinga2/zones.d/master/ffmuc-conf.d/hosts/generated/:
     - source: salt://icinga2/host.conf.tmpl
     - template: jinja
     - context:
-      node_id: {{ node_id }}
-      node_config: {{ data }}
+        node_id: {{ node_id }}
+        node_config: {{ data }}
     - require:
       - file: Create /etc/icinga2/zones.d/master/ffmuc-conf.d/hosts/generated/
     - require_in:

@@ -60,7 +60,7 @@ generate-privkey:
         - source: salt://wireguard/ebgp4.jinja2
         - template: jinja
         - defaults:
-          interfaces: {{ interfaces }}
+            interfaces: {{ interfaces }}
         - watch_in:
            - cmd: bird-configure
         - require:
@@ -73,7 +73,7 @@ generate-privkey:
         - source: salt://wireguard/ebgp6.jinja2
         - template: jinja
         - defaults:
-          interfaces: {{ interfaces }}
+            interfaces: {{ interfaces }}
         - watch_in:
            - cmd: bird6-configure
         - require:
@@ -100,10 +100,10 @@ generate-clientkey-{{ interface }}:
         - source: salt://wireguard/wg.jinja2
         - template: jinja
         - defaults:
-          interface: {{ interface }}
-          interfaces: {{ interfaces }}
-          client_name: {{ client_name }}
-          network_id: {{ network_id }}
+            interface: {{ interface }}
+            interfaces: {{ interfaces }}
+            client_name: {{ client_name }}
+            network_id: {{ network_id }}
         - require:
            - cmd: generate-privkey
            - cmd: generate-clientkey-{{ interface }}
@@ -116,8 +116,8 @@ generate-clientkey-{{ interface }}:
         - source: salt://wireguard/interface.jinja2
         - template: jinja
         - defaults:
-          interface: {{ interface }}
-          interfaces: {{ interfaces }}
+            interface: {{ interface }}
+            interfaces: {{ interfaces }}
         - watch_in:
           - cmd: ifreload
 

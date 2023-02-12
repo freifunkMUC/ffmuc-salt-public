@@ -67,7 +67,7 @@ compose-file-{{ container }}:
     - mode: "0600"
     {%- if 'credentials' in containers[container] %}
     - context:
-      credentials: {{ containers[container]['credentials'] }}
+        credentials: {{ containers[container]['credentials'] }}
     {% endif  %}
 
 compose-build-{{ container }}:
