@@ -10,7 +10,7 @@ graylog-sidecar-pkg:
 
 graylog-repo-key:
     cmd.run:
-      - name: "curl https://packages.graylog2.org/repo/debian/keyring.gpg | gpg --dearmor -o /usr/share/keyrings/graylog-keyring.gpg"
+      - name: "wget -O - -o /dev/null https://packages.graylog2.org/repo/debian/keyring.gpg | gpg --dearmor -o /usr/share/keyrings/graylog-keyring.gpg"
       - creates: /usr/share/keyrings/graylog-keyring.gpg
 
 graylog-repo:
@@ -24,7 +24,7 @@ graylog-repo:
 
 elasticsearch-repo-key:
   cmd.run:
-    - name: "curl https://artifacts.elastic.co/GPG-KEY-elasticsearch | gpg --dearmor -o /usr/share/keyrings/elasticsearch-keyring.gpg"
+    - name: "wget -O - -o /dev/null https://artifacts.elastic.co/GPG-KEY-elasticsearch | gpg --dearmor -o /usr/share/keyrings/elasticsearch-keyring.gpg"
     - creates: /usr/share/keyrings/elasticsearch-keyring.gpg
 
 filebeat-repo:

@@ -272,6 +272,9 @@ firewall:
   - port: 4000
     proto: tcp
     group: webfrontend
+  - port: 3001
+    proto: tcp
+    group: webfrontend
 {%- endif %}
 {%- if "docker07.in.ffmuc.net" == grains["id"] %}
   # Elastiflow Logstash
