@@ -5,14 +5,14 @@
 
 grafana-repo-key:
   cmd.run:
-    - name: "curl https://packages.grafana.com/gpg.key | gpg --dearmor -o /usr/share/keyrings/grafana-keyring.gpg"
+    - name: "curl https://apt.grafana.com/gpg.key | gpg --dearmor -o /usr/share/keyrings/grafana-keyring.gpg"
     - creates: /usr/share/keyrings/grafana-keyring.gpg
 
 grafana:
 # add Grafana Repo
   pkgrepo.managed:
     - humanname: Grafana Repo
-    - name: deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/grafana-keyring.gpg] https://packages.grafana.com/oss/deb stable main
+    - name: deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/grafana-keyring.gpg] https://apt.grafana.com stable main
     - file: /etc/apt/sources.list.d/grafana.list
     - clean_file: True
     - require:
