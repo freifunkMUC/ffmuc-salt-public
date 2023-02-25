@@ -212,6 +212,8 @@ update-certificates:
   "mod_muc_breakout_rooms",
   "mod_muc_lobby_rooms",
   "mod_muc_meeting_id",
+  "mod_room_metadata",
+  "mod_room_metadata_component",
   "mod_smacks",
   "mod_speakerstats",
   "mod_speakerstats_component",
