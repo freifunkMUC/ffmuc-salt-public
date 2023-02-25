@@ -205,11 +205,14 @@ update-certificates:
 
 {% for component in [
   "ext_events.lib",
-  "mod_muc_domain_mapper",
+  "mod_av_moderation",
+  "mod_av_moderation_component",
+  "mod_end_conference",
   "mod_conference_duration",
   "mod_conference_duration_component",
   "mod_jitsi_session",
   "mod_muc_breakout_rooms",
+  "mod_muc_domain_mapper",
   "mod_muc_lobby_rooms",
   "mod_muc_meeting_id",
   "mod_room_metadata",

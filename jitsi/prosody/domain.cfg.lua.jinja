@@ -17,24 +17,29 @@ VirtualHost "{{ jitsi.xmpp.xmpp_domain }}"
             key = "/etc/prosody/certs/{{ jitsi.public_domain }}.key";
             certificate = "/etc/prosody/certs/{{ jitsi.public_domain }}.crt";
     }
+    av_moderation_component = "avmoderation.{{ jitsi.public_domain }}"
     speakerstats_component = "speakerstats.{{ jitsi.public_domain }}"
     conference_duration_component = "conferenceduration.{{ jitsi.public_domain }}"
+    end_conference_component = "endconference.{{ jitsi.public_domain }}"
     -- we need bosh
     modules_enabled = {
         "bosh";
         "websocket";
+        "ping"; -- Enable mod_ping
+        "speakerstats";
+        "conference_duration";
+        "end_conference";
         {% if jitsi.lobby_enabled %}"muc_lobby_rooms";{% endif %}
         {% if jitsi.breakout_enabled %}"muc_breakout_rooms";{% endif %}
-        "ping"; -- Enable mod_ping
-        "conference_duration";
-        "speakerstats";
+        "av_moderation";
+        "room_metadata";
     }
     {%- if jitsi.lobby_enabled %}
     lobby_muc = "lobby.{{ jitsi.public_domain }}"
-    main_muc = "conference.{{ jitsi.public_domain }}"
     {%- endif %}
     {% if jitsi.breakout_enabled %}breakout_rooms_muc = "breakout.{{ jitsi.public_domain }}"{% endif %}
     room_metadata_component = "metadata.{{ jitsi.public_domain }}"
+    main_muc = "conference.{{ jitsi.public_domain }}"
     c2s_require_encryption = false
     app_id = ""
     app_secret = ""
@@ -45,6 +50,7 @@ Component "conference.{{ jitsi.public_domain }}" "muc"
     modules_enabled = {
         "muc_meeting_id";
         "muc_domain_mapper";
+        "polls";
     }
     muc_room_cache_size = 10000
     muc_room_locking = false
@@ -69,6 +75,7 @@ Component "breakout.{{ jitsi.public_domain }}" "muc"
     modules_enabled = {
         "muc_meeting_id";
         "muc_domain_mapper";
+        "polls";
     }
     admins = { "{{ jitsi.jicofo.username }}@{{ jitsi.xmpp.auth_domain }}" }
     muc_room_locking = false
@@ -98,6 +105,12 @@ Component "speakerstats.{{ jitsi.public_domain }}" "speakerstats_component"
     muc_component = "conference.{{ jitsi.public_domain }}"
 
 Component "conferenceduration.{{ jitsi.public_domain }}" "conference_duration_component"
+    muc_component = "conference.{{ jitsi.public_domain }}"
+
+Component "endconference.{{ jitsi.public_domain }}" "end_conference"
+    muc_component = "conference.{{ jitsi.public_domain }}"
+
+Component "avmoderation.{{ jitsi.public_domain }}" "av_moderation_component"
     muc_component = "conference.{{ jitsi.public_domain }}"
 
 {%- if jitsi.authentication %}
