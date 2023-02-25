@@ -34,6 +34,7 @@ VirtualHost "{{ jitsi.xmpp.xmpp_domain }}"
     main_muc = "conference.{{ jitsi.public_domain }}"
     {%- endif %}
     {% if jitsi.breakout_enabled %}breakout_rooms_muc = "breakout.{{ jitsi.public_domain }}"{% endif %}
+    room_metadata_component = "metadata.{{ jitsi.public_domain }}"
     c2s_require_encryption = false
     app_id = ""
     app_secret = ""
@@ -140,3 +141,7 @@ VirtualHost "recorder.{{ jitsi.public_domain }}"
     c2s_require_encryption = false
     allow_empty_token = true
 {% endif %}{# recorder enabled #}
+
+Component "metadata.{{ jitsi.public_domain }}" "room_metadata_component"
+    muc_component = "conference.{{ jitsi.public_domain }}"
+    breakout_rooms_component = "breakout.{{ jitsi.public_domain }}"
