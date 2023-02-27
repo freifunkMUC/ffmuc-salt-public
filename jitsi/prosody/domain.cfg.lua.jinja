@@ -77,7 +77,7 @@ Component "breakout.{{ jitsi.public_domain }}" "muc"
         "muc_domain_mapper";
         "polls";
     }
-    admins = { "{{ jitsi.jicofo.username }}@{{ jitsi.xmpp.auth_domain }}" }
+    admins = { "{{ jitsi.jicofo.username }}@{{ jitsi.xmpp.auth_domain }}", "{{ jitsi.videobridge.username }}@{{ jitsi.xmpp.auth_domain }}" }
     muc_room_locking = false
     muc_room_default_public_jids = true
 {% endif %}
@@ -88,6 +88,9 @@ Component "internal.auth.{{ jitsi.public_domain }}" "muc"
     modules_enabled = {
       "ping";
     }
+    admins = { "{{ jitsi.jicofo.username }}@{{ jitsi.xmpp.auth_domain }}", "{{ jitsi.videobridge.username }}@{{ jitsi.xmpp.auth_domain }}" }
+    muc_room_locking = false
+    muc_room_default_public_jids = true
     muc_room_cache_size = 10000
 
 VirtualHost "{{ jitsi.xmpp.auth_domain }}"
@@ -100,6 +103,7 @@ VirtualHost "{{ jitsi.xmpp.auth_domain }}"
 -- Proxy to jicofo's user JID, so that it doesn't have to register as a component.
 Component "focus.{{ jitsi.public_domain }}" "client_proxy"
     target_address = "{{ jitsi.jicofo.username }}@{{ jitsi.xmpp.auth_domain }}"
+    component_secret = "{{ jitsi.jicofo.secret }}"
 
 Component "speakerstats.{{ jitsi.public_domain }}" "speakerstats_component"
     muc_component = "conference.{{ jitsi.public_domain }}"

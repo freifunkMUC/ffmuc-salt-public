@@ -231,12 +231,4 @@ update-certificates:
       - service: prosody
 {% endfor %}{# for component #}
 
-#{% for component in ["mod_muc_lobby_rooms"] %}
-#/usr/share/jitsi-meet/prosody-plugins/{{ component }}.lua:
-#  file.managed:
-#    - source: salt://jitsi/prosody/modules/{{ component }}.lua
-#    - skip_verify: True
-#    - watch_in:
-#      - service: prosody
-#{% endfor %}{# for component #}
 {% endif %}{# if jitsi.prosody.enabled #}
