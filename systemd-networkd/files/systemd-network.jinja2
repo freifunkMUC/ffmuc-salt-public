@@ -35,6 +35,8 @@ Metric=1024
 {%- if 'wg' in interface %}
 [Network]
 Address={{ salt['wireguard_v6.generate'](salt['pillar.get']('netbox:config_context:wireguard:public_key')) }}/128
+# for systemd 250.4
+#IPv6AcceptRA=false # workaround for https://github.com/systemd/systemd/issues/23197
 VXLAN={{ interface | regex_replace('wg-', 'vx-') }}
 {%- set own_location = salt['pillar.get']('netbox:site:name') %}
 {% for node,bla in salt['mine.get']('netbox:role:name:nextgen-gateway', 'minion_id', tgt_type='pillar').items() | sort %}

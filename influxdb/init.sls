@@ -2,24 +2,23 @@
 # influxdb
 #
 {%- if 'influxdb_server' in salt['pillar.get']('netbox:tag_list', []) %}
-influxdb-repo-key:
+influx-db-repo-key:
   cmd.run:
-    - name: "curl https://repos.influxdata.com/influxdata-archive_compat.key | gpg --dearmor -o /usr/share/keyrings/influxdb-keyring.gpg"
-    - creates: /usr/share/keyrings/influxdb-keyring.gpg
+    - name: "curl https://repos.influxdata.com/influxdata-archive_compat.key | gpg --batch --yes --dearmor -o /usr/share/keyrings/influxdb-keyring.gpg"
 
-influxdb-repo:
+influx-db-repo:
   pkgrepo.managed:
     - name: deb [signed-by=/usr/share/keyrings/influxdb-keyring.gpg] https://repos.influxdata.com/{{ grains.lsb_distrib_id | lower }} {{ grains.oscodename }} stable
     - file: /etc/apt/sources.list.d/influxdb.list
     - clean_file: True
     - require:
-      - cmd: influxdb-repo-key
+      - cmd: influx-db-repo-key
 
 influxdb-pkg:
   pkg.installed:
     - name: influxdb
     - require:
-      - pkgrepo: influxdb-repo
+      - pkgrepo: influx-db-repo
 
 influxdb:
   service.running:
