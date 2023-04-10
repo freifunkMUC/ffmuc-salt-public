@@ -20,7 +20,9 @@ VirtualHost "{{ jitsi.xmpp.xmpp_domain }}"
     av_moderation_component = "avmoderation.{{ jitsi.public_domain }}"
     speakerstats_component = "speakerstats.{{ jitsi.public_domain }}"
     conference_duration_component = "conferenceduration.{{ jitsi.public_domain }}"
+    {%- if jitsi.end_conference_enabled %}
     end_conference_component = "endconference.{{ jitsi.public_domain }}"
+    {%- endif %}
     -- we need bosh
     modules_enabled = {
         "bosh";
@@ -28,7 +30,7 @@ VirtualHost "{{ jitsi.xmpp.xmpp_domain }}"
         "ping"; -- Enable mod_ping
         "speakerstats";
         "conference_duration";
-        "end_conference";
+        {% if jitsi.end_conference_enabled %}"end_conference";{% endif %}
         {% if jitsi.lobby_enabled %}"muc_lobby_rooms";{% endif %}
         {% if jitsi.breakout_enabled %}"muc_breakout_rooms";{% endif %}
         "av_moderation";
@@ -111,8 +113,10 @@ Component "speakerstats.{{ jitsi.public_domain }}" "speakerstats_component"
 Component "conferenceduration.{{ jitsi.public_domain }}" "conference_duration_component"
     muc_component = "conference.{{ jitsi.public_domain }}"
 
-Component "endconference.{{ jitsi.public_domain }}" "end_conference"
+{%- if jitsi.end_conference_enabled %}
+Component "endconference.{{ jitsi.public_domain }}" "https://meet.ffmuc.net/asfasgeag4"
     muc_component = "conference.{{ jitsi.public_domain }}"
+{% endif %}{# if end_conference_enabled #}
 
 Component "avmoderation.{{ jitsi.public_domain }}" "av_moderation_component"
     muc_component = "conference.{{ jitsi.public_domain }}"

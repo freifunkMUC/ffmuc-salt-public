@@ -8,6 +8,7 @@ jitsi:
     - exampledomain
   authentication: false
   lobby_enabled: true
+  end_conference_enabled: false
   breakout_enabled: true
   jibri_enabled: false
   conference_mapper_url: "https://meet.example.com/conferencemapper"
