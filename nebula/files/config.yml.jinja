@@ -153,6 +153,10 @@ firewall:
   - port: 8084
     proto: tcp
     group: webfrontend
+  # Allow connections for excalidraw.ffmuc.net
+  - port: 8090
+    proto: tcp
+    group: webfrontend
   # Allow connections for matomo.ffmuc.net
   - port: 8092
     proto: tcp
