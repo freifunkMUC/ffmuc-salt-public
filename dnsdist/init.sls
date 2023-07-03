@@ -5,12 +5,12 @@
 
 dnsdist-repo-key:
   cmd.run:
-    - name: "curl https://repo.powerdns.com/FD380FBB-pub.asc | gpg --dearmor -o /usr/share/keyrings/powerdns-keyring.gpg"
-    - creates: /usr/share/keyrings/powerdns-keyring.gpg
+    - name: "/usr/lib/apt/apt-helper download-file https://repo.powerdns.com/FD380FBB-pub.asc /tmp/FD380FBB-pub.asc && mv /tmp/FD380FBB-pub.asc /etc/apt/trusted.gpg.d/FD380FBB.asc"
+    - creates: /etc/apt/trusted.gpg.d/FD380FBB.asc
 
 dnsdist-repo:
   pkgrepo.managed:
-    - name: deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/powerdns-keyring.gpg] https://repo.powerdns.com/{{ grains.lsb_distrib_id | lower }} {{ grains.oscodename }}-dnsdist-17 main
+    - name: deb [arch={{ grains.osarch }}] https://repo.powerdns.com/{{ grains.lsb_distrib_id | lower }} {{ grains.oscodename }}-dnsdist-18 main
     - file: /etc/apt/sources.list.d/dnsdist.list
     - clean_file: True
     - require:

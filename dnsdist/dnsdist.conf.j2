@@ -11,8 +11,15 @@ setACL({'0.0.0.0/0', '::/0'})
 addAction(AndRule({QTypeRule(DNSQType.ANY), TCPRule(false)}), TCAction(), {name="Shunt-ANY-to-TCP"})
 addAction(RegexRule(".*\\.(10|168\\.192|(1[6-9]|2[0-9]|3[0-1])\\.172)\\.in-addr\\.arpa$"), RCodeAction(DNSRCode.NXDOMAIN), {name="RFC1918-PTR-NXDOMAIN"})
 
-addLocal("0.0.0.0")
-addLocal("::")
+-- This adds more UDP threads https://dnsdist.org/advanced/tuning.html
+addLocal("0.0.0.0", {reusePort=true})
+addLocal("0.0.0.0", {reusePort=true})
+addLocal("0.0.0.0", {reusePort=true})
+addLocal("0.0.0.0", {reusePort=true})
+addLocal("0.0.0.0", {reusePort=true})
+addLocal("0.0.0.0", {reusePort=true})
+addLocal("::", {reusePort=true})
+addLocal("::", {reusePort=true})
 
 {%- if 'webfrontend' in grains.id %}
 ssl_cert="/etc/letsencrypt/live/ffmuc.net/fullchain.pem"
@@ -49,7 +56,7 @@ addAction(AndRule({NotRule(makeRule({"ffmuc.net"})), NotRule(makeRule({"127.0.0.
 addCapabilitiesToRetain("CAP_SYS_ADMIN")
 
 -- enable ebpf
-bpf = newBPFFilter(1024, 1024, 1024)
+bpf = newBPFFilter({ipv4MaxItems=1024, ipv6MaxItems=1024, qnamesMaxItems=1024})
 setDefaultBPFFilter(bpf)
 
 -- set number of queries to be allowed per second from an IP but exclude localhost
@@ -66,15 +73,15 @@ end
 setRingBuffersSize(100000)
 
 {%- if 'muc01' in salt['pillar.get']('netbox:site:slug') %}
-newServer({address="10.8.0.39:1653", name="web05", weight=3, retries=2, id="7cd4655e-071e-4a9a-9623-834ba49ea472"})
-newServer({address="10.8.0.40:1653", name="web06", weight=3, retries=2, id="d5d0a3a9-6787-479f-ad0f-106d4618ccc2"})
-newServer({address="10.8.0.38:1653", name="gw06", weight=2, retries=2, id="42c4bdfe-0ccc-4e9e-8816-7f88421b50f8"})
-newServer({address="10.8.0.13:1653", name="gw07", weight=2, retries=2, id="1c961f33-3a09-4b40-ae9d-5b5a8dd71061"})
+newServer({address="10.8.0.39:1653", name="web05", weight=3, retries=2, id="7cd4655e-071e-4a9a-9623-834ba49ea472", sockets=6})
+newServer({address="10.8.0.40:1653", name="web06", weight=3, retries=2, id="d5d0a3a9-6787-479f-ad0f-106d4618ccc2", sockets=6})
+newServer({address="10.8.0.38:1653", name="gw06", weight=2, retries=2, id="42c4bdfe-0ccc-4e9e-8816-7f88421b50f8", sockets=6})
+newServer({address="10.8.0.13:1653", name="gw07", weight=2, retries=2, id="1c961f33-3a09-4b40-ae9d-5b5a8dd71061", sockets=6})
 {%- elif 'vie01' in salt['pillar.get']('netbox:site:slug') %}
-newServer({address="10.8.0.29:1653", name="web03", weight=3, retries=2, id="23b0121d-91c5-4338-8c5a-cc8ba6f2ca8d"})
-newServer({address="10.8.0.30:1653", name="web04", weight=3, retries=2, id="0ed35651-7766-492c-ab44-562e76d395b6"})
-newServer({address="10.8.0.32:1653", name="gw04", weight=3, retries=2, id="fec91b13-6d71-4162-92a5-68c197ee99c4"})
-newServer({address="10.8.0.33:1653", name="gw05", weight=3, retries=2, id="24d189ad-2070-458d-b34a-7c0c22ba7bcd"})
+newServer({address="10.8.0.29:1653", name="web03", weight=3, retries=2, id="23b0121d-91c5-4338-8c5a-cc8ba6f2ca8d", sockets=6})
+newServer({address="10.8.0.30:1653", name="web04", weight=3, retries=2, id="0ed35651-7766-492c-ab44-562e76d395b6", sockets=6})
+newServer({address="10.8.0.32:1653", name="gw04", weight=3, retries=2, id="fec91b13-6d71-4162-92a5-68c197ee99c4", sockets=6})
+newServer({address="10.8.0.33:1653", name="gw05", weight=3, retries=2, id="24d189ad-2070-458d-b34a-7c0c22ba7bcd", sockets=6})
 {%- else %}
 newServer({address="1.1.1.1", name="anycastCF"})
 {%- endif %}
@@ -95,7 +102,7 @@ newServer({address="1.1.1.1", name="anycastCF", pool="auth"})
   {%- endif %}{# site #}
 {%- endif %}{# authoritative #}
 
-addAction({'in.ffmuc.net', 'ov.ffmuc.net', 'ffmuc.net', 'ffmuc.bayern', 'fnmuc.net', 'freewifi.bayern', 'freifunk-muenchen.de', 'xn--freifunk-mnchen-8vb.de.', 'freifunk-muenchen.net'}, PoolAction("auth"), {name="Redirect-Auth"})
+addAction({'in.ffmuc.net', 'ov.ffmuc.net', 'ffmuc.net', 'ffmuc.bayern', 'fnmuc.net', 'freewifi.bayern', 'freifunk-muenchen.de', 'xn--freifunk-mnchen-8vb.de.', 'freifunk-muenchen.net', 'muenchen.freifunk.net', 'xn--mnchen-3ya.freifunk.net', 'augsburg.freifunk.net', 'wertingen.freifunk.net', 'donau-ries.freifunk.net'}, PoolAction("auth"), {name="Redirect-Auth"})
 
 {#- some stats #}
 addAction({'in-addr.arpa', 'ip6.arpa'}, NoneAction(), {name="RDNS"})
@@ -114,7 +121,8 @@ getPool("auth"):setCache(pc)
 
 {%- set dnsdist_webserver = salt["pillar.get"]("netbox:config_context:dnsdist:webserver", []) %}
 {%- if "bind" in dnsdist_webserver %}
-webserver("{{ dnsdist_webserver["bind"] }}", "{{ dnsdist_webserver["password"] }}", "{{ dnsdist_webserver["api_token"] }}")
+webserver("{{ dnsdist_webserver["bind"] }}")
+setWebserverConfig ({password="{{ dnsdist_webserver["password"] }}", apiKey="{{ dnsdist_webserver["api_token"] }}"})
 {%- endif -%}
 {%- set dnsdist_console = salt["pillar.get"]("netbox:config_context:dnsdist:console", []) %}
 {%- if "bind" in dnsdist_console %}
@@ -123,7 +131,7 @@ setKey("{{ dnsdist_console["key"] }}")
 {%- endif %}
 
 setMaxUDPOutstanding(65535)
-setMaxTCPClientThreads(2000)        -- set X(int) to handle number of maximum tcp clients
+setMaxTCPClientThreads(20)        -- set X(int) to handle number of maximum tcp clients
 setMaxTCPConnectionDuration(120)    -- set X(int) for tcp connection duaration from a connected client. X is number of seconds.
 setMaxTCPConnectionsPerClient(200)   -- set X(int) for number of tcp connections from a single client. Useful for rate limiting the concurrent connections.
 setMaxTCPQueriesPerConnection(3000) -- set X(int) , similiar to addAction(MaxQPSIPRule(X), DropAction())
