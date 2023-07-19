@@ -1,0 +1,19 @@
+$ORIGIN .
+$TTL 3600	; 1 week
+{{ domain }}		IN	SOA	anycast01.ffmuc.net. hostmaster.ffmuc.net. (
+					2023071001 ; serial
+					300        ; refresh (5 minutes)
+					100        ; retry (1 minute 40 seconds)
+					6000       ; expire (1 hour 40 minutes)
+					600        ; minimum (10 minutes)
+					)
+			IN	NS	anycast01.ffmuc.net.
+			IN	NS	anycast02.ffmuc.net.
+
+			IN	AAAA	2001:678:ed0:f000::
+			IN	AAAA	2001:678:e68:f000::
+
+			IN	A	5.1.66.255
+			IN	A	185.150.99.255
+
+$ORIGIN {{domain}}.

@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# Script to nsupdate all our authoritative servers, supposed to be run by certbot.
+# Requires bind9-utils installed.
+
+# The following environment variables are passed to the script by certbot:
+# CERTBOT_DOMAIN, CERTBOT_VALIDATION, CERTBOT_TOKEN (HTTP-01 only), CERTBOT_REMAINING_CHALLENGES, CERTBOT_ALL_DOMAINS, CERTBOT_AUTH_OUTPUT
+
+HOST="_acme-challenge"
+
+{%- set update_key = salt['pillar.get']('netbox:config_context:dns_zones:update_keys:letsencrypt:key') %}
+UPDATE_KEY="{{ update_key }}"
+
+AUTH_SERVERS=("webfrontend03.ov.ffmuc.net" "webfrontend04.ov.ffmuc.net" "webfrontend05.ov.ffmuc.net" "webfrontend06.ov.ffmuc.net")
+
+for AUTH in ${AUTH_SERVERS[@]}; do
+	nsupdate -y "hmac-sha512:letsencrypt:${UPDATE_KEY}" << EOM
+server ${AUTH} 553
+zone ${CERTBOT_DOMAIN}
+update delete ${HOST}.${CERTBOT_DOMAIN} TXT "${CERTBOT_VALIDATION}"
+send
+EOM
+	echo ""
+done

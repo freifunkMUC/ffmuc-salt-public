@@ -17,7 +17,7 @@ update_ca_certificates:
 
 generate-dhparam:
   cmd.run:
-    - name: openssl dhparam -out /etc/ssl/dhparam.pem 2048
+    - name: openssl dhparam -out /etc/ssl/dhparam.pem 4096
     - creates: /etc/ssl/dhparam.pem
 
 # Install FFMUC internal CA into Debian CA certificate mangling mechanism so
@@ -129,9 +129,12 @@ certbot-dns-cloudflare:
 dns_credentials:
   file.managed:
     - name: /var/lib/cache/salt/dns_plugin_credentials.ini
+    - source: salt://certs/files/dns_plugin_credentials.ini
     - makedirs: True
-    - contents: "dns_cloudflare_api_token = {{ cloudflare_token }}"
     - mode: "0600"
+    - template: jinja
+    - defaults:
+        cloudflare_token: {{ cloudflare_token }}
 
 ffmuc-wildcard-cert:
   acme.cert:
@@ -172,6 +175,49 @@ ffmuc-wildcard-cert:
         - cmd: certbot-dns-cloudflare
         - pip: acme-client
         - file: dns_credentials
+
+
+{% if "webserver-external" in role %}
+# Required for running nsupdate with certbot
+bind9-utils:
+  pkg.installed
+
+update-dns.sh:
+  file.managed:
+    - name: /var/lib/cache/salt/update-dns.sh
+    - source: salt://certs/files/update-dns.sh.jinja
+    - makedirs: True
+    - mode: "0700"
+    - template: jinja
+
+cleanup-dns.sh:
+  file.managed:
+    - name: /var/lib/cache/salt/cleanup-dns.sh
+    - source: salt://certs/files/cleanup-dns.sh.jinja
+    - makedirs: True
+    - mode: "0700"
+    - template: jinja
+
+# Salt's acme module doesn't support any DNS plugin besides Cloudflare, not even manual. Thus use cmd.run.
+# TODO add 'unless' condition which checks whether cert needs renewal.
+# Expiration date is not enough, should check revocation status as well. As of 2023-06 Cerbot has no command exposed for this.
+muenchen.freifunk.net-wildcard-cert:
+  cmd.run:
+    - name: >
+        certbot certonly -n --agree-tos -m hilfe@ffmuc.net
+        --manual --manual-auth-hook /var/lib/cache/salt/update-dns.sh --manual-cleanup-hook /var/lib/cache/salt/cleanup-dns.sh
+        --preferred-challenges dns --expand
+        -d "muenchen.freifunk.net" -d "*.muenchen.freifunk.net"
+        -d "xn--mnchen-3ya.freifunk.net" -d "*.xn--mnchen-3ya.freifunk.net"
+        -d "wertingen.freifunk.net" -d "*.wertingen.freifunk.net"
+        -d "donau-ries.freifunk.net" -d "*.donau-ries.freifunk.net"
+{#-        -d "augsburg.freifunk.net" -d "*.augsburg.freifunk.net" #}
+    - require:
+        - cmd: certbot
+        - pip: acme-client
+        - file: update-dns.sh
+{% endif %}
+
 
 /etc/letsencrypt/renewal-hooks/deploy/01-reload-nginx.sh:
   file.managed:

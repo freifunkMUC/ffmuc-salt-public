@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# Script to nsupdate all our authoritative servers, supposed to be run by certbot.
+# Requires bind-tools installed.
+
+# The following environment variables are passed to the script by certbot:
+# CERTBOT_DOMAIN, CERTBOT_VALIDATION, CERTBOT_TOKEN (HTTP-01 only), CERTBOT_REMAINING_CHALLENGES, CERTBOT_ALL_DOMAINS
+
+HOST="_acme-challenge"
+
+{%- set update_key = salt['pillar.get']('netbox:config_context:dns_zones:update_keys:letsencrypt:key') %}
+UPDATE_KEY="{{ update_key }}"
+
+{#- TODO: use netbox_vms:get_vms_by_filter to get authoritative DNS servers
+{%- set auth_servers = salt['netbox_vms:get_vms_by_filter'](
+    salt['pillar.get']('netbox:config_context:netbox:api_url'),
+    salt['pillar.get']('netbox:config_context:dns_zones:netbox_token'),
+    'tag=authorative-dns'
+) %}
+AUTH_SERVERS=({{ auth_servers | join(" ") }})
+#}
+
+AUTH_SERVERS=("webfrontend03.ov.ffmuc.net" "webfrontend04.ov.ffmuc.net" "webfrontend05.ov.ffmuc.net" "webfrontend06.ov.ffmuc.net")
+
+for AUTH in ${AUTH_SERVERS[@]}; do
+	nsupdate -y "hmac-sha512:letsencrypt:${UPDATE_KEY}" << EOM
+server ${AUTH} 553
+zone ${CERTBOT_DOMAIN}
+{#- Don't delete existing records as they might be of other webfrontends renewing simultaneously. #}
+update add ${HOST}.${CERTBOT_DOMAIN} 5 TXT "${CERTBOT_VALIDATION}"
+send
+EOM
+	echo ""
+done
