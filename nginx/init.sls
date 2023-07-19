@@ -115,6 +115,16 @@ nginx-module-{{ module }}:
       - service: nginx
 {% endfor %}{# config #}
 
+/etc/nginx/sites-enabled/ffmuc.net.include:
+  file.managed:
+    - source: salt://nginx/domains/ffmuc.net.include
+    - makedirs: True
+    - template: jinja
+    - require:
+      - pkg: nginx
+    - require_in:
+      - service: nginx
+
 /etc/logrotate.d/nginx:
   file.managed:
     - source: salt://nginx/files/logrotate.conf

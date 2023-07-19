@@ -53,71 +53,82 @@ python-dnspython:
       - pkg: bind9
 
 
-{% if not salt['file.file_exists' ]('/etc/bind/zones/db.in.ffmuc.net') %}
 /etc/bind/zones/db.in.ffmuc.net:
   file.managed:
     - source: salt://dns-server/auth/db.in.ffmuc.net
     - user: bind
     - group: bind
     - mode: "0775"
+    - replace: False
     - require:
       - file: /etc/bind/zones
     - watch_in:
       - cmd: rndc-reload
-{% endif %}
 
-{% if not salt['file.file_exists' ]('/etc/bind/zones/db.ov.ffmuc.net') %}
 /etc/bind/zones/db.ov.ffmuc.net:
   file.managed:
     - source: salt://dns-server/auth/db.ov.ffmuc.net
     - user: bind
     - group: bind
     - mode: "0775"
+    - replace: False
     - require:
       - file: /etc/bind/zones
     - watch_in:
       - cmd: rndc-reload
-{% endif %}
 
-{% if not salt['file.file_exists' ]('/etc/bind/zones/db.ext.ffmuc.net') %}
 /etc/bind/zones/db.ext.ffmuc.net:
   file.managed:
     - source: salt://dns-server/auth/db.ext.ffmuc.net
     - user: bind
     - group: bind
     - mode: "0775"
+    - replace: False
     - require:
       - file: /etc/bind/zones
     - watch_in:
       - cmd: rndc-reload
-{% endif %}
 
-{% if not salt['file.file_exists' ]('/etc/bind/zones/db.80.10.in-addr.arpa') %}
 /etc/bind/zones/db.80.10.in-addr.arpa:
   file.managed:
     - source: salt://dns-server/auth/db.80.10.in-addr.arpa
     - user: bind
     - group: bind
     - mode: "0775"
+    - replace: False
     - require:
       - file: /etc/bind/zones
     - watch_in:
       - cmd: rndc-reload
-{% endif %}
 
-{% if not salt['file.file_exists' ]('/etc/bind/zones/db.1.0.a.0.8.0.6.0.1.0.0.2.ip6.arpa') %}
 /etc/bind/zones/db.1.0.a.0.8.0.6.0.1.0.0.2.ip6.arpa:
   file.managed:
     - source: salt://dns-server/auth/db.1.0.a.0.8.0.6.0.1.0.0.2.ip6.arpa
     - user: bind
     - group: bind
     - mode: "0775"
+    - replace: False
     - require:
       - file: /etc/bind/zones
     - watch_in:
       - cmd: rndc-reload
-{% endif %}
 
+{% set freifunk_net_zones = salt['pillar.get']('netbox:config_context:dns_zones:freifunk_net_zones') %}
+{% for domain in freifunk_net_zones %}
+{% set zonefile_path = '/etc/bind/zones/db.'+domain %}
+/etc/bind/zones/db.{{ domain }}:
+  file.managed:
+    - source: salt://dns-server/auth/db.x.freifunk.net.jinja
+    - user: bind
+    - group: bind
+    - mode: "0644"
+    - template: jinja
+    - defaults:
+        domain: {{ domain }}
+    - replace: False
+    - require:
+      - file: /etc/bind/zones
+{% endfor %}
 
 dns-key:
   file.managed:
@@ -129,6 +140,7 @@ dns-key:
     - mode: "0600"
     - require:
       - pkg: bind9
+
 
 # Create DNS records for each node
 {% for node_id in nodes %}
@@ -388,4 +400,26 @@ record-AAAA-extra-{{ dns_entry }}:
   {%- endif %}
 
 {%- endfor %}{# for dns_entry in extra_dns_entries #}
-{%- endif %}{# if 'dnsserver' in role #}
+
+# Additional DNS records
+{%- set custom_records = salt['pillar.get']('netbox:config_context:dns_zones:custom_records', []) %}
+{%- for record in custom_records %}
+record-{{ record.get('type') }}-{{ record.get('name') }}.{{ record.get('zone') }}:
+  ddns.present:
+    - name: {{ record.get('name') }}
+    - zone: {{ record.get('zone') }}
+    - ttl: 60
+    - data: {{ record.get('content') }}
+    - rdtype: {{ record.get('type') }}
+    - nameserver: 127.0.0.1
+    - port: {{ listening_port }}
+    - keyfile: /etc/bind/salt-master.key
+    - keyalgorithm: hmac-sha512
+    - replace_on_change: True
+    - require:
+      - pkg: python-dnspython
+      - file: dns-key
+{%- endfor %}{# for record in custom_records #}
+
+
+{%- endif %}{# if 'authorative-dns' in salt['pillar.get']('netbox:tag_list', []) #}

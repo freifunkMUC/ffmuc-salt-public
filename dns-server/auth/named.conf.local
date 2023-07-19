@@ -7,6 +7,7 @@
 //include "/etc/bind/zones.rfc1918";
 {%- set update_keys = salt['pillar.get']('netbox:config_context:dns_zones:update_keys') %}
 {%- set zones = salt['pillar.get']('netbox:config_context:dns_zones:zones') %}
+{%- set freifunk_net_zones = salt['pillar.get']('netbox:config_context:dns_zones:freifunk_net_zones') %}
 
 
 {%- for zone_key in update_keys | sort %}
@@ -21,7 +22,18 @@ key "{{ zone_key }}" {
 zone "{{ zone }}" {
 	type master;
 	file "/etc/bind/zones/db.{{ zone }}";
-        update-policy  { 
+	update-policy  {
+	{%- for zone_key in update_keys | sort %}
+		grant {{ zone_key }} zonesub {{ update_keys[zone_key]['type'] }};
+	{%- endfor %}
+	};
+};
+{%- endfor %}
+{%- for zone in freifunk_net_zones %}
+zone "{{ zone }}" {
+	type master;
+	file "/etc/bind/zones/db.{{ zone }}";
+	update-policy  {
 	{%- for zone_key in update_keys | sort %}
 		grant {{ zone_key }} zonesub {{ update_keys[zone_key]['type'] }}; 
 	{%- endfor %}

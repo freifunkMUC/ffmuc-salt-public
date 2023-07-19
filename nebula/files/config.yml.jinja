@@ -325,8 +325,12 @@ firewall:
   - port: 53
     proto: tcp
     host: any
+  # Bind
   - port: 553
     proto: udp
+    host: any
+  - port: 553
+    proto: tcp
     host: any
   # access pdns-recursor as dnsdist is listening on 53
   - port: 1653

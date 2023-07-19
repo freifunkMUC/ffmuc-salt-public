@@ -231,9 +231,9 @@ def update(
             replace = True
         # If there is no entry usual dns_update.add() happens
 
-        dns_update = dns.update.Update(
-            zone, keyring=keyring, keyname=keyname, keyalgorithm=keyalgorithm
-        )
+    dns_update = dns.update.Update(
+        zone, keyring=keyring, keyname=keyname, keyalgorithm=keyalgorithm
+    )
     if replace:
         dns_update.replace(name, ttl, rdata)
     elif not is_exist:

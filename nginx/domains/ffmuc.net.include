@@ -1,0 +1,93 @@
+# Force HTTPS connection. This rules is domain agnostic
+if ($scheme != "https") {
+	rewrite ^ https://$host$uri permanent;
+}
+
+if ( $host = wiki.ffmuc.net ) {
+	return 301 https://ffmuc.net/wiki/doku.php;
+}
+root /srv/www/ffmuc.net/_site/;
+
+index index.html;
+
+location /favicon.ico {
+	root /srv/www/ffmuc.net/_site/assets/;
+}
+
+# Point SSID-URL to ffmuc.net
+rewrite ^/(uml_.*|muc_.*|gauting|freising|augsburg|welt)$ https://ffmuc.net redirect;
+
+location ~ ^/speed(.*)$ {
+	return 301 https://speed.ffmuc.net$1;
+}
+
+location /pad/ {
+	proxy_pass         http://etherpad_upstream/;
+	proxy_redirect     off;
+	proxy_set_header   Host $host;
+	proxy_set_header   X-Real-IP $remote_addr;
+	proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+	proxy_set_header   X-Forwarded-Host $server_name;
+	proxy_set_header   X-Forwarded-Proto $scheme;
+	proxy_set_header   Upgrade $http_upgrade;
+	proxy_set_header   Connection $connection_upgrade;
+	client_max_body_size 200M;
+	proxy_http_version 1.1;
+	proxy_request_buffering off;
+}
+
+location /static {
+	rewrite /static/(.*) /static/$1 break;
+	proxy_pass http://wiki_upstream/;
+	proxy_set_header Host $host;
+	proxy_buffering off;
+}
+
+location /wiki/ {
+#deny all;
+	proxy_pass         http://wiki_upstream/;
+	proxy_redirect     off;
+	proxy_set_header   Host $host;
+	proxy_set_header   X-Real-IP $remote_addr;
+	proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+	proxy_set_header   X-Forwarded-Host $server_name;
+	proxy_http_version 1.1;
+	client_max_body_size 200M;
+	proxy_request_buffering off;
+}
+
+location /draw/ {
+	rewrite /draw/d/(.*)/socket.io/(.*) /socket.io/$2 break;
+	rewrite /draw/d/(.*) /boards/$1 break;
+	rewrite /draw/tools/(.*) /boards/tools/$1 break;
+	proxy_pass          http://draw_upstream/;
+	proxy_ssl_server_name on;
+	proxy_set_header    Upgrade $http_upgrade;
+	proxy_set_header    Connection "upgrade";
+	proxy_set_header Host "wbo.ophir.dev";
+	proxy_ssl_name  $proxy_host;
+	proxy_buffering off;
+}
+
+location /draw2 {
+	rewrite /draw2/d/(.*) /boards/$1 break;
+	proxy_pass https://wbo.ophir.dev;
+	proxy_ssl_server_name on;
+	proxy_set_header Host "wbo.ophir.dev";
+	proxy_ssl_name $proxy_host;
+	proxy_buffering off;
+}
+
+location /router-flashen {
+	return "https://ffmuc.net/wiki/doku.php?id=knb:flash";
+}
+location /map {
+	return https://map.ffmuc.net;
+}
+
+location /podcast/ {
+	deny all;
+}
+
+access_log /var/log/nginx/hp.ffmuc.net_access.log json_normal;
+error_log /var/log/nginx/hp.ffmuc.net_error.log;
