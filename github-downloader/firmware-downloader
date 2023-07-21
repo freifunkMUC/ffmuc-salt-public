@@ -1,43 +1,44 @@
 #!/bin/bash
-if [ -z "$1" ]
-then
+
+set -eEu
+
+if [ $# -eq 0 ]; then
     URLS=$(curl -s https://api.github.com/repos/freifunkMUC/site-ffm/releases/latest | jq .assets[].browser_download_url | tr -d \")
     TAG=$(curl -s https://api.github.com/repos/freifunkMUC/site-ffm/releases/latest | jq .tag_name | tr -d \")
 else
     TAG=$1
-    ID=$(curl -s https://api.github.com/repos/freifunkMUC/site-ffm/releases | jq '.[] | "\(.tag_name) \(.id)"' | grep \"$1\  | cut -d" " -f2 | sed 's/"//g')
-    URLS=$(curl -s https://api.github.com/repos/freifunkMUC/site-ffm/releases/$ID | jq .assets[].browser_download_url | tr -d \")
+    ID=$(curl -s https://api.github.com/repos/freifunkMUC/site-ffm/releases | jq '.[] | "\(.tag_name) \(.id)"' | grep \""$1"\  | cut -d" " -f2 | sed 's/"//g')
+    URLS=$(curl -s "https://api.github.com/repos/freifunkMUC/site-ffm/releases/$ID" | jq .assets[].browser_download_url | tr -d \")
 fi
-
 
 echo "Latest tag is $TAG"
 
 FIRMWARE_DIR=/srv/www/firmware.ffmuc.net/$TAG
 TEMP_DIR=/tmp/firmware/$TAG
-if [ ! -d $FIRMWARE_DIR ];
+if [ ! -d "$FIRMWARE_DIR" ];
 then
         echo "Downloading firmware with tag $TAG"
-        mkdir -p $FIRMWARE_DIR $TEMP_DIR $TEMP_DIR/extracted
-        cd $TEMP_DIR
-        for i in $URLS;
+        mkdir -p "$FIRMWARE_DIR" "$TEMP_DIR/extracted"
+        cd "$TEMP_DIR"
+        for url in $URLS;
         do
-                wget -q $i
+                wget -q "$url"
         done
-        for file in `ls *.tar.gz`;
+        for file in *.tar.gz;
         do
-                tar xzvf $file -C $TEMP_DIR/extracted
+                tar xzvf "$file" -C "$TEMP_DIR"/extracted
         done
-        BRANCH_LIST=$(ls extracted/x86-64_output/images/sysupgrade/ | grep manifest)
-        for branch in $BRANCH_LIST; 
-        do
-                head -4 extracted/x86-64_output/images/sysupgrade/$branch > extracted/$branch
-                MANIFEST_LIST=$(ls extracted/*/images/sysupgrade/$branch)
+
+        for x86_64_manifest in extracted/x86-64_output/images/sysupgrade/*manifest; do
+                branch=$(basename -- "$x86_64_manifest")
+                head -4 "extracted/x86-64_output/images/sysupgrade/$branch" > "extracted/$branch"
+                MANIFEST_LIST=$(ls extracted/*/images/sysupgrade/"$branch")
                 for manifest in $MANIFEST_LIST
                 do
-                        tail -n +5 $manifest >> extracted/$branch
+                        tail -n +5 "$manifest" >> "extracted/$branch"
                 done
         done
-        cp -r extracted/*/debug extracted/*/images/* extracted/*/packages $FIRMWARE_DIR/
-        cp extracted/*.manifest $FIRMWARE_DIR/sysupgrade/
-        rm -r $TEMP_DIR
+        cp -r extracted/*/debug extracted/*/images/* extracted/*/packages "$FIRMWARE_DIR"/
+        cp extracted/*.manifest "$FIRMWARE_DIR/sysupgrade/"
+        rm -r "$TEMP_DIR"
 fi
