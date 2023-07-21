@@ -48,4 +48,6 @@ then
         cp -r extracted/*/debug extracted/*/images/* extracted/*/packages "$FIRMWARE_DIR"/
         cp extracted/*.manifest "$FIRMWARE_DIR/sysupgrade/"
         rm -r "$TEMP_DIR"
+else
+        echo "Stopping. Firmware folder already exists: ${FIRMWARE_DIR}"
 fi
