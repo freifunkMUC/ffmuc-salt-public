@@ -24,7 +24,7 @@ fi
 if [ ! -d "$FIRMWARE_DIR" ];
 then
         echo "Downloading firmware with tag $TAG"
-        mkdir -p "$FIRMWARE_DIR" "$TEMP_DIR/extracted"
+        mkdir -p "$TEMP_DIR/extracted"
         cd "$TEMP_DIR"
         for url in $URLS;
         do
@@ -44,6 +44,7 @@ then
                         tail -n +5 "$manifest" >> "extracted/$branch"
                 done
         done
+        mkdir -p "$FIRMWARE_DIR"
         cp -r extracted/*/debug extracted/*/images/* extracted/*/packages "$FIRMWARE_DIR"/
         cp extracted/*.manifest "$FIRMWARE_DIR/sysupgrade/"
         rm -r "$TEMP_DIR"
