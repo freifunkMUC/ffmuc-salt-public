@@ -1,43 +1,68 @@
 #!/bin/bash
-if [ -z "$1" ]
-then
-    URLS=$(curl -s https://api.github.com/repos/freifunkMUC/site-ffm/releases/latest | jq .assets[].browser_download_url | tr -d \")
-    TAG=$(curl -s https://api.github.com/repos/freifunkMUC/site-ffm/releases/latest | jq .tag_name | tr -d \")
+
+set -eEu
+shopt -s nullglob # required for downloads that have no "debug" artifacts
+
+SITE=${2:-ffm}
+if [ "${SITE}" = "ffm" ]; then
+    base_url=https://api.github.com/repos/freifunkMUC/site-ffm
+elif [ "${SITE}" = "ffdon" ]; then
+    base_url=https://api.github.com/repos/freifunkMUC/sites-ffdon
 else
-    TAG=$1
-    ID=$(curl -s https://api.github.com/repos/freifunkMUC/site-ffm/releases | jq '.[] | "\(.tag_name) \(.id)"' | grep \"$1\  | cut -d" " -f2 | sed 's/"//g')
-    URLS=$(curl -s https://api.github.com/repos/freifunkMUC/site-ffm/releases/$ID | jq .assets[].browser_download_url | tr -d \")
+    echo "Unknown site ${SITE}. Aborting."
+    exit 1
 fi
 
+TAG=${1:-latest}
+if [ "${TAG}" = "latest" ]; then
+    TAG=$(curl -s "${base_url}/releases/latest" | jq .tag_name | tr -d \")
+    echo "Latest tag is $TAG"
+fi
 
-echo "Latest tag is $TAG"
+TAG_ID=$(curl -s "${base_url}/releases" | jq '.[] | "\(.tag_name) \(.id)"' | grep \""${TAG}"\  | cut -d" " -f2 | sed 's/"//g')
+URLS=$(curl -s "${base_url}/releases/${TAG_ID}" | jq '.assets[].browser_download_url' | tr -d \")
 
-FIRMWARE_DIR=/srv/www/firmware.ffmuc.net/$TAG
-TEMP_DIR=/tmp/firmware/$TAG
-if [ ! -d $FIRMWARE_DIR ];
+if [ "${SITE}" = "ffm" ]; then
+    FIRMWARE_DIR=/srv/www/firmware.ffmuc.net/$TAG
+    TEMP_DIR=/tmp/firmware/$TAG
+else
+    FIRMWARE_DIR="/srv/www/firmware.ffmuc.net/${SITE}/${TAG}"
+    TEMP_DIR="/tmp/firmware/${SITE}/${TAG}"
+fi
+
+if [ -d "$TEMP_DIR" ]
+then # cleanup old tempdirs
+    echo "Cleaning old temporary directory"
+    rm -r "$TEMP_DIR"
+fi
+
+if [ ! -d "$FIRMWARE_DIR" ];
 then
-        echo "Downloading firmware with tag $TAG"
-        mkdir -p $FIRMWARE_DIR $TEMP_DIR $TEMP_DIR/extracted
-        cd $TEMP_DIR
-        for i in $URLS;
+    echo "Downloading firmware with tag $TAG"
+    mkdir -p "$TEMP_DIR/extracted"
+    cd "$TEMP_DIR"
+    for url in $URLS;
+    do
+        wget --no-verbose "$url"
+    done
+    for file in *.tar.gz;
+    do
+        tar xzvf "$file" -C "$TEMP_DIR"/extracted
+    done
+
+    for x86_64_manifest in extracted/x86-64_output/images/sysupgrade/*manifest; do
+        branch=$(basename -- "$x86_64_manifest")
+        head -4 "extracted/x86-64_output/images/sysupgrade/$branch" > "extracted/$branch"
+        MANIFEST_LIST=$(ls extracted/*/images/sysupgrade/"$branch")
+        for manifest in $MANIFEST_LIST
         do
-                wget -q $i
+            tail -n +5 "$manifest" >> "extracted/$branch"
         done
-        for file in `ls *.tar.gz`;
-        do
-                tar xzvf $file -C $TEMP_DIR/extracted
-        done
-        BRANCH_LIST=$(ls extracted/x86-64_output/images/sysupgrade/ | grep manifest)
-        for branch in $BRANCH_LIST; 
-        do
-                head -4 extracted/x86-64_output/images/sysupgrade/$branch > extracted/$branch
-                MANIFEST_LIST=$(ls extracted/*/images/sysupgrade/$branch)
-                for manifest in $MANIFEST_LIST
-                do
-                        tail -n +5 $manifest >> extracted/$branch
-                done
-        done
-        cp -r extracted/*/debug extracted/*/images/* extracted/*/packages $FIRMWARE_DIR/
-        cp extracted/*.manifest $FIRMWARE_DIR/sysupgrade/
-        rm -r $TEMP_DIR
+    done
+    mkdir -p "$FIRMWARE_DIR"
+    cp -r extracted/*/debug extracted/*/images/* extracted/*/packages "$FIRMWARE_DIR"/
+    cp extracted/*.manifest "$FIRMWARE_DIR/sysupgrade/"
+    rm -r "$TEMP_DIR"
+else
+    echo "Stopping. Firmware folder already exists: ${FIRMWARE_DIR}"
 fi
