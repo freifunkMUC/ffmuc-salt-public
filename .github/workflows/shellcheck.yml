@@ -1,0 +1,29 @@
+---
+name: Shell Linting
+
+on:  # yamllint disable-line rule:truthy
+  workflow_dispatch:
+  push:
+    branches:
+      - stable
+      - next
+    paths:
+      - '**.sh'
+  pull_request:
+    paths:
+      - '**.sh'
+
+jobs:
+  shellcheck:
+    name: runner / shellcheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: shellcheck
+        # Make sure the action is pinned to a commit, as all reviewdog repos
+        # have hundreds of contributors with write access (breaks easy/often)
+        uses: reviewdog/action-shellcheck@50e5e1e2284575f23a1e409d9c0804cdfc4f6e31  # v1.18.1
+        with:
+          filter_mode: "file"
+          fail_on_error: true
+          check_all_files_with_shebangs: true
