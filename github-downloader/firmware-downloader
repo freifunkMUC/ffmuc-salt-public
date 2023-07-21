@@ -1,8 +1,17 @@
 #!/bin/bash
 
 set -eEu
+shopt -s nullglob # required for downloads that have no "debug" artifacts
 
-base_url=https://api.github.com/repos/freifunkMUC/site-ffm
+SITE=${2:-ffm}
+if [ "${SITE}" = "ffm" ]; then
+    base_url=https://api.github.com/repos/freifunkMUC/site-ffm
+elif [ "${SITE}" = "ffdon" ]; then
+    base_url=https://api.github.com/repos/freifunkMUC/sites-ffdon
+else
+    echo "Unknown site ${SITE}. Aborting."
+    exit 1
+fi
 
 TAG=${1:-latest}
 if [ "${TAG}" = "latest" ]; then
@@ -11,10 +20,16 @@ if [ "${TAG}" = "latest" ]; then
 fi
 
 TAG_ID=$(curl -s "${base_url}/releases" | jq '.[] | "\(.tag_name) \(.id)"' | grep \""${TAG}"\  | cut -d" " -f2 | sed 's/"//g')
-URLS=$(curl -s "${base_url}/releases/${TAG_ID}" | jq .assets[].browser_download_url | tr -d \")
+URLS=$(curl -s "${base_url}/releases/${TAG_ID}" | jq '.assets[].browser_download_url' | tr -d \")
 
-FIRMWARE_DIR=/srv/www/firmware.ffmuc.net/$TAG
-TEMP_DIR=/tmp/firmware/$TAG
+if [ "${SITE}" = "ffm" ]; then
+    FIRMWARE_DIR=/srv/www/firmware.ffmuc.net/$TAG
+    TEMP_DIR=/tmp/firmware/$TAG
+else
+    FIRMWARE_DIR="/srv/www/firmware.ffmuc.net/${SITE}/${TAG}"
+    TEMP_DIR="/tmp/firmware/${SITE}/${TAG}"
+fi
+
 if [ -d "$TEMP_DIR" ]
 then # cleanup old tempdirs
     echo "Cleaning old temporary directory"
