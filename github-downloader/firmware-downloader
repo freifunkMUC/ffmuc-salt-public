@@ -17,37 +17,37 @@ FIRMWARE_DIR=/srv/www/firmware.ffmuc.net/$TAG
 TEMP_DIR=/tmp/firmware/$TAG
 if [ -d "$TEMP_DIR" ]
 then # cleanup old tempdirs
-        echo "Cleaning old temporary directory"
-        rm -r "$TEMP_DIR"
+    echo "Cleaning old temporary directory"
+    rm -r "$TEMP_DIR"
 fi
 
 if [ ! -d "$FIRMWARE_DIR" ];
 then
-        echo "Downloading firmware with tag $TAG"
-        mkdir -p "$TEMP_DIR/extracted"
-        cd "$TEMP_DIR"
-        for url in $URLS;
-        do
-                wget --no-verbose "$url"
-        done
-        for file in *.tar.gz;
-        do
-                tar xzvf "$file" -C "$TEMP_DIR"/extracted
-        done
+    echo "Downloading firmware with tag $TAG"
+    mkdir -p "$TEMP_DIR/extracted"
+    cd "$TEMP_DIR"
+    for url in $URLS;
+    do
+        wget --no-verbose "$url"
+    done
+    for file in *.tar.gz;
+    do
+        tar xzvf "$file" -C "$TEMP_DIR"/extracted
+    done
 
-        for x86_64_manifest in extracted/x86-64_output/images/sysupgrade/*manifest; do
-                branch=$(basename -- "$x86_64_manifest")
-                head -4 "extracted/x86-64_output/images/sysupgrade/$branch" > "extracted/$branch"
-                MANIFEST_LIST=$(ls extracted/*/images/sysupgrade/"$branch")
-                for manifest in $MANIFEST_LIST
-                do
-                        tail -n +5 "$manifest" >> "extracted/$branch"
-                done
+    for x86_64_manifest in extracted/x86-64_output/images/sysupgrade/*manifest; do
+        branch=$(basename -- "$x86_64_manifest")
+        head -4 "extracted/x86-64_output/images/sysupgrade/$branch" > "extracted/$branch"
+        MANIFEST_LIST=$(ls extracted/*/images/sysupgrade/"$branch")
+        for manifest in $MANIFEST_LIST
+        do
+            tail -n +5 "$manifest" >> "extracted/$branch"
         done
-        mkdir -p "$FIRMWARE_DIR"
-        cp -r extracted/*/debug extracted/*/images/* extracted/*/packages "$FIRMWARE_DIR"/
-        cp extracted/*.manifest "$FIRMWARE_DIR/sysupgrade/"
-        rm -r "$TEMP_DIR"
+    done
+    mkdir -p "$FIRMWARE_DIR"
+    cp -r extracted/*/debug extracted/*/images/* extracted/*/packages "$FIRMWARE_DIR"/
+    cp extracted/*.manifest "$FIRMWARE_DIR/sysupgrade/"
+    rm -r "$TEMP_DIR"
 else
-        echo "Stopping. Firmware folder already exists: ${FIRMWARE_DIR}"
+    echo "Stopping. Firmware folder already exists: ${FIRMWARE_DIR}"
 fi
