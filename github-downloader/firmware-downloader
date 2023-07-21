@@ -2,16 +2,16 @@
 
 set -eEu
 
-if [ $# -eq 0 ]; then
-    URLS=$(curl -s https://api.github.com/repos/freifunkMUC/site-ffm/releases/latest | jq .assets[].browser_download_url | tr -d \")
-    TAG=$(curl -s https://api.github.com/repos/freifunkMUC/site-ffm/releases/latest | jq .tag_name | tr -d \")
-else
-    TAG=$1
-    ID=$(curl -s https://api.github.com/repos/freifunkMUC/site-ffm/releases | jq '.[] | "\(.tag_name) \(.id)"' | grep \""$1"\  | cut -d" " -f2 | sed 's/"//g')
-    URLS=$(curl -s "https://api.github.com/repos/freifunkMUC/site-ffm/releases/$ID" | jq .assets[].browser_download_url | tr -d \")
+base_url=https://api.github.com/repos/freifunkMUC/site-ffm
+
+TAG=${1:-latest}
+if [ "${TAG}" = "latest" ]; then
+    TAG=$(curl -s "${base_url}/releases/latest" | jq .tag_name | tr -d \")
+    echo "Latest tag is $TAG"
 fi
 
-echo "Latest tag is $TAG"
+TAG_ID=$(curl -s "${base_url}/releases" | jq '.[] | "\(.tag_name) \(.id)"' | grep \""${TAG}"\  | cut -d" " -f2 | sed 's/"//g')
+URLS=$(curl -s "${base_url}/releases/${TAG_ID}" | jq .assets[].browser_download_url | tr -d \")
 
 FIRMWARE_DIR=/srv/www/firmware.ffmuc.net/$TAG
 TEMP_DIR=/tmp/firmware/$TAG
