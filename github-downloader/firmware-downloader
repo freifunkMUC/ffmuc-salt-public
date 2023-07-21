@@ -22,7 +22,7 @@ then
         cd "$TEMP_DIR"
         for url in $URLS;
         do
-                wget -q "$url"
+                wget --no-verbose "$url"
         done
         for file in *.tar.gz;
         do
