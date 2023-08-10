@@ -211,7 +211,7 @@ muenchen.freifunk.net-wildcard-cert:
         -d "xn--mnchen-3ya.freifunk.net" -d "*.xn--mnchen-3ya.freifunk.net"
         -d "wertingen.freifunk.net" -d "*.wertingen.freifunk.net"
         -d "donau-ries.freifunk.net" -d "*.donau-ries.freifunk.net"
-{#-        -d "augsburg.freifunk.net" -d "*.augsburg.freifunk.net" #}
+        -d "augsburg.freifunk.net" -d "*.augsburg.freifunk.net"
     - require:
         - cmd: certbot
         - pip: acme-client
