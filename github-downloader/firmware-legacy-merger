@@ -1,0 +1,115 @@
+#!/bin/bash
+
+set -eEu
+set -o pipefail
+shopt -s nullglob # required for downloads that have no "debug" artifacts
+
+BASEFOLDER=${BASEFOLDER:-} # allows local testing, by e.g. "export BASEFOLDER=${PWD}". Use "/" as default.
+
+if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
+    echo "Usage: $0 LEGACY_VERSION STABLE_VERSION [SITE]"
+    echo
+    echo "Note: The order of legacy and stable is important for filtering of devices existing in both!"
+    exit 1
+fi
+
+function extract_models() {
+    local manifest=$1
+    # Merge the files excluding the header (tail -n +5) and signatures (sed -n "/---/q;p")
+    tail -n +5 "${manifest}" | sed -n '/^---$/q;p'
+}
+
+function merge_manifests() {
+    local legacy_dir=$1
+    local stable_dir=$2
+    local tempdir=$3
+
+    for stable_manifest in "${stable_dir}/sysupgrade/"*manifest; do
+        branch=$(basename -- "$stable_manifest")
+
+        # if branch does not exist in legacy firmware, ignore it
+        if [ ! -e "${legacy_dir}/sysupgrade/$branch" ]; then
+            cp -av "${stable_dir}/sysupgrade/$branch" "${tempdir}/$branch"
+            echo "Skip merging $branch. It does not exist in legacy branch."
+            continue
+        fi
+
+        # Grab the header
+        head -n 4 "${stable_dir}/sysupgrade/$branch" > "${tempdir}/$branch"
+
+        extract_models "${stable_dir}/sysupgrade/$branch" > "${tempdir}/$branch.models"
+        extract_models "${legacy_dir}/sysupgrade/$branch" >> "${tempdir}/$branch.models"
+
+        # merge both files, ignoring all but the first entry ("-u") for a specific model ("-k1,1")
+        sort -u -k1,1 "${tempdir}/$branch.models" > "${tempdir}/$branch"
+
+        echo "Merged $branch".
+    done
+}
+
+function merge_sysupgrade_files() {
+    local stable_sysupgrade_dir="${1}/sysupgrade"
+    local legacy_sysupgrade_dir="${2}/sysupgrade"
+    local merged_sysupgrade_dir="${3}/sysupgrade"
+
+    if [ ! -f "${merged_sysupgrade_dir}"/stable.manifest ]; then
+        echo "Unable to find merged stable.manifest in ${merged_sysupgrade_dir}".
+        return 1
+    fi
+
+    echo "Merging sysupgrade files from legacy and stable."
+
+    for model_sysupgrade_image in $(extract_models "${merged_sysupgrade_dir}/stable.manifest" | awk '{ print $NF}'); do
+        if grep -q "${model_sysupgrade_image}" "${stable_sysupgrade_dir}/stable.manifest"; then
+            cp -al "${stable_sysupgrade_dir}/${model_sysupgrade_image}" "${merged_sysupgrade_dir}/"
+        elif grep -q "${model_sysupgrade_image}" "${legacy_sysupgrade_dir}/stable.manifest"; then
+            cp -al "${legacy_sysupgrade_dir}/${model_sysupgrade_image}" "${merged_sysupgrade_dir}/"
+        else
+            echo "Unable to find ${model_sysupgrade_image}. Aborting"
+            return 1
+        fi
+    done
+}
+
+LEGACY_VERSION=${1}
+STABLE_VERSION=${2}
+SITE=${3:-ffm}
+
+if [ "${SITE}" = "ffm" ]; then
+    FIRMWARE_DIR_BASE="${BASEFOLDER}/srv/www/firmware.ffmuc.net"
+else
+    FIRMWARE_DIR_BASE="${BASEFOLDER}/srv/www/firmware.ffmuc.net/${SITE}"
+fi
+FIRMWARE_DIR_STABLE="${FIRMWARE_DIR_BASE}/${STABLE_VERSION}"
+FIRMWARE_DIR_LEGACY="${FIRMWARE_DIR_BASE}/${LEGACY_VERSION}"
+FIRMWARE_DIR_MERGED="${FIRMWARE_DIR_BASE}/${STABLE_VERSION}_${LEGACY_VERSION}"
+
+# Give user chance to abort
+if [ -d "${FIRMWARE_DIR_MERGED}" ]; then
+    echo "WARNING: Found existing ${FIRMWARE_DIR_MERGED}. Will overwrite existing files."
+    echo "         Press Enter to ignore warning or Ctrl+C to abort."
+    read -r
+fi
+
+# Check that both firmwares have been downloaded already
+if [ ! -d "${FIRMWARE_DIR_STABLE}" ]; then
+    echo "Unable to find stable firmware ${STABLE_VERSION} at ${FIRMWARE_DIR_STABLE}."
+    exit 2
+fi
+if [ ! -d "${FIRMWARE_DIR_LEGACY}" ]; then
+    echo "Unable to find legacy firmware ${LEGACY_VERSION} at ${FIRMWARE_DIR_LEGACY}."
+    exit 2
+fi
+
+TEMP_DIR="$(mktemp -d)"
+mkdir -p "${TEMP_DIR}/merged"
+merge_manifests "${FIRMWARE_DIR_LEGACY}" "${FIRMWARE_DIR_STABLE}" "${TEMP_DIR}/merged"
+
+mkdir -p "${FIRMWARE_DIR_MERGED}/sysupgrade"
+mv "${TEMP_DIR}/merged"/*manifest "${FIRMWARE_DIR_MERGED}"/sysupgrade/
+
+rm -r "$TEMP_DIR"
+
+merge_sysupgrade_files "${FIRMWARE_DIR_LEGACY}" "${FIRMWARE_DIR_STABLE}" "${FIRMWARE_DIR_MERGED}"
+
+echo "Finishing merging sysupgrade folders of ${LEGACY_VERSION} and ${STABLE_VERSION} in ${FIRMWARE_DIR_MERGED}"
