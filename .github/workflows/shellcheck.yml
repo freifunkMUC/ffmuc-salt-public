@@ -7,11 +7,11 @@ on:  # yamllint disable-line rule:truthy
     branches:
       - stable
       - next
-    paths:
-      - '**.sh'
+    paths-ignore:
+      - '.github/workflows/**'
   pull_request:
-    paths:
-      - '**.sh'
+    paths-ignore:
+      - '.github/workflows/**'
 
 jobs:
   shellcheck:
