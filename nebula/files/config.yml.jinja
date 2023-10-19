@@ -123,6 +123,21 @@ firewall:
     proto: udp
     host: any
 {%- if "docker06.in.ffmuc.net" == grains["id"] %}
+  # Allow connections for http backend of broker.ffmuc.net
+  - port: 5000
+    proto: tcp
+    group: webfrontend
+  # Allow connections for mqtt backend of broker.ffmuc.net
+  - port: 1883
+    proto: tcp
+    host: any
+  # Allow MQTT replicas
+  - port: 4370
+    proto: tcp
+    host: any
+  - port: 5369
+    proto: tcp
+    host: any
     # Allow pushing to graylog via filebeat
   - port: 5044
     proto: tcp
@@ -133,6 +148,13 @@ firewall:
     host: any
 {%- endif %}
 {%- if "docker04.in.ffmuc.net" == grains["id"] %}
+  # Allow MQTT replicas
+  - port: 4370
+    proto: tcp
+    host: any
+  - port: 5369
+    proto: tcp
+    host: any
   # Allow connections for draw
   - port: 5001
     proto: tcp
@@ -145,12 +167,20 @@ firewall:
   - port: 1883
     proto: tcp
     host: any
+  # Allow connections for mqtt backend of broker.ffmuc.net
+  - port: 1884
+    proto: tcp
+    host: any
   # Allow connections for etherpad
   - port: 8081
     proto: tcp
     group: webfrontend
   # Allow connections for ffmuc.net/wiki
   - port: 8084
+    proto: tcp
+    group: webfrontend
+  # Allow connections for hedgedoc
+  - port: 8085
     proto: tcp
     group: webfrontend
   # Allow connections for excalidraw.ffmuc.net
@@ -189,6 +219,21 @@ firewall:
     group: webfrontend
 {%- endif %}
 {%- if "docker05.in.ffmuc.net" == grains["id"] %}
+  # Allow MQTT replicas
+  - port: 4370
+    proto: tcp
+    host: any
+  - port: 5369
+    proto: tcp
+    host: any
+  # Allow connections for mqtt backend of broker.ffmuc.net
+  - port: 5000
+    proto: tcp
+    group: webfrontend
+  # Allow connections for http backend of broker.ffmuc.net
+  - port: 1883
+    proto: tcp
+    host: any
   # Allow connections for chat.ffmuc.net
   - port: 8000
     proto: tcp
@@ -281,6 +326,21 @@ firewall:
     group: webfrontend
 {%- endif %}
 {%- if "docker07.in.ffmuc.net" == grains["id"] %}
+  # Allow connections for http backend of broker.ffmuc.net
+  - port: 5000
+    proto: tcp
+    group: webfrontend
+  # Allow connections for mqtt backend of broker.ffmuc.net
+  - port: 1883
+    proto: tcp
+    host: any
+  # Allow MQTT replicas
+  - port: 4370
+    proto: tcp
+    host: any
+  - port: 5369
+    proto: tcp
+    host: any
   # Elastiflow Logstash
   - port: 2055
     proto: udp
@@ -306,6 +366,12 @@ firewall:
     group: webfrontend
   - port: 8081
     proto: tcp
+    group: webfrontend
+  - port: 9443
+    proto: tcp
+    group: webfrontend
+  - port: 2055
+    proto: udp
     group: webfrontend
 {%- endif %}
 {%- if 'metrics.in.ffmuc.net' == grains["id"] %}

@@ -3,7 +3,7 @@
 ---
 nebula:
   enabled: false
-  version: 1.5.2-2
+  version: 1.7.2-1
 
   am_lighthouse: false
   lighthouses:

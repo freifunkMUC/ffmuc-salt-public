@@ -10,7 +10,7 @@ include:
 
 /etc/nebula/ca.crt:
   file.managed:
-    - source: salt://nebula/cert/ca-ffmuc.crt
+    - source: salt://nebula/cert/ca.crt
     - require:
         - file: /etc/nebula/config.yml
         - file: /etc/nebula/{{ grains['id'] }}.crt
@@ -61,11 +61,15 @@ nebula-service:
     - name: nebula
     - require:
         - file: /etc/nebula/config.yml
+        - file: /etc/nebula/ca.crt
         - file: /etc/nebula/{{ grains['id'] }}.crt
         - file: /etc/nebula/{{ grains['id'] }}.key
         - pkg: nebula-pkg
     - watch:
         - file: /etc/nebula/config.yml
+        - file: /etc/nebula/ca.crt
+        - file: /etc/nebula/{{ grains['id'] }}.crt
+        - file: /etc/nebula/{{ grains['id'] }}.key
 
 {% else %}
 {# remove old config to allow migration to new file destination #}
