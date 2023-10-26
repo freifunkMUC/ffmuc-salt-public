@@ -38,7 +38,17 @@ docker-pkgs:
           "log-opts": {
             "max-size": "10m",
             "max-file": "3"
-          }
+          },
+          "default-address-pools": [
+            {
+              "base": "172.17.0.0/12",
+              "size": 24
+            },
+            {
+              "base": "192.168.0.0/16",
+              "size": 24
+            }
+          ]
         }
 
 /usr/local/bin/docker-compose:
