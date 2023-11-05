@@ -18,11 +18,11 @@ jobs:
     name: runner / shellcheck
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: shellcheck
         # Make sure the action is pinned to a commit, as all reviewdog repos
         # have hundreds of contributors with write access (breaks easy/often)
-        uses: reviewdog/action-shellcheck@50e5e1e2284575f23a1e409d9c0804cdfc4f6e31  # v1.18.1
+        uses: reviewdog/action-shellcheck@96fa305c16b0f9cc9b093af22dcd09de1c8f1c2d  # v1.19.0
         with:
           filter_mode: "file"
           fail_on_error: true

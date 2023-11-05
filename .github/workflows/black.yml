@@ -9,8 +9,8 @@ jobs:
   black:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
       - uses: psf/black@main
         with:
           # yamllint disable-line rule:line-length
