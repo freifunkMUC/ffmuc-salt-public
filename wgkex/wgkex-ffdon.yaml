@@ -1,28 +1,15 @@
 ---
 
 domains:
-  - ffmuc_ffdon_test
-  - ffmuc_augsburg
-  - ffmuc_freising
-  - ffmuc_gauting
-  - ffmuc_muc_cty
-  - ffmuc_muc_nord
-  - ffmuc_muc_ost
-  - ffmuc_muc_sued
-  - ffmuc_muc_west
-  - ffmuc_uml_nord
-  - ffmuc_uml_ost
-  - ffmuc_uml_sued
-  - ffmuc_uml_west
-  - ffmuc_welt
+  - ffdon_test
+domain_prefix: ffdon_
 mqtt:
   broker_url: broker.ov.ffmuc.net
   username:
   password:
   tls: False
-  broker_port: 1883
+  broker_port: 1884
   keepalive: 20
-domain_prefix: ffmuc_
 logging_config:
   formatters:
     standard:

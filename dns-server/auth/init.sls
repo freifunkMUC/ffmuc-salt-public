@@ -404,7 +404,7 @@ record-AAAA-extra-{{ dns_entry }}:
 # Additional DNS records
 {%- set custom_records = salt['pillar.get']('netbox:config_context:dns_zones:custom_records', []) %}
 {%- for record in custom_records %}
-record-{{ record.get('type') }}-{{ record.get('name') }}.{{ record.get('zone') }}:
+record-{{ loop.index }}-{{ record.get('type') }}-{{ record.get('name') }}.{{ record.get('zone') }}:
   ddns.present:
     - name: {{ record.get('name') }}
     - zone: {{ record.get('zone') }}

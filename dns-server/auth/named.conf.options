@@ -15,7 +15,6 @@ options {
 	allow-recursion { trusted; };
 	allow-transfer { none; };
 	dnssec-validation auto;
-
 	auth-nxdomain no;    # conform to RFC1035
 	{%- if "dnsdist" in salt['pillar.get']('netbox:tag_list', []) %}
 	listen-on port {{ listening_port }} { 127.0.0.1; {{ salt['grains.get']('ip4_interfaces:nebula0')[0] }}; };
