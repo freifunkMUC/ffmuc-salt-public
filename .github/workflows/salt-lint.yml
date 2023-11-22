@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Salt Lint
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v4
       - name: Run salt-lint
         uses: roaldnefs/salt-lint-action@master
         env:
