@@ -109,7 +109,7 @@ systemd-networkd-reload:
     - template: jinja
       interface: {{ iface }}
       mac: {{ interfaces[iface]['mac_address'] }}
-      desc: {{ interfaces[iface]['description'] }}
+      desc: "{{ interfaces[iface]['description'] }}"
     - watch_in:
       - cmd: generate_initrd
       - cmd: systemd-networkd-reload
@@ -123,7 +123,7 @@ systemd-networkd-reload:
     - source: salt://systemd-networkd/files/systemd-netdev.jinja2
     - template: jinja
       interface: {{ iface }}
-      desc: {{ interfaces[iface]['description'] }}
+      desc: "{{ interfaces[iface]['description'] }}"
       kind: "dummy"
     - watch_in:
       - cmd: systemd-networkd-reload
@@ -134,7 +134,7 @@ systemd-networkd-reload:
     - source: salt://systemd-networkd/files/systemd-netdev.jinja2
     - template: jinja
       interface: {{ iface }}
-      desc: {{ interfaces[iface]['description'] }}
+      desc: "{{ interfaces[iface]['description'] }}"
       kind: "wireguard"
     - watch_in:
       - cmd: systemd-networkd-reload
@@ -145,7 +145,7 @@ systemd-networkd-reload:
     - source: salt://systemd-networkd/files/systemd-netdev.jinja2
     - template: jinja
       interface: {{ iface }}
-      desc: {{ interfaces[iface]['description'] }}
+      desc: "{{ interfaces[iface]['description'] }}"
       kind: "vxlan"
     - watch_in:
       - cmd: systemd-networkd-reload
@@ -156,7 +156,7 @@ systemd-networkd-reload:
     - source: salt://systemd-networkd/files/systemd-netdev.jinja2
     - template: jinja
       interface: {{ iface }}
-      desc: {{ interfaces[iface]['description'] }}
+      desc: "{{ interfaces[iface]['description'] }}"
       kind: "batadv"
     - watch_in:
       - cmd: systemd-networkd-reload
@@ -167,7 +167,7 @@ systemd-networkd-reload:
     - source: salt://systemd-networkd/files/systemd-netdev.jinja2
     - template: jinja
       interface: {{ iface }}
-      desc: {{ interfaces[iface]['description'] }}
+      desc: "{{ interfaces[iface]['description'] }}"
       kind: "bridge"
     - watch_in:
       - cmd: systemd-networkd-reload
@@ -178,7 +178,7 @@ systemd-networkd-reload:
     - source: salt://systemd-networkd/files/systemd-netdev.jinja2
     - template: jinja
       interface: {{ iface }}
-      desc: {{ interfaces[iface]['description'] }}
+      desc: "{{ interfaces[iface]['description'] }}"
       kind: "ip6gre"
     - watch_in:
       - cmd: systemd-networkd-reload
@@ -190,7 +190,7 @@ systemd-networkd-reload:
     - source: salt://systemd-networkd/files/systemd-network.jinja2
     - template: jinja
       interface: {{ iface }}
-      desc: {{ interfaces[iface]['description'] }}
+      desc: "{{ interfaces[iface]['description'] }}"
       ipaddresses: {{ interfaces[iface]['ipaddresses'] }}
       gateway: {{ gateway }}
     - watch_in:

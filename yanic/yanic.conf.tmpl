@@ -13,12 +13,12 @@ synchronize      = "1m"
 collect_interval = "1m"
 
 [respondd.sites.ffmuc]
-domains             = [{% for site in sites %}"ffmuc_{{ site }}", {% endfor %}]
+domains             = [{% for site, domains in sites.items() %}{% for domain in domains %}"{{site}}_{{ domain }}", {% endfor %}{% endfor %}]
 
 # interface that has an IP in your mesh network
-{%- for site in sites %}
+{%- for domain in sites.values()|sum(start=[]) %}
 [[respondd.interfaces]]
-ifname = "br-{{ site }}"
+ifname = "br-{{ domain }}"
 port = 45124
 {% endfor %}
 

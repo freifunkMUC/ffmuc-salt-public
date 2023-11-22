@@ -10,7 +10,7 @@
 python3-netifaces:
    pkg.installed
 
-{% for site in salt['pillar.get']('netbox:config_context:sites')  %}
+{% for site in salt['pillar.get']('netbox:config_context:sites').values()|sum(start=[])  %}
 
 {% if not salt['file.directory_exists']('/opt/respondd-' ~ site ) %}
 /opt/respondd-{{ site }}:

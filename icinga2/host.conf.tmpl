@@ -4,7 +4,7 @@
 {%- set roles = salt['mine.get'](node_id,'minion_roles')[node_id] %}
 {%- set role = salt['mine.get'](node_id,'minion_role')[node_id] %}
 {%- set device_role = salt['mine.get'](node_id,'minion_device_role')[node_id] %}
-{%- set sites = salt['pillar.get']('netbox:config_context:sites') %}
+{%- set sites = salt['pillar.get']('netbox:config_context:sites').values()|sum(start=[]) %}
 {%- set address = salt['mine.get'](node_id,'minion_address', tgt_type='glob')[node_id] %}
 {%- set overlay_address = salt['mine.get'](node_id,'minion_overlay_address', tgt_type='glob')[node_id] %}
 {%- set address6 = salt['mine.get'](node_id,'minion_address6', tgt_type='glob')[node_id] %}
