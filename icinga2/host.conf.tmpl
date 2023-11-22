@@ -53,8 +53,8 @@ object Host "{{ node_id }}" {
 
 	vars.location = "{{ location }}"
 
-	vars.disk_wfree = "5%"
-	vars.disk_cfree = "3%"
+	vars.disk_wfree = "4%"
+	vars.disk_cfree = "2%"
 	vars.disks["disk /"] = {
 	      disk_partitions = "/"
 	}
