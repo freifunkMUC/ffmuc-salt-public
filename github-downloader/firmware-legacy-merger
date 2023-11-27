@@ -113,3 +113,8 @@ rm -r "$TEMP_DIR"
 merge_sysupgrade_files "${FIRMWARE_DIR_LEGACY}" "${FIRMWARE_DIR_STABLE}" "${FIRMWARE_DIR_MERGED}"
 
 echo "Finishing merging sysupgrade folders of ${LEGACY_VERSION} and ${STABLE_VERSION} in ${FIRMWARE_DIR_MERGED}"
+
+# Hardlink all other folders as well
+shopt -s extglob
+cp -lR "${FIRMWARE_DIR_STABLE}"/!(sysupgrade) "${FIRMWARE_DIR_MERGED}/"
+shopt -u extglob # disable extglob to avoid inintentional globbing further down
