@@ -8,7 +8,7 @@
       "contact": "hilfe@ffmuc.net"
     },
     "system": {
-      "domain_code": "ffmuc_{{ site }}",
+      "domain_code": "{{ prefix }}_{{ site }}",
       "role": "gateway"
     },
     "pages": [

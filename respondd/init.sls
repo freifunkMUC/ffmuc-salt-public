@@ -10,7 +10,9 @@
 python3-netifaces:
    pkg.installed
 
-{% for site in salt['pillar.get']('netbox:config_context:sites').values()|sum(start=[])  %}
+{% set sites = salt['pillar.get']('netbox:config_context:sites') %}
+{% for prefix, domains in sites.items() %}
+{% for site in domains %}
 
 {% if not salt['file.directory_exists']('/opt/respondd-' ~ site ) %}
 /opt/respondd-{{ site }}:
@@ -64,4 +66,4 @@ respondd@{{ site }}:
       - file: /opt/respondd-{{ site }}/config.json
       - file: /etc/systemd/system/respondd@.service
 {% endfor %}
-
+{% endfor %}
