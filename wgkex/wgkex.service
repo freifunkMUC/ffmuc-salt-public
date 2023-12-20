@@ -5,8 +5,8 @@ After=network-online.target
 
 [Service]
 User=wgkex
-WorkingDirectory=/srv/wgkex
-ExecStart=/usr/bin/python3 -u -m wgkex.worker.app
+WorkingDirectory=/srv/wgkex/wgkex
+ExecStart=/srv/wgkex/wgkex/venv/bin/python3 -u -m wgkex.worker.app
 Restart=on-failure
 
 # Enable Logging
