@@ -58,6 +58,8 @@ then
         do
             tail -n +5 "$manifest" >> "extracted/$branch"
         done
+        # Add --- to easily add signatures below
+        echo '---' >> "extracted/$branch"
     done
     mkdir -p "$FIRMWARE_DIR"
     cp -r extracted/*/debug extracted/*/images/* extracted/*/packages "$FIRMWARE_DIR"/
