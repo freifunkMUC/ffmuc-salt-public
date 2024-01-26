@@ -2,11 +2,12 @@
 
 set -eEu
 shopt -s nullglob # required for downloads that have no "debug" artifacts
+set -o pipefail # to capture errors of jq when there is a grep after
 
 SITE=${2:-ffm}
-if [ "${SITE}" = "ffm" ]; then
+if [[ "${SITE}" == "ffm" ]]; then
     base_url=https://api.github.com/repos/freifunkMUC/site-ffm
-elif [ "${SITE}" = "ffdon" ]; then
+elif [[ "${SITE}" == "ffdon" ]]; then
     base_url=https://api.github.com/repos/freifunkMUC/sites-ffdon
 else
     echo "Unknown site ${SITE}. Aborting."
@@ -14,7 +15,7 @@ else
 fi
 
 TAG=${1:-latest}
-if [ "${TAG}" = "latest" ]; then
+if [[ "${TAG}" == "latest" ]]; then
     TAG=$(curl -s "${base_url}/releases/latest" | jq .tag_name | tr -d \")
     echo "Latest tag is $TAG"
 fi
@@ -22,7 +23,7 @@ fi
 TAG_ID=$(curl -s "${base_url}/releases" | jq '.[] | "\(.tag_name) \(.id)"' | grep \""${TAG}"\  | cut -d" " -f2 | sed 's/"//g')
 URLS=$(curl -s "${base_url}/releases/${TAG_ID}" | jq '.assets[].browser_download_url' | tr -d \")
 
-if [ "${SITE}" = "ffm" ]; then
+if [[ "${SITE}" == "ffm" ]]; then
     FIRMWARE_DIR=/srv/www/firmware.ffmuc.net/$TAG
     TEMP_DIR=/tmp/firmware/$TAG
 else
@@ -30,13 +31,13 @@ else
     TEMP_DIR="/tmp/firmware/${SITE}/${TAG}"
 fi
 
-if [ -d "$TEMP_DIR" ]
+if [[ -d "$TEMP_DIR" ]]
 then # cleanup old tempdirs
     echo "Cleaning old temporary directory"
     rm -r "$TEMP_DIR"
 fi
 
-if [ ! -d "$FIRMWARE_DIR" ];
+if [[ ! -d "$FIRMWARE_DIR" ]]
 then
     echo "Downloading firmware with tag $TAG"
     mkdir -p "$TEMP_DIR/extracted"
@@ -58,6 +59,8 @@ then
         do
             tail -n +5 "$manifest" >> "extracted/$branch"
         done
+        # Add --- to easily add signatures below
+        echo '---' >> "extracted/$branch"
     done
     mkdir -p "$FIRMWARE_DIR"
     cp -r extracted/*/debug extracted/*/images/* extracted/*/packages "$FIRMWARE_DIR"/
