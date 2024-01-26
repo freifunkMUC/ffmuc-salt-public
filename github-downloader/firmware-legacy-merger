@@ -43,6 +43,9 @@ function merge_manifests() {
         # merge both files, ignoring all but the first entry ("-u") for a specific model ("-k1,1")
         sort -u -k1,1 "${tempdir}/$branch.models" >> "${tempdir}/$branch"
 
+        # Add --- to easily add signatures below
+        echo '---' >> "${tempdir}/$branch"
+
         echo "Merged $branch".
     done
 }
