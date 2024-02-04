@@ -46,6 +46,14 @@ offline_after = "10m"
 enable   = true
 path = "/srv/yanic/meshviewer.json"
 
+[[nodes.output.meshviewer-ffrgb]]
+enable = true
+path = "/srv/yanic/meshviewer-ffdon.json"
+
+[nodes.output.meshviewer-ffrgb.filter]
+sites = ["ffdon_mitte", "ffdon_nordwest", "ffdon_sued"]
+
+
 [[nodes.output.geojson]]
 enable   = true
 path = "/srv/yanic/nodes.geojson"
