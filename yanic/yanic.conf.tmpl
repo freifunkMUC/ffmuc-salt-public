@@ -12,8 +12,15 @@ synchronize      = "1m"
 # how often request per multicast
 collect_interval = "1m"
 
+# all
 [respondd.sites.ffmuc]
 domains             = [{% for site, domains in sites.items() %}{% for domain in domains %}"{{site}}_{{ domain }}", {% endfor %}{% endfor %}]
+
+# ffdon
+[respondd.sites.ffdon]
+domains             = ["ffdon_mitte", "ffdon_nordwest", "ffdon_sued"]
+
+
 
 # interface that has an IP in your mesh network
 {%- for domain in sites.values()|sum(start=[]) %}
@@ -51,7 +58,7 @@ enable = true
 path = "/srv/yanic/meshviewer-ffdon.json"
 
 [nodes.output.meshviewer-ffrgb.filter]
-sites = ["ffdon_mitte", "ffdon_nordwest", "ffdon_sued"]
+sites = ["ffdon"]
 
 
 [[nodes.output.geojson]]
