@@ -18,7 +18,7 @@ domains             = [{% for site, domains in sites.items() %}{% for domain in 
 
 # ffdon
 [respondd.sites.ffdon]
-domains             = ["ffdon_mitte", "ffdon_nordwest", "ffdon_sued"]
+domains             = [{% for domain in sites["ffdon"] %}"ffdon_{{ domain }}", {% endfor %}]
 
 
 
