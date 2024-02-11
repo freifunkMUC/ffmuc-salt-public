@@ -229,9 +229,9 @@ def ext_pillar(minion_id, pillar, *args, **kwargs):
             log.error(interface_results["error"])
             return ret
         if interface_results["dict"]["name"] not in ret["netbox"]["interfaces"]:
-            ret["netbox"]["interfaces"][
-                interface_results["dict"]["name"]
-            ] = interface_results["dict"]
+            ret["netbox"]["interfaces"][interface_results["dict"]["name"]] = (
+                interface_results["dict"]
+            )
         if (
             "ipaddresses"
             not in ret["netbox"]["interfaces"][interface_results["dict"]["name"]]
