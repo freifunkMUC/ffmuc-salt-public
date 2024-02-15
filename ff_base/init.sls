@@ -21,7 +21,6 @@ ffmuc_packages:
       - sysstat
       - dnsutils
       - curl
-      - iftop
       - iptraf
       - speedtest-cli
       - dmidecode

@@ -3,12 +3,13 @@
 #
 
 # salt started complaining as this key is present in another formula...
-python3-netifaces-dhcp:
-  pkg.installed:
-    - name: python3-netifaces
+netifaces-dhcp:
+  pip.installed:  # Install into Salt's Python environment
+    - name: netifaces
 
-python3-netaddr:
-  pkg.installed
+netaddr-dhcp:
+  pip.installed:  # Install into Salt's Python environment
+    - name: netaddr
 
 isc-dhcp-server:
   pkg.installed:
@@ -43,8 +44,8 @@ dhcpd-pools:
     - template: jinja
     - require:
       - file: /etc/systemd/system/isc-dhcp-server.service
-      - pkg: python3-netifaces-dhcp
-      - pkg: python3-netaddr
+      - pip: netifaces-dhcp
+      - pip: netaddr-dhcp
     - watch_in:
       - service: isc-dhcp-server
 

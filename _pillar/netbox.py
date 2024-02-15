@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 A module that adds data to the Pillar structure from a NetBox API.
 
@@ -48,17 +47,12 @@ site_prefixes: ``True``
     Whether should retrieve the prefixes of the site the device belongs to.
 """
 
-from __future__ import absolute_import, print_function, unicode_literals
 import logging
-import six
 
 # Import Salt libs
 import salt.utils.http
 
-if six.PY3:
-    import ipaddress
-else:
-    import salt.ext.ipaddress as ipaddress
+import ipaddress
 
 log = logging.getLogger(__name__)
 
