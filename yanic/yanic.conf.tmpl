@@ -16,12 +16,6 @@ collect_interval = "1m"
 [respondd.sites.ffmuc]
 domains             = [{% for site, domains in sites.items() %}{% for domain in domains %}"{{site}}_{{ domain }}", {% endfor %}{% endfor %}]
 
-# ffdon
-[respondd.sites.ffdon]
-domains             = [{% for domain in sites["ffdon"] %}"ffdon_{{ domain }}", {% endfor %}]
-
-
-
 # interface that has an IP in your mesh network
 {%- for domain in sites.values()|sum(start=[]) %}
 [[respondd.interfaces]]
@@ -58,8 +52,8 @@ enable = true
 path = "/srv/yanic/meshviewer-ffdon.json"
 
 [nodes.output.meshviewer-ffrgb.filter]
-sites = ["ffdon"]
 domain_as_site = true
+sites = [{% for domain in sites["ffdon"] %}"ffdon_{{ domain }}", {% endfor %}]
 
 [[nodes.output.geojson]]
 enable   = true
