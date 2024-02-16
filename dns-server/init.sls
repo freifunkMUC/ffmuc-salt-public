@@ -12,10 +12,12 @@ bind9:
 dns_pkgs:
   pkg.installed:
     - pkgs:
-      - python3-dnspython
-      - python-dnspython
       - dnsutils
       - bind9-dnsutils
+
+dnspython:
+  pip.installed:  # Install into Salt's Python environment
+    - reload_modules: True
 
 # Reload command
 rndc-reload:

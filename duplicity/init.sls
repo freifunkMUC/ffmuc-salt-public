@@ -22,6 +22,7 @@ duplicity_repo:
 
 b2sdk:
   pip.installed:
+    - pip_bin: /usr/bin/pip3  # Required with Salt Onedir packaging, otherwise dependency is installed into Salt's custom Python environment
     - require:
       - pkg: duplicity-packages
 {% endif %}

@@ -18,10 +18,6 @@
 include:
   - dns-server
 
-python-dnspython:
-  pkg.installed:
-    - name: python3-dnspython
-
 # Bind options
 /etc/bind/named.conf.options:
   file.managed:
@@ -166,7 +162,7 @@ record-A-{{ node_id }}:
     - keyalgorithm: hmac-sha512
     - replace_on_change: True
     - require:
-      - pkg: python-dnspython
+      - pip: dnspython
       - file: dns-key
 
 record-PTR-{{ node_id }}:
@@ -182,7 +178,7 @@ record-PTR-{{ node_id }}:
     - keyalgorithm: hmac-sha512
     - replace_on_change: True
     - require:
-      - pkg: python-dnspython
+      - pip: dnspython
       - file: dns-key
 
   {% endif %}
@@ -201,7 +197,7 @@ record-AAAA-{{ node_id }}:
     - keyalgorithm: hmac-sha512
     - replace_on_change: True
     - require:
-      - pkg: python-dnspython
+      - pip: dnspython
       - file: dns-key
 
 record-PTR6-{{ node_id }}:
@@ -217,7 +213,7 @@ record-PTR6-{{ node_id }}:
     - keyalgorithm: hmac-sha512
     - replace_on_change: True
     - require:
-      - pkg: python-dnspython
+      - pip: dnspython
       - file: dns-key
 
   {%- endif %}
@@ -237,7 +233,7 @@ record-A-overlay-{{ node_id }}:
     - keyalgorithm: hmac-sha512
     - replace_on_change: True
     - require:
-      - pkg: python-dnspython
+      - pip: dnspython
       - file: dns-key
   {% endif %}
 
@@ -258,7 +254,7 @@ record-A-external-{{ node_id }}:
     - keyalgorithm: hmac-sha512
     - replace_on_change: True
     - require:
-      - pkg: python-dnspython
+      - pip: dnspython
       - file: dns-key
   {%- endif -%}
 
@@ -278,7 +274,7 @@ record-AAAA-external-{{ node_id }}:
     - keyalgorithm: hmac-sha512
     - replace_on_change: True
     - require:
-      - pkg: python-dnspython
+      - pip: dnspython
       - file: dns-key
 
   {%- endif %}
@@ -325,7 +321,7 @@ record-CNAME-{{ cname }}:
     - keyalgorithm: hmac-sha512
     - replace_on_change: True
     - require:
-      - pkg: python-dnspython
+      - pip: dnspython
       - file: dns-key
 
 # we create a cname ov.ffmuc.net entry for each in.ffmuc.net entry
@@ -347,7 +343,7 @@ record-CNAME-{{ cname_ov }}:
     - keyalgorithm: hmac-sha512
     - replace_on_change: True
     - require:
-      - pkg: python-dnspython
+      - pip: dnspython
       - file: dns-key
   {% endif %}
 
@@ -376,7 +372,7 @@ record-A-extra-{{ dns_entry }}:
     - keyalgorithm: hmac-sha512
     - replace_on_change: True
     - require:
-      - pkg: python-dnspython
+      - pip: dnspython
       - file: dns-key
 
   {%- endif %}
@@ -395,7 +391,7 @@ record-AAAA-extra-{{ dns_entry }}:
     - keyalgorithm: hmac-sha512
     - replace_on_change: True
     - require:
-      - pkg: python-dnspython
+      - pip: dnspython
       - file: dns-key
   {%- endif %}
 
@@ -417,7 +413,7 @@ record-{{ loop.index }}-{{ record.get('type') }}-{{ record.get('name') }}.{{ rec
     - keyalgorithm: hmac-sha512
     - replace_on_change: True
     - require:
-      - pkg: python-dnspython
+      - pip: dnspython
       - file: dns-key
 {%- endfor %}{# for record in custom_records #}
 

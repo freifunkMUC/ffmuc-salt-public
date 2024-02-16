@@ -1,9 +1,9 @@
 {% set interfaces = salt['pillar.get']('netbox:interfaces') %}
-python3-netifaces:
-  pkg.installed
+netifaces:
+  pip.installed  # Install into Salt's Python environment
 
-python3-netaddr:
-  pkg.installed
+netaddr:
+  pip.installed  # Install into Salt's Python environment
 
 iptables-persistent:
   pkg.installed
