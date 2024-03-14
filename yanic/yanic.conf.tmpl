@@ -55,6 +55,30 @@ path = "/srv/yanic/meshviewer-ffdon.json"
 domain_as_site = true
 sites = [{% for domain in sites["ffdon"] %}"ffdon_{{ domain }}", {% endfor %}]
 
+[[nodes.output.meshviewer-ffrgb]]
+enable = true
+path = "/srv/yanic/meshviewer-ffwert.json"
+
+[nodes.output.meshviewer-ffrgb.filter]
+domain_as_site = true
+sites = [{% for domain in sites["ffwert"] %}"ffwert_{{ domain }}", {% endfor %}]
+
+[[nodes.output.meshviewer-ffrgb]]
+enable = true
+path = "/srv/yanic/meshviewer-augsburg.json"
+
+[nodes.output.meshviewer-ffrgb.filter]
+domain_as_site = true
+sites = ["ffmuc_augsburg"]
+
+[[nodes.output.meshviewer-ffrgb]]
+enable = true
+path = "/srv/yanic/meshviewer-freising.json"
+
+[nodes.output.meshviewer-ffrgb.filter]
+domain_as_site = true
+sites = ["ffmuc_freising"]
+
 [[nodes.output.geojson]]
 enable   = true
 path = "/srv/yanic/nodes.geojson"
