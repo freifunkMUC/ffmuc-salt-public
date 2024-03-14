@@ -18,6 +18,8 @@ addLocal("0.0.0.0", {reusePort=true})
 addLocal("0.0.0.0", {reusePort=true})
 addLocal("0.0.0.0", {reusePort=true})
 addLocal("0.0.0.0", {reusePort=true})
+addLocal("0.0.0.0", {reusePort=true})
+addLocal("0.0.0.0", {reusePort=true})
 addLocal("::", {reusePort=true})
 addLocal("::", {reusePort=true})
 
@@ -31,6 +33,8 @@ addTLSLocal("[::]", ssl_cert, ssl_key, { reusePort=true, tcpFastOpenQueueSize=20
 
 -- listen for DoH on localhost for reverse proxy
 addDOHLocal("127.0.0.1:445", nil, nil, "/dns-query", { reusePort=true, trustForwardedForHeader=true })
+addDOHLocal("127.0.0.1:445", nil, nil, "/dns-query", { reusePort=true, trustForwardedForHeader=true })
+addDOHLocal("[::1]:445", nil, nil, "/dns-query", { reusePort=true, trustForwardedForHeader=true })
 addDOHLocal("[::1]:445", nil, nil, "/dns-query", { reusePort=true, trustForwardedForHeader=true })
 
 if not file_exists("/var/lib/dnsdist/providerPrivate.key") then
@@ -131,7 +135,7 @@ setKey("{{ dnsdist_console["key"] }}")
 {%- endif %}
 
 setMaxUDPOutstanding(65535)
-setMaxTCPClientThreads(20)        -- set X(int) to handle number of maximum tcp clients
+setMaxTCPClientThreads(50)        -- set X(int) to handle number of maximum tcp clients
 setMaxTCPConnectionDuration(120)    -- set X(int) for tcp connection duaration from a connected client. X is number of seconds.
-setMaxTCPConnectionsPerClient(200)   -- set X(int) for number of tcp connections from a single client. Useful for rate limiting the concurrent connections.
 setMaxTCPQueriesPerConnection(3000) -- set X(int) , similiar to addAction(MaxQPSIPRule(X), DropAction())
+setOutgoingDoHWorkerThreads(6)
