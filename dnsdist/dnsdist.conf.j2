@@ -107,6 +107,8 @@ newServer({address="1.1.1.1", name="anycastCF", pool="auth"})
 {%- endif %}{# authoritative #}
 
 addAction({'in.ffmuc.net', 'ov.ffmuc.net', 'ffmuc.net', 'ffmuc.bayern', 'fnmuc.net', 'freewifi.bayern', 'freifunk-muenchen.de', 'xn--freifunk-mnchen-8vb.de.', 'freifunk-muenchen.net', 'muenchen.freifunk.net', 'xn--mnchen-3ya.freifunk.net', 'augsburg.freifunk.net', 'wertingen.freifunk.net', 'donau-ries.freifunk.net'}, PoolAction("auth"), {name="Redirect-Auth"})
+addAction(AndRule({OpcodeRule(DNSOpcode.Notify), NotRule(makeRule("213.160.72.212"))}), RCodeAction(DNSRCode.REFUSED))
+addAction({'freifunk.net'}, PoolAction("auth"), {name="Redirect-Auth-freifunk.net"})
 
 {#- some stats #}
 addAction({'in-addr.arpa', 'ip6.arpa'}, NoneAction(), {name="RDNS"})

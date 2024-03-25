@@ -8,6 +8,7 @@
 {%- set update_keys = salt['pillar.get']('netbox:config_context:dns_zones:update_keys') %}
 {%- set zones = salt['pillar.get']('netbox:config_context:dns_zones:zones') %}
 {%- set freifunk_net_zones = salt['pillar.get']('netbox:config_context:dns_zones:freifunk_net_zones') %}
+{%- set freifunk_net_axfr = salt['pillar.get']('netbox:config_context:dns_zones:freifunk_net_axfr_key') %}
 
 
 {%- for zone_key in update_keys | sort %}
@@ -17,6 +18,18 @@ key "{{ zone_key }}" {
 };
 {%- endfor %}
 
+key "freifunk-net-axfr" {
+  algorithm hmac-sha512;
+  secret "{{ freifunk_net_axfr['key'] }}";
+};
+
+zone „freifunk.net“ {
+	type slave;
+	file „/etc/bind/zones/db.freifunk.net“;
+	allow-notify { 127.0.0.1; ::1; };
+	notify primary-only;
+	masters		{ 213.160.72.212 key freifunk-net-axfr; };
+};
 
 {%- for zone in zones %}
 zone "{{ zone }}" {
