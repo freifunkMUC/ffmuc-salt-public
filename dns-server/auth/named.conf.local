@@ -18,18 +18,18 @@ key "{{ zone_key }}" {
 };
 {%- endfor %}
 
-key "freifunk-net-axfr" {
-  algorithm hmac-sha512;
+key "freifunk-net-ffmuc" {
+  algorithm hmac-sha256;
   secret "{{ freifunk_net_axfr['key'] }}";
 };
 
-zone „freifunk.net“ {
+zone "freifunk.net" {
 	type slave;
-	file „/etc/bind/zones/db.freifunk.net“;
+	file "/etc/bind/zones/db.freifunk.net";
 	allow-notify { 127.0.0.1; ::1; };
 	notify explicit;
 	also-notify port 553 { 10.8.0.39; 10.8.0.40; 10.8.0.38; 10.8.0.13; };
-	masters		{ 213.160.72.212 key freifunk-net-axfr; };
+	masters		{ 213.160.72.212 key freifunk-net-ffmuc; };
 };
 
 {%- for zone in zones %}
