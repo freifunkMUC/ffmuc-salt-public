@@ -27,7 +27,8 @@ zone „freifunk.net“ {
 	type slave;
 	file „/etc/bind/zones/db.freifunk.net“;
 	allow-notify { 127.0.0.1; ::1; };
-	notify primary-only;
+	notify explicit;
+	also-notify port 553 { 10.8.0.39; 10.8.0.40; 10.8.0.38; 10.8.0.13; };
 	masters		{ 213.160.72.212 key freifunk-net-axfr; };
 };
 
