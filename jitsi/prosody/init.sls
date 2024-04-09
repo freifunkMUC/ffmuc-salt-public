@@ -22,42 +22,40 @@ prosody-repo:
 prosody-dependencies:
   pkg.installed:
     - pkgs:
-      - libssl-dev
-      - gcc
+      #- libssl-dev
+      #- gcc
       - lua-basexx
-      - lua-event
+      - lua-cjson
+      #- lua-event
+      - lua-cyrussasl
+      - lua-inspect
       - lua-luaossl
       - lua-sec
+      - lua-unbound
       - luarocks
-      - lua5.2
-      - liblua5.2-dev
-      - patch
+      - lua5.3
+      - liblua5.3-dev
 
-# Hacks for enabling token auth in jitsi
-# https://community.jitsi.org/t/jitsi-meet-tokens-chronicles-on-debian-buster/76756
-# orig file path: https://emrah.com/files/lua-cjson-2.1devel-1.linux-x86_64.rock
-/tmp/lua-cjson-2.1devel-1.linux-x86_64.rock:
-  file.managed:
-    - source: salt://jitsi/prosody/lua-cjson-2.1devel-1.linux-x86_64.rock
-    - require_in:
-      - cmd: luarocks-/tmp/lua-cjson-2.1devel-1.linux-x86_64.rock
+old-prosody:
+  pkg.removed:
+    - name: prosody-0.11
+    - required_in:
+      pkg: prosody
+
 
 {% for luapkg in [
-  "lbase64",
-  "luajwtjitsi",
-  "/tmp/lua-cjson-2.1devel-1.linux-x86_64.rock"] %}
+  "net-url 0.9-1"
+] %}
 luarocks-{{ luapkg }}:
   cmd.run:
     - name: "luarocks install {{ luapkg }}"
     - require:
       - pkg: prosody-dependencies
-
 {% endfor %}{# luapkg #}
-
 prosody:
   pkg.installed:
-    - name: prosody-0.11 # This is the nightly build. use "prosody" for stable
-    - version: "{{ jitsi.prosody.version }}~{{ grains.oscodename }}"
+    - name: prosody
+    - version: "{{ jitsi.prosody.version }}~{{ grains.oscodename }}1"
     - hold: True
     - require:
       - pkgrepo: prosody-repo
@@ -71,7 +69,7 @@ prosody:
 {# download and extract prosody plugins of jitsi #}
 download-jitsi-meet-prosody:
   file.managed:
-    - source: https://download.jitsi.org/unstable/jitsi-meet-prosody_1.0.5622-1_all.deb
+    - source: https://download.jitsi.org/stable/jitsi-meet-prosody_1.0.7874-1_all.deb
     - skip_verify: True
     - name: /var/cache/apt/archives/jitsi-meet-prosody.deb
     - required_in:
@@ -92,23 +90,13 @@ copy-prosody-plugins:
     - require:
       - cmd: extract_prosody_modules
 
-patch_muc_owner_allow_kick:
-  file.patch:
-    - name: /usr/lib/prosody/modules/muc
-    - source: /usr/share/jitsi-meet/prosody-plugins/muc_owner_allow_kick.patch
-    - strip: 0
-    - require:
-      - file: copy-prosody-plugins
-
 remove-temporary-files:
   file.absent:
     - names:
       - /var/cache/apt/archives/jitsi-meet-prosody.deb
       - /tmp/jitsi-prosody-modules
-      - /usr/share/jitsi-meet/prosody-plugins/muc_owner_allow_kick.patch
     - require:
       - file: copy-prosody-plugins
-      - file: patch_muc_owner_allow_kick
     - require_in:
       - service: prosody
 
@@ -186,7 +174,9 @@ update-certificates:
   "mod_client_proxy",
   "mod_reload_components",
   "mod_reload_modules" ,
-  "mod_roster_command" ] %}
+  "mod_roster_command",
+  "mod_smacks",
+ ] %}
 /usr/lib/prosody/modules/{{ component }}.lua:
   file.managed:
     - source: https://hg.prosody.im/prosody-modules/raw-file/tip/{{ component }}/{{ component }}.lua
@@ -217,11 +207,10 @@ update-certificates:
   "mod_muc_meeting_id",
   "mod_room_metadata",
   "mod_room_metadata_component",
-  "mod_smacks",
   "mod_speakerstats",
   "mod_speakerstats_component",
-  "mod_turncredentials",
-  "util.lib"] %}
+  "util.lib",
+] %}
 /usr/lib/prosody/modules/{{ component }}.lua:
 #/usr/share/jitsi-meet/prosody-plugins/{{ component }}.lua:
   file.managed:

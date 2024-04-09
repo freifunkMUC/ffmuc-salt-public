@@ -2,14 +2,14 @@
 
 -- enable websocket support
 consider_websocket_secure = true;
-cross_domain_websocket = true;
 
 -- settings for bosh interface
-cross_domain_bosh = false;
 consider_bosh_secure = true;
 
 -- domain mapper options, must at least have domain base set to use the mapper
 muc_mapper_domain_base = "{{ jitsi.public_domain }}";
+
+http_default_host = "{{ jitsi.xmpp.xmpp_domain }}";
 
 VirtualHost "{{ jitsi.xmpp.xmpp_domain }}"
     authentication = {% if jitsi.authentication %}"internal_plain"{% else %}"token"{% endif %}
@@ -35,6 +35,7 @@ VirtualHost "{{ jitsi.xmpp.xmpp_domain }}"
         {% if jitsi.breakout_enabled %}"muc_breakout_rooms";{% endif %}
         "av_moderation";
         "room_metadata";
+        "external_services";
     }
     {%- if jitsi.lobby_enabled %}
     lobby_muc = "lobby.{{ jitsi.public_domain }}"
@@ -138,7 +139,7 @@ VirtualHost "guest.{{ jitsi.public_domain }}"
         "pubsub";
         "ping"; -- Enable mod_ping
         "speakerstats";
-        "turncredentials";
+        "external_services";
         "conference_duration";
     }
     c2s_require_encryption = false

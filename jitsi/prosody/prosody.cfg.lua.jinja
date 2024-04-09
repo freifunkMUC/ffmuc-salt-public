@@ -21,12 +21,21 @@
 -- for the server. Note that you must create the accounts separately
 -- (see https://prosody.im/doc/creating_accounts for info)
 -- Example: admins = { "user1@example.com", "user2@example.net" }
-admins = { "{{ jitsi.jicofo.username }}@{{ jitsi.xmpp.auth_domain }}" }
+admins = {
+    "{{ jitsi.jicofo.username }}@{{ jitsi.xmpp.auth_domain }}",
+    "{{ jitsi.videobridge.username }}@{{ jitsi.xmpp.auth_domain }}"
+}
+unlimited_jids = {
+    "{{ jitsi.jicofo.username }}@{{ jitsi.xmpp.auth_domain }}",
+    "{{ jitsi.videobridge.username }}@{{ jitsi.xmpp.auth_domain }}"
+}
 
-component_interface = "0.0.0.0";
---component_ports = {{ jitsi.xmpp.port }}
 {% set nebula_ip = salt['grains.get']('ip4_interfaces:nebula1:0') %}
-interfaces = { "127.0.0.1" {% if nebula_ip %}, "{{ nebula_ip }}"{% endif %} }
+http_ports = { 5280 }
+http_interfaces = { "127.0.0.1" {% if nebula_ip %}, "{{ nebula_ip }}"{% endif %} }
+
+-- disable listening for components (only http)
+component_ports = {}
 -- disable listening for https
 https_ports = {}
 
@@ -34,12 +43,14 @@ network_settings = {
 	read_timeout = 300;
 	tcp_backlog = 511;
 }
+unbound = {
+    resolvconf = true
+}
 
 -- Enable use of libevent for better performance under high load
 -- For more information see: https://prosody.im/doc/libevent
 -- https://prosody.im/doc/network_backend
 network_backend = "epoll"
-use_libevent = true
 
 -- Prosody will always look in its source directory for modules, but
 -- this option allows you to specify additional locations where Prosody
@@ -99,7 +110,6 @@ modules_enabled = {
 		--"proxy65"; -- Enables a file transfer proxy service which clients behind NAT can use
 
 		"smacks"; --XEP-0198: Stream Management
-		"turncredentials";
 }
 modules_disabled = {
      -- "offline"; -- Store offline messages
@@ -112,17 +122,27 @@ smacks_hibernation_time = 60;
 smacks_max_hibernated_sessions = 1;
 smacks_max_old_sessions = 1;
 
-turncredentials_secret = "{{ jitsi.turn.secret }}"
-turncredentials = {
+external_service_secret = "{{ jitsi.turn.secret }}"
+external_services = {
 {%- for host in jitsi.turn.hosts %}
-    { type = "stun", host = "{{ host.hostname }}", port = "{{ host.port }}", transport = "tcp" },
-    { type = "turn", host = "{{ host.hostname }}", port = "{{ host.port }}", transport = "tcp" },
+    { type = "stun", host = "{{ host.hostname }}", port = "{{ host.port }}", transport = "udp", secret = true, ttl = 86400, algorithm = "turn" },
+    { type = "turn", host = "{{ host.hostname }}", port = "{{ host.port }}", transport = "udp", secret = true, ttl = 86400, algorithm = "turn" },
+    { type = "turn", host = "{{ host.hostname }}", port = "{{ host.port }}", transport = "tcp", secret = true, ttl = 86400, algorithm = "turn" },
+    { type = "turns", host = "{{ host.hostname }}", port = "{{ host.port }}", transport = "tcp", secret = true, ttl = 86400, algorithm = "turn" },
 {%- endfor %}
 };
 
 -- Disable account creation by default, for security
 -- For more information see https://prosody.im/doc/creating_accounts
 allow_registration = false
+
+-- tweak garbage collection. For more see https://prosody.im/doc/advanced_gc
+gc = {
+	mode = "incremental";
+	threshold = 150;
+	speed = 250;
+	step_size = 13;
+}
 
 -- Debian:
 --   Do not send the server to background, either systemd or start-stop-daemon take care of that.
