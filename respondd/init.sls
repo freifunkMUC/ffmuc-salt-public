@@ -28,6 +28,7 @@ python3-netifaces:
     - template: jinja
     - defaults:
         site: {{ site }}
+        prefix: {{ prefix }}
     - watch_in:
         - service: respondd@{{ site }}
 

@@ -29,13 +29,11 @@ http {
 	sendfile_max_chunk 512k;
 	server_tokens off;
 
-	server_names_hash_bucket_size 64;
+	server_names_hash_bucket_size 128;
 	# server_name_in_redirect off;
 
 	include /etc/nginx/mime.types;
 	types {
-		# nginx's default mime.types doesn't include a mapping for wasm
-		application/wasm	wasm;
 		text/plain                 manifest;
 		application/manifest+json  webmanifest;
 		application/geo+json       geojson;
@@ -48,12 +46,11 @@ http {
 	ssl_protocols TLSv1.2 TLSv1.3;
 	ssl_prefer_server_ciphers on;
     ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
-	ssl_session_cache shared:ssl_session_cache:10m;
-	ssl_session_timeout 1d;
+	ssl_session_cache shared:SSL:32m;
+	ssl_session_timeout 30m;
 	ssl_stapling on;
 	ssl_stapling_verify on;
 	resolver 1.1.1.1;
-
 	##
 	# Gzip Settings
 	##
@@ -87,7 +84,7 @@ http {
 		application/ecmascript application/json image/svg+xml;
 
 	# Set hint which webfrontend is used
-	add_header X-FFMuc-Edge "{{ grains.id.split('.')[0] }}";
+	add_header X-FFMuc-Edge "{{ grains.id.split('.')[0] }}" always;
 	map $http_upgrade $connection_upgrade {
 		default upgrade;
 		''      close;

@@ -12,9 +12,6 @@
 virt-pkgs:
   pkg.installed:
     - pkgs:
-      - qemu-kvm
-      - libvirt-daemon-system
-      - libvirt-clients
       - xmlstarlet
       - netcat-openbsd
       - ipmitool
