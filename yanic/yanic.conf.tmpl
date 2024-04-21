@@ -79,6 +79,14 @@ path = "/srv/yanic/meshviewer-freising.json"
 domain_as_site = true
 sites = ["ffmuc_freising"]
 
+[[nodes.output.meshviewer-ffrgb]]
+enable = true
+path = "/srv/yanic/meshviewer-ulm.json"
+
+[nodes.output.meshviewer-ffrgb.filter]
+domain_as_site = true
+sites = ["ffmuc_ulm"]
+
 [[nodes.output.geojson]]
 enable   = true
 path = "/srv/yanic/nodes.geojson"
