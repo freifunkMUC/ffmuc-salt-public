@@ -15,7 +15,7 @@ location /favicon.ico {
 }
 
 # Point SSID-URL to ffmuc.net
-rewrite ^/(uml_.*|muc_.*|gauting|freising|augsburg|welt)$ https://ffmuc.net redirect;
+rewrite ^/(uml_.*|muc_.*|gauting|freising|augsburg|welt|ulm)$ https://ffmuc.net redirect;
 
 location ~ ^/speed(.*)$ {
 	return 301 https://speed.ffmuc.net$1;
