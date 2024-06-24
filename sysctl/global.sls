@@ -45,28 +45,28 @@ net.ipv4.tcp_l3mdev_accept:
 # Increase ARP garbage collector thresholds
 net.ipv4.neigh.default.gc_thresh1:
   sysctl.present:
-    - value: 1024
+    - value: 4096
     - config: /etc/sysctl.d/10-global.conf
 net.ipv4.neigh.default.gc_thresh2:
   sysctl.present:
-    - value: 2048
+    - value: 8192
     - config: /etc/sysctl.d/10-global.conf
 net.ipv4.neigh.default.gc_thresh3:
   sysctl.present:
-    - value: 8192
+    - value: 16384
     - config: /etc/sysctl.d/10-global.conf
 
 net.ipv6.neigh.default.gc_thresh1:
   sysctl.present:
-    - value: 1024
+    - value: 4096
     - config: /etc/sysctl.d/10-global.conf
 net.ipv6.neigh.default.gc_thresh2:
   sysctl.present:
-    - value: 2048
+    - value: 8192
     - config: /etc/sysctl.d/10-global.conf
 net.ipv6.neigh.default.gc_thresh3:
   sysctl.present:
-    - value: 8192
+    - value: 16384
     - config: /etc/sysctl.d/10-global.conf
 
 net.ipv6.route.max_size:
