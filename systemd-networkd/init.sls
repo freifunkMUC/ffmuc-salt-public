@@ -1,11 +1,20 @@
 {%- set role = salt['pillar.get']('netbox:role:name', salt['pillar.get']('netbox:device_role:name')) %}
 
 {%- if 'nextgen-gateway' in role %}
-/usr/src/batman-adv-2021.5/dkms.conf:
+{%- set batman_version = '2024.1' %}
+/usr/src/batman-adv-{{ batman_version }}:
+  git.latest:
+    - name: https://github.com/open-mesh-mirror/batman-adv.git
+    - rev: v{{ batman_version }}
+    - target: /usr/src/batman-adv-{{ batman_version }}
+    - force_reset: True
+    - require_in: /usr/src/batman-adv-{{ batman_version }}/dkms.conf
+
+/usr/src/batman-adv-{{ batman_version }}/dkms.conf:
   file.managed:
     - contents: |
         PACKAGE_NAME=batman-adv
-        PACKAGE_VERSION=2021.5
+        PACKAGE_VERSION={{ batman_version }}
 
         DEST_MODULE_LOCATION=/extra
         BUILT_MODULE_NAME=batman-adv
@@ -197,4 +206,3 @@ systemd-networkd-reload:
       - cmd: systemd-networkd-reload
 {% endif %}
 {% endfor %}
-
