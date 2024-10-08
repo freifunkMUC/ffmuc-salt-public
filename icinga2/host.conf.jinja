@@ -1,0 +1,62 @@
+#
+# {{ node_id }}
+#
+{%- set role = salt['mine.get'](node_id,'minion_role')[node_id] %}
+{%- set tags = salt['mine.get'](node_id,'minion_tags')[node_id] %}
+{%- set location = salt['mine.get'](node_id,'minion_location', tgt_type='glob')[node_id] %}
+{%- set overlay_address = salt['mine.get'](node_id,'minion_overlay_address', tgt_type='glob')[node_id] %}
+{%- set minion_external_address6 = salt['mine.get'](node_id,'minion_external_ip6', tgt_type='glob')[node_id] %}
+
+{%- if 'icinga2_server' not in tags %}
+object Endpoint "{{ node_id }}" {
+		host = "{{ node_id }}"
+}
+
+object Zone "{{ node_id }}" {
+	endpoints = [ "{{ node_id }}" ]
+	parent = "master"
+}
+{%- endif %}
+
+object Host "{{ node_id }}" {
+	import "generic-host"
+
+	display_name = "{{ node_id }}"
+	check_command = "hostalive"
+
+	{%- if 'mine_interval' not in overlay_address %}
+	address = "{{ overlay_address | regex_replace('/\d+$','') }}"
+	{%- endif %}
+
+	{%- if minion_external_address6 %}
+	# Used to determine whether a host has IPv6
+	vars.external_address_6 = "{{ minion_external_address6 }}"
+	{%- endif %}
+
+	vars.os = "Linux"
+
+	vars.role = "{{ role }}"
+
+	vars.tags = [
+	{%- for tag in tags|sort %}
+		"{{ tag }}",
+	{%- endfor %}
+	]
+
+	vars.location = "{{ location }}"
+
+	vars.disk_wfree = "4%"
+	vars.disk_cfree = "2%"
+	vars.disks["disk /"] = {
+		disk_partitions = "/"
+	}
+	{% if 'backupserver' == role %}
+	vars.disks["disk /srv"] = {
+		disk_partitions = "/srv"
+	}
+	{% elif 'buildserver' == role %}
+	vars.disks["disk /build"] = {
+		disk_partitions = "/build"
+	}
+	{% endif %}
+}

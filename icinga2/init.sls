@@ -248,14 +248,13 @@ Cleanup /etc/icinga2/zones.d/master/ffmuc-conf.d/hosts/generated/:
       - service: icinga2-service
 
   # Generate config file for every client known to pillar
-{% for node_id,data in salt['mine.get']('netbox:tag_list:icinga2_client', 'minion_id', tgt_type='pillar').items() %}
+{% for node_id in salt['mine.get']('netbox:tag_list:icinga2_client', 'minion_id', tgt_type='pillar').keys() %}
 /etc/icinga2/zones.d/master/ffmuc-conf.d/hosts/generated/{{ node_id }}.conf:
   file.managed:
-    - source: salt://icinga2/host.conf.tmpl
+    - source: salt://icinga2/host.conf.jinja
     - template: jinja
     - context:
         node_id: {{ node_id }}
-        node_config: {{ data }}
     - require:
       - file: Create /etc/icinga2/zones.d/master/ffmuc-conf.d/hosts/generated/
     - require_in:

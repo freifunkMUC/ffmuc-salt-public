@@ -50,7 +50,7 @@ salt-repo:
 apt-transport-https:
   pkg.installed
 
-python-apt:
+python3-apt:
   pkg.installed
 
 # Purge old stuff
