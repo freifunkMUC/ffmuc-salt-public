@@ -39,7 +39,7 @@ protocol = https
 ;http_port = 3000
 
 # The public facing domain name used to access grafana from a browser
-domain = {{ grains.id }}
+domain = stats.ffmuc.net
 
 # Redirect to correct domain if host header does not match domain
 # Prevents DNS rebinding attacks
@@ -47,7 +47,7 @@ domain = {{ grains.id }}
 
 # The full public facing url you use in browser, used for redirects and emails
 # If you use reverse proxy and sub path specify full url (with sub path)
-;root_url = http://localhost:3000
+root_url = %(protocol)s://%(domain)s/
 
 # Log web requests
 ;router_logging = false
@@ -417,4 +417,3 @@ concurrent_render_request_limit = 30
 rendering_ignore_https_errors = true
 [feature_toggles]
 autoMigrateOldPanels = true
-
