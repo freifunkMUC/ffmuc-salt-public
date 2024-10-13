@@ -8,7 +8,7 @@ influx-db-repo-key:
 
 influx-db-repo:
   pkgrepo.managed:
-    - name: deb [signed-by=/usr/share/keyrings/influxdb-keyring.gpg] https://repos.influxdata.com/{{ grains.lsb_distrib_id | lower }} {{ grains.oscodename }} stable
+    - name: deb [signed-by=/usr/share/keyrings/influxdb-keyring.gpg] https://repos.influxdata.com/{{ grains.lsb_distrib_id | lower }} stable main
     - file: /etc/apt/sources.list.d/influxdb.list
     - clean_file: True
     - require:

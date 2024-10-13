@@ -8,23 +8,22 @@
 {# There is data available so we think telegraf should be installed #}
 {% set role = salt['pillar.get']('netbox:role:name') %}
 
-influxdb-repo-key:
+influx-db-repo-key:
   cmd.run:
     - name: "curl https://repos.influxdata.com/influxdata-archive_compat.key | gpg --batch --yes --dearmor -o /usr/share/keyrings/influxdb-keyring.gpg"
 
-influxdb-repo:
+influx-db-repo:
   pkgrepo.managed:
-    - humanname: Jitsi Repo
-    - name: deb [signed-by=/usr/share/keyrings/influxdb-keyring.gpg] https://repos.influxdata.com/{{ grains.lsb_distrib_id | lower }} {{ grains.oscodename }} stable
+    - name: deb [signed-by=/usr/share/keyrings/influxdb-keyring.gpg] https://repos.influxdata.com/{{ grains.lsb_distrib_id | lower }} stable main
     - file: /etc/apt/sources.list.d/influxdb.list
     - clean_file: True
     - require:
-      - cmd: influxdb-repo-key
+      - cmd: influx-db-repo-key
 
 telegraf:
   pkg.installed:
     - require:
-        - pkgrepo: influxdb-repo
+        - pkgrepo: influx-db-repo
   service.running:
     - enable: True
     - running: True
