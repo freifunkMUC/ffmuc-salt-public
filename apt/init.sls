@@ -2,7 +2,12 @@
 # APT
 #
 {% set site_slug = salt['pillar.get']("netbox:site:slug") %}
+
+{% if grains.os == 'Ubuntu' and grains.osmajorrelease >= 24 %}
+/etc/apt/sources.list.d/ubuntu.sources:
+{% else %}
 /etc/apt/sources.list:
+{% endif %}
   file.managed:
     - source:
       - salt://apt/sources.list.{{ grains.os }}.{{ grains.oscodename }}.{{ site_slug }}

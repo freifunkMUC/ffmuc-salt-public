@@ -26,6 +26,7 @@ docker-pkgs:
       - docker-ce
       - docker-ce-cli
       - containerd.io
+      - docker-compose-plugin
     - require:
       - pkgrepo: docker-repo
 
@@ -52,8 +53,5 @@ docker-pkgs:
         }
 
 /usr/local/bin/docker-compose:
-  file.managed:
-    - source: https://github.com/docker/compose/releases/download/v2.5.0/docker-compose-linux-x86_64
-    - source_hash: 6296d17268c77a7159f57f04ed26dd2989f909c58cca4d44d1865f28bd27dd67
-    - mode: "0755"
+  file.absent
 {% endif  %}

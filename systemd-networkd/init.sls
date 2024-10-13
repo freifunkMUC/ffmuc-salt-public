@@ -84,9 +84,15 @@ vxlan-fdb-fill.service:
 {% endif %}{# 'nextgen-gateway' in role #}
 
 disable_netplan:
-    file.managed:
-        - name: /etc/netplan/01-netcfg.yaml
-        - source: salt://systemd-networkd/files/netplan.conf
+  file.managed:
+    - name: /etc/netplan/01-netcfg.yaml
+    - source: salt://systemd-networkd/files/netplan.conf
+
+disable_netplan_generator:
+  file.symlink:
+    - name: /usr/lib/systemd/system-generators/netplan
+    - target: /dev/null
+    - force: True
 
 systemd-networkd:
     service.running:

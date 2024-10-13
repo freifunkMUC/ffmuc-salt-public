@@ -18,11 +18,11 @@ ssh:
 /etc/ssh/sshd_config:
   file.managed:
     - source:
-      - salt://ssh/sshd_config.{{ grains.os }}.{{ grains.oscodename }}
       - salt://ssh/sshd_config
     - user: root
     - group: root
     - mode: "0644"
+    - template: jinja
     - watch_in:
       - service: ssh
 
