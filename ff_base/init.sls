@@ -17,7 +17,7 @@ ffmuc_packages:
       - ethtool
       - mtr-tiny
       - lldpd
-      - mlocate
+      - plocate
       - sysstat
       - dnsutils
       - curl
