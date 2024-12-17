@@ -23,26 +23,13 @@
   file.absent
 
 salt-repo-key:
-  file.managed:
-    - name: /usr/share/keyrings/salt-archive-keyring.gpg
-    {% if 'Ubuntu' in grains.lsb_distrib_id %}
-    - source: https://repo.saltproject.io/salt/py3/{{ grains.lsb_distrib_id | lower }}/{{ grains.osrelease }}/{{ grains.osarch }}/SALT-PROJECT-GPG-PUBKEY-2023.gpg
-    {% elif 'Raspbian' in grains.lsb_distrib_id %}
-    - source: http://repo.saltproject.io/salt/py3/debian/{{ grains.osmajorrelease }}/{{ grains.osarch }}/SALT-PROJECT-GPG-PUBKEY-2023.gpg
-    {% else %}
-    - source: http://repo.saltproject.io/salt/py3/{{ grains.lsb_distrib_id | lower }}/{{ grains.osmajorrelease }}/{{ grains.osarch }}/SALT-PROJECT-GPG-PUBKEY-2023.gpg
-    {% endif %}
-    - skip_verify: True
+  cmd.run:
+    - name: "curl -sSL https://packages.broadcom.com/artifactory/api/security/keypair/SaltProjectKey/public | gpg --dearmor -o /usr/share/keyrings/salt-archive-keyring.gpg"
+    - creates: /usr/share/keyrings/salt-archive-keyring.gpg
 
 salt-repo:
   pkgrepo.managed:
-    {% if 'Ubuntu' in grains.lsb_distrib_id %}
-    - name: deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/salt-archive-keyring.gpg] http://repo.saltproject.io/salt/py3/{{ grains.lsb_distrib_id | lower }}/{{ grains.osrelease }}/{{ grains.osarch }}/latest {{ grains.oscodename }} main
-    {% elif 'Raspbian' in grains.lsb_distrib_id %}
-    - name: deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/salt-archive-keyring.gpg] http://repo.saltproject.io/salt/py3/debian/{{ grains.osmajorrelease }}/{{ grains.osarch }}/latest {{ grains.oscodename }} main
-    {% else %}
-    - name: deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/salt-archive-keyring.gpg] http://repo.saltproject.io/salt/py3/{{ grains.lsb_distrib_id | lower }}/{{ grains.osmajorrelease }}/{{ grains.osarch }}/latest {{ grains.oscodename }} main # noqa: 204
-    {% endif %}
+    - name: deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/salt-archive-keyring.gpg] https://packages.broadcom.com/artifactory/saltproject-deb/ stable main
     - file: /etc/apt/sources.list.d/saltstack.list
     - clean_file: True
     - require:
