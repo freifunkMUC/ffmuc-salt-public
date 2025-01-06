@@ -3,7 +3,7 @@
 ###
 {%- set role = salt['pillar.get']('netbox:role:name', salt['pillar.get']('netbox:device_role:name')) %}
 {% set tags = salt['pillar.get']('netbox:tag_list', []) %}
-{% if "webserver" in role or "webserver" in tags %}
+{% if not "jitsi meet" in role and ("webserver" in role or "webserver" in tags) %}
 
 nginx-repo-key:
   cmd.run:
@@ -124,6 +124,42 @@ nginx-module-{{ module }}:
       - pkg: nginx
     - require_in:
       - service: nginx
+
+{% if "ffmuc.net" in salt['pillar.get']('netbox:config_context:webserver:domains') %}
+/srv/www/ffmuc.net:
+    file.directory:
+      - user: deploy-ffmuc
+      - group: deploy-ffmuc
+      - mode: '0755'
+
+/srv/www/ffmuc.net/.ssh:
+    file.directory:
+      - user: deploy-ffmuc
+      - group: deploy-ffmuc
+      - mode: '0700'
+
+/srv/www/ffmuc.net/.ssh/id_ed25519:
+    file.managed:
+      - contents_pillar: netbox:config_context:ffmuc-net_deploy:ssh_privkey
+      - user: deploy-ffmuc
+      - group: deploy-ffmuc
+      - mode: '0600'
+
+/srv/www/ffmuc.net/.ssh/id_ed25519.pub:
+    file.managed:
+      - contents_pillar: netbox:config_context:ffmuc-net_deploy:ssh_pubkey
+      - user: deploy-ffmuc
+      - group: deploy-ffmuc
+      - mode: '0644'
+
+/srv/www/ffmuc.net/.ssh/authorized_keys:
+    file.managed:
+      - contents_pillar: netbox:config_context:ffmuc-net_deploy:ssh_pubkey
+      - user: deploy-ffmuc
+      - group: deploy-ffmuc
+      - mode: '0640'
+
+{% endif %}{# "ffmuc.net" in salt['pillar.get']('netbox:config_context:webserver:domains') #}
 
 /etc/logrotate.d/nginx:
   file.managed:
