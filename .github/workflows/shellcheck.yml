@@ -22,7 +22,7 @@ jobs:
       - name: shellcheck
         # Make sure the action is pinned to a commit, as all reviewdog repos
         # have hundreds of contributors with write access (breaks easy/often)
-        uses: reviewdog/action-shellcheck@96fa305c16b0f9cc9b093af22dcd09de1c8f1c2d  # v1.19.0
+        uses: reviewdog/action-shellcheck@6e0e63d1750d02d761b3df0f2c5ba9f9ac4a9ed7  # v1.29.0
         with:
           filter_mode: "file"
           fail_on_error: true
