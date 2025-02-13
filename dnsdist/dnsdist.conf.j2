@@ -45,7 +45,7 @@ end
 if not file_exists("/run/dnsdist/resolver.cert") then
   -- this should be recreated regularly => store in /run/dnsdist which gets cleaned at every restart
   infolog("Generate new DNSCrypt keys.")
-  generateDNSCryptCertificate("/var/lib/dnsdist/providerPrivate.key", "/run/dnsdist/resolver.cert", "/run/dnsdist/resolver.key", os.date('%Y%m%d', os.time()), os.time(os.date("!*t")), os.time({year=2025, month=2, day=1, hour=00, minute=00}))
+  generateDNSCryptCertificate("/var/lib/dnsdist/providerPrivate.key", "/run/dnsdist/resolver.cert", "/run/dnsdist/resolver.key", os.date('%Y%m%d', os.time()), os.time(os.date("!*t")), os.time({year=2030, month=2, day=1, hour=00, minute=00}))
 end
 
 -- listen for DNSCrypt
