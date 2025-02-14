@@ -1,6 +1,5 @@
 #!/usr/bin/python
-"""WIP module to get virtual machine data from netbox, e.g. to get all VMs with a certain tag..
-"""
+"""WIP module to get virtual machine data from netbox, e.g. to get all VMs with a certain tag.."""
 
 import requests
 import logging
