@@ -148,7 +148,7 @@ protocol ospf v2 {
                 export filter DEFAULT;
         };
 }
-{%- elif 'dummy0' not in interfaces or 'dummy1' not in interfaces %}
+{%- elif 'dummy0' not in interfaces and 'dummy1' not in interfaces %}
 # We aren't a gateway so we want a default route via OSPF
 protocol kernel {
         ipv4 {                  # Connect protocol to IPv4 table by channel
