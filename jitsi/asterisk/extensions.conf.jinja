@@ -2,18 +2,33 @@
 [default]
 exten => s,1,Hangup()
 
+[sub-headers]
+exten => jigasi_handler,1,NoOp(Set Header Jitsi-Conference-Room: ${ARG1} -Pass: ${ARG2} -Base: ${CUT(CUT(ARG1,@,2),.,2-)})
+same => n,GotoIf($[${LEN(${ARG1})} == 0]? 5)
+same => n,Set(PJSIP_HEADER(add,Jitsi-Conference-Room)=${ARG1})
+same => n,Set(PJSIP_HEADER(add,X-Room-Name)=${ARG1})
+same => n,Set(PJSIP_HEADER(add,X-Domain-Base)=meet.ffmuc.net)
+same => 5,GotoIf($[${LEN(${ARG2})} != 0]? 10)
+same => n,Return()
+same => 10,Set(PJSIP_HEADER(add,Jitsi-Conference-Room-Pass)=${ARG2})
+same => n,Return()
+
 [von-voip-provider]
 exten => {{ jitsi.asterisk.sip.username }},1,Answer()
 same => n,Playback(hello)
 same => n,Playback(conf-getpin)
-same => n,Playback(astcc-followed-by-pound)
-same => n(getmeeting),Read(confid)
+{#- same => n,Playback(astcc-followed-by-pound)
+ Read does not block unless there is a second parameter:
+ https://github.com/asterisk/asterisk/issues/565#issuecomment-1958900506
+#}
+same => n(getmeeting),Read(confid,astcc-followed-by-pound)
 same => n,Log(NOTICE, query conferenceMapper for pin ${confid});
 same => n,Set(CURL_RESULT=${SHELL(curl --silent {{ jitsi.conference_mapper_url }}?id=${confid} | jq -r .conference)})
+same => n,Set(CURL_RESULT=${TRIM(${CURL_RESULT})})
 same => n,Log(NOTICE, conferenceMapper result is ${CURL_RESULT});
-same => n,GotoIf($[ ${CURL_RESULT} = false]?conf-unknown)
-same => n,SIPAddHeader(Jitsi-Conference-Room:${CURL_RESULT})
-same => n,Dial(SIP/2000,5)
+same => n,GotoIf($["${CURL_RESULT}"="false"]?conf-unknown)
+same => n,GotoIf($["${CURL_RESULT}"=""]?conf-unknown)
+same => n,Dial(PJSIP/2000,5,b(sub-headers^jigasi_handler^1(${CURL_RESULT},)))
 same => n,Log(NOTICE, Contacting Jigasi... Status is ${DIALSTATUS} );
 same => n,GotoIf($["${DIALSTATUS}" = "BUSY"]?error)
 same => n,GotoIf($["${DIALSTATUS}" = "NOANSWER"]?conf-busy)
@@ -32,4 +47,4 @@ same => n,Log(ERROR, joining conference ${confid}, status is ${DIALSTATUS});
 same => n,Hangup()
 same => n(conf-busy),Playback(confbridge-begin-leader)
 same => n,Log(NOTICE, waiting 120 sec for conference with pin ${confid} to start);
-same => n,Dial(SIP/2000,120)
+same => n,Dial(PJSIP/2000,120,b(sub-headers^jigasi_handler^1(${CURL_RESULT},)))

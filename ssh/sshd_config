@@ -37,7 +37,7 @@ PermitRootLogin prohibit-password
 PubkeyAuthentication yes
 
 # Expect .ssh/authorized_keys2 to be disregarded by default in future.
-#AuthorizedKeysFile     .ssh/authorized_keys .ssh/authorized_keys2
+#AuthorizedKeysFile  .ssh/authorized_keys
 
 #AuthorizedPrincipalsFile none
 
@@ -81,7 +81,7 @@ ChallengeResponseAuthentication no
 # be allowed through the KbdInteractiveAuthentication and
 # PasswordAuthentication.  Depending on your PAM configuration,
 # PAM authentication via KbdInteractiveAuthentication may bypass
-# the setting of "PermitRootLogin without-password".
+# the setting of "PermitRootLogin prohibit-password".
 # If you just want the PAM account and session checks to run without
 # PAM authentication, then enable this but set PasswordAuthentication
 # and KbdInteractiveAuthentication to 'no'.
@@ -115,11 +115,11 @@ PermitUserEnvironment yes
 AcceptEnv LANG LC_*
 
 # override default of no subsystems
-Subsystem       sftp    /usr/lib/openssh/sftp-server
+Subsystem    sftp    /usr/lib/openssh/sftp-server
 
 # Example of overriding settings on a per-user basis
 #Match User anoncvs
-#       X11Forwarding no
-#       AllowTcpForwarding no
-#       PermitTTY no
-#       ForceCommand cvs server
+#    X11Forwarding no
+#    AllowTcpForwarding no
+#    PermitTTY no
+#    ForceCommand cvs server

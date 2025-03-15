@@ -3,7 +3,7 @@
 # Managed by SaltStack
 ###
 
-org.jitsi.jigasi.DEFAULT_JVB_ROOM_NAME=siptest
+org.jitsi.jigasi.DEFAULT_JVB_ROOM_NAME=verySecretSipTestRoomShouldNotBeUsed
 net.java.sip.communicator.impl.protocol.SingleCallInProgressPolicy.enabled=false
 
 # Should be enabled when using translator mode
@@ -24,6 +24,8 @@ net.java.sip.communicator.impl.protocol.sip.acc1.USER_ID={{ jitsi.jigasi.sip.use
 net.java.sip.communicator.impl.protocol.sip.acc1.KEEP_ALIVE_INTERVAL=25
 net.java.sip.communicator.impl.protocol.sip.acc1.KEEP_ALIVE_METHOD=OPTIONS
 net.java.sip.communicator.impl.protocol.sip.acc1.VOICEMAIL_ENABLED=false
+net.java.sip.communicator.impl.protocol.sip.acc1.JITSI_MEET_ROOM_HEADER_NAME=X-Room-Name
+net.java.sip.communicator.impl.protocol.sip.acc1.JITSI_MEET_DOMAIN_BASE_HEADER_NAME=X-Domain-Base
 net.java.sip.communicator.impl.protocol.sip.acc1.Encodings.AMR-WB/16000=750
 net.java.sip.communicator.impl.protocol.sip.acc1.Encodings.G722/8000=700
 net.java.sip.communicator.impl.protocol.sip.acc1.Encodings.GSM/8000=0

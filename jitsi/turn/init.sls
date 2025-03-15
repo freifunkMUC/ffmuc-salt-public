@@ -19,6 +19,7 @@ coturn:
 
 /etc/systemd/system/coturn.service.d/override.conf:
   file.managed:
+    - makedirs: true
     - contents: |
         [Service]
         AmbientCapabilities=CAP_NET_BIND_SERVICE

@@ -16,6 +16,7 @@ python3-virtualenv:
     - target: /srv/wgkex/wgkex
     - user: wgkex
     - force_reset: True
+    - force_fetch: True
 
 /srv/wgkex/wgkex/venv:
   virtualenv.managed:

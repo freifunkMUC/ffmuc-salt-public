@@ -42,7 +42,7 @@ base:
     - jitsi.jicofo
     - jitsi.meet
     - certs
-    - nginx
+#    - nginx # broken, old nginx versions
   'call*':
     - jitsi.asterisk
     - jitsi.jigasi

@@ -16,7 +16,7 @@ graylog-repo-key:
 graylog-repo:
     pkgrepo.managed:
     - humanname: Graylog-Repo
-    - name: deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/graylog-keyring.gpg] https://packages.graylog2.org/repo/debian/ sidecar-stable 1.2
+    - name: deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/graylog-keyring.gpg] https://packages.graylog2.org/repo/debian/ sidecar-stable 1.5
     - file: /etc/apt/sources.list.d/graylog-sidecar.list
     - clean_file: True
     - require:
@@ -27,11 +27,14 @@ elasticsearch-repo-key:
     - name: "wget -O - -o /dev/null https://artifacts.elastic.co/GPG-KEY-elasticsearch | gpg --dearmor -o /usr/share/keyrings/elasticsearch-keyring.gpg"
     - creates: /usr/share/keyrings/elasticsearch-keyring.gpg
 
+/etc/apt/sources.list.d/elastic-7.x.list:
+  file.absent
+
 filebeat-repo:
   pkgrepo.managed:
     - humanname: Elastic-Repo
-    - name: deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/elasticsearch-keyring.gpg] https://artifacts.elastic.co/packages/oss-7.x/apt stable main
-    - file: /etc/apt/sources.list.d/elastic-7.x.list
+    - name: deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/elasticsearch-keyring.gpg] https://artifacts.elastic.co/packages/oss-8.x/apt stable main
+    - file: /etc/apt/sources.list.d/elastic-8.x.list
     - clean_file: True
     - require:
       - cmd: elasticsearch-repo-key

@@ -33,7 +33,7 @@ salt-repo:
     - file: /etc/apt/sources.list.d/saltstack.list
     - clean_file: True
     - require:
-      - file: salt-repo-key
+      - cmd: salt-repo-key
 
 /etc/cron.d/apt:
   file.managed:

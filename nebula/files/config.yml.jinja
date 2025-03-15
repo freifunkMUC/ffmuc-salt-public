@@ -118,6 +118,9 @@ firewall:
   - port: 161
     proto: udp
     host: nms.in.ffmuc.net
+  - port: 161
+    proto: udp
+    host: docker07.in.ffmuc.net
     # mosh
   - port: 60001-60010
     proto: udp
@@ -125,6 +128,10 @@ firewall:
 {%- if "docker06.in.ffmuc.net" == grains["id"] %}
   # Allow connections for http backend of broker.ffmuc.net
   - port: 5000
+    proto: tcp
+    group: webfrontend
+   # Allow connections for http backend of broker.ffmuc.net
+  - port: 8888
     proto: tcp
     group: webfrontend
   # Allow connections for mqtt backend of broker.ffmuc.net
@@ -244,6 +251,9 @@ firewall:
     group: webfrontend
   # Allow connections for cryptpad.ffmuc.net
   - port: 8011
+    proto: tcp
+    group: webfrontend
+  - port: 8012
     proto: tcp
     group: webfrontend
   # Allow connections for tickets.ffmuc.net
