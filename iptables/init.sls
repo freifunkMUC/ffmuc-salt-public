@@ -4,7 +4,7 @@ iptables_pkgs:
       - iptables-persistent
       - netfilter-persistent
 
-{% if "guardian" in grains.id %}
+{% if "guardian" in grains.id or "gw" in grains.id %}
 
 {% set own_location = salt['pillar.get']('netbox:site:name') %}
 
@@ -18,7 +18,7 @@ iptables_pkgs:
 {% for node in nodes %}
 {%- set node_location = salt['mine.get'](node, 'minion_location', tgt_type='glob') %}
 # Are we in the same location as our minion?
-{% if own_location == node_location[node] %}
+{% if own_location == node_location[node] and grains.id != node %}
 
 {%- set overlay_address = salt['mine.get'](node,'minion_overlay_address', tgt_type='glob') %}
 {%- set minion_address = salt['mine.get'](node,'minion_address', tgt_type='glob')[node] %}
