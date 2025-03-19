@@ -56,7 +56,7 @@ base:
 #  'webfrontend03.in.ffmuc.net':
 #    - cloudflare
   'webfrontend0[3-6].in.ffmuc.net':
-    - dns-server/auth
+    - dns-auth
     - pdns-recursor
     - github-downloader
   'vpn0*.in.ffmuc.net':
