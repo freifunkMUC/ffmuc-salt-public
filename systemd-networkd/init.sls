@@ -26,7 +26,8 @@
         AUTOINSTALL="yes"
     - require_in: systemd-packages
 
-# for gateways we need v249+ (not in upstream yet) to to configure Batman-Adv and FDB entries
+# for gateways we need v249+ (not in Ubuntu 20.04 repos) to to configure Batman-Adv and FDB entries
+{% if grains.os == 'Ubuntu' and grains.osmajorrelease < 24 %}
 {% set systemd_nightly_buildid = "21960774" %}
 {% set systemd_version = "249.287.g84817bfdb3+20.04.20210808175006" %}
 systemd-packages:
@@ -44,6 +45,8 @@ systemd-packages:
     #- {{ package }}: https://code.launchpad.net/~ubuntu-support-team/+archive/ubuntu/systemd/+build/{{ systemd_nightly_buildid }}/+files/{{ package }}_{{ systemd_version }}_{{ grains.osarch }}.deb
       - {{ package }}: https://apt.ffmuc.net/systemd-packages/{{ package }}_{{ systemd_version }}_{{ grains.osarch }}.deb
 {% endfor %}{# packages #}
+{% endif %}
+
 
 /etc/systemd/system/batadv-throughput.service:
   file.managed:

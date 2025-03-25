@@ -21,7 +21,11 @@ ffmuc_packages:
       - sysstat
       - dnsutils
       - curl
+{% if grains.os == 'Ubuntu' and grains.osmajorrelease >= 24 %}
+      - iptraf-ng
+{% else %}
       - iptraf
+{% endif %}
       - speedtest-cli
       - dmidecode
       - psmisc
