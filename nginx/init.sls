@@ -48,15 +48,6 @@ nginx-configtest:
 {% set nginx_version = "1.26.2" %}{# current on 02.11.2020 #}
 {% endif %}
 
-{% for module in ["http_brotli_filter_module", "http_brotli_static_module", "http_fancyindex_module"] %}
-nginx-module-{{ module }}:
-  file.managed:
-    - name: /usr/lib/nginx/modules/ngx_{{ module }}.so
-    - source: https://mirror.krombel.de/nginx-{{ nginx_version }}/ngx_{{ module }}.so
-    - skip_verify: True
-    - watch_in:
-      - cmd: nginx-configtest
-{% endfor %}
 
 /etc/nginx/nginx.conf:
   file.managed:

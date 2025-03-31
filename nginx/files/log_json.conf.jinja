@@ -38,8 +38,7 @@ log_format json_{{ flavor }} escape=json '{'
    '"response_status":"$status",'
    '"body_bytes_sent":"$body_bytes_sent",'
    '"ssl_protocol":"$ssl_protocol",'
-   '"gzip_ratio":"$gzip_ratio",'
-   '"brotli_ratio":"$brotli_ratio"'
+   '"gzip_ratio":"$gzip_ratio"'
 '}';
 
 {% endfor %}
