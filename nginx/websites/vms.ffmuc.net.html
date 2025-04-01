@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FFMUC VMs - Standortauswahl</title>
+    <style>
+        :root {
+            --bg-color: #f5f5f5;
+            --text-color: #333;
+            --card-bg: #ffffff;
+            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --button-bg: #3498db;
+            --button-hover: #2980b9;
+            --button-text: #ffffff;
+            --header-color: #2c3e50;
+            --footer-bg: #ecf0f1;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #1a1a1a;
+            --text-color: #f5f5f5;
+            --card-bg: #2c2c2c;
+            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            --button-bg: #3498db;
+            --button-hover: #2980b9;
+            --button-text: #ffffff;
+            --header-color: #ecf0f1;
+            --footer-bg: #2c3e50;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: background-color 0.1s, color 0.1s;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            text-align: center;
+            padding: 2rem 1rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--header-color);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.8;
+            margin-bottom: 0.5rem;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem 1rem;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .locations {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .location-btn {
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            border: none;
+            border-radius: 8px;
+            padding: 1rem 2rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+            min-width: 200px;
+        }
+
+        .location-btn:hover {
+            background-color: var(--button-hover);
+            transform: translateY(-3px);
+        }
+
+        .location-btn:active {
+            transform: translateY(0);
+        }
+
+        .theme-switch {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+
+        .theme-switch-label {
+            margin-right: 10px;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #2196F3;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .slider-icon {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+            color: white;
+        }
+
+        .sun-icon {
+            right: 10px;
+            display: block;
+        }
+
+        .moon-icon {
+            left: 10px;
+            display: none;
+        }
+
+        input:checked ~ .sun-icon {
+            display: none;
+        }
+
+        input:checked ~ .moon-icon {
+            display: block;
+        }
+
+        footer {
+            background-color: var(--footer-bg);
+            text-align: center;
+            padding: 1.5rem;
+            margin-top: auto;
+        }
+
+        @media (max-width: 600px) {
+            .locations {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .location-btn {
+                width: 100%;
+            }
+        }
+
+        .signup-btn {
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            border: none;
+            border-radius: 8px;
+            padding: 0.8rem 1.5rem;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+
+        .signup-btn:hover {
+            background-color: var(--button-hover);
+            transform: translateY(-3px);
+        }
+
+        .signup-btn:active {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>FFMUC VMs</h1>
+        <p class="subtitle">Wählen deinen VM-Standort</p>
+        <div class="theme-switch">
+            <label class="switch">
+                <input type="checkbox" id="theme-toggle">
+                <span class="slider"></span>
+                <span class="slider-icon sun-icon">☀️</span>
+                <span class="slider-icon moon-icon">🌙</span>
+            </label>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <div class="card">
+                <h2>VM-Server auswählen</h2>
+                <p>Bitte wähle deinen bevorzugten VM-Server-Standort:</p>
+                
+                <div class="locations">
+                    <button class="location-btn" onclick="redirectTo('https://member01.vms.ffmuc.net/oidc/login')">
+                        München (MUC)
+                    </button>
+                    <button class="location-btn" onclick="redirectTo('https://member02.vms.ffmuc.net/oidc/login')">
+                        Wien (VIE)
+                    </button>
+                </div>
+            </div>
+            <!-- Moved signup section starts here -->
+            <div class="card">
+                <p>Um diesen Dienst zu nutzen, werde Mitglied bei Freie Netze München e.V.</p>
+                <a href="https://ffmuc.net/wiki/lib/exe/fetch.php?media=ev:fnmuc_mitgliedsantrag_2023.pdf" target="_blank" rel="noopener noreferrer">
+                    <button class="signup-btn">Mitglied werden</button>
+                </a>
+            </div>
+            <!-- Moved signup section ends here -->
+        </div>
+    </main>
+    <footer>
+        <p>&copy; 2025 FFMUC VM Service. Alle Rechte vorbehalten.</p>
+    </footer>
+
+    <script>
+        // Check for saved theme preference or use system preference
+        const prefersDarkScheme = window.matchMedia("(prefers-color-scheme: dark)");
+        const storedTheme = localStorage.getItem("theme");
+        
+        // Set the initial theme
+        if (storedTheme === "dark" || (!storedTheme && prefersDarkScheme.matches)) {
+            document.body.setAttribute("data-theme", "dark");
+            document.getElementById("theme-toggle").checked = true;
+        }
+        
+        // Theme toggle functionality
+        document.getElementById("theme-toggle").addEventListener("change", function() {
+            if (this.checked) {
+                document.body.setAttribute("data-theme", "dark");
+                localStorage.setItem("theme", "dark");
+            } else {
+                document.body.removeAttribute("data-theme");
+                localStorage.setItem("theme", "light");
+            }
+        });
+        
+        // Redirect function
+        function redirectTo(url) {
+            window.location.href = url;
+        }
+    </script>
+</body>
+</html>

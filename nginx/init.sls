@@ -59,6 +59,24 @@ nginx-configtest:
       - cmd: nginx-configtest
 
 
+{% set domains = ['vpn.ffmuc.net', 'vms.ffmuc.net', 'mitglieder.ffmuc.net'] %}
+{% for domain in domains %}
+/srv/www/{{ domain }}:
+  file.directory:
+    - user: www-data
+    - group: www-data
+    - mode: '0755'
+    - makedirs: True
+
+/srv/www/{{ domain }}/index.html:
+  file.managed:
+    - source: salt://nginx/websites/{{ domain }}.html
+    - user: www-data
+    - group: www-data
+    - mode: '0755'
+{% endfor %}
+
+
 {% for domain in salt['pillar.get']('netbox:config_context:webserver:domains') %}
 /etc/nginx/sites-enabled/{{ domain }}.conf:
   file.managed:
