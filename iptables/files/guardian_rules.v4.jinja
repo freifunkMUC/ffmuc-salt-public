@@ -1,0 +1,39 @@
+{%- from 'iptables/nebula_map.jinja' import nebula_node_data_list with context %}
+# Managed with Salt
+
+*nat
+:PREROUTING ACCEPT
+:INPUT ACCEPT
+:POSTROUTING ACCEPT
+:OUTPUT ACCEPT
+
+{#- Add SNAT and DNAT rule for nebula traffic to/from hosts in the internal VLAN #}
+{%- for node in nebula_node_data_list %}
+-A PREROUTING -d {{ nat_ip }} -p udp -m udp --dport {{ node.nebula_port }} -j DNAT --to-destination {{ node.minion_address }} -m comment --comment "{{ node.hostname }}"
+{%- endfor %}{# node #}
+
+{%- if own_location == "MUC01" %}
+-A PREROUTING -d {{ nat_ip }} -p tcp -m tcp --dport 52210 -j DNAT --to-destination 10.80.248.86:22 -m comment --comment "Fallback SSH for ft04"
+{%- endif %}
+
+{%- for node in nebula_node_data_list %}
+-A POSTROUTING -s {{ node.minion_address }} -p udp -m udp --sport {{ node.nebula_port }} -j SNAT --to-source {{ nat_ip }}:{{ node.nebula_port }} -m comment --comment "{{ node.hostname }}"
+{%- endfor %}{# node #}
+
+{%- if own_location == "MUC01" %}
+-A POSTROUTING -d 10.80.248.86/32 -p tcp -m tcp --dport 22 -j MASQUERADE
+{%- elif own_location == "VIE01" %}
+-A POSTROUTING -s 172.31.0.39/32 -o vlan101 -j SNAT --to-source {{ nat_ip }} -m comment --comment "RIPE Atlas Anchor"
+-A POSTROUTING -s 172.31.0.40/32 -o vlan101 -j SNAT --to-source {{ nat_ip }} -m comment --comment "NLNOG Ring"
+{%- endif %}
+
+
+{%- set internal_vlan_net = salt['network.calc_net'](salt['mine.get'](grains.id,'minion_address',tgt_type='glob')[grains.id]) %}
+-A POSTROUTING -s {{ internal_vlan_net }} -o {{ uplink_iface }} -j SNAT --to-source {{ nat_ip }}
+COMMIT
+
+*filter
+:INPUT ACCEPT
+:FORWARD ACCEPT
+:OUTPUT ACCEPT
+COMMIT
