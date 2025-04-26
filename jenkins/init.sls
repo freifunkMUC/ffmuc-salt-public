@@ -4,7 +4,7 @@
 {% if salt['pillar.get']('netbox:role:name') %}
 {%- set role = salt['pillar.get']('netbox:role:name') %}
 {% else %}
-{%- set role = salt['pillar.get']('netbox:device_role:name') %}
+{%- set role = salt['pillar.get']('netbox:role:name') %}
 {% endif %}
 
 {% if 'buildserver' in role %}

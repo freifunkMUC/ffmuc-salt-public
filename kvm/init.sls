@@ -1,11 +1,7 @@
 #
 # KVM host
 #
-{% if salt['pillar.get']('netbox:role:name') %}
 {%- set role = salt['pillar.get']('netbox:role:name') %}
-{% else %}
-{%- set role = salt['pillar.get']('netbox:device_role:name') %}
-{% endif %}
 
 
 {% if 'vmhost' in role %}

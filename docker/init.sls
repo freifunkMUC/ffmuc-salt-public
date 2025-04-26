@@ -1,7 +1,7 @@
 #
 # Setup docker.io
 #
-{%- set role = salt['pillar.get']('netbox:role:name', salt['pillar.get']('netbox:device_role:name')) %}
+{%- set role = salt['pillar.get']('netbox:role:name', salt['pillar.get']('netbox:role:name')) %}
 
 {% if 'docker' in role or 'mailserver' in role or 'roadwarrior' in role %}
 docker-repo-key:

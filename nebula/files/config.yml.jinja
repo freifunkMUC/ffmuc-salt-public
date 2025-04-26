@@ -1,5 +1,5 @@
 {%- from "nebula/map.jinja" import nebula with context %}
-{%- set role = salt['pillar.get']('netbox:role:name', salt['pillar.get']('netbox:device_role:name')) %}
+{%- set role = salt['pillar.get']('netbox:role:name', salt['pillar.get']('netbox:role:name')) %}
 {%- set tags = salt['pillar.get']('netbox:tag_list', []) %}
 
 pki:

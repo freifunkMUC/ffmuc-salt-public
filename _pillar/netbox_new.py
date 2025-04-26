@@ -23,7 +23,7 @@ def ext_pillar_test(minion_id, pillar, *args, **kwargs):
             device_list(name: "guardian-muc01.in.ffmuc.net", status: "ACTIVE") {
                 id
                 name
-                device_role {
+                role {
                     id
                     slug
                 }
@@ -58,7 +58,7 @@ def ext_pillar_test(minion_id, pillar, *args, **kwargs):
                     }
                 }
                 tags {
-                    
+
                 }
             }
             virtual_machine_list(name: "webfrontend03.in.ffmuc.net", status: "ACTIVE") {

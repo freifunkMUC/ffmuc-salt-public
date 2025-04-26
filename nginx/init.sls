@@ -1,7 +1,7 @@
 ###
 # nginx
 ###
-{%- set role = salt['pillar.get']('netbox:role:name', salt['pillar.get']('netbox:device_role:name')) %}
+{%- set role = salt['pillar.get']('netbox:role:name', salt['pillar.get']('netbox:role:name')) %}
 {% set tags = salt['pillar.get']('netbox:tag_list', []) %}
 {% if not "jitsi meet" in role and ("webserver" in role or "webserver" in tags) %}
 

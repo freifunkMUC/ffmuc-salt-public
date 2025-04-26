@@ -1,4 +1,4 @@
-{%- set role = salt['pillar.get']('netbox:role:name', salt['pillar.get']('netbox:device_role:name')) %}
+{%- set role = salt['pillar.get']('netbox:role:name', salt['pillar.get']('netbox:role:name')) %}
 
 {%- if 'nextgen-gateway' in role %}
 {%- set batman_version = '2024.1' %}
