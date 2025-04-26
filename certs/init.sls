@@ -62,7 +62,7 @@ generate-dhparam:
 {% endif %}{# Certificate wont expire #}
 {% endif %}{# can ping ca #}
 
-{%- set role = salt['pillar.get']('netbox:role:name', salt['pillar.get']('netbox:device_role:name')) %}
+{%- set role = salt['pillar.get']('netbox:role:name', salt['pillar.get']('netbox:role:name')) %}
 {% set cloudflare_token = salt['pillar.get']('netbox:config_context:cloudflare:api_token') %}
 {% if ("webserver-external" in role or "jitsi meet" in role) and cloudflare_token %}
 
