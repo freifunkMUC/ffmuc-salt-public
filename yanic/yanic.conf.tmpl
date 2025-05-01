@@ -87,6 +87,13 @@ path = "/srv/yanic/meshviewer-ulm.json"
 domain_as_site = true
 sites = ["ffmuc_ulm"]
 
+# definition for nodes.json
+[[nodes.output.meshviewer]]
+enable = true
+version    = 2
+nodes_path = "/srv/yanic/nodes.json"
+graph_path = "/srv/yanic/graph.json"
+
 [[nodes.output.geojson]]
 enable   = true
 path = "/srv/yanic/nodes.geojson"
