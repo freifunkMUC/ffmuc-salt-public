@@ -1,4 +1,27 @@
 #
+# Bind name server
+#
+
+bind9:
+  pkg.installed:
+    - name: bind9
+  service.running:
+    - enable: True
+    - reload: True
+
+dns_pkgs:
+  pkg.installed:
+    - pkgs:
+      - dnsutils
+      - bind9-dnsutils
+
+dnspython:
+  pip.installed:  # Install into Salt's Python environment
+    - reload_modules: True
+
+
+
+#
 # Authoritive FFMUC DNS Server configuration
 #
 
@@ -15,13 +38,10 @@
 {%- set listening_port = 53 %}
 {%- endif %}
 
-include:
-  - dns-server
-
 # Bind options
 /etc/bind/named.conf.options:
   file.managed:
-    - source: salt://dns-server/auth/named.conf.options
+    - source: salt://dns-auth/named.conf.options
     - template: jinja
     - defaults:
         listening_port: {{ listening_port }}
@@ -33,7 +53,7 @@ include:
 # Configure authoritive zones in local config
 /etc/bind/named.conf.local:
   file.managed:
-    - source: salt://dns-server/auth/named.conf.local
+    - source: salt://dns-auth/named.conf.local
     - template: jinja
     - require:
       - pkg: bind9
@@ -51,7 +71,7 @@ include:
 
 /etc/bind/zones/db.in.ffmuc.net:
   file.managed:
-    - source: salt://dns-server/auth/db.in.ffmuc.net
+    - source: salt://dns-auth/db.in.ffmuc.net
     - user: bind
     - group: bind
     - mode: "0775"
@@ -63,7 +83,7 @@ include:
 
 /etc/bind/zones/db.ov.ffmuc.net:
   file.managed:
-    - source: salt://dns-server/auth/db.ov.ffmuc.net
+    - source: salt://dns-auth/db.ov.ffmuc.net
     - user: bind
     - group: bind
     - mode: "0775"
@@ -75,7 +95,7 @@ include:
 
 /etc/bind/zones/db.ext.ffmuc.net:
   file.managed:
-    - source: salt://dns-server/auth/db.ext.ffmuc.net
+    - source: salt://dns-auth/db.ext.ffmuc.net
     - user: bind
     - group: bind
     - mode: "0775"
@@ -87,7 +107,7 @@ include:
 
 /etc/bind/zones/db.80.10.in-addr.arpa:
   file.managed:
-    - source: salt://dns-server/auth/db.80.10.in-addr.arpa
+    - source: salt://dns-auth/db.80.10.in-addr.arpa
     - user: bind
     - group: bind
     - mode: "0775"
@@ -99,7 +119,7 @@ include:
 
 /etc/bind/zones/db.1.0.a.0.8.0.6.0.1.0.0.2.ip6.arpa:
   file.managed:
-    - source: salt://dns-server/auth/db.1.0.a.0.8.0.6.0.1.0.0.2.ip6.arpa
+    - source: salt://dns-auth/db.1.0.a.0.8.0.6.0.1.0.0.2.ip6.arpa
     - user: bind
     - group: bind
     - mode: "0775"
@@ -114,7 +134,7 @@ include:
 {% set zonefile_path = '/etc/bind/zones/db.'+domain %}
 /etc/bind/zones/db.{{ domain }}:
   file.managed:
-    - source: salt://dns-server/auth/db.x.freifunk.net.jinja
+    - source: salt://dns-auth/db.x.freifunk.net.jinja
     - user: bind
     - group: bind
     - mode: "0644"
@@ -129,7 +149,7 @@ include:
 dns-key:
   file.managed:
     - name: /etc/bind/salt-master.key
-    - source: salt://dns-server/auth/salt-master.key
+    - source: salt://dns-auth/salt-master.key
     - template: jinja
     - user: bind
     - group: bind
@@ -419,3 +439,9 @@ record-{{ loop.index }}-{{ record.get('type') }}-{{ record.get('name') }}.{{ rec
 
 
 {%- endif %}{# if 'authorative-dns' in salt['pillar.get']('netbox:tag_list', []) #}
+
+
+# Reload command
+rndc-reload:
+  cmd.run:
+    - name: /usr/sbin/rndc reload
