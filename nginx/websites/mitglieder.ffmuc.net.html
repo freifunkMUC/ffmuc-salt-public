@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="de">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unsere Dienste</title>
+    <title>Unsere Dienste | Our Services</title>
     <style>
             body {
                 font-family: 'Roboto', sans-serif;
@@ -12,6 +12,29 @@
                 padding: 0;
                 background-color: #f4f4f9;
                 color: #333;
+            }
+            .language-selector {
+                text-align: right;
+                margin-bottom: 20px;
+            }
+            .language-selector button {
+                background: none;
+                border: 1px solid #ddd;
+                padding: 5px 10px;
+                margin-left: 5px;
+                cursor: pointer;
+                border-radius: 3px;
+            }
+            .language-selector button:hover {
+                background-color: #f0f0f0;
+            }
+            .language-selector button.active {
+                background-color: #3498db;
+                color: white;
+                border-color: #3498db;
+            }
+            .hidden {
+                display: none;
             }
             .container {
                 max-width: 900px;
@@ -71,56 +94,165 @@
         </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Unsere Dienste</h1>
-        <p>Freie Netze München e.V. setzt sich für <strong>Digitale Teilhabe</strong> ein, weil wir glauben, dass der Zugang zu Internet und digitalen Diensten ein Grundrecht ist. Unsere Dienste wie <a href="https://meet.ffmuc.net" target="_blank" rel="noopener noreferrer">Videokonferenzen</a>, <a href="https://ffmuc.net/wiki/doku.php?id=knb:dns" target="_blank" rel="noopener noreferrer">DNS-Services</a>, <a href="https://cryptpad.ffmuc.net" target="_blank" rel="noopener noreferrer">verschlüsselte Office-Cloud</a> und <a href="https://ffmuc.net" target="_blank" rel="noopener noreferrer">Freifunk</a> ermöglichen es allen, unabhängig von ihrer finanziellen Situation, am digitalen Leben teilzunehmen.</p>
-        <p>Alle unsere Dienste werden in Europa gehostet, um höchste Datenschutzstandards und eine nachhaltige digitale Infrastruktur zu gewährleisten. Transparenz wird bei uns großgeschrieben, daher sind alle unsere Statistiken öffentlich einsehbar: <a href="https://stats.ffmuc.net/" target="_blank" rel="noopener noreferrer">stats.ffmuc.net</a>.</p> 
-        <p>Deine Unterstützung hilft uns, diese Vision zu verwirklichen.</p>
-        <h2>Trefft uns auf</h2>
-        <ul>
-            <li><a href="https://chat.ffmuc.net" target="_blank" rel="noopener noreferrer">Chat: chat.ffmuc.net</a> - Ein Ort, um sich zu treffen, Ideen für Projekte einzubringen und Hilfe zu leisten.</li>
-        </ul>
-
-        <h2>Exklusive Dienste für Mitglieder</h2>
-        <ul>
-            <li><a href="https://social.ffmuc.net" target="_blank" rel="noopener noreferrer">Mastodon: social.ffmuc.net</a></li>
-            <li><a href="https://vms.ffmuc.net" target="_blank" rel="noopener noreferrer">Virtuelle Maschinen: vms.ffmuc.net</a></li>
-            <li><a href="https://vpn.ffmuc.net" target="_blank" rel="noopener noreferrer">VPN: vpn.ffmuc.net</a></li>
-        </ul>
-        <h2>Satzung und Kosten</h2>
-        <p>Unsere Mitgliedsbeiträge sind wie folgt:</p>
-        <ul>
-            <li>60 Euro pro Jahr für Erwachsene</li>
-            <li>30 Euro pro Jahr für Minderjährige</li>
-            <li>250 Euro oder Freiwählbarer Betrag pro Jahr für Fördermitglieder</li>
-        </ul>
-        <p>Unsere Satzung findest du hier: <a href="https://ffmuc.net/wiki/_media/ev:satzung20220304.pdf" target="_blank" rel="noopener noreferrer">Satzung (PDF)</a>.</p>
-        <a href="https://web.meinverein.de/profile/86506" target="_blank" rel="noopener noreferrer" class="button">Mitglied werden</a>
-
-        <h2>Spenden</h2>
-        <p>Unsere Kontodaten lauten:</p>
-        <p>
-            Freie Netze München e.V.<br>
-            DE73 7025 0150 0029 4939 13<br>
-            Kreissparkasse München - Starnberg - Ebersberg
-        </p>
-
-        <p>Alternativ können Sie uns auch über folgende Wege unterstützen:</p>
-        <p><a href="https://github.com/sponsors/freifunkMUC" target="_blank" rel="noopener noreferrer">GitHub Sponsors</a></p>
-        
-        <form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top">
-            <input type="hidden" name="cmd" value="_s-xclick" />
-            <input type="hidden" name="hosted_button_id" value="72YXAEKPGQR2A" />
-            <input type="image" src="https://www.paypalobjects.com/de_DE/DE/i/btn/btn_donateCC_LG.gif" border="0" name="submit" title="PayPal - The safer, easier way to pay online!" alt="Spenden mit dem PayPal-Button" />
-            <img alt="" border="0" src="https://www.paypal.com/de_DE/i/scr/pixel.gif" width="1" height="1" />
-        </form>
+    <div class="language-selector">
+        <button onclick="setLanguage('de')" id="btn-de">Deutsch</button>
+        <button onclick="setLanguage('en')" id="btn-en">English</button>
     </div>
+    
+    <div class="container">
+        <!-- German Content -->
+        <div id="content-de" class="language-content">
+            <h1>Unsere Dienste</h1>
+            <p>Freie Netze München e.V. setzt sich für <strong>Digitale Teilhabe</strong> ein, weil wir glauben, dass der Zugang zu Internet und digitalen Diensten ein Grundrecht ist. Unsere Dienste wie <a href="https://meet.ffmuc.net" target="_blank" rel="noopener noreferrer">Videokonferenzen</a>, <a href="https://ffmuc.net/wiki/doku.php?id=knb:dns" target="_blank" rel="noopener noreferrer">DNS-Services</a>, <a href="https://cryptpad.ffmuc.net" target="_blank" rel="noopener noreferrer">verschlüsselte Office-Cloud</a> und <a href="https://ffmuc.net" target="_blank" rel="noopener noreferrer">Freifunk</a> ermöglichen es allen, unabhängig von ihrer finanziellen Situation, am digitalen Leben teilzunehmen.</p>
+            <p>Alle unsere Dienste werden in Europa gehostet, um höchste Datenschutzstandards und eine nachhaltige digitale Infrastruktur zu gewährleisten. Transparenz wird bei uns großgeschrieben, daher sind alle unsere Statistiken öffentlich einsehbar: <a href="https://stats.ffmuc.net/" target="_blank" rel="noopener noreferrer">stats.ffmuc.net</a>.</p> 
+            <p>Deine Unterstützung hilft uns, diese Vision zu verwirklichen.</p>
+        </div>
+        
+        <!-- English Content -->
+        <div id="content-en" class="language-content hidden">
+            <h1>Our Services</h1>
+            <p>Freie Netze München e.V. advocates for <strong>digital participation</strong> because we believe that access to the internet and digital services is a fundamental right. Our services such as <a href="https://meet.ffmuc.net" target="_blank" rel="noopener noreferrer">video conferencing</a>, <a href="https://ffmuc.net/wiki/doku.php?id=knb:dns" target="_blank" rel="noopener noreferrer">DNS services</a>, <a href="https://cryptpad.ffmuc.net" target="_blank" rel="noopener noreferrer">encrypted office cloud</a>, and <a href="https://ffmuc.net" target="_blank" rel="noopener noreferrer">Freifunk</a> enable everyone to participate in digital life regardless of their financial situation.</p>
+            <p>All our services are hosted in Europe to ensure the highest data protection standards and sustainable digital infrastructure. Transparency is a priority for us, which is why all our statistics are publicly accessible: <a href="https://stats.ffmuc.net/" target="_blank" rel="noopener noreferrer">stats.ffmuc.net</a>.</p>
+            <p>Your support helps us to realize this vision.</p>
+        </div>
+        <!-- German Content Continued -->
+        <div id="content-de" class="language-content">
+            <h2>Trefft uns auf</h2>
+            <ul>
+                <li><a href="https://chat.ffmuc.net" target="_blank" rel="noopener noreferrer">Chat: chat.ffmuc.net</a> - Ein Ort, um sich zu treffen, Ideen für Projekte einzubringen und Hilfe zu leisten.</li>
+            </ul>
+
+            <h2>Exklusive Dienste für Mitglieder</h2>
+            <ul>
+                <li><a href="https://social.ffmuc.net" target="_blank" rel="noopener noreferrer">Mastodon: social.ffmuc.net</a></li>
+                <li><a href="https://vms.ffmuc.net" target="_blank" rel="noopener noreferrer">Virtuelle Maschinen: vms.ffmuc.net</a></li>
+                <li><a href="https://vpn.ffmuc.net" target="_blank" rel="noopener noreferrer">VPN: vpn.ffmuc.net</a></li>
+            </ul>
+            <h2>Satzung und Kosten</h2>
+            <p>Unsere Mitgliedsbeiträge sind wie folgt:</p>
+            <ul>
+                <li>60 Euro pro Jahr für Erwachsene</li>
+                <li>30 Euro pro Jahr für Minderjährige</li>
+                <li>250 Euro oder Freiwählbarer Betrag pro Jahr für Fördermitglieder</li>
+            </ul>
+            <p>Unsere Satzung findest du hier: <a href="https://ffmuc.net/wiki/_media/ev:satzung20220304.pdf" target="_blank" rel="noopener noreferrer">Satzung (PDF)</a>.</p>
+            <a href="https://web.meinverein.de/profile/86506" target="_blank" rel="noopener noreferrer" class="button">Mitglied werden</a>
+
+            <h2>Spenden</h2>
+            <p>Unsere Kontodaten lauten:</p>
+            <p>
+                Freie Netze München e.V.<br>
+                DE73 7025 0150 0029 4939 13<br>
+                Kreissparkasse München - Starnberg - Ebersberg
+            </p>
+
+            <p>Alternativ können Sie uns auch über folgende Wege unterstützen:</p>
+            <p><a href="https://github.com/sponsors/freifunkMUC" target="_blank" rel="noopener noreferrer">GitHub Sponsors</a></p>
+            
+            <form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top">
+                <input type="hidden" name="cmd" value="_s-xclick" />
+                <input type="hidden" name="hosted_button_id" value="72YXAEKPGQR2A" />
+                <input type="image" src="https://www.paypalobjects.com/de_DE/DE/i/btn/btn_donateCC_LG.gif" border="0" name="submit" title="PayPal - The safer, easier way to pay online!" alt="Spenden mit dem PayPal-Button" />
+                <img alt="" border="0" src="https://www.paypal.com/de_DE/i/scr/pixel.gif" width="1" height="1" />
+            </form>
+        </div>
+        
+        <!-- English Content Continued -->
+        <div id="content-en" class="language-content hidden">
+            <h2>Meet us at</h2>
+            <ul>
+                <li><a href="https://chat.ffmuc.net" target="_blank" rel="noopener noreferrer">Chat: chat.ffmuc.net</a> - A place to meet, contribute ideas for projects, and provide help.</li>
+            </ul>
+
+            <h2>Exclusive Services for Members</h2>
+            <ul>
+                <li><a href="https://social.ffmuc.net" target="_blank" rel="noopener noreferrer">Mastodon: social.ffmuc.net</a></li>
+                <li><a href="https://vms.ffmuc.net" target="_blank" rel="noopener noreferrer">Virtual Machines: vms.ffmuc.net</a></li>
+                <li><a href="https://vpn.ffmuc.net" target="_blank" rel="noopener noreferrer">VPN: vpn.ffmuc.net</a></li>
+            </ul>
+            <h2>Statutes and Costs</h2>
+            <p>Our membership fees are as follows:</p>
+            <ul>
+                <li>60 Euro per year for adults</li>
+                <li>30 Euro per year for minors</li>
+                <li>250 Euro or a freely selectable amount per year for supporting members</li>
+            </ul>
+            <p>You can find our statutes here: <a href="https://ffmuc.net/wiki/_media/ev:satzung20220304.pdf" target="_blank" rel="noopener noreferrer">Statutes (PDF)</a>.</p>
+            <a href="https://web.meinverein.de/profile/86506" target="_blank" rel="noopener noreferrer" class="button">Become a Member</a>
+
+            <h2>Donations</h2>
+            <p>Our bank details are:</p>
+            <p>
+                Freie Netze München e.V.<br>
+                DE73 7025 0150 0029 4939 13<br>
+                Kreissparkasse München - Starnberg - Ebersberg
+            </p>
+
+            <p>Alternatively, you can also support us through:</p>
+            <p><a href="https://github.com/sponsors/freifunkMUC" target="_blank" rel="noopener noreferrer">GitHub Sponsors</a></p>
+            
+            <form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top">
+                <input type="hidden" name="cmd" value="_s-xclick" />
+                <input type="hidden" name="hosted_button_id" value="72YXAEKPGQR2A" />
+                <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif" border="0" name="submit" title="PayPal - The safer, easier way to pay online!" alt="Donate with PayPal button" />
+                <img alt="" border="0" src="https://www.paypal.com/de_DE/i/scr/pixel.gif" width="1" height="1" />
+            </form>
+        </div>
+    </div>
+    
     <footer style="text-align: center;">
-            <p>&copy; 2025 FFMUC Service. Alle Rechte vorbehalten.</p>
-            <p><strong>Freie Netze München e. V.</strong>, Parkstraße 28, 82131 Gauting<br>
-            Registergericht: Amtsgericht München, VR 206402<br>
-            Vorsitzender: Tobias McFadden<br>
-            Kontakt: <a href="mailto:abuse@ffmuc.net">abuse@ffmuc.net</a></p>
-        </footer>
+        <p>&copy; 2025 FFMUC Service. Alle Rechte vorbehalten.</p>
+        <p><strong>Freie Netze München e. V.</strong>, Parkstraße 28, 82131 Gauting<br>
+        Registergericht: Amtsgericht München, VR 206402<br>
+        Vorsitzender: Tobias McFadden<br>
+        Kontakt: <a href="mailto:info@ffmuc.net">info@ffmuc.net</a></p>
+        <p><a href="https://ffmuc.net/impressum/">Impressum</a> | <a href="https://ffmuc.net/privacy/">Datenschutzerklärung</a></p>
+    </footer>
+
+    <script>
+        // Language detection and switching functionality
+        function setLanguage(lang) {
+            const contents = document.querySelectorAll('.language-content');
+            contents.forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            document.querySelectorAll(`#content-${lang}`).forEach(content => {
+                content.classList.remove('hidden');
+            });
+            
+            // Update active button
+            const buttons = document.querySelectorAll('.language-selector button');
+            buttons.forEach(button => {
+                button.classList.remove('active');
+            });
+            document.getElementById(`btn-${lang}`).classList.add('active');
+            
+            // Store the language preference
+            localStorage.setItem('preferredLanguage', lang);
+        }
+        
+        // Auto-detect browser language or use stored preference
+        function detectLanguage() {
+            const storedLang = localStorage.getItem('preferredLanguage');
+            
+            if (storedLang && (storedLang === 'de' || storedLang === 'en')) {
+                setLanguage(storedLang);
+                return;
+            }
+            
+            const browserLang = navigator.language || navigator.userLanguage;
+            let lang = 'en'; // Default language
+            
+            if (browserLang.startsWith('de')) {
+                lang = 'de';
+            }
+            
+            setLanguage(lang);
+        }
+        
+        // Run on page load
+        window.onload = detectLanguage;
+    </script>
 </body>
 </html>
