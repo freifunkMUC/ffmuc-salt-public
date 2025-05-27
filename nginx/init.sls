@@ -59,7 +59,7 @@ nginx-configtest:
       - cmd: nginx-configtest
 
 
-{% set domains = ['vpn.ffmuc.net', 'vms.ffmuc.net', 'mitglieder.ffmuc.net'] %}
+{% set domains = ['vpn.ffmuc.net', 'vms.ffmuc.net', 'mitglieder.ffmuc.net', 'spende.ffmuc.net'] %}
 {% for domain in domains %}
 /srv/www/{{ domain }}:
   file.directory:

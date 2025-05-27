@@ -18,6 +18,9 @@ python3-netifaces:
 /opt/respondd-{{ site }}:
   file.recurse:
     - source: salt://respondd/respondd-tmpl
+    # try template: jinja option and get rid of below overridings
+    - exclude_pat:
+      - ".git/*"
     - watch_in:
         - service: respondd@{{ site }}
 {% endif %}
@@ -47,7 +50,6 @@ python3-netifaces:
     - template: jinja
     - defaults:
         site: {{ site }}
-        id: {{ salt['pillar.get']('netbox:config_context:site_config:{{ site }}:site_no')  }}
     - watch_in:
         - service: respondd@{{ site }}
 
