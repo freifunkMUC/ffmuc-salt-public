@@ -17,4 +17,4 @@ jobs:
       - uses: psf/black@8a737e727ac5ab2f1d4cf5876720ed276dc8dc4b # v25.1.0
         with:
           # yamllint disable-line rule:line-length
-          options: ". --exclude respondd/respondd-tmpl/lib/respondd_client.py --extend-exclude respondd/respondd-tmpl/lib/nodeinfo.py --check --diff"
+          options: ". --check --diff"
