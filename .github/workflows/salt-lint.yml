@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Run salt-lint
-        uses: roaldnefs/salt-lint-action@03ef6dfb800c7cce64b187eeaabdba9a90c093d7 # v0.3.0
+        uses: roaldnefs/salt-lint-action@891749ef3993e132990898fb1ea495756db0634d # master
         env:
           ACTION_STATE_FIND_PATTERN: '^.*\.(sls|jinja|j2|tmpl|tst)$'
           ACTION_STATE_FIND_TYPE: 'regex'
