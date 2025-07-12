@@ -45,8 +45,15 @@ object Host "{{ node_id }}" {
 
 	vars.location = "{{ location }}"
 
+	{%- if 'metrics.in.ffmuc.net' == node_id %}
+	vars.disk_wfree = "15"
+	vars.disk_cfree = "10"
+	{% else %}
 	vars.disk_wfree = "4%"
 	vars.disk_cfree = "2%"
+	{%- endif %}
+
+	vars.disk_units = "GB"
 	vars.disks["disk /"] = {
 		disk_partitions = "/"
 	}

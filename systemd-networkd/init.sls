@@ -86,6 +86,7 @@ vxlan-fdb-fill.service:
 
 {% endif %}{# 'nextgen-gateway' in role #}
 
+{% if grains.os == 'Ubuntu' %}
 disable_netplan:
   file.managed:
     - name: /etc/netplan/01-netcfg.yaml
@@ -96,6 +97,7 @@ disable_netplan_generator:
     - name: /usr/lib/systemd/system-generators/netplan
     - target: /dev/null
     - force: True
+{% endif %}
 
 systemd-networkd:
     service.running:
