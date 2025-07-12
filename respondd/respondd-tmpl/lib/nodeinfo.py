@@ -119,14 +119,14 @@ class Nodeinfo(Respondd):
             "vpn": self.getVPNFlag(self._config["batman"]),
         }
 
-#        if "mesh-vpn" in self._config and len(self._config["mesh-vpn"]) > 0:
-#            try:
-#                ret["software"]["fastd"] = {
-#                    "version": lib.helper.call(["fastd", "-v"])[0].split(" ")[1],
-#                    "enabled": True,
-#                }
-#            except:
-#                pass
+        #        if "mesh-vpn" in self._config and len(self._config["mesh-vpn"]) > 0:
+        #            try:
+        #                ret["software"]["fastd"] = {
+        #                    "version": lib.helper.call(["fastd", "-v"])[0].split(" ")[1],
+        #                    "enabled": True,
+        #                }
+        #            except:
+        #                pass
 
         if "nodeinfo" in self._aliasOverlay:
             return lib.helper.merge(ret, self._aliasOverlay["nodeinfo"])
