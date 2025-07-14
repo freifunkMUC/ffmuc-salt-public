@@ -9,7 +9,7 @@ pdns-repo-key:
 
 pdns-repo:
   pkgrepo.managed:
-    - name: deb [arch=amd64] http://repo.powerdns.com/{{ grains.lsb_distrib_id | lower }} {{ grains.oscodename }}-rec-51 main
+    - name: deb [arch=amd64] http://repo.powerdns.com/{{ grains.lsb_distrib_id | lower }} {{ grains.oscodename }}-rec-52 main
     - file: /etc/apt/sources.list.d/pdns.list
     - clean_file: True
     - require:

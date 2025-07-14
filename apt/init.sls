@@ -24,7 +24,7 @@
 
 salt-repo-key:
   cmd.run:
-    - name: "curl -sSL https://packages.broadcom.com/artifactory/api/security/keypair/SaltProjectKey/public | gpg --dearmor -o /usr/share/keyrings/salt-archive-keyring.gpg"
+    - name: "curl -sSL https://packages.broadcom.com/artifactory/api/security/keypair/SaltProjectKey/public | gpg --batch --dearmor -o /usr/share/keyrings/salt-archive-keyring.gpg"
     - creates: /usr/share/keyrings/salt-archive-keyring.gpg
 
 salt-repo:

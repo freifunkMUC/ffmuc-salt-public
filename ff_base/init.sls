@@ -17,14 +17,15 @@ ffmuc_packages:
       - ethtool
       - mtr-tiny
       - lldpd
-      - plocate
       - sysstat
       - dnsutils
       - curl
 {% if grains.os == 'Ubuntu' and grains.osmajorrelease >= 24 %}
       - iptraf-ng
+      - plocate
 {% else %}
       - iptraf
+      - mlocate
 {% endif %}
       - speedtest-cli
       - dmidecode
