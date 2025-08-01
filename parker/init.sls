@@ -13,4 +13,5 @@
 {% if "parker-gateway" in role %}
 include:
   - .systemd-networkd
+  - .bird2
 {% endif %}
