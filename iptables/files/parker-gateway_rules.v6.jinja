@@ -1,0 +1,39 @@
+# Managed with Salt
+*nat
+:PREROUTING ACCEPT
+:INPUT ACCEPT
+:OUTPUT ACCEPT
+:POSTROUTING ACCEPT
+
+{% set own_external_address6 = salt['mine.get'](grains.id,'minion_external_ip6', tgt_type='glob')[grains.id][0].split('/')[0] %}
+{% set own_internal_address6 = salt['grains.get']('ip6_interfaces:' + uplink_iface + ':0') %}
+{#- TODO after client networks (& Jool netns IPv6 address) are properly routed to pgw VM, remove NAT rule #}
+-A POSTROUTING -s {{ own_external_address6 }} -o {{ uplink_iface }} -j RETURN
+-A POSTROUTING -s {{ own_internal_address6 }} -o {{ uplink_iface }} -j RETURN
+-A POSTROUTING -o {{ uplink_iface }} -j SNAT --to-source {{ own_external_address6 }}
+COMMIT
+
+*filter
+:INPUT ACCEPT
+:FORWARD ACCEPT
+:OUTPUT ACCEPT
+{#- Block tunnel in tunnel to this gateway #}
+{%- set wireguard_port = salt['pillar.get']('netbox:config_context:wireguard:port') %}
+-A INPUT -i wg-nodes -d {{ own_external_address6 }} -p udp -m udp --dport {{ wireguard_port }} -j REJECT --reject-with icmp6-port-unreachable -m comment --comment "Block tunnel in tunnel"
+
+-A FORWARD -i wg-nodes -o {{ uplink_iface }} -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1220
+
+{#- Block tunnel in tunnel to other gateways #}
+{%- for node,_ in salt['mine.get']('netbox:role:name:nextgen-gateway', 'minion_id', tgt_type='pillar').items() | sort if grains.id not in node %}
+{%- set external_address6 = salt['mine.get'](node,'minion_external_ip6', tgt_type='glob')[node][0].split('/')[0] %}
+{#- TODO create mine function for port to get correct port for each node in case they are different #}
+-A FORWARD -i wg-nodes -d {{ external_address6 }} -p udp -m udp --dport {{ wireguard_port }} -j REJECT --reject-with icmp6-port-unreachable -m comment --comment "Block tunnel in tunnel"
+{%- endfor %}
+
+{#- Block all traffic to internal network #}
+{%- for internal_vlan_if in salt['pillar.get']('netbox:config_context:network:gateway') %}{# vlan1001/1002 #}
+-A FORWARD -i wg-nodes -o {{ internal_vlan_if }} -j REJECT --reject-with icmp6-port-unreachable
+{%- endfor %}
+
+-A FORWARD -i wg-nodes -o nebula0 -j REJECT --reject-with icmp6-port-unreachable
+COMMIT
