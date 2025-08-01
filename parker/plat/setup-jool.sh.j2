@@ -1,0 +1,38 @@
+#!/bin/bash
+
+set -e
+
+modprobe jool
+
+# Create and interconnect namespaces
+ip netns add jool
+ip link add name jool type veth peer name host netns jool
+
+# Use IPv6LL addresses to route between the namespaces
+ip addr add fe80::64:1/64 dev jool
+ip -n jool addr add fe80::64:2/64 dev host
+
+# Add public IPs to respond to traceroute etc.
+ip -n jool addr add {{ nat64_ipv6 }}/128 dev host
+ip -n jool addr add {{ nat64_ipv4 }}/32 dev host
+
+# Bring interfaces up
+ip link set jool up
+ip -n jool link set host up
+
+# Route NAT64 range and public IPv4 into Jool namespace
+ip -6 route add 64:ff9b::/96 via fe80::64:2 dev jool
+ip -4 route add {{ nat64_ipv4 }}/32 via inet6 fe80::64:2 dev jool
+
+# Route everything from Jool back to the host
+ip -n jool -4 route add default via inet6 fe80::64:1 dev host
+ip -n jool -6 route add default via fe80::64:1 dev host
+
+# We don't really need local port ranges in the Jool netns
+ip netns exec jool sysctl -w net.ipv4.ip_local_port_range="1024 1999"
+
+# Set up NAT64
+{# ip netns exec jool jool instance add --netfilter --pool6 64:ff9b::/96
+ip netns exec jool jool pool4 add {{ nat64_ipv4 }} 2000-64999 --tcp
+ip netns exec jool jool pool4 add {{ nat64_ipv4 }} 2000-64999 --udp
+ip netns exec jool jool pool4 add {{ nat64_ipv4 }} 2000-64999 --icmp #}

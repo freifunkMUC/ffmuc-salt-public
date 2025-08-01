@@ -6,7 +6,7 @@ iptables_pkgs:
       - iptables-persistent
       - netfilter-persistent
 
-{% if role in ('nextgen-gateway', 'guardian') %}
+{% if role in ('nextgen-gateway', 'guardian', 'parker-gateway') %}
 
 netfilter_service:
   service.enabled:
