@@ -15,24 +15,41 @@ pdns-repo:
     - require:
       - cmd: pdns-repo-key
 
-pdns-recursor:
+pdns-pkg:
   pkg.installed:
+    - name: pdns-recursor
     - refresh: True
     - require:
       - pkgrepo: pdns-repo
-  service.running:
-    - enable: True
-    - restart: True
-    - require:
-      - file: /etc/powerdns/recursor.conf
-    - watch:
-      - file: /etc/powerdns/recursor.conf
-
-systemd-resolved:
-  service.dead:
-    - enable: False
 
 /etc/powerdns/recursor.conf:
   file.managed:
     - source: salt://pdns-recursor/recursor.conf
     - template: jinja
+    - require:
+      - pkg: pdns-pkg
+
+systemd-resolved:
+  service.dead:
+    - enable: False
+    - requires:
+      - pkg: pdns-pkg
+      - file: /etc/powerdns/recursor.conf
+
+/etc/resolv.conf:
+  file.managed:
+    - source: salt://pdns-recursor/resolv.conf
+    - template: jinja
+    - require:
+      - service: systemd-resolved
+
+pdns-recursor:
+  service.running:
+    - enable: True
+    - restart: True
+    - require:
+      - pkg: pdns-pkg
+      - file: /etc/powerdns/recursor.conf
+      - service: systemd-resolved
+    - watch:
+      - file: /etc/powerdns/recursor.conf
