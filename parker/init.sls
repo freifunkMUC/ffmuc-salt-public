@@ -14,4 +14,6 @@
 include:
   - .systemd-networkd
   - .bird2
+  - .wgkex
+  - .nginx
 {% endif %}
