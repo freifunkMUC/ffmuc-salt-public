@@ -1,0 +1,14 @@
+#
+# {{ interface }} / {{ desc }}
+#
+
+[Match]
+{%- if 'bat-' in interface or 'br-' in interface or 'dummy-' in interface %}
+OriginalName={{ interface }}
+[Link]
+MACAddress={{ mac }}
+{%- else %}
+MACAddress={{ mac }}
+[Link]
+Name={{ interface }}
+{%- endif %}
