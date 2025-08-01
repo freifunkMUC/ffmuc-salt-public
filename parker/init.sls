@@ -8,12 +8,14 @@
 # wg-nodes: node peers
 # wg-<bb-gw0X>: crosslink/backbone between gateways, with default routes as AllowedIPs with OSPF running on top
 #
-{% set role = salt['pillar.get']('netbox:role:name') %}
+{%- set role = salt['pillar.get']('netbox:role:name') %}
 
-{% if "parker-gateway" in role %}
+{%- if "parker-gateway" in role %}
 include:
   - .systemd-networkd
+  - iptables
   - .bird2
+  - .plat
   - .wgkex
   - .nginx
 {% endif %}
