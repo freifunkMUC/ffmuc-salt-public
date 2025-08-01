@@ -1,0 +1,33 @@
+---
+
+parker: True
+broker_signing_key: '{{ salt['pillar.get']('netbox:config_context:parker_backbone_config:wgkex:nodeconfig_key') }}'
+
+# Not needed for parker, but codebase not adjusted everywhere, and to silence warnings
+domains: []
+domain_prefixes:
+  - 'ffmuc_'
+
+# [worker] The external hostname of this worker
+externalName: {{ grains['id'] | regex_replace('in\.ffmuc\.net','ext.ffmuc.net') }}
+# [broker, worker] MQTT connection informations
+mqtt:
+  broker_url: broker.ov.ffmuc.net
+  username:
+  password:
+  tls: False
+  broker_port: 1883
+  keepalive: 20
+logging_config:
+  formatters:
+    standard:
+      format: '%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s'
+  handlers:
+    console:
+      class: logging.StreamHandler
+      formatter: standard
+  root:
+    handlers:
+      - console
+    level: INFO
+  version: 1
