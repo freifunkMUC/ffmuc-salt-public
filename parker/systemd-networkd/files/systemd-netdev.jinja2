@@ -1,0 +1,76 @@
+{%- set role = salt['pillar.get']('netbox:role:name', salt['pillar.get']('netbox:role:name')) %}
+#
+# {{ interface }} / {{ desc }}
+#
+
+[NetDev]
+Name={{ interface }}
+Kind={{ kind }}
+
+{%- if kind == "wireguard" %}
+# If we generate a wireguard interface we need additional stuff
+{%- set wireguard_key = salt['pillar.get']('netbox:config_context:wireguard:secret_key') %}
+
+{%- if 'nextgen-gateway' in role %}
+{%- set sites_config = salt['pillar.get']('netbox:config_context:site_config') %}
+{%- set site = interface | regex_replace('wg-', '')%}
+{%- set wireguard_port = sites_config[site]['wireguard_port'] %}
+{%- elif 'parker-gateway' in role and 'wg-bb-' in interface %}
+{%- set wireguard_port = listen_port %}
+{%- else %}
+{%- set wireguard_port = salt['pillar.get']('netbox:config_context:wireguard:port') %}
+{%- endif %}{# 'nextgen-gateway' in role #}
+
+[WireGuard]
+ListenPort={{ wireguard_port }}
+PrivateKey={{ wireguard_key }}
+
+{# Not needed for Parker #}
+{%- if 'nextgen-gateway' in role %}
+{% for node,bla in salt['mine.get']('netbox:role:name:nextgen-gateway', 'minion_id', tgt_type='pillar').items() | sort
+%}{# Create peers for other gateways #}
+{%- if grains['id'] not in node %}{# Skip, don't create peer for the host we are configuring #}
+{%- set wireguard_public_key = salt['mine.get'](node,'minion_wireguard_public', tgt_type='glob')[node] %}
+{%- if wireguard_public_key %}
+{%- set link_local = salt['wireguard_v6.generate'](wireguard_public_key) %}
+[WireGuardPeer]
+PublicKey={{ wireguard_public_key }}
+AllowedIPs={{ link_local }}/128
+Endpoint={{ node | regex_replace('in\.ffmuc\.net','ext.ffmuc.net') }}:{{ wireguard_port }}
+{%- endif %}{# wireguard_public_key #}
+{%- endif %}{# grains['id'] not in node#}
+{%- endfor %}{# node,bla in salt['mine.get']('netbox:role:name:nextgen-gateway', 'minion_id', tgt_type='pillar').items()
+| sort #}
+
+{%- elif 'parker-gateway' in role %}
+
+{%- if 'wg-bb-' in interface %}{# cross links / backbone between gateways #}
+[WireGuardPeer]
+PublicKey={{ peer_public_key }}
+AllowedIPs={{ peer_link_local }}/128, ::/0
+Endpoint={{ peer_endpoint }}
+{%- endif %}{# 'wg-bb-' in interface #}
+{%- endif %}{# 'parker-gateway' in role #}
+{%- endif %}{# kind == "wireguard" #}
+
+{%- if kind == "vxlan" %}
+{%- set sites = salt['pillar.get']('netbox:config_context:site_config') %}
+{%- set current_site = interface | regex_replace('vx-','') %}
+[VXLAN]
+VNI={{ sites[current_site]['vni'] }}
+Local={{ salt['wireguard_v6.generate'](salt['pillar.get']('netbox:config_context:wireguard:public_key')) }}
+{%- endif %}
+
+{%- if kind == "batadv" %}
+[BatmanAdvanced]
+GatewayMode=server
+RoutingAlgorithm=batman-v
+OriginatorIntervalSec=5
+HopPenalty=250
+{%- endif %}
+
+{%- if kind == "ip6gre" %}
+[Tunnel]
+Remote={{ desc }}
+Local=any
+{%- endif %}
