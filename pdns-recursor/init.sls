@@ -18,22 +18,28 @@ pdns-repo:
     - require:
       - cmd: pdns-repo-key
 
-pdns-recursor:
+pdns-pkg:
   pkg.installed:
+    - name: pdns-recursor
     - refresh: True
     - require:
       - pkgrepo: pdns-repo
-  service.running:
-    - enable: True
-    - restart: True
-    - require:
-      - file: /etc/powerdns/recursor.conf
-    - watch:
-      - file: /etc/powerdns/recursor.conf
 
 /etc/powerdns/recursor.conf:
   file.managed:
     - source: salt://pdns-recursor/recursor.conf
     - template: jinja
+    - require:
+      - pkg: pdns-pkg
+
+pdns-recursor:
+  service.running:
+    - enable: True
+    - restart: True
+    - require:
+      - pkg: pdns-pkg
+      - file: /etc/powerdns/recursor.conf
+    - watch:
+      - file: /etc/powerdns/recursor.conf
 
 {% endif %}

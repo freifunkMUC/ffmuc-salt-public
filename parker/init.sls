@@ -15,6 +15,7 @@ include:
   - .systemd-networkd
   - iptables
   - .bird2
+  - pdns-recursor
   - .plat
   - .wgkex
   - .nginx
