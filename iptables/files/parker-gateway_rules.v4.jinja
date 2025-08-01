@@ -1,0 +1,44 @@
+{%- from 'iptables/nebula_map.jinja' import nebula_node_data_list with context %}
+# Managed with Salt
+
+*nat
+:PREROUTING ACCEPT
+:INPUT ACCEPT
+:OUTPUT ACCEPT
+:POSTROUTING ACCEPT
+
+-A POSTROUTING -s 10.80.0.0/16 -o {{ uplink_iface }} -j SNAT --to-source {{ nat_ip }}
+-A POSTROUTING -s 10.86.0.0/16 -o {{ uplink_iface }} -j SNAT --to-source {{ nat_ip }}
+COMMIT
+
+*filter
+:INPUT ACCEPT
+:FORWARD ACCEPT
+:OUTPUT ACCEPT
+
+{#- Block tunnel in tunnel to this gateway #}
+{%- set wireguard_port = salt['pillar.get']('netbox:config_context:wireguard:port') %}
+-A INPUT -i jool -d {{ nat_ip }} -p udp -m udp --dport {{ wireguard_port }} -j REJECT --reject-with icmp-port-unreachable -m comment --comment "Block tunnel in tunnel"
+
+-A FORWARD -i jool -o {{ uplink_iface }} -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1240
+
+{#- Block tunnel in tunnel to other gateways #}
+{%- for node,_ in salt['mine.get']('netbox:role:name:parker-gateway', 'minion_id', tgt_type='pillar').items() | sort if
+grains.id not in node %}
+{%- set external_address = salt['mine.get'](node,'minion_external_ip', tgt_type='glob')[node][0].split('/')[0] %}
+{#- TODO create mine function for port to get correct port for each node in case they are different #}
+-A FORWARD -i jool -d {{ external_address }} -p udp -m udp --dport {{ wireguard_port }} -j REJECT --reject-with icmp-port-unreachable -m comment --comment "Block tunnel in tunnel"
+{%- endfor %}
+
+-A FORWARD -i jool -o nebula0 -j REJECT --reject-with icmp-port-unreachable
+
+{%- for internal_vlan_if in salt['pillar.get']('netbox:config_context:network:gateway') %}{# vlan1001/1002 #}
+{#- Allow nebula traffic from Freifunk Netz to internal network #}
+{%- for node in nebula_node_data_list %}
+-A FORWARD -o {{ internal_vlan_if }} -d {{ node.minion_address }} -p udp -m udp --dport {{ node.nebula_port }} -j ACCEPT -m comment --comment "{{ node.hostname }}"
+{%- endfor %}{# node #}
+{#- Block all other traffic to internal network #}
+-A FORWARD -i jool -o {{ internal_vlan_if }} -j REJECT --reject-with icmp-port-unreachable
+{%- endfor %}{# internal_vlan_if #}
+
+COMMIT

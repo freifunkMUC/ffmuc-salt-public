@@ -1,0 +1,15 @@
+[Unit]
+Description=Set up Jool
+Wants=network.target
+After=network.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStartPre=/usr/local/sbin/setup-jool.sh
+ExecStart=ip netns exec jool /usr/bin/jool file handle /etc/jool/jool.conf
+ExecStop=ip netns exec jool /usr/bin/jool -f /etc/jool/jool.conf instance remove
+ExecStopPost=ip netns del jool
+
+[Install]
+WantedBy=multi-user.target

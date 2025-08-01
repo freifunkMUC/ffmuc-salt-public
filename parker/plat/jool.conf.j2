@@ -1,0 +1,32 @@
+{
+    "comment": "NAT64 configuration",
+
+    "instance": "default",
+    "framework": "netfilter",
+
+    "global": {
+        "comment": "NAT64 prefix",
+        "pool6": "64:ff9b::/96"
+    },
+
+    "pool4": [
+        {
+            "comment": "IPv4 translation address",
+            "prefix": "{{ nat64_ipv4 }}/32",
+            "protocol": "TCP",
+            "port range": "2000-64999"
+        },
+        {
+            "comment": "IPv4 translation address",
+            "prefix": "{{ nat64_ipv4 }}/32",
+            "protocol": "UDP",
+            "port range": "2000-64999"
+        },
+        {
+            "comment": "IPv4 translation address",
+            "prefix": "{{ nat64_ipv4 }}/32",
+            "protocol": "ICMP",
+            "port range": "2000-64999"
+        }
+    ]
+}
