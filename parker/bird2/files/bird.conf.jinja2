@@ -1,0 +1,206 @@
+{%- set interfaces = salt['pillar.get']('netbox:interfaces') %}
+{%- set uplink_vlan = salt['pillar.get']('netbox:config_context:network:uplink_vlan') %}
+{%- set prefixes_v4 = [] %}
+{%- set prefixes_v6 = [] %}
+log syslog all;
+
+protocol device {
+}
+
+protocol direct {
+        ipv4;                   # Connect to default IPv4 table
+        ipv6;                   # ... and to default IPv6 table
+}
+{%- if 'nextgen-gateway' in salt['pillar.get']('netbox:role:name') or 'roadwarrior' in salt['pillar.get']('netbox:role:name') or 'freifunk-transit' in salt['pillar.get']('netbox:role:name') %}
+{%- for iface in interfaces|sort %}
+{%- if 'br' in iface %}
+{%- for ipaddress in interfaces[iface]['ipaddresses'] %}
+{%- if ipaddress['family']['value'] == 6 %}
+{%- do prefixes_v6.append(salt['network.calc_net'](ipaddress['address'])) %}
+{%- endif %}{# ipaddress['family']['value'] == 6 #}
+{%- endfor %}{# ipaddress in interfaces[iface]['ipaddresses'] #}
+{%- endif %}{# 'br' in iface #}
+{%- endfor %}{# iface in interfaces #}
+{%- set nat66 = salt['pillar.get']('netbox:config_context:network:nat66_pool') %}
+{%- set additional_v6_prefix = salt['pillar.get']('netbox:config_context:network:additional_v6_prefix') %}
+{%- if nat66 %}
+protocol static {
+        ipv6;
+        route {{ nat66 }} blackhole;
+}
+{%- do prefixes_v6.append(nat66) %}
+{%- endif %}{# nat66 #}
+{%- if additional_v6_prefix %}
+{%- do prefixes_v6.append(additional_v6_prefix) %}
+{%- endif %}{# additional_v6_prefix #}
+{%- endif -%}{# 'nextgen-gateway' in salt['pillar.get']('netbox:role:name') or 'roadwarrior' in salt['pillar.get']('netbox:role:name') #}
+
+{%- for iface in interfaces|sort %}
+{%- if 'dummy' in iface %}
+{%- for ipaddress in interfaces[iface]['ipaddresses']%}
+{%- if ipaddress['family']['value'] == 4 %}
+{%- if iface == 'dummy0' %}
+protocol kernel {
+        ipv4 {                  # Connect protocol to IPv4 table by channel
+              import all;       # Import to table, default is import all
+              export filter {
+                        if net ~ [ 0.0.0.0/0 ] then {
+                            krt_prefsrc = {{ ipaddress['address'].split('/')[0] }};
+                            accept;
+                        }
+                        };
+        };
+}
+{%- endif %}{# iface == 'dummy0' #}
+{%- do prefixes_v4.append(ipaddress['address']) %}
+{%- else %}{# ipaddress is v6 #}
+{%- if iface == 'dummy0' %}
+protocol kernel {
+        ipv6 {
+                import all;       # Import to table, default is import all
+                export filter {
+                        if net ~ [ ::/0 ] then {
+                                krt_prefsrc = {{ ipaddress['address'].split('/')[0] }};
+                                {%- if salt['pillar.get']('netbox:role:name') == 'webserver-external' %}
+                                krt_mtu = 1280;
+                                {%- endif %}
+                                accept;
+                        }
+                };
+         };
+}
+{%- endif %}{# iface == 'dummy0' #}
+{%- do prefixes_v6.append(ipaddress['address']) %}
+{%- endif %}{# ipaddress is v4 #}
+{%- endfor %}{# ipaddress in interfaces[iface] #}
+{%- endif %}{# 'dummy' in iface #}
+{%- endfor %}{# iface in interfaces #}
+
+filter DEFAULT {
+  if net ~ [ 0.0.0.0/0 ] then {
+    accept;
+  }
+  reject;
+}
+
+filter DEFAULT6 {
+  if net ~ [ ::/0 ] then {
+    accept;
+  }
+  reject;
+}
+
+{%- for iface in interfaces|sort %}
+{%- if iface == uplink_vlan['interface'] %}
+filter EXTERNAL_OUT {
+  if net ~ {{ prefixes_v4 | string | regex_replace('\'','') }} then {
+    accept;
+  }
+  reject;
+}
+
+filter EXTERNAL6_OUT {
+  if net ~ {{ prefixes_v6 | string | regex_replace('\'','') }} then {
+    accept;
+  }
+  reject;
+}
+{%- for ipaddress in interfaces[iface]['ipaddresses'] %}
+{%- if ipaddress['family']['value'] == 4 %}
+router id {{ ipaddress['address'].split('/')[0] }};
+protocol bgp {{ iface }}_v4 {
+        description "Uplink";
+        local {{ ipaddress['address'].split('/')[0] }} as {{ uplink_vlan['local_asn'] }};
+        neighbor {{ uplink_vlan['neighbor_v4'] }} as {{ uplink_vlan['remote_asn'] }};
+        ipv4 {
+                import filter DEFAULT;
+                export filter EXTERNAL_OUT;
+        };
+}
+{%- else %}{# if ipaddress['family']['value'] == 4 #}
+protocol bgp {{ iface }}_v6 {
+        local {{ ipaddress['address'].split('/')[0] }} as {{ uplink_vlan['local_asn'] }};
+        neighbor {{ uplink_vlan['neighbor_v6'] }} as {{ uplink_vlan['remote_asn'] }};
+        ipv6 {
+                import filter DEFAULT6;
+                export filter EXTERNAL6_OUT;
+        };
+}
+{%- endif %}{# if ipaddress['family']['value'] == 4 #}
+{%- endfor %}{# ipaddress in interfaces[iface]['ipaddresses'] #}
+{%- endif %}{# iface == uplink_vlan['interface'] #}
+{%- endfor %}{# iface in interfaces #}
+
+{%- if 'nextgen-gateway' in salt['pillar.get']('netbox:role:name') %}
+# If we are a Gateway we announced OSPF default routes
+protocol ospf v2 {
+        area 0 {
+                {%- for iface in salt['pillar.get']('netbox:config_context:network:gateway') %}
+                interface "{{ iface }}" {
+                        type broadcast;		# Detected by default
+                        cost 10;		# Interface metric
+                        hello 5;		# Default hello perid 10 is too long
+                };
+                {%- endfor %}
+        };
+        ipv4 {
+                import none;
+                export filter DEFAULT;
+        };
+}
+{%- elif 'parker-gateway' in salt['pillar.get']('netbox:role:name') %}
+filter BB_FILTER_IN {
+        # TODO only accept routes within node super-prefix
+        if net ~ [ 2001:678:e68::/48, 2001:678:ed0::/48 ] then {
+                accept;
+        }
+        reject;
+}
+
+filter BB_FILTER_OUT {
+        # TODO only export routes within node super-prefix
+        if net ~ [ 2001:678:e68::/48, 2001:678:ed0::/48 ] then {
+                accept;
+        }
+        reject;
+}
+
+# Set up a mesh via the wg-bb links
+protocol ospf v2 {
+        area 0 {
+                interface "wg-bb-*" {
+                        type broadcast;		# Detected by default
+                        cost 10;		# Interface metric
+                        hello 5;		# Default hello perid 10 is too long
+                };
+        };
+        ipv6 {
+                import filter BB_FILTER_IN;
+                export filter BB_FILTER_OUT;
+        };
+}
+{%- elif 'dummy0' not in interfaces and 'dummy1' not in interfaces %}
+# We aren't a gateway so we want a default route via OSPF
+protocol kernel {
+        ipv4 {                  # Connect protocol to IPv4 table by channel
+              import none;       # Import to table, default is import all
+              export filter DEFAULT;
+        };
+}
+
+protocol ospf v2 {
+        area 0 {
+                {%- for iface in salt['pillar.get']('netbox:config_context:network:gateway') %}
+                interface "{{ iface }}" {
+                        type broadcast;		# Detected by default
+                        cost 100;		# Interface metric
+                        hello 5;		# Default hello perid 10 is too long
+                };
+        };
+        {%- endfor %}
+        ipv4 {
+                import filter DEFAULT;
+                export none;
+        };
+}
+{%- endif %}
