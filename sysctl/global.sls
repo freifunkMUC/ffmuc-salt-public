@@ -81,7 +81,7 @@ net.netfilter.nf_conntrack_max:
   sysctl.present:
     - value: 16777216
     - config: /etc/sysctl.d/10-global.conf
-{% endif %}
+{%- endif %}
 
 # Disable RA
 net.ipv6.conf.default.accept_ra:

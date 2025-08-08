@@ -35,7 +35,7 @@ asterisk_german_sounds_core:
 {% else %}{# ubuntu #}
     - name: /usr/share/asterisk/sounds/de
 {% endif %}
-    - source: https://www.asterisksounds.org/de/download/asterisk-sounds-core-de-sln16.zip
+    - source: https://apt.ffmuc.net/asterisk-sounds-core-de-2.11.19.zip
     - enforce_toplevel: False
     - skip_verify: True
     - user: asterisk
@@ -48,7 +48,7 @@ asterisk_german_sounds_extra:
 {% else %}{# ubuntu #}
     - name: /usr/share/asterisk/sounds/de
 {% endif %}
-    - source: https://www.asterisksounds.org/de/download/asterisk-sounds-extra-de-sln16.zip
+    - source: https://apt.ffmuc.net/asterisk-sounds-extra-de-2.11.19.zip
     - enforce_toplevel: False
     - skip_verify: True
     - user: asterisk
