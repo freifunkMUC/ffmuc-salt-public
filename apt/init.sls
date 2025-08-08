@@ -52,6 +52,9 @@ python3-apt:
 /etc/apt/sources.list.d/universe-factory.list:
   file.absent
 
+/etc/apt/sources.list.d/salt.list:
+  file.absent
+
 /etc/apt/preferences.d/libluajit:
   file.managed:
     - contents: |
