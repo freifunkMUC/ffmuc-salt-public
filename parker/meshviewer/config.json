@@ -1,0 +1,476 @@
+{
+    "reverseGeocodingApi": "https://nominatim.openstreetmap.org/reverse",
+    "maxAge": 7,
+    "maxAgeAlert": 3,
+    "nodeZoom": 18,
+    "labelZoom": 13,
+    "clientZoom": 15,
+    "fullscreen": true,
+    "fullscreenFrame": true,
+    "nodeAttr": [
+        {
+            "name": "node.status",
+            "value": "Status"
+        },
+        {
+            "name": "node.gateway",
+            "value": "Gateway"
+        },
+        {
+            "name": "node.coordinates",
+            "value": "GeoURI"
+        },
+        {
+            "name": "node.contact",
+            "value": "owner"
+        },
+        {
+            "name": "node.hardware",
+            "value": "model"
+        },
+        {
+            "name": "node.primaryMac",
+            "value": "mac"
+        },
+        {
+            "name": "node.firmware",
+            "value": "Firmware"
+        },
+        {
+            "name": "node.uptime",
+            "value": "Uptime"
+        },
+        {
+            "name": "node.firstSeen",
+            "value": "FirstSeen"
+        },
+        {
+            "name": "node.systemLoad",
+            "value": "Load"
+        },
+        {
+            "name": "node.ram",
+            "value": "RAM"
+        },
+        {
+            "name": "node.ipAddresses",
+            "value": "IPs"
+        },
+        {
+            "name": "node.update",
+            "value": "Autoupdate"
+        },
+        {
+            "name": "node.domain",
+            "value": "Domain"
+        },
+        {
+            "name": "node.clients",
+            "value": "Clients"
+        }
+    ],
+    "supportedLocale": [
+        "en",
+        "de",
+        "cz",
+        "fr",
+        "tr",
+        "ru"
+    ],
+    "icon": {
+        "base": {
+            "fillOpacity": 0.6,
+            "opacity": 0.6,
+            "weight": 2,
+            "radius": 6,
+            "className": "stroke-first"
+        },
+        "online": {
+            "color": "#1566A9",
+            "fillColor": "#1566A9"
+        },
+        "offline": {
+            "color": "#D43E2A",
+            "fillColor": "#D43E2A",
+            "radius": 3
+        },
+        "lost": {
+            "color": "#D43E2A",
+            "fillColor": "#D43E2A",
+            "radius": 4
+        },
+        "alert": {
+            "color": "#D43E2A",
+            "fillColor": "#D43E2A",
+            "radius": 5
+        },
+        "new": {
+            "color": "#1566A9",
+            "fillColor": "#93E929"
+        }
+    },
+    "client": {
+        "wifi24": "rgba(220, 0, 103, 0.7)",
+        "wifi5": "rgba(10, 156, 146, 0.7)",
+        "other": "rgba(227, 166, 25, 0.7)"
+    },
+    "map": {
+        "labelNewColor": "#459c18",
+        "tqFrom": "#F02311",
+        "tqTo": "#04C714",
+        "highlightNode": {
+            "color": "#ad2358",
+            "weight": 8,
+            "fillOpacity": 1,
+            "opacity": 0.4,
+            "className": "stroke-first"
+        },
+        "highlightLink": {
+            "weight": 4,
+            "opacity": 1,
+            "dashArray": "5, 10"
+        }
+    },
+    "forceGraph": {
+        "nodeColor": "#fff",
+        "nodeOfflineColor": "#D43E2A",
+        "highlightColor": "rgba(255, 255, 255, 0.2)",
+        "labelColor": "#fff",
+        "tqFrom": "#770038",
+        "tqTo": "#dc0067",
+        "zoomModifier": 1
+    },
+    "locate": {
+        "outerCircle": {
+            "stroke": false,
+            "color": "#4285F4",
+            "opacity": 1,
+            "fillOpacity": 0.3,
+            "clickable": false,
+            "radius": 16
+        },
+        "innerCircle": {
+            "stroke:": true,
+            "color": "#ffffff",
+            "fillColor": "#4285F4",
+            "weight": 1.5,
+            "clickable": false,
+            "opacity": 1,
+            "fillOpacity": 1,
+            "radius": 7
+        },
+        "accuracyCircle": {
+            "stroke": true,
+            "color": "#4285F4",
+            "weight": 1,
+            "clickable": false,
+            "opacity": 0.7,
+            "fillOpacity": 0.2
+        }
+    },
+    "cacheBreaker": "22967a527",
+    "nodeInfos": [
+        {
+            "name": "Clients (24 Stunden)",
+            "image": "https://stats.ffmuc.net/render/d-solo/hRIn3dRWk/mesh-nodes?orgId=1&panelId=2&var-nodeid={NODE_ID}&width=450&height=300&theme=light&from=now-24h",
+            "href": "https://stats.ffmuc.net/d/hRIn3dRWk/mesh-nodes?orgId=1&var-nodeid={NODE_ID}",
+            "title": "Clients - Knoten {NODE_ID}"
+        },
+        {
+            "name": "Traffic (24 Stunden)",
+            "image": "https://stats.ffmuc.net/render/d-solo/hRIn3dRWk/mesh-nodes?panelId=6&var-nodeid={NODE_ID}&width=450&height=400&theme=light&from=now-24h",
+            "href": "https://stats.ffmuc.net/d/hRIn3dRWk/mesh-nodes?orgId=1&var-nodeid={NODE_ID}",
+            "title": "Traffic - Knoten {NODE_ID}"
+        },
+        {
+            "name": "Clients (7 Tage)",
+            "image": "https://stats.ffmuc.net/render/d-solo/hRIn3dRWk/mesh-nodes?panelId=2&var-nodeid={NODE_ID}&width=450&height=300&theme=light&from=now-7d",
+            "href": "https://stats.ffmuc.net/d/hRIn3dRWk/mesh-nodes?orgId=1&var-nodeid={NODE_ID}",
+            "title": "Clients - Knoten {NODE_ID}"
+        },
+        {
+            "name": "Traffic (7 Tage)",
+            "image": "https://stats.ffmuc.net/render/d-solo/hRIn3dRWk/mesh-nodes?panelId=6&var-nodeid={NODE_ID}&width=450&height=400&theme=light&from=now-7d",
+            "href": "https://stats.ffmuc.net/d/hRIn3dRWk/mesh-nodes?orgId=1&var-nodeid={NODE_ID}",
+            "title": "Traffic - Knoten {NODE_ID}"
+        },
+        {
+            "name": "Uptime (7 Tage)",
+            "image": "https://stats.ffmuc.net/render/d-solo/hRIn3dRWk/mesh-nodes?panelId=8&var-nodeid={NODE_ID}&width=450&height=400&theme=light&from=now-7d",
+            "href": "https://stats.ffmuc.net/d/hRIn3dRWk/mesh-nodes?orgId=1&var-nodeid={NODE_ID}",
+            "title": "Traffic - Knoten {NODE_ID}"
+        }
+    ],
+    "globalInfos": [
+        {
+            "name": "Clients",
+            "title": "Clients pro Segment",
+            "href": "https://stats.ffmuc.net",
+            "image": "https://stats.ffmuc.net/render/d-solo/kUoZ2DRWz/network-overview?panelId=6&orgId=1&theme=light&width=500&height=500"
+        },
+        {
+            "name": "Traffic",
+            "title": "Traffic pro Server",
+            "href": "https://stats.ffmuc.net",
+            "image": "https://stats.ffmuc.net/render/d-solo/kUoZ2DRWz/network-overview?panelId=7&orgId=1&theme=light&width=500&height=500"
+        }
+    ],
+    "dataPath": [
+        "http://pgw01.ext.ffmuc.net/map/data/"
+    ],
+    "siteName": "Freifunk München",
+    "mapLayers": [
+        {
+            "name": "FFMUC OSM Proxy",
+            "url": "https://tiles.ext.ffmuc.net/osm/{z}/{x}/{y}.png",
+            "config": {
+                "maxZoom": 19,
+                "attribution": "&copy; Openstreetmap | &copy; <a href=\"http://www.openstreetmap.org/copyright\">OpenStreetMap</a>"
+            }
+        },
+        {
+            "name": "FFMUC OSM.HOT Proxy",
+            "url": "https://tiles.ext.ffmuc.net/hot/{z}/{x}/{y}.png",
+            "config": {
+                "maxZoom": 20,
+                "attribution": "&copy; Openstreetmap France | &copy; <a href=\"http://www.openstreetmap.org/copyright\">OpenStreetMap</a>"
+            }
+        },
+        {
+            "name": "Esri.WorldImagery",
+            "url": "//server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+            "config": {
+                "maxZoom": 20,
+                "attribution": "Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community"
+            }
+        }
+    ],
+    "backup_map_provider_ffmuc": [
+        {
+            "name": "HERE",
+            "url": "https://{s}.base.maps.api.here.com/maptile/2.1/maptile/newest/normal.day/{z}/{x}/{y}/256/png8?app_id=YOUR_KEY&app_code=YOUR_CODE&lg=deu",
+            "config": {
+                "attribution": "Map &copy; 1987-2014 <a href=\"http://developer.here.com\">HERE</a>",
+                "subdomains": "1234",
+                "maxZoom": 20
+            }
+        },
+        {
+            "name": "HERE.hybridDay",
+            "url": "https://{s}.aerial.maps.api.here.com/maptile/2.1/maptile/newest/{variant}/{z}/{x}/{y}/256/png8?app_id=YOUR_KEY&app_code=YOUR_CODE&lg=deu",
+            "config": {
+                "attribution": "Map &copy; 1987-2014 <a href=\"http://developer.here.com\">HERE</a>",
+                "subdomains": "1234",
+                "variant": "hybrid.day",
+                "maxZoom": 20
+            }
+        }
+    ],
+    "fixedCenter": [
+        [
+            48.3957886,
+            12.012732
+        ],
+        [
+            48.0428527,
+            11.2707154
+        ]
+    ],
+    "domainNames": [
+        {
+            "domain": "",
+            "name": "Unknown Domain"
+        },
+        {
+            "domain": "ffdon",
+            "name": "Donau-Ries"
+        },
+        {
+            "domain": "ffmuc",
+            "name": "München"
+        },
+        {
+            "domain": "ffwert",
+            "name": "Wertingen"
+        },
+        {
+            "domain": "ffwert_events",
+            "name": "Wertingen - Events"
+        },
+        {
+            "domain": "ffmuc_unifi_respondd_fallback",
+            "name": "UniFi",
+            "filterClients": true
+        },
+        {
+            "domain": "omada_respondd_fallback",
+            "name": "Omada",
+            "filterClients": true
+        }
+    ],
+    "linkList": [
+        {
+            "title": "Chat",
+            "href": "https://chat.ffmuc.net"
+        },
+        {
+            "title": "Tickets",
+            "href": "https://tickets.ffmuc.net"
+        },
+        {
+            "title": "Statistiken",
+            "href": "https://stats.ffmuc.net"
+        },
+        {
+            "title": "Kontakt",
+            "href": "https://ffmuc.net/kontakt"
+        },
+        {
+            "title": "Impressum",
+            "href": "https://ffmuc.net/impressum/"
+        }
+    ],
+    "devicePictures": "https://map.aachen.freifunk.net/pictures-svg/{MODEL_NORMALIZED}.svg",
+    "devicePicturesSource": "<a href='https://github.com/freifunk/device-pictures'>https://github.com/freifunk/device-pictures</a>",
+    "devicePicturesLicense": "CC-BY-NC-SA 4.0",
+    "deprecation_text": "Dieses Gerät ist leider veraltet und wird voraussichtlich nach 2025 nicht mehr durch Software-Updates unterstützt - <a href='https://ffmuc.net/freifunkmuc/2023/12/08/supportende-von-8-64-routern/'>Mehr Infos</a>",
+    "eol_text": "Dieses Gerät ist leider veraltet und wird nicht mehr durch Software-Updates unterstützt - <a href='https://bitte-router-erneuern.ffmuc.net/'>Mehr Infos</a>",
+    "deprecation_enabled": true,
+    "eol": [
+        "A5-V11",
+        "AP121",
+        "AP121U",
+        "D-Link DIR-615",
+        "D-Link DIR-615 D",
+        "D-Link DIR-825",
+        "AVM FRITZ!Box 7320",
+        "AVM FRITZ!Box 7330",
+        "AVM FRITZ!Box 7330 SL",
+        "TP-Link RE200 v1",
+        "TP-Link RE200 v2",
+        "TP-Link RE200 v3",
+        "TP-Link RE200 v4",
+        "TP-Link RE305 v1",
+        "TP-Link RE305 v2",
+        "TP-Link RE305 v3",
+        "TP-Link RE355 v1",
+        "TP-Link RE450 v1",
+        "TP-Link RE450 v2",
+        "TP-Link RE450 v3",
+        "TP-Link TL-MR13U v1",
+        "TP-Link TL-MR3020 v1",
+        "TP-Link TL-MR3040 v1",
+        "TP-Link TL-MR3040 v2",
+        "TP-Link TL-MR3220 v1",
+        "TP-Link TL-MR3220 v2",
+        "TP-Link TL-MR3420 v1",
+        "TP-Link TL-MR3420 v2",
+        "TP-Link TL-WA701N/ND v1",
+        "TP-Link TL-WA701N/ND v2",
+        "TP-Link TL-WA730RE v1",
+        "TP-Link TL-WA750RE v1",
+        "TP-Link TL-WA801N/ND v1",
+        "TP-Link TL-WA801N/ND v2",
+        "TP-Link TL-WA801N/ND v3",
+        "TP-Link TL-WA830RE v1",
+        "TP-Link TL-WA830RE v2",
+        "TP-Link TL-WA850RE v1",
+        "TP-Link TL-WA860RE v1",
+        "TP-Link TL-WA901N/ND v1",
+        "TP-Link TL-WA901N/ND v2",
+        "TP-Link TL-WA901N/ND v3",
+        "TP-Link TL-WA901N/ND v4",
+        "TP-Link TL-WA901N/ND v5",
+        "TP-Link TL-WA7210N v2",
+        "TP-Link TL-WA7510N v1",
+        "TP-Link TL-WR703N v1",
+        "TP-Link TL-WR710N v1",
+        "TP-Link TL-WR710N v2",
+        "TP-Link TL-WR710N v2.1",
+        "TP-Link TL-WR740N/ND v1",
+        "TP-Link TL-WR740N/ND v3",
+        "TP-Link TL-WR740N/ND v4",
+        "TP-Link TL-WR740N/ND v5",
+        "TP-Link TL-WR741N/ND v1",
+        "TP-Link TL-WR741N/ND v3",
+        "TP-Link TL-WR741N/ND v4",
+        "TP-Link TL-WR741N/ND v5",
+        "TP-Link TL-WR743N/ND v1",
+        "TP-Link TL-WR743N/ND v2",
+        "TP-Link TL-WR840N v2",
+        "TP-Link TL-WR841N/ND v3",
+        "TP-Link TL-WR841N/ND v5",
+        "TP-Link TL-WR841N/ND v7",
+        "TP-Link TL-WR841N/ND v8",
+        "TP-Link TL-WR841N/ND v9",
+        "TP-Link TL-WR841N/ND v10",
+        "TP-Link TL-WR841N/ND v11",
+        "TP-Link TL-WR841N/ND v12",
+        "TP-Link TL-WR841N/ND Mod (16M) v11",
+        "TP-Link TL-WR841N/ND Mod (16M) v10",
+        "TP-Link TL-WR841N/ND Mod (16M) v8",
+        "TP-Link TL-WR841N/ND Mod (16M) v9",
+        "TP-Link TL-WR841N/ND Mod (8M) v10",
+        "TP-Link TL-WR842N/ND v1",
+        "TP-Link TL-WR842N/ND v2",
+        "TP-Link TL-WR843N/ND v1",
+        "TP-Link TL-WR940N v1",
+        "TP-Link TL-WR940N v2",
+        "TP-Link TL-WR940N v3",
+        "TP-Link TL-WR940N v4",
+        "TP-Link TL-WR940N v5",
+        "TP-Link TL-WR940N v6",
+        "TP-Link TL-WR941N/ND v2",
+        "TP-Link TL-WR941N/ND v3",
+        "TP-Link TL-WR941N/ND v4",
+        "TP-Link TL-WR941N/ND v5",
+        "TP-Link TL-WR941N/ND v6",
+        "TP-Link TL-WR1043N/ND v1",
+        "D-Link DIR-615 D1",
+        "D-Link DIR-615 D2",
+        "D-Link DIR-615 D3",
+        "D-Link DIR-615 D4",
+        "D-Link DIR-615 H1",
+        "Ubiquiti NanoStation loco M2",
+        "Ubiquiti NanoStation M2",
+        "Ubiquiti PicoStation M2",
+        "Ubiquiti Bullet M",
+        "Ubiquiti Bullet M2",
+        "Ubiquiti AirRouter",
+        "VoCore 8M",
+        "VoCore 16M"
+    ],
+    "deprecated": [
+        "TP-Link Archer C2 v3",
+        "TP-Link Archer C6 v2 (EU/RU/JP)",
+        "TP-Link Archer C6 v2",
+        "TP-Link Archer C6 v3",
+        "TP-Link Archer C20 v4",
+        "TP-Link Archer C20i",
+        "TP-Link Archer C25 v1",
+        "TP-Link Archer C50 v1",
+        "TP-Link Archer C50 v3",
+        "TP-Link Archer C50 v4",
+        "TP-Link Archer C50 v6",
+        "TP-Link Archer C60 v1",
+        "TP-Link Archer C60 v2",
+        "TP-Link CPE210 v1.0",
+        "TP-Link CPE210 v1.1",
+        "TP-Link CPE210 v1",
+        "TP-Link CPE210 v2.0",
+        "TP-Link CPE210 v2",
+        "TP-Link CPE210 v3.0",
+        "TP-Link CPE210 v3.20",
+        "TP-Link CPE210 v3",
+        "TP-Link CPE510 v1.0",
+        "TP-Link CPE510 v1.1",
+        "TP-Link CPE510 v1",
+        "TP-Link CPE510 v2",
+        "TP-Link CPE510 v3",
+        "TP-Link TL-WR902AC v1",
+        "TP-Link TL-WR902AC v3",
+        "TP-Link WBS210 v1.20",
+        "TP-Link WBS210 v2",
+        "TP-Link WBS510 v1"
+    ]
+}

@@ -1,0 +1,110 @@
+{% set sites = salt['pillar.get']('netbox:config_context:sites') -%}
+{% set influxdb = salt['pillar.get']('netbox:config_context:yanic:influxdb', {}) -%}
+###
+# yanic config (salt managed)
+###
+
+# Send respondd request to update information
+[respondd]
+enable           = true
+# Delay startup until a multiple of the period since zero time
+synchronize      = "1m"
+# how often request per multicast
+collect_interval = "1m"
+
+# all
+[respondd.sites.ffmuc]
+domains             = ["ffmuc", "ffdon", "ffwert", "ffwert_events"]
+
+# interface that has an IP in your mesh network
+[[respondd.interfaces]]
+ifname          = "lo"
+ip_address      = "::1"
+send_no_request = true
+port            = 11001
+
+
+# A little build-in webserver, which statically serves a directory.
+# This is useful for testing purposes or for a little standalone installation.
+[webserver]
+enable  = false
+bind    = "127.0.0.1:8080"
+webroot = "/var/www/html/meshviewer"
+
+[nodes]
+# Cache file
+# a json file to cache all data collected directly from respondd
+state_path    = "/srv/yanic/state.json"
+# prune data in RAM, cache-file and output json files (i.e. nodes.json)
+# that were inactive for longer than
+prune_after   = "7d"
+# Export nodes and graph periodically
+save_interval = "30s"
+# Set node to offline if not seen within this period
+offline_after = "10m"
+
+# definition for the new more compressed meshviewer.json
+[[nodes.output.meshviewer-ffrgb]]
+enable   = true
+path = "/srv/yanic/meshviewer.json"
+
+[[nodes.output.meshviewer-ffrgb]]
+enable = true
+path = "/srv/yanic/meshviewer-ffdon.json"
+
+[nodes.output.meshviewer-ffrgb.filter]
+domain_as_site = true
+sites = ["ffdon"]
+
+[[nodes.output.meshviewer-ffrgb]]
+enable = true
+path = "/srv/yanic/meshviewer-ffwert.json"
+
+[nodes.output.meshviewer-ffrgb.filter]
+domain_as_site = true
+sites = ["ffwert", "ffwert_events"]
+
+
+# definition for nodes.json
+[[nodes.output.meshviewer]]
+enable = true
+version    = 2
+nodes_path = "/srv/yanic/nodes.json"
+graph_path = "/srv/yanic/graph.json"
+
+[[nodes.output.geojson]]
+enable   = true
+path = "/srv/yanic/nodes.geojson"
+
+[[nodes.output.nodelist]]
+enable   = true
+path = "/srv/yanic/nodelist.json"
+
+[database]
+# this will send delete commands to the database to prune data
+# which is older than:
+delete_after    = "90d"
+# how often run the cleaning
+delete_interval = "1h"
+
+## [[database.connection.example]]
+# Each database-connection has its own config block and needs to be enabled by adding:
+#enable = true
+
+# Save collected data to InfluxDB.
+# There are the following measurments:
+#   node: store node specific data i.e. clients memory, airtime
+#   global: store global data, i.e. count of clients and nodes
+#   firmware: store the count of nodes tagged with firmware
+#   model: store the count of nodes tagged with hardware model
+{# [[database.connection.influxdb]]
+enable   = true
+address  = "{{ influxdb.address }}"
+database = "{{ influxdb.database }}"
+username = "{{ influxdb.username }}"
+password = "{{ influxdb.password }}"
+insecure_skip_verify = {{ influxdb.insecure_skip_verify | default(false) | lower }}
+
+[[database.connection.logging]]
+enable   = false
+path     = "/var/log/yanic.log" #}

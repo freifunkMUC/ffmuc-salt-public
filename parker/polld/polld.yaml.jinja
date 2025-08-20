@@ -1,0 +1,27 @@
+# Address and port of YANIC (as a list: [IPv6, Port])
+yanic:
+  host: '::1'
+  port: 11001
+
+# List of respondd topics to query
+respondd_topics:
+  - nodeinfo
+  - statistics
+  - neighbours
+  - wireguard
+
+# The node info source to use (to load list of IP addresses of VPN-connected nodes).
+# Must contain the configuration for one (and only one) of etcd, netbox or jsonfile.
+node_list:
+  jsonfile:
+    # Expects a JSON file with a 'nodes' key that is a list of objects, where each object has an 'address6' string item.
+    path: './polld.json'
+
+# InfluxDB configuration
+influx:
+  enabled: false # true to enable InfluxDB
+  connection_type: 'socket' # "socket" or "http"
+  endpoint: '/run/influxdb/influxdb.sock' # For "http" e.g. "http://localhost:8086"
+  database: 'ffbs' # Name of the database
+  username: '' # Optional, only for http
+  password: '' # Optional, only for http
