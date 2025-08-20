@@ -82,9 +82,10 @@ nginx-configtest:
 {% endfor %}{# config #}
 
 
-/etc/nginx/sites-enabled/wgkex-broker.conf:
+{%- set domain = grains['id'] | regex_replace('in\.ffmuc\.net','ext.ffmuc.net') %}
+/etc/nginx/sites-enabled/{{ domain }}.conf:
   file.managed:
-    - source: salt://parker/nginx/sites/wgkex-broker.conf
+    - source: salt://parker/nginx/sites/pgw.conf
     - template: jinja
     - user: www-data
     - group: www-data
