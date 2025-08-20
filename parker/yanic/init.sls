@@ -36,7 +36,7 @@ yanic:
 # add configuration file
 /etc/yanic.conf:
   file.managed:
-    - source: salt://yanic/yanic.conf.tmpl
+    - source: salt://parker/yanic/yanic.conf.tmpl
     - template: jinja
     - require:
       - file: /srv/yanic

@@ -22,8 +22,9 @@ user-{{ user }}:
     - require:
       - group: group-{{ user }}
 
-python3-virtualenv:
-  pkg.installed
+polld-python3-virtualenv:
+  pkg.installed:
+    - name: python3-virtualenv
 
 /srv/polld:
   file.directory:
