@@ -19,4 +19,7 @@ include:
   - .plat
   - .wgkex
   - .nginx
+  - .yanic
+  - .polld
+  - .meshviewer
 {% endif %}
