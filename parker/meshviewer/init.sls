@@ -20,6 +20,7 @@ meshviewer-code:
     - user: www-data
     - group: www-data
     - clean: True
+    - enforce_toplevel: False
     - require:
       - file: meshviewer-directory
 
