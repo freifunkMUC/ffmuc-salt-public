@@ -216,7 +216,7 @@
         }
     ],
     "dataPath": [
-        "https://pgw01.ext.ffmuc.net/map/data/"
+        "http://pgw01.ext.ffmuc.net/map/data/"
     ],
     "siteName": "Freifunk München",
     "mapLayers": [
