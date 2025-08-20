@@ -2,14 +2,37 @@
 # yanic
 #
 
-{% set role = salt['pillar.get']('netbox:role:name') %}
+{%- set role = salt['pillar.get']('netbox:role:name') %}
 
 {%- if 'nextgen-gateway' in role or 'parker-gateway' in role %}
 
-# add yanic directory
+{%- set user = "yanic" %}
+
+# Create Group
+group-{{ user }}:
+  group.present:
+      - name: {{ user }}
+
+# Create User
+user-{{ user }}:
+  user.present:
+    - name: {{ user }}
+    - shell: /bin/sh
+    - home: /srv/yanic
+    - createhome: True
+    - groups:
+      - {{ user }}
+    - system: False
+    - require:
+      - group: group-{{ user }}
+
 /srv/yanic:
   file.directory:
-    - makedirs: True
+    - mode: "0755"
+    - user: yanic
+    - group: yanic
+    - require:
+      - user: user-{{ user }}
 
 # copy yanic binary to destination
 # the binary needs to be provided by the salt-master
