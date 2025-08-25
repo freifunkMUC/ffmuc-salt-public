@@ -77,6 +77,24 @@ nginx-configtest:
 {% endfor %}
 
 
+/srv/www/firmware.ffmuc.net/.gluon-firmware-selector:
+  git.latest:
+    - name: https://github.com/freifunkMUC/gluon-firmware-selector.git
+    - rev: main-ffmuc
+    - target: /srv/www/firmware.ffmuc.net/.gluon-firmware-selector
+    - force_reset: True
+    - require:
+      - file: /srv/www/firmware.ffmuc.net
+
+/srv/www/firmware.ffmuc.net/.gluon-firmware-selector/config.js:
+  file.managed:
+    - source: salt://nginx/files/config.js
+    - user: www-data
+    - group: www-data
+    - mode: '0644'
+    - require:
+      - git: /srv/www/firmware.ffmuc.net/.gluon-firmware-selector
+
 {% for domain in salt['pillar.get']('netbox:config_context:webserver:domains') %}
 /etc/nginx/sites-enabled/{{ domain }}.conf:
   file.managed:
