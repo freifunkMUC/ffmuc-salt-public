@@ -30,14 +30,14 @@ ssl_cert="/etc/letsencrypt/live/ffmuc.net/fullchain.pem"
 ssl_key="/etc/letsencrypt/live/ffmuc.net/privkey.pem"
 
 -- listen for DoT on external interface
-addTLSLocal("0.0.0.0", ssl_cert, ssl_key, { numberOfStoredSessions=0, reusePort=true, tcpFastOpenQueueSize=20, minTLSVersion="tls1.1" })
-addTLSLocal("0.0.0.0", ssl_cert, ssl_key, { numberOfStoredSessions=0, reusePort=true, tcpFastOpenQueueSize=20, minTLSVersion="tls1.1" })
-addTLSLocal("0.0.0.0", ssl_cert, ssl_key, { numberOfStoredSessions=0, reusePort=true, tcpFastOpenQueueSize=20, minTLSVersion="tls1.1" })
-addTLSLocal("0.0.0.0", ssl_cert, ssl_key, { numberOfStoredSessions=0, reusePort=true, tcpFastOpenQueueSize=20, minTLSVersion="tls1.1" })
-addTLSLocal("[::]", ssl_cert, ssl_key, { numberOfStoredSessions=0, reusePort=true, tcpFastOpenQueueSize=20, minTLSVersion="tls1.1" })
-addTLSLocal("[::]", ssl_cert, ssl_key, { numberOfStoredSessions=0, reusePort=true, tcpFastOpenQueueSize=20, minTLSVersion="tls1.1" })
-addTLSLocal("[::]", ssl_cert, ssl_key, { numberOfStoredSessions=0, reusePort=true, tcpFastOpenQueueSize=20, minTLSVersion="tls1.1" })
-addTLSLocal("[::]", ssl_cert, ssl_key, { numberOfStoredSessions=0, reusePort=true, tcpFastOpenQueueSize=20, minTLSVersion="tls1.1" })
+addTLSLocal("0.0.0.0", ssl_cert, ssl_key, { numberOfStoredSessions=0, reusePort=true, tcpFastOpenQueueSize=20, minTLSVersion="tls1.2" })
+addTLSLocal("0.0.0.0", ssl_cert, ssl_key, { numberOfStoredSessions=0, reusePort=true, tcpFastOpenQueueSize=20, minTLSVersion="tls1.2" })
+addTLSLocal("0.0.0.0", ssl_cert, ssl_key, { numberOfStoredSessions=0, reusePort=true, tcpFastOpenQueueSize=20, minTLSVersion="tls1.2" })
+addTLSLocal("0.0.0.0", ssl_cert, ssl_key, { numberOfStoredSessions=0, reusePort=true, tcpFastOpenQueueSize=20, minTLSVersion="tls1.2" })
+addTLSLocal("[::]", ssl_cert, ssl_key, { numberOfStoredSessions=0, reusePort=true, tcpFastOpenQueueSize=20, minTLSVersion="tls1.2" })
+addTLSLocal("[::]", ssl_cert, ssl_key, { numberOfStoredSessions=0, reusePort=true, tcpFastOpenQueueSize=20, minTLSVersion="tls1.2" })
+addTLSLocal("[::]", ssl_cert, ssl_key, { numberOfStoredSessions=0, reusePort=true, tcpFastOpenQueueSize=20, minTLSVersion="tls1.2" })
+addTLSLocal("[::]", ssl_cert, ssl_key, { numberOfStoredSessions=0, reusePort=true, tcpFastOpenQueueSize=20, minTLSVersion="tls1.2" })
 
 -- listen for DoH on localhost for reverse proxy
 addDOHLocal("127.0.0.1:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reusePort=true, trustForwardedForHeader=true })
@@ -54,15 +54,51 @@ if not file_exists("/var/lib/dnsdist/providerPrivate.key") then
   generateDNSCryptProviderKeys("/var/lib/dnsdist/providerPublic.cert", "/var/lib/dnsdist/providerPrivate.key")
 end
 
-if not file_exists("/run/dnsdist/resolver.cert") then
-  -- this should be recreated regularly => store in /run/dnsdist which gets cleaned at every restart
-  infolog("Generate new DNSCrypt keys.")
-  generateDNSCryptCertificate("/var/lib/dnsdist/providerPrivate.key", "/run/dnsdist/resolver.cert", "/run/dnsdist/resolver.key", os.date('%Y%m%d', os.time()), os.time(os.date("!*t")), os.time({year=2030, month=2, day=1, hour=00, minute=00}))
+local now = os.time()
+local serial = os.date('%Y%m%d', now)
+local validity = 365 * 86400  -- 1 year
+
+-- XChaCha20
+if not file_exists("/run/dnsdist/resolver_xchacha.cert") then
+  infolog("Generate DNSCrypt v2 (XChaCha20) certificate.")
+  generateDNSCryptCertificate(
+    "/var/lib/dnsdist/providerPrivate.key",
+    "/run/dnsdist/resolver_xchacha.cert",
+    "/run/dnsdist/resolver_xchacha.key",
+    serial,
+    now,
+    now + validity,
+    DNSCryptExchangeVersion.VERSION2  -- X25519-XChaCha20-Poly1305
+  )
+end
+
+-- Fallback XSalsa20
+if not file_exists("/run/dnsdist/resolver_xsalsa.cert") then
+  infolog("Generate DNSCrypt v1 (XSalsa20) certificate.")
+  generateDNSCryptCertificate(
+    "/var/lib/dnsdist/providerPrivate.key",
+    "/run/dnsdist/resolver_xsalsa.cert",
+    "/run/dnsdist/resolver_xsalsa.key",
+    serial,
+    now,
+    now + validity,
+    DNSCryptExchangeVersion.VERSION1  -- X25519-XSalsa20-Poly1305
+  )
 end
 
 -- listen for DNSCrypt
-addDNSCryptBind("0.0.0.0:8443", "2.dnscrypt-cert.ffmuc.net", "/run/dnsdist/resolver.cert", "/run/dnsdist/resolver.key", { reusePort=true })
-addDNSCryptBind("[::]:8443", "2.dnscrypt-cert.ffmuc.net", "/run/dnsdist/resolver.cert", "/run/dnsdist/resolver.key", { reusePort=true })
+addDNSCryptBind("0.0.0.0:8443",
+  "2.dnscrypt-cert.ffmuc.net",
+  { "/run/dnsdist/resolver_xchacha.cert", "/run/dnsdist/resolver_xsalsa.cert" },
+  { "/run/dnsdist/resolver_xchacha.key",  "/run/dnsdist/resolver_xsalsa.key"  },
+  { reusePort=true }
+)
+addDNSCryptBind("[::]:8443",
+  "2.dnscrypt-cert.ffmuc.net",
+  { "/run/dnsdist/resolver_xchacha.cert", "/run/dnsdist/resolver_xsalsa.cert" },
+  { "/run/dnsdist/resolver_xchacha.key",  "/run/dnsdist/resolver_xsalsa.key"  },
+  { reusePort=true }
+)
 {% else %}
 -- limit resolving on Port 53 to "ffmuc-domains"
 addAction(AndRule({NotRule(makeRule({"ffmuc.net"})), NotRule(makeRule({"127.0.0.1","::1","10.80.0.0/16","10.86.0.0/16","10.8.0.0/23","5.1.66.0/24","185.150.99.0/24","2001:678:e68::/48","2001:678:ed0::/48"})), DSTPortRule(53)}), DropAction(), {name="Drop-Gateway-Foreign-Source"})
