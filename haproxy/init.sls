@@ -29,7 +29,6 @@ haproxy-service:
     - reload: True
     - require:
       - pkg: haproxy
-      - file: cert-symlink
     - watch:
       - cmd: haproxy-configtest
 
