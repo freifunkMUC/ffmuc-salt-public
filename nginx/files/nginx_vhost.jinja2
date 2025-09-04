@@ -3,9 +3,19 @@
 ###
 
 server {
-    listen 443 ssl;
-    listen [::]:443 ssl;
+    listen 80;
+    listen [::]:80;
+    listen {{ sslPort }} ssl;
+    listen [::]:{{ sslPort }} ssl;
+
+    ssl_certificate     /etc/letsencrypt/live/ffmuc.net/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/ffmuc.net/privkey.pem;
+
     server_name {{ domain }};
+
+    if ($scheme != "https") {
+        return 301 https://$host$request_uri;
+    }
 
     root /srv/www/{{ domain }};
     index index.html;
@@ -14,18 +24,6 @@ server {
         deny all;
     }
 
-    ssl_stapling on;
-    ssl_certificate     /etc/letsencrypt/live/ffmuc.net/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/ffmuc.net/privkey.pem;
-
     access_log /var/log/nginx/{{ domain }}_access.log json_normal;
     error_log  /var/log/nginx/{{ domain }}_error.log;
-}
-
-server {
-    listen 80;
-    listen [::]:80;
-    server_name {{ domain }};
-
-    return 301 https://$host$request_uri;
 }

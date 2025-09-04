@@ -5,6 +5,12 @@
 {% set tags = salt['pillar.get']('netbox:tag_list', []) %}
 {% if not "jitsi meet" in role and ("webserver" in role or "webserver" in tags) %}
 
+{% set behind_haproxy = 'haproxy' in salt['pillar.get']('netbox:tag_list', []) %}
+{% set sslPort = 443 %}
+{% if behind_haproxy %}
+{% set sslPort = 8843 %}{# not enabled during testing #}
+{% endif %}
+
 nginx-repo-key:
   cmd.run:
     - name: "curl https://nginx.org/keys/nginx_signing.key | gpg --dearmor -o /usr/share/keyrings/nginx-archive-keyring.gpg"
@@ -104,6 +110,8 @@ nginx-configtest:
     - makedirs: True
     - defaults:
         domain: {{ domain }}
+        behind_haproxy: {{ behind_haproxy }}
+        sslPort: {{ sslPort }}
     - template: jinja
     - require:
       - pkg: nginx

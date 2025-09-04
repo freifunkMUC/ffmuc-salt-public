@@ -10,7 +10,7 @@ dnsdist-repo-key:
 
 dnsdist-repo:
   pkgrepo.managed:
-    - name: deb [arch={{ grains.osarch }}] https://repo.powerdns.com/{{ grains.lsb_distrib_id | lower }} {{ grains.oscodename }}-dnsdist-19 main
+    - name: deb [arch={{ grains.osarch }}] https://repo.powerdns.com/{{ grains.lsb_distrib_id | lower }} {{ grains.oscodename }}-dnsdist-20 main
     - file: /etc/apt/sources.list.d/dnsdist.list
     - clean_file: True
     - require:

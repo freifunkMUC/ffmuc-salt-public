@@ -7,6 +7,7 @@
 
 {# There is data available so we think telegraf should be installed #}
 {% set role = salt['pillar.get']('netbox:role:name') %}
+{% set behind_haproxy = 'haproxy' in salt['pillar.get']('netbox:tag_list', []) %}
 
 influx-db-repo-key:
   cmd.run:
@@ -164,6 +165,16 @@ remove_asterisk_monitoring:
 {% if 'webserver-external' == role or 'jitsi meet' == role %}
   file.managed:
     - source: salt://telegraf/files/in_nginx.conf
+{% else %}
+  file.absent:
+{% endif %}
+    - watch_in:
+          service: telegraf
+
+/etc/telegraf/telegraf.d/in-haproxy.conf:
+{% if behind_haproxy %}
+  file.managed:
+    - source: salt://telegraf/files/in_haproxy.conf
 {% else %}
   file.absent:
 {% endif %}
