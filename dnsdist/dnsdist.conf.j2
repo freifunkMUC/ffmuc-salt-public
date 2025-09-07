@@ -10,7 +10,6 @@ setACL({'0.0.0.0/0', '::/0'})
 -- respond to ANY queries sent over UDP with the TC bit set, shunting to TCP.
 addAction(AndRule({QTypeRule(DNSQType.ANY), TCPRule(false)}), TCAction(), {name="Shunt-ANY-to-TCP"})
 addAction(RegexRule(".*\\.(10|168\\.192|(1[6-9]|2[0-9]|3[0-1])\\.172)\\.in-addr\\.arpa$"), RCodeAction(DNSRCode.NXDOMAIN), {name="RFC1918-PTR-NXDOMAIN"})
-
 -- This adds more UDP threads https://dnsdist.org/advanced/tuning.html
 addLocal("0.0.0.0", {reusePort=true})
 addLocal("0.0.0.0", {reusePort=true})
@@ -39,11 +38,25 @@ addTLSLocal("[::]", ssl_cert, ssl_key, { numberOfStoredSessions=0, reusePort=tru
 addTLSLocal("[::]", ssl_cert, ssl_key, { numberOfStoredSessions=0, reusePort=true, tcpFastOpenQueueSize=20, minTLSVersion="tls1.1" })
 addTLSLocal("[::]", ssl_cert, ssl_key, { numberOfStoredSessions=0, reusePort=true, tcpFastOpenQueueSize=20, minTLSVersion="tls1.1" })
 
+-- listen for DoQ on external interface
+addDOQLocal("0.0.0.0", ssl_cert, ssl_key, { reusePort=true })
+addDOQLocal("0.0.0.0", ssl_cert, ssl_key, { reusePort=true })
+addDOQLocal("[::]", ssl_cert, ssl_key, { reusePort=true })
+addDOQLocal("[::]", ssl_cert, ssl_key, { reusePort=true})
+
 -- listen for DoH on localhost for reverse proxy
 addDOHLocal("127.0.0.1:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reusePort=true, trustForwardedForHeader=true })
 addDOHLocal("127.0.0.1:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reusePort=true, trustForwardedForHeader=true })
 addDOHLocal("127.0.0.1:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reusePort=true, trustForwardedForHeader=true })
 addDOHLocal("127.0.0.1:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reusePort=true, trustForwardedForHeader=true })
+addDOHLocal("127.0.0.1:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reusePort=true, trustForwardedForHeader=true })
+addDOHLocal("127.0.0.1:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reusePort=true, trustForwardedForHeader=true })
+addDOHLocal("127.0.0.1:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reusePort=true, trustForwardedForHeader=true })
+addDOHLocal("127.0.0.1:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reusePort=true, trustForwardedForHeader=true })
+addDOHLocal("[::1]:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reusePort=true, trustForwardedForHeader=true })
+addDOHLocal("[::1]:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reusePort=true, trustForwardedForHeader=true })
+addDOHLocal("[::1]:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reusePort=true, trustForwardedForHeader=true })
+addDOHLocal("[::1]:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reusePort=true, trustForwardedForHeader=true })
 addDOHLocal("[::1]:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reusePort=true, trustForwardedForHeader=true })
 addDOHLocal("[::1]:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reusePort=true, trustForwardedForHeader=true })
 addDOHLocal("[::1]:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reusePort=true, trustForwardedForHeader=true })
@@ -90,15 +103,15 @@ setRingBuffersSize(100000)
 
 -- Be generous with the sockets setting of newServer. A starting points is to configure twice as many sockets as Recursor threads.
 {%- if 'muc01' in salt['pillar.get']('netbox:site:slug') %}
-newServer({address="10.8.0.39:1653", name="web05", weight=500, retries=2, id="7cd4655e-071e-4a9a-9623-834ba49ea472", sockets=28})
-newServer({address="10.8.0.40:1653", name="web06", weight=500, retries=2, id="d5d0a3a9-6787-479f-ad0f-106d4618ccc2", sockets=28})
-newServer({address="10.8.0.38:1653", name="gw06", weight=500, retries=2, id="42c4bdfe-0ccc-4e9e-8816-7f88421b50f8", sockets=28})
-newServer({address="10.8.0.13:1653", name="gw07", weight=500, retries=2, id="1c961f33-3a09-4b40-ae9d-5b5a8dd71061", sockets=28})
+newServer({address="10.80.248.73:1653", name="web05", weight=500, retries=2, id="7cd4655e-071e-4a9a-9623-834ba49ea472", sockets=28})
+newServer({address="10.80.248.74:1653", name="web06", weight=500, retries=2, id="d5d0a3a9-6787-479f-ad0f-106d4618ccc2", sockets=28})
+newServer({address="10.80.248.68:1653", name="gw06", weight=500, retries=2, id="42c4bdfe-0ccc-4e9e-8816-7f88421b50f8", sockets=28})
+newServer({address="10.80.248.69:1653", name="gw07", weight=500, retries=2, id="1c961f33-3a09-4b40-ae9d-5b5a8dd71061", sockets=28})
 {%- elif 'vie01' in salt['pillar.get']('netbox:site:slug') %}
-newServer({address="10.8.0.29:1653", name="web03", weight=500, retries=2, id="23b0121d-91c5-4338-8c5a-cc8ba6f2ca8d", sockets=28})
-newServer({address="10.8.0.30:1653", name="web04", weight=500, retries=2, id="0ed35651-7766-492c-ab44-562e76d395b6", sockets=28})
-newServer({address="10.8.0.32:1653", name="gw04", weight=500, retries=2, id="fec91b13-6d71-4162-92a5-68c197ee99c4", sockets=28})
-newServer({address="10.8.0.33:1653", name="gw05", weight=500, retries=2, id="24d189ad-2070-458d-b34a-7c0c22ba7bcd", sockets=28})
+newServer({address="10.80.248.36:1653", name="web03", weight=500, retries=2, id="23b0121d-91c5-4338-8c5a-cc8ba6f2ca8d", sockets=28})
+newServer({address="10.80.248.37:1653", name="web04", weight=500, retries=2, id="0ed35651-7766-492c-ab44-562e76d395b6", sockets=28})
+newServer({address="10.80.248.39:1653", name="gw04", weight=500, retries=2, id="fec91b13-6d71-4162-92a5-68c197ee99c4", sockets=28})
+newServer({address="10.80.248.40:1653", name="gw05", weight=500, retries=2, id="24d189ad-2070-458d-b34a-7c0c22ba7bcd", sockets=28})
 {%- else %}
 newServer({address="1.1.1.1", name="anycastCF"})
 {%- endif %}
@@ -152,6 +165,6 @@ setKey("{{ dnsdist_console["key"] }}")
 setMaxUDPOutstanding(65535)
 setMaxTCPClientThreads(50)        -- set X(int) to handle number of maximum tcp clients
 setMaxTCPConnectionDuration(120)    -- set X(int) for tcp connection duaration from a connected client. X is number of seconds.
-setMaxTCPQueriesPerConnection(3000) -- set X(int) , similiar to addAction(MaxQPSIPRule(X), DropAction())
+setMaxTCPQueriesPerConnection(0) -- set X(int) , similiar to addAction(MaxQPSIPRule(X), DropAction())
 setOutgoingDoHWorkerThreads(12)
 setRandomizedOutgoingSockets(true)
