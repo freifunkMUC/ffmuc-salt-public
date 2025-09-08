@@ -88,6 +88,8 @@ http {
 	##
 	access_log /var/log/nginx/access.log json_normal;
 	error_log /var/log/nginx/error.log;
+
+	port_in_redirect off;
 }
 
 stream {

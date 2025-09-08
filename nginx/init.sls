@@ -82,6 +82,8 @@ nginx-configtest:
     - mode: '0755'
 {% endfor %}
 
+/srv/www/firmware.ffmuc.net:
+  file.directory
 
 /srv/www/firmware.ffmuc.net/.gluon-firmware-selector:
   git.latest:
