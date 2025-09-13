@@ -41,6 +41,10 @@ generate-dhparam:
 {%- if salt["network.ping"]("ca.ov.ffmuc.net", return_boolean=True, timeout=10) %}
 {% if 'Certificate will not expire' not in cert_validity %}
 {%- set cert_bundle = salt['cfssl_certs.request_cert']('https://ca.ov.ffmuc.net', grains['id']) %}
+#
+# Internal certificate from FFMUC CA
+#
+
 # Install found certificates
 /etc/ssl/certs/{{ grains['id'] }}.cert.pem:
   file.managed:
@@ -63,8 +67,48 @@ generate-dhparam:
 {% endif %}{# can ping ca #}
 
 {%- set role = salt['pillar.get']('netbox:role:name', salt['pillar.get']('netbox:role:name')) %}
+
+{% if "webserver-external" in role %}
+# Preparation / install deploy hooks
+/etc/letsencrypt/archive/:
+  file.directory:
+    - group: ssl-cert
+    - mode: "0750"
+/etc/letsencrypt/live/:
+  file.directory:
+    - group: ssl-cert
+    - mode: "0750"
+
+/etc/letsencrypt/renewal-hooks/deploy/01-reload-nginx.sh:
+  file.managed:
+    - contents: |
+        #!/bin/sh
+        systemctl reload nginx
+    - mode: "0750"
+    - makedirs: True
+
+/etc/letsencrypt/renewal-hooks/deploy/02-reload-dnsdist-certs.sh:
+  file.managed:
+    - contents: |
+        #!/bin/sh
+        dnsdist -e "reloadAllCertificates()"
+    - mode: "0750"
+    - makedirs: True
+
+/etc/letsencrypt/renewal-hooks/deploy/03-reload-haproxy.sh:
+  file.managed:
+    - contents: |
+        #!/bin/sh
+        systemctl reload haproxy
+    - mode: "0750"
+    - makedirs: True
+{% endif %}{# if "webserver-external" in role #}
+
 {% set cloudflare_token = salt['pillar.get']('netbox:config_context:cloudflare:api_token') %}
 {% if ("webserver-external" in role or "jitsi meet" in role) and cloudflare_token %}
+#
+# Certificate for ffmuc.net
+#
 
 {# old behaviour. Got disabled as for DoT it got necessary to set the preferred-chain to ISRG Root X1
    which is only possible with a more up to date version than available in ubuntu standard package repository.
@@ -175,9 +219,20 @@ ffmuc-wildcard-cert:
         - cmd: certbot-dns-cloudflare
         - pip: acme-client
         - file: dns_credentials
+        - file: /etc/letsencrypt/renewal-hooks/deploy/01-reload-nginx.sh
+        {% if "webserver-external" in role %}
+        - file: /etc/letsencrypt/renewal-hooks/deploy/02-reload-dnsdist-certs.sh
+        - file: /etc/letsencrypt/renewal-hooks/deploy/03-reload-haproxy.sh
+        {% endif %}{# if "webserver-external" in role #}
+
+{% endif %}{# if ("webserver-external" in role or "jitsi meet" in role) and cloudflare_token #}
 
 
 {% if "webserver-external" in role %}
+#
+# Certificate for freifunk.net domains
+#
+
 # Required for running nsupdate with certbot
 bind9-utils:
   pkg.installed
@@ -216,34 +271,8 @@ muenchen.freifunk.net-wildcard-cert:
         - cmd: certbot
         - pip: acme-client
         - file: update-dns.sh
-{% endif %}
-
-
-/etc/letsencrypt/renewal-hooks/deploy/01-reload-nginx.sh:
-  file.managed:
-    - contents: |
-        #!/bin/sh
-        systemctl reload nginx
-    - mode: "0750"
-    - makedirs: True
-
-{% endif %}{# if ("webserver-external" in role or "jitsi meet" in role) and cloudflare_token #}
-
-{% if "webfrontend" in grains.id %}
-/etc/letsencrypt/archive/:
-  file.directory:
-    - group: ssl-cert
-    - mode: "0750"
-/etc/letsencrypt/live/:
-  file.directory:
-    - group: ssl-cert
-    - mode: "0750"
-
-/etc/letsencrypt/renewal-hooks/deploy/02-reload-dnsdist-certs.sh:
-  file.managed:
-    - contents: |
-        #!/bin/sh
-        dnsdist -e "reloadAllCertificates()"
-    - mode: "0750"
-    - makedirs: True
-{% endif %}
+        - file: cleanup-dns.sh
+        - file: /etc/letsencrypt/renewal-hooks/deploy/01-reload-nginx.sh
+        - file: /etc/letsencrypt/renewal-hooks/deploy/02-reload-dnsdist-certs.sh
+        - file: /etc/letsencrypt/renewal-hooks/deploy/03-reload-haproxy.sh
+{% endif %}{# if "webserver-external" in role #}
