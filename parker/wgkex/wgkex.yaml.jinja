@@ -1,6 +1,14 @@
 ---
 
-parker: True
+parker:
+  enabled: True
+  ipam: json
+  prefixes:
+    ipv4:
+      clat_subnet: 10.80.96.0/22
+    ipv6:
+      length: 63
+
 broker_signing_key: '{{ salt['pillar.get']('netbox:config_context:parker_backbone_config:wgkex:nodeconfig_key') }}'
 
 # Not needed for parker, but codebase not adjusted everywhere, and to silence warnings

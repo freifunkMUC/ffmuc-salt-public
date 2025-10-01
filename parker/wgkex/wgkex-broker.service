@@ -1,5 +1,5 @@
 [Unit]
-Description=Wireguard Key Exchange Worker
+Description=Wireguard Key Exchange Broker
 Documentation=https://github.com/freifunkMUC/wgkex
 After=network-online.target
 
