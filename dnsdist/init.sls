@@ -51,7 +51,7 @@ dnsdist:
     - source: salt://dnsdist/private/providerPublic.cert
     - user: 1000
     - group: 1000
-    - mode: "644"
+    - mode: "0644"
     - require_in:
       - service: dnsdist
 /var/lib/dnsdist/providerPrivate.key:
@@ -59,7 +59,7 @@ dnsdist:
     - source: salt://dnsdist/private/providerPrivate.key
     - user: 1000
     - group: 1000
-    - mode: "644"
+    - mode: "0644"
     - require_in:
       - service: dnsdist
 
