@@ -111,6 +111,9 @@ firewall:
   - port: 443
     proto: tcp
     host: any
+  - port: 445
+    proto: tcp
+    host: webfrontend
     # SNMP
   - port: 161
     proto: udp
@@ -261,7 +264,7 @@ firewall:
     proto: tcp
     group: webfrontend
   # Allow connections for speed.ffmuc.net
-  - port: 80
+  - port: 3000
     proto: tcp
     group: webfrontend
     # Allow connections for unifi (web)
@@ -336,6 +339,10 @@ firewall:
     group: webfrontend
 {%- endif %}
 {%- if "docker07.in.ffmuc.net" == grains["id"] %}
+  # Allow connections to vaultwarden
+  - port: 11001
+    proto: tcp
+    group: webfrontend
   # Allow connections for http backend of broker.ffmuc.net
   - port: 5000
     proto: tcp
@@ -371,7 +378,7 @@ firewall:
     proto: tcp
     host: any
     # Allow connections for speed.ffmuc.net
-  - port: 8080
+  - port: 3000
     proto: tcp
     group: webfrontend
   - port: 8081

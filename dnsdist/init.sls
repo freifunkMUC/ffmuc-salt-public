@@ -46,6 +46,23 @@ dnsdist:
     - require:
       - pkg: dnsdist
 
+/var/lib/dnsdist/providerPublic.cert:
+  file.managed:
+    - source: salt://dnsdist/private/providerPublic.cert
+    - user: 1000
+    - group: 1000
+    - mode: "0644"
+    - require_in:
+      - service: dnsdist
+/var/lib/dnsdist/providerPrivate.key:
+  file.managed:
+    - source: salt://dnsdist/private/providerPrivate.key
+    - user: 1000
+    - group: 1000
+    - mode: "0644"
+    - require_in:
+      - service: dnsdist
+
 dnsdist-service-override:
   file.managed:
     - name: /etc/systemd/system/dnsdist.service.d/override.conf
