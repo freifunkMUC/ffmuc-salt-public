@@ -15,4 +15,4 @@ Und wie immer: Man kann mit uns reden!
 Solltest du Zugriff auf unser Repository haben wollen schildere uns kurz deinen Zweck und wir können einen Weg finden dir den Zugang zu ermöglichen.
 
 
-docker exec -ti salt-salt-master-1 salt 'jvb*.meet.ffmuc.net' cmd.run 'bash -c "salt-call pkg.version jitsi-videobridge2 2>/dev/null | grep 2.3-92 && /usr/share/jitsi-videobridge/graceful_shutdown.sh >/tmp/graceful_update.log && salt-call state.apply jitsi.videobridge >> /tmp/graceful_update.log"' bg=true
+docker exec -ti salt-salt-master-1 salt 'jvb*.meet.ffmuc.net' cmd.run 'bash -c "salt-call pkg.version jitsi-videobridge2 2>/dev/null | grep 2.3-215 && /usr/share/jitsi-videobridge/graceful_shutdown.sh >/tmp/graceful_update.log && salt-call state.apply jitsi.videobridge >> /tmp/graceful_update.log"' bg=true

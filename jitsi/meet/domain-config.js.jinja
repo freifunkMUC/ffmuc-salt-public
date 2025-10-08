@@ -328,7 +328,7 @@ var config = {
     // Customize the Live Streaming dialog. Can be modified for a non-YouTube provider.
     liveStreaming: {
     //    // Whether to enable live streaming or not.
-        enabled: false,
+    //    enabled: false,
     //    // Terms link
     //    termsLink: 'https://www.youtube.com/t/terms',
     //    // Data privacy link
@@ -697,6 +697,7 @@ var config = {
     //    'videoquality',
     //    'whiteboard',
     // ],
+
     toolbarButtons: [
         'microphone', 'camera', 'closedcaptions', 'desktop', 'embedmeeting', 'fullscreen',
         'fodeviceselection', 'hangup', 'profile', 'chat', 'participants-pane', 'recording',
@@ -705,6 +706,7 @@ var config = {
         'tileview', 'select-background', 'download', 'help', 'mute-everyone', 'mute-video-everyone', 'e2ee', 'security',
         'whiteboard'
     ],
+
 
     // Holds values related to toolbar visibility control.
     // toolbarConfig: {
@@ -1052,6 +1054,7 @@ var config = {
     // For information about the properties of
     // deeplinking.[ios/android].dynamicLink check:
     // https://firebase.google.com/docs/dynamic-links/create-manually
+    disableDeepLinking: true,
     deeplinking: {
         desktop: {
             appName: 'Freifunk Muenchen Jitsi Meet'
@@ -1059,7 +1062,7 @@ var config = {
 
         // If true, any checks to handoff to another application will be prevented
         // and instead the app will continue to display in the current browser.
-        disabled: false,
+        disabled: true,
 
         // whether to hide the logo on the deep linking pages.
         hideLogo: false,
