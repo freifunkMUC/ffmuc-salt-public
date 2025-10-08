@@ -12,7 +12,7 @@ def get_site_prefixes(netbox_api, netbox_token, filter):
     try:
         response = requests.get(url, headers=headers).json()
         for prefix in response["results"]:
-            prefixes[prefix["description"]] = prefix["prefix"]
+            prefixes[prefix["description"]] = prefix
     except Exception as e:
         log.error(e)
     return prefixes

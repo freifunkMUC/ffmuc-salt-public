@@ -20,7 +20,7 @@ update-repo:
 
 haproxy:
   pkg.installed:
-    - version: 3.2.5-1ppa1~noble
+    - version: 3.2.6-1ppa1~noble
 
 haproxy-service:
   service.running:
