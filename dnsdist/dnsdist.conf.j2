@@ -191,7 +191,7 @@ setKey("{{ dnsdist_console["key"] }}")
 {%- endif %}
 
 setMaxUDPOutstanding(65535)
-setMaxTCPClientThreads(50)        -- set X(int) to handle number of maximum tcp clients
+setMaxTCPClientThreads(100)        -- set X(int) to handle number of maximum tcp clients
 setMaxTCPConnectionDuration(120)    -- set X(int) for tcp connection duaration from a connected client. X is number of seconds.
 setMaxTCPQueriesPerConnection(0) -- set X(int) , similiar to addAction(MaxQPSIPRule(X), DropAction())
 setOutgoingDoHWorkerThreads(12)
