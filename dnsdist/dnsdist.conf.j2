@@ -144,8 +144,6 @@ newServer({address="10.80.248.36:1653", name="web03", weight=500, retries=2, id=
 newServer({address="10.80.248.37:1653", name="web04", weight=500, retries=2, id="0ed35651-7766-492c-ab44-562e76d395b6", sockets=28})
 newServer({address="10.80.248.39:1653", name="gw04", weight=500, retries=2, id="fec91b13-6d71-4162-92a5-68c197ee99c4", sockets=28})
 newServer({address="10.80.248.40:1653", name="gw05", weight=500, retries=2, id="24d189ad-2070-458d-b34a-7c0c22ba7bcd", sockets=28})
-{%- else %}
-newServer({address="1.1.1.1", name="anycastCF"})
 {%- endif %}
 
 setWHashedPertubation(3962345)
@@ -159,8 +157,6 @@ newServer({address="127.0.0.1:553", name="local-auth", pool="auth"}){# bind #}
 newServer({address="185.150.99.255", name="anycast02", pool="auth"})
   {%- elif 'vie01' in salt['pillar.get']('netbox:site:slug') %}
 newServer({address="5.1.66.255", name="anycast01", pool="auth"})
-  {%- else %}
-newServer({address="1.1.1.1", name="anycastCF", pool="auth"})
   {%- endif %}{# site #}
 {%- endif %}{# authoritative #}
 
