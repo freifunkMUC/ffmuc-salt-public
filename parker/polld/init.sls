@@ -58,11 +58,12 @@ polld-python3-virtualenv:
   file.managed:
     - source: salt://parker/polld/polld.service
 
-
 /etc/polld.yaml:
   file.managed:
     - source: salt://parker/polld/polld.yaml.jinja
     - template: jinja
+    - context:
+        netbox_token: {{ salt['pillar.get']('netbox:config_context:parker_backbone_config:polld:netbox_token') }}
 
 polld-service:
   service.running:
