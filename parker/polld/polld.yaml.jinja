@@ -13,9 +13,22 @@ respondd_topics:
 # The node info source to use (to load list of IP addresses of VPN-connected nodes).
 # Must contain the configuration for one (and only one) of etcd, netbox or jsonfile.
 node_list:
-  jsonfile:
-    # Expects a JSON file with a 'nodes' key that is a list of objects, where each object has an 'address6' string item.
-    path: './polld.json'
+  # jsonfile:
+  #   # Expects a JSON file with a 'nodes' key that is a list of objects, where each object has an 'address6' string item.
+  #   path: './polld.json'
+
+  netbox:
+    # A mapping of filters for Netbox to find the allocated node prefixes.
+    # If you're using wgkex, should match the "netbox_additional_data" configuration setting.
+    # E.g. {role: NodePrefixes} or {cf_my_custom_field: 'Some Value', tag: [ node-prefix, another-tag ]}
+    # See https://demo.netbox.dev/api/schema/swagger-ui/#/ipam/ipam_prefixes_list and https://netboxlabs.com/docs/netbox/reference/filtering/ for filtering syntax
+    filter:
+      tag:
+        - node-prefix
+
+    # URL for your NetBox instance, without the "/api" path
+    url: https://nb-parker.ov.ffmuc.net
+    api_key: {{ netbox_token }}
 
 # InfluxDB configuration
 influx:
