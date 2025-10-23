@@ -2,12 +2,25 @@
 
 parker:
   enabled: True
-  ipam: json
+  ipam: netbox
+  464xlat: True
   prefixes:
     ipv4:
       clat_subnet: 10.80.96.0/22
     ipv6:
       length: 63
+      # A mapping of filters for Netbox to find the parent prefix to allocate node prefixes from if 464xlat=False.
+      # Needs to match one and only one IPv6 prefix.
+      # Prefix is loaded only once on startup, so if you want to switch the prefix, you need to restart wgkex.
+      # E.g. {id: 9999} or {prefix: '10.80.0.0/16'} or {description: Freifunk, role: NodePrefixes} or {cf_my_custom_field: 'Some Value'}
+      # See https://demo.netbox.dev/api/schema/swagger-ui/#/ipam/ipam_prefixes_list and https://netboxlabs.com/docs/netbox/reference/filtering/ for filtering syntax
+      netbox_filter:
+        role: freifunk-net
+      # Optionally specify additional NetBox data to add to new prefixes, like tags or a role.
+      # See the POST request body scheme at https://demo.netbox.dev/api/schema/swagger-ui/#/ipam/ipam_prefixes_available_prefixes_create for supported fields.
+      netbox_additional_data:
+        tags:
+          - slug: node-prefix
 
 broker_signing_key: '{{ salt['pillar.get']('netbox:config_context:parker_backbone_config:wgkex:nodeconfig_key') }}'
 
@@ -16,8 +29,20 @@ domains: []
 domain_prefixes:
   - 'ffmuc_'
 
+workers:
+  pgw01:
+    weight: 100
+
 # [worker] The external hostname of this worker
 externalName: {{ grains['id'] | regex_replace('in\.ffmuc\.net','ext.ffmuc.net') }}
+
+# [broker] netbox connection details
+# Note: you can restrict the user for wgkex to "IPAM > Prefix" object types
+netbox:
+  # URL for your NetBox instance, without the "/api" path
+  url: https://nb-parker.ov.ffmuc.net
+  api_key: {{ salt['pillar.get']('netbox:config_context:parker_backbone_config:wgkex:netbox_token') }}
+
 # [broker, worker] MQTT connection informations
 mqtt:
   broker_url: broker.ov.ffmuc.net
