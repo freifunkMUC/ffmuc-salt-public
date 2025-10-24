@@ -38,3 +38,18 @@ influx:
   database: 'ffbs' # Name of the database
   username: '' # Optional, only for http
   password: '' # Optional, only for http
+
+# Logging configuration
+logging:
+  formatters:
+    standard:
+      format: '%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s'
+  handlers:
+    console:
+      class: logging.StreamHandler
+      formatter: standard
+  root:
+    handlers:
+      - console
+    level: DEBUG
+  version: 1
