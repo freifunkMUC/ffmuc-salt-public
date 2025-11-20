@@ -25,19 +25,73 @@ location ~ ^/speed(.*)$ {
 	return 301 https://speed.ffmuc.net$1;
 }
 
-location /pad/ {
-	proxy_pass         http://etherpad_upstream/;
-	proxy_redirect     off;
-	proxy_set_header   Host $host;
-	proxy_set_header   X-Real-IP $remote_addr;
-	proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
-	proxy_set_header   X-Forwarded-Host $server_name;
-	proxy_set_header   X-Forwarded-Proto $scheme;
-	proxy_set_header   Upgrade $http_upgrade;
-	proxy_set_header   Connection $connection_upgrade;
-	client_max_body_size 200M;
-	proxy_http_version 1.1;
-	proxy_request_buffering off;
+location /pad {
+    rewrite         /pad/(.*) /$1 break;
+    rewrite         ^/pad$ /pad/ permanent;
+    proxy_redirect  / /pad/;
+
+    proxy_pass         http://etherpad_upstream;
+    proxy_buffering    off; # be careful, this line doesn't override any proxy_buffering on set in a conf.d/file.conf
+    proxy_set_header   Host $host;
+    proxy_pass_header  Server;
+
+    # Note you might want to pass more headers etc too. See above configs.
+}
+
+location /pad/socket.io {
+    rewrite         /pad/socket.io/(.*) /socket.io/$1 break;
+    proxy_redirect  / /pad/;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+    proxy_pass         http://etherpad_upstream;
+    proxy_buffering    off; # be careful, this line doesn't override any proxy_buffering on set in a conf.d/file.conf
+    proxy_set_header   Host $host;
+    proxy_pass_header  Server;
+proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+
+    # Note you might want to pass more headers etc too. See above configs.
+}
+
+
+
+location /pad/admin {
+    rewrite         /pad/admin/(.*) /admin/$1 break;
+    proxy_redirect  / /pad/;
+proxy_set_header   X-Proxy-Path /pad;
+    proxy_pass         http://etherpad_upstream;
+
+    proxy_buffering    off; # be careful, this line doesn't override any proxy_buffering on set in a conf.d/file.conf
+    proxy_set_header   Host $host;
+    proxy_pass_header  Server;
+
+    # Note you might want to pass more headers etc too. See above configs.
+}
+
+
+location /pad/admin-auth {
+    rewrite         /pad/admin-auth/(.*) /admin-auth/$1 break;
+    proxy_redirect  / /pad/;
+proxy_set_header   X-Proxy-Path /pad;
+    proxy_pass         http://etherpad_upstream;
+
+    proxy_buffering    off; # be careful, this line doesn't override any proxy_buffering on set in a conf.d/file.conf
+    proxy_set_header   Host $host;
+    proxy_pass_header  Server;
+
+    # Note you might want to pass more headers etc too. See above configs.
+}
+
+location /pad/static {
+    rewrite  /pad/static/(.*) /static/$1 break;
+
+    proxy_pass         http://etherpad_upstream;
+    proxy_buffering    off; # be careful, this line doesn't override any proxy_buffering on set in a conf.d/file.conf
+    proxy_set_header   Host $host;
+    proxy_pass_header  Server;
+
+    # Note you might want to pass more headers etc too. See above configs.
 }
 
 location /static {
