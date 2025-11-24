@@ -7,8 +7,8 @@ end
 --- now the real config
 
 setACL({'0.0.0.0/0', '::/0'})
--- respond to ANY queries sent over UDP with the TC bit set, shunting to TCP.
-addAction(AndRule({QTypeRule(DNSQType.ANY), TCPRule(false)}), TCAction(), {name="Shunt-ANY-to-TCP"})
+-- https://blog.cloudflare.com/rfc8482-saying-goodbye-to-any/
+addAction(QTypeRule(DNSQType.ANY), RCodeAction(DNSRCode.NOTIMP), {name="Drop ANY"})
 addAction(RegexRule(".*\\.(10|168\\.192|(1[6-9]|2[0-9]|3[0-1])\\.172)\\.in-addr\\.arpa$"), RCodeAction(DNSRCode.NXDOMAIN), {name="RFC1918-PTR-NXDOMAIN"})
 -- This adds more UDP threads https://dnsdist.org/advanced/tuning.html
 addLocal("0.0.0.0", {reusePort=true})
