@@ -106,6 +106,9 @@ firewall:
   - port: 80
     proto: tcp
     host: any
+  - port: 443
+    proto: udp
+    host: any
 {%- endif %}
     # HTTPS
   - port: 443

@@ -9,6 +9,7 @@ haproxy-ppa:
   file.managed:
     - name: /etc/apt/sources.list.d/vbernat-ubuntu-haproxy-3_2-noble.sources
     - source: salt://haproxy/ppa-haproxy.sources
+    - template: jinja
     - require_in:
       - pkg: haproxy
 
@@ -20,7 +21,25 @@ update-repo:
 
 haproxy:
   pkg.installed:
-    - version: 3.2.8-1ppa1~noble
+    - name: haproxy-awslc
+    - version: 3.3.0-0+ha33+ubuntu24.04u2
+
+haproxy-keyring-dir:
+  file.directory:
+    - name: /usr/share/keyrings
+    - user: root
+    - group: root
+    - mode: 755
+    - makedirs: True
+
+haproxy-gpg-key:
+  cmd.run:
+    - name: wget -qO /usr/share/keyrings/HAPROXY-key-community.asc https://www.haproxy.com/download/haproxy/HAPROXY-key-community.asc
+    - creates: /usr/share/keyrings/HAPROXY-key-community.asc
+    - require:
+      - file: haproxy-keyring-dir
+    - require_in:
+      - pkg: haproxy
 
 haproxy-service:
   service.running:
@@ -40,6 +59,40 @@ haproxy-configtest:
   file.managed:
     - source: salt://haproxy/haproxy.cfg
     - template: jinja
+    - require:
+      - pkg: haproxy
+    - watch_in:
+      - cmd: haproxy-configtest
+
+/etc/haproxy/abuse_ips.map:
+  file.managed:
+    - source: salt://haproxy/files/abuse_ips.map
+    - user: root
+    - group: root
+    - mode: 644
+    - require:
+      - pkg: haproxy
+    - watch_in:
+      - cmd: haproxy-configtest
+
+/etc/haproxy/abuse_rooms.map:
+  file.managed:
+    - source: salt://haproxy/files/abuse_rooms.map
+    - user: root
+    - group: root
+    - mode: 644
+    - require:
+      - pkg: haproxy
+    - watch_in:
+      - cmd: haproxy-configtest
+
+/etc/haproxy/errors/403.http:
+  file.managed:
+    - source: salt://haproxy/files/403.http
+    - user: root
+    - group: root
+    - mode: 644
+    - makedirs: True
     - require:
       - pkg: haproxy
     - watch_in:
