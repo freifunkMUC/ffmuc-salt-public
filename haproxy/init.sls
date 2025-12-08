@@ -29,7 +29,7 @@ haproxy-keyring-dir:
     - name: /usr/share/keyrings
     - user: root
     - group: root
-    - mode: 755
+    - mode: "0755"
     - makedirs: True
 
 haproxy-gpg-key:
@@ -69,7 +69,7 @@ haproxy-configtest:
     - source: salt://haproxy/files/abuse_ips.map
     - user: root
     - group: root
-    - mode: 644
+    - mode: "0644"
     - require:
       - pkg: haproxy
     - watch_in:
@@ -80,7 +80,7 @@ haproxy-configtest:
     - source: salt://haproxy/files/abuse_rooms.map
     - user: root
     - group: root
-    - mode: 644
+    - mode: "0644"
     - require:
       - pkg: haproxy
     - watch_in:
@@ -91,7 +91,7 @@ haproxy-configtest:
     - source: salt://haproxy/files/403.http
     - user: root
     - group: root
-    - mode: 644
+    - mode: "0644"
     - makedirs: True
     - require:
       - pkg: haproxy
