@@ -75,8 +75,8 @@ This repo makes heavy use of Netbox based ext-pillar information especially conf
 }
 ```
 
-**Note:** The `minion_external_ip6` mine function uses the `cidr` parameter to exclude site-internal IPv6 addresses from the external IP list:
-- For site ID 18: use `2001:678:e68:ff00::/64`
-- For other sites: use `2001:678:ed0:ff00::/64`
+**Note:** The `minion_external_ip6` mine function configuration excludes site-internal IPv6 addresses from the external IP list. The `cidr` parameter specifies which addresses to filter out (exclude) from the `network.ip_addrs6` results:
+- For site ID 18: use `2001:678:e68:ff00::/64` to exclude addresses in this range
+- For other sites: use `2001:678:ed0:ff00::/64` to exclude addresses in this range
 
-This configuration should be set per-site in NetBox's config_context to ensure Nebula-over-IPv6 correctly identifies external addresses.
+This configuration should be set per-site in NetBox's config_context to ensure Nebula-over-IPv6 correctly identifies external addresses. The mine function configuration format shown above is a JSON representation of Salt's mine function syntax where the function and its parameters are provided as an array of objects.
