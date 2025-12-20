@@ -6,6 +6,8 @@
 {% set search_domains = salt['pillar.get']('netbox:config_context:search_domains', ['ffmuc.net']) %}
 
 # Disable systemd-resolved to prevent conflicts with static resolv.conf
+# Note: This state is idempotent with pdns-recursor's systemd-resolved management
+# Both states require systemd-resolved to be disabled and Salt ensures this
 systemd-resolved:
   service.dead:
     - enable: False
