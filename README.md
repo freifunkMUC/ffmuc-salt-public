@@ -7,6 +7,16 @@ This repo makes heavy use of Netbox based ext-pillar information especially conf
 ## Sample config_context
 ```
 {
+    "mine_functions": {
+        "minion_external_ip6": [
+            {
+                "mine_function": "network.ip_addrs6"
+            },
+            {
+                "cidr": "2001:678:e68:ff00::/64"
+            }
+        ]
+    },
     "docker": {
         "cfssl": {
             "container_dir": "/srv/docker/cfssl",
@@ -64,3 +74,9 @@ This repo makes heavy use of Netbox based ext-pillar information especially conf
     "user_home": {}
 }
 ```
+
+**Note:** The `minion_external_ip6` mine function uses the `cidr` parameter to exclude site-internal IPv6 addresses from the external IP list:
+- For site ID 18: use `2001:678:e68:ff00::/64`
+- For other sites: use `2001:678:ed0:ff00::/64`
+
+This configuration should be set per-site in NetBox's config_context to ensure Nebula-over-IPv6 correctly identifies external addresses.
