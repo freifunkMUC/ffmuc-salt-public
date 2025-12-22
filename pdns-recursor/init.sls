@@ -28,10 +28,6 @@ pdns-recursor:
     - watch:
       - file: /etc/powerdns/recursor.conf
 
-systemd-resolved:
-  service.dead:
-    - enable: False
-
 /etc/powerdns/recursor.conf:
   file.managed:
     - source: salt://pdns-recursor/recursor.conf

@@ -1,13 +1,19 @@
 #
 # Manage /etc/resolv.conf
 #
+# If machine runs pdns-recursor or dnsdist:
+#   - Disable systemd-resolved
+#   - Install static resolv.conf pointing to anycast servers
+# Otherwise:
+#   - Use systemd-resolved with anycast servers
+#   - Create symlink to stub-resolv.conf
 
-{% set nameservers = salt['pillar.get']('netbox:config_context:nameservers', ['1.1.1.1', '8.8.8.8']) %}
-{% set search_domains = salt['pillar.get']('netbox:config_context:search_domains', ['ffmuc.net']) %}
+{% set has_recursor = salt['pillar.get']('netbox:services', []) | selectattr('name', 'equalto', 'pdns-recursor') | list | length > 0 %}
+{% set has_dnsdist = 'dnsdist' in salt['pillar.get']('netbox:tag_list', []) %}
+{% set use_local_resolver = has_recursor or has_dnsdist %}
 
-# Disable systemd-resolved to prevent conflicts with static resolv.conf
-# Note: This state is idempotent with pdns-recursor's systemd-resolved management
-# Both states require systemd-resolved to be disabled and Salt ensures this
+{% if use_local_resolver %}
+# Machine runs local DNS resolver - disable systemd-resolved and use static resolv.conf
 systemd-resolved:
   service.dead:
     - enable: False
@@ -19,6 +25,31 @@ systemd-resolved:
     - user: root
     - group: root
     - mode: "0644"
-    - context:
-        nameservers: {{ nameservers }}
-        search_domains: {{ search_domains }}
+    - follow_symlinks: False
+    - require:
+      - service: systemd-resolved
+
+{% else %}
+# Machine uses systemd-resolved
+systemd-resolved:
+  service.running:
+    - enable: True
+
+/etc/systemd/resolved.conf:
+  file.managed:
+    - source: salt://resolv/resolved.conf
+    - template: jinja
+    - user: root
+    - group: root
+    - mode: "0644"
+    - watch_in:
+      - service: systemd-resolved
+
+/etc/resolv.conf:
+  file.symlink:
+    - target: /run/systemd/resolve/stub-resolv.conf
+    - force: True
+    - require:
+      - service: systemd-resolved
+
+{% endif %}
