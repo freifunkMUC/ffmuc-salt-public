@@ -24,7 +24,7 @@ parker:
 
 broker_signing_key: '{{ salt['pillar.get']('netbox:config_context:parker_backbone_config:wgkex:nodeconfig_key') }}'
 
-# Not needed for parker, but codebase not adjusted everywhere, and to silence warnings
+# Not needed for parker
 domains: []
 domain_prefixes:
   - 'ffmuc_'
@@ -32,6 +32,9 @@ domain_prefixes:
 workers:
   pgw01:
     weight: 100
+    pop: muc01
+
+sticky_worker_tolerance: 15
 
 # [worker] The external hostname of this worker
 externalName: {{ grains['id'] | regex_replace('in\.ffmuc\.net','ext.ffmuc.net') }}
