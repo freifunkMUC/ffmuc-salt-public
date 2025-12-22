@@ -8,7 +8,7 @@
 #   - Use systemd-resolved with anycast servers
 #   - Create symlink to stub-resolv.conf
 
-{% set has_recursor = salt['pillar.get']('netbox:services', []) | selectattr('name', 'equalto', 'pdns-recursor') | list | length > 0 %}
+{% set has_recursor = salt['pillar.get']('netbox:services', []) | selectattr('name', 'equalto', 'pdns-recursor') | list %}
 {% set has_dnsdist = 'dnsdist' in salt['pillar.get']('netbox:tag_list', []) %}
 {% set use_local_resolver = has_recursor or has_dnsdist %}
 
