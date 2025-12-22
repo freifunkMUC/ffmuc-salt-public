@@ -6,9 +6,9 @@
 #   - Install static resolv.conf pointing to anycast servers
 # Otherwise:
 #   - Use systemd-resolved with anycast servers
-#   - Create symlink to stub-resolv.conf
+#   - Create symlink to systemd-resolved's stub-resolv.conf
 
-{% set has_recursor = salt['pillar.get']('netbox:services', []) | selectattr('name', 'equalto', 'pdns-recursor') | list %}
+{% set has_recursor = 'recursor' in salt['pillar.get']('netbox:tag_list', []) %}
 {% set has_dnsdist = 'dnsdist' in salt['pillar.get']('netbox:tag_list', []) %}
 {% set use_local_resolver = has_recursor or has_dnsdist %}
 
@@ -35,13 +35,22 @@ systemd-resolved:
   service.running:
     - enable: True
 
-/etc/systemd/resolved.conf:
+/etc/systemd/resolved.conf.d/:
+  file.directory:
+    - user: root
+    - group: root
+    - mode: "0755"
+    - makedirs: True
+
+/etc/systemd/resolved.conf.d/resolved.conf:
   file.managed:
-    - source: salt://resolv/resolved.conf
+    - source: salt://resolv/systemd-resolved.conf
     - template: jinja
     - user: root
     - group: root
     - mode: "0644"
+    - require:
+      - file: /etc/systemd/resolved.conf.d/
     - watch_in:
       - service: systemd-resolved
 

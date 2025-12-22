@@ -1,6 +1,9 @@
 #
 # pdns-recursor
 #
+# systemd-resolved is disabled by 'resolv' state
+#
+{% if 'recursor' in salt['pillar.get']('netbox:tag_list', []) %}
 
 pdns-repo-key:
   cmd.run:
@@ -32,3 +35,5 @@ pdns-recursor:
   file.managed:
     - source: salt://pdns-recursor/recursor.conf
     - template: jinja
+
+{% endif %}
