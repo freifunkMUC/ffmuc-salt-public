@@ -22,7 +22,7 @@ update-repo:
 haproxy:
   pkg.installed:
     - name: haproxy-awslc
-    - version: 3.3.0-0+ha33+ubuntu24.04u2
+    - version: 3.3.1-0+ha33+ubuntu24.04u1
 
 haproxy-keyring-dir:
   file.directory:
