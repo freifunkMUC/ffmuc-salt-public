@@ -1,6 +1,9 @@
 #
 # pdns-recursor
 #
+# systemd-resolved is disabled by 'resolv' state
+#
+{% if 'recursor' in salt['pillar.get']('netbox:tag_list', []) %}
 
 pdns-repo-key:
   cmd.run:
@@ -28,11 +31,9 @@ pdns-recursor:
     - watch:
       - file: /etc/powerdns/recursor.conf
 
-systemd-resolved:
-  service.dead:
-    - enable: False
-
 /etc/powerdns/recursor.conf:
   file.managed:
     - source: salt://pdns-recursor/recursor.conf
     - template: jinja
+
+{% endif %}
