@@ -104,5 +104,9 @@ var config = {
     "FriendlyElec": {
       "NanoPi R2S": "https://gist.github.com/awlx/71b7727536f8f8bfe0c0031403ae86bf"
     },
+    "Ubiquiti": {
+      "EdgeRouter X": "https://ffmuc.net/freifunkmuc/2025/11/07/edgerouter-deprecation/",
+      "EdgeRouter X SFP": "https://ffmuc.net/freifunkmuc/2025/11/07/edgerouter-deprecation/"
+    },
   }
 };
