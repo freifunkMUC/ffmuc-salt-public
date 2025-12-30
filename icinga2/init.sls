@@ -18,7 +18,12 @@ include:
 
 icinga2-repo-key:
   cmd.run:
-    - name: "curl https://packages.icinga.com/icinga.key | gpg --batch --yes --dearmor -o /usr/share/keyrings/icinga2-keyring.gpg"
+    - name: >-
+        gpg --batch --no-default-keyring
+        --keyring /usr/share/keyrings/icinga2-keyring.gpg
+        --keyserver keyserver.ubuntu.com
+        --recv-keys 0xC6E3197DE97DA6F9999B830CCC116F55AA7F2382
+    - creates: /usr/share/keyrings/icinga2-keyring.gpg
 
 icinga2-repo:
   pkgrepo.managed:
