@@ -10,6 +10,7 @@ base:
     - mosh
     - motd
     - nebula
+    - resolv
     - screen
     - sudo
     - sysctl

@@ -1,6 +1,8 @@
 #
 # dnsdist
 #
+# systemd-resolved is disabled by 'resolv' state
+#
 {% if 'dnsdist' in salt['pillar.get']('netbox:tag_list', []) %}
 
 dnsdist-repo-key:
