@@ -1,0 +1,15 @@
+$ORIGIN .
+$TTL 604800     ; 1 week
+resolver.arpa   IN SOA  anycast01.ffmuc.net. hostmaster.ffmuc.net. (
+                                1 ; serial
+                                300        ; refresh (5 minutes)
+                                100        ; retry (1 minute 40 seconds)
+                                6000       ; expire (1 hour 40 minutes)
+                                600        ; minimum (10 minutes)
+                                )
+                        NS      anycast01.ffmuc.net.
+$ORIGIN resolver.arpa.
+$TTL 60 ; 1 minute during testing
+_dns SVCB 1 doq.ffmuc.net. alpn=doq ipv4hint=5.1.66.255,185.150.99.255 ipv6hint=2001:678:e68:f000::,2001:678:ed0:f000::
+_dns SVCB 2 dot.ffmuc.net. alpn=dot ipv4hint=5.1.66.255,185.150.99.255 ipv6hint=2001:678:e68:f000::,2001:678:ed0:f000::
+_dns SVCB 3 doh.ffmuc.net. alpn=h2,h3 dohpath=/dns-query{?dns} ipv4hint=5.1.66.255,185.150.99.255 ipv6hint=2001:678:e68:f000::,2001:678:ed0:f000::

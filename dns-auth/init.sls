@@ -68,6 +68,17 @@ dnspython:
     - require:
       - pkg: bind9
 
+/etc/bind/zones/db.resolver.arpa:
+  file.managed:
+    - source: salt://dns-auth/db.resolver.arpa
+    - user: bind
+    - group: bind
+    - mode: "0775"
+    - replace: True
+    - require:
+      - file: /etc/bind/zones
+    - watch_in:
+      - cmd: rndc-reload
 
 /etc/bind/zones/db.in.ffmuc.net:
   file.managed:
