@@ -166,10 +166,10 @@ addAction({'resolver.arpa'}, PoolAction("auth"), {name="Redirect-resolver.arpa"}
 addAction({'in-addr.arpa', 'ip6.arpa'}, NoneAction(), {name="RDNS"})
 
 -- OpenNIC
-newServer({address="88.198.92.222:53", name="v4.ns25.opennic", pool="opennic"})
-newServer({address="[2a01:4f8:1c0c:82c0::1]:53", name="v6.ns25.opennic", pool="opennic"})
-newServer({address="217.91.179.72:53", name="v4.ns27.de.opennic", pool="opennic"})
-newServer({address="[2003:a:133:1500::2]:53", name="v6.ns27.de.opennic", pool="opennic"})
+newServer({address="88.198.92.222:53", name="v4.ns25.opennic", pool="opennic", healthCheckMode="lazy"})
+newServer({address="[2a01:4f8:1c0c:82c0::1]:53", name="v6.ns25.opennic", pool="opennic", healthCheckMode="lazy"})
+newServer({address="217.91.179.72:53", name="v4.ns27.de.opennic", pool="opennic", healthCheckMode="lazy"})
+newServer({address="[2003:a:133:1500::2]:53", name="v6.ns27.de.opennic", pool="opennic", healthCheckMode="lazy"})
 addAction({'bbs','chan','cyb','dns.opennic.glue','dyn','geek','gopher','indy','libre','neo','null','o','opennic.glue','oss','oz','parody','pirate'}, PoolAction("opennic"), {name="Redirect-OpenNIC"})
 
 -- add cache for X possible entries
