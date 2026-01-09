@@ -18,12 +18,13 @@ include:
 
 icinga2-repo-key:
   cmd.run:
-    - name: "curl https://packages.icinga.com/icinga.key | gpg --batch --yes --dearmor -o /usr/share/keyrings/icinga2-keyring.gpg"
+    - name: "curl -fsSL https://packages.icinga.com/icinga.key | gpg --batch --yes --dearmor -o /usr/share/keyrings/icinga2-keyring.gpg"
+    - creates: /usr/share/keyrings/icinga2-keyring.gpg
 
 icinga2-repo:
   pkgrepo.managed:
     {% if grains.osfullname in 'Raspbian' %}
-    - name: deb [signed-by=/usr/share/keyrings/icinga2-keyring.gpg] https://packages.icinga.com/raspbian icinga-{{ grains.oscodename }} main
+    - name: deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/icinga2-keyring.gpg] https://packages.icinga.com/raspbian icinga-{{ grains.oscodename }} main
     {% elif grains.osfullname in 'Ubuntu' %}
     - name: deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/icinga2-keyring.gpg] https://packages.icinga.com/{{ grains.lsb_distrib_id | lower }} icinga-{{ grains.oscodename }} main
     {% else %}

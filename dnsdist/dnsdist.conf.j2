@@ -153,11 +153,8 @@ setServerPolicy(chashed)
 {%- if 'authorative-dns' in salt['pillar.get']('netbox:tag_list', []) %}
 newServer({address="127.0.0.1:553", name="local-auth", pool="auth"}){# bind #}
 {%- else %}
-  {%- if 'muc01' in salt['pillar.get']('netbox:site:slug') %}
-newServer({address="185.150.99.255", name="anycast02", pool="auth"})
-  {%- elif 'vie01' in salt['pillar.get']('netbox:site:slug') %}
-newServer({address="5.1.66.255", name="anycast01", pool="auth"})
-  {%- endif %}{# site #}
+  newServer({address="185.150.99.255", name="anycast02", pool="auth"})
+  newServer({address="5.1.66.255", name="anycast01", pool="auth"})
 {%- endif %}{# authoritative #}
 
 addAction({'in.ffmuc.net', 'ov.ffmuc.net', 'ffmuc.net', 'ffmuc.bayern', 'fnmuc.net', 'freewifi.bayern', 'freifunk-muenchen.de', 'xn--freifunk-mnchen-8vb.de.', 'freifunk-muenchen.net', 'muenchen.freifunk.net', 'xn--mnchen-3ya.freifunk.net', 'augsburg.freifunk.net', 'wertingen.freifunk.net', 'donau-ries.freifunk.net'}, PoolAction("auth"), {name="Redirect-Auth"})

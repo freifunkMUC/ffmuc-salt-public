@@ -32,8 +32,17 @@ systemd-resolved:
 {% else %}
 # Machine uses systemd-resolved
 systemd-resolved:
+{%- if grains.os == 'Ubuntu' and grains.osmajorrelease >= 24 %}
+{#- systemd-resolved is a separate package since 24.04 #}
+  pkg.installed:
+    - refresh: True
+{%- endif %}
   service.running:
     - enable: True
+{%- if grains.os == 'Ubuntu' and grains.osmajorrelease >= 24 %}
+    - require:
+      - pkg: systemd-resolved
+{%- endif %}
 
 /etc/systemd/resolved.conf.d/:
   file.directory:

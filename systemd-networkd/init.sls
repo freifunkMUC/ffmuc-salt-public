@@ -145,6 +145,7 @@ systemd-networkd-reload:
       interface: {{ iface }}
       desc: "{{ interfaces[iface]['description'] }}"
       kind: "dummy"
+    - mode: "0640"
     - watch_in:
       - cmd: systemd-networkd-reload
 {% set id = 20 %}
@@ -156,6 +157,7 @@ systemd-networkd-reload:
       interface: {{ iface }}
       desc: "{{ interfaces[iface]['description'] }}"
       kind: "wireguard"
+    - mode: "0640"
     - watch_in:
       - cmd: systemd-networkd-reload
 {% set id = 30 %}
@@ -167,6 +169,7 @@ systemd-networkd-reload:
       interface: {{ iface }}
       desc: "{{ interfaces[iface]['description'] }}"
       kind: "vxlan"
+    - mode: "0640"
     - watch_in:
       - cmd: systemd-networkd-reload
 {% set id = 40 %}
@@ -178,6 +181,7 @@ systemd-networkd-reload:
       interface: {{ iface }}
       desc: "{{ interfaces[iface]['description'] }}"
       kind: "batadv"
+    - mode: "0640"
     - watch_in:
       - cmd: systemd-networkd-reload
 {% set id = 50 %}
@@ -189,6 +193,7 @@ systemd-networkd-reload:
       interface: {{ iface }}
       desc: "{{ interfaces[iface]['description'] }}"
       kind: "bridge"
+    - mode: "0640"
     - watch_in:
       - cmd: systemd-networkd-reload
 {% set id = 60 %}
@@ -200,6 +205,7 @@ systemd-networkd-reload:
       interface: {{ iface }}
       desc: "{{ interfaces[iface]['description'] }}"
       kind: "ip6gre"
+    - mode: "0640"
     - watch_in:
       - cmd: systemd-networkd-reload
 {% set id = 70 %}
