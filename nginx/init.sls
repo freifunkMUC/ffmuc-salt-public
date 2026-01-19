@@ -48,6 +48,13 @@ nginx-configtest:
     - watch_in:
       - cmd: nginx-configtest
 
+# Remove nginx package's default.conf (it listens on port 80, HAProxy handles that)
+# firmware.ffmuc.net.conf serves as our default_server
+/etc/nginx/conf.d/default.conf:
+  file.absent:
+    - watch_in:
+      - cmd: nginx-configtest
+
 {% if salt["service.available"]("nginx") %}
 {% set nginx_version = salt["pkg.info_installed"]("nginx").get("nginx", {}).get("version","").split("-")[0] %}
 {% else %}

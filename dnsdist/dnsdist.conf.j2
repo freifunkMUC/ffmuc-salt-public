@@ -122,11 +122,11 @@ setDefaultBPFFilter(bpf)
 
 -- set number of queries to be allowed per second from an IP but exclude localhost
 dbr = dynBlockRulesGroup()
-dbr:excludeRange({"127.0.0.1/32", "::1/128", "10.8.0.0/23"})
-dbr:setRCodeRate(DNSRCode.NXDOMAIN, 20, 10, "Exceeded NXD rate", 60, DNSAction.Drop)
-dbr:setRCodeRate(DNSRCode.SERVFAIL, 20, 10, "Exceeded SERVFAIL rate", 60, DNSAction.Drop)
-dbr:setQTypeRate(DNSQType.PTR, 20, 10, "Exceeded PTR rate", 60, DNSAction.Drop)
-dbr:setQueryRate(500, 1, "Exceeded query rate", 60, DNSAction.Drop)
+dbr:excludeRange({"127.0.0.1/32", "::1/128", "10.8.0.0/23", "5.1.66.0/24", "185.150.99.0/24", "2001:678:e68:f000::/64", "2001:678:e68:ff00::/64", "2001:678:ed0:f000::/64", "2001:678:ed0:ff00::/64"})
+dbr:setRCodeRate(DNSRCode.NXDOMAIN, 100, 10, "Exceeded NXD rate", 60, DNSAction.Drop)
+dbr:setRCodeRate(DNSRCode.SERVFAIL, 50, 10, "Exceeded SERVFAIL rate", 60, DNSAction.Drop)
+dbr:setQTypeRate(DNSQType.PTR, 100, 10, "Exceeded PTR rate", 60, DNSAction.Drop)
+dbr:setQueryRate(1000, 1, "Exceeded query rate", 60, DNSAction.Drop)
 function maintenance()
    dbr:apply()
 end
