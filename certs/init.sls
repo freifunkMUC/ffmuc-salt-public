@@ -68,6 +68,9 @@ generate-dhparam:
 
 {%- set role = salt['pillar.get']('netbox:role:name', salt['pillar.get']('netbox:role:name')) %}
 
+{% set gcore_token = salt['pillar.get']('netbox:config_context:gcore:api_token') %}
+{% set cloudflare_token = salt['pillar.get']('netbox:config_context:cloudflare:api_token') %}
+
 {% if "webserver-external" in role %}
 # Preparation / install deploy hooks
 /etc/letsencrypt/archive/:
@@ -104,126 +107,178 @@ generate-dhparam:
     - makedirs: True
 {% endif %}{# if "webserver-external" in role #}
 
-{% set cloudflare_token = salt['pillar.get']('netbox:config_context:cloudflare:api_token') %}
-{% if ("webserver-external" in role or "jitsi meet" in role) and cloudflare_token %}
+{% if "webserver-external" in role or "jitsi meet" in role %}
 #
-# Certificate for ffmuc.net
+# Certbot (shared venv)
 #
 
-{# old behaviour. Got disabled as for DoT it got necessary to set the preferred-chain to ISRG Root X1
-   which is only possible with a more up to date version than available in ubuntu standard package repository.
-certbot:
+python3-venv:
   pkg.installed
-
-certbot-dns-cloudflare:
-  pip.installed:
-    - require:
-      - pkg: python3-pip
-
-New behaviour can be manually setup via
-
-  apt install snapd
-  snap install core # update core
-  snap install --classic certbot
-  snap set certbot trust-plugin-with-root=ok
-  snap install certbot-dns-cloudflare
-
-As snap is not possible to be managed with salt natively but should be coming
-in next release proper rollout via salt is blocked on this issue:
-https://github.com/saltstack/salt/issues/58132
-#}
-
-snapd:
-  pkg.installed
-
-certbot:
-  pkg.removed:
-    - name: certbot
-  cmd.run:
-    - name: snap install --classic certbot
-    - creates: /snap/bin/certbot
-    - require:
-        - pkg: snapd
-
-fix_permissions_for_certbot_plugin:
-  cmd.run:
-    - name: snap set certbot trust-plugin-with-root=ok
-    - require:
-       - cmd: certbot
 
 python3-pip:
   pkg.installed
 
-acme-client:
-  pip.installed:
-    - name: acme>=1.8.0
+certbot-venv:
+  cmd.run:
+    - name: python3 -m venv /opt/certbot-venv
+    - creates: /opt/certbot-venv/bin/python3
     - require:
+      - pkg: python3-venv
+
+certbot-venv-packages:
+  pip.installed:
+    - bin_env: /opt/certbot-venv/bin/pip
+    - pkgs:
+      - certbot>=2.0.0
+    - require:
+      - cmd: certbot-venv
       - pkg: python3-pip
 
-certbot-dns-cloudflare:
-  pip.removed:
-    - name: certbot-dns-cloudflare
-  cmd.run:
-    - name: snap install certbot-dns-cloudflare
-    - creates: /snap/certbot-dns-cloudflare/current/setup.py
-    - require:
-       - cmd: certbot
-       - cmd: fix_permissions_for_certbot_plugin
-
-dns_credentials:
+/etc/systemd/system/certbot-renew.service:
   file.managed:
-    - name: /var/lib/cache/salt/dns_plugin_credentials.ini
-    - source: salt://certs/files/dns_plugin_credentials.ini
+    - mode: "0644"
+    - contents: |
+        [Unit]
+        Description=Renew Let's Encrypt certificates
+
+        [Service]
+        Type=oneshot
+        ExecStart=/opt/certbot-venv/bin/certbot renew --quiet
+    - require:
+      - pip: certbot-venv-packages
+
+/etc/systemd/system/certbot-renew.timer:
+  file.managed:
+    - mode: "0644"
+    - contents: |
+        [Unit]
+        Description=Run certbot twice daily
+
+        [Timer]
+        OnCalendar=*-*-* 02,14:00:00
+        RandomizedDelaySec=30m
+        Persistent=true
+
+        [Install]
+        WantedBy=timers.target
+
+systemd-daemon-reload-certbot-renew:
+  cmd.run:
+    - name: systemctl daemon-reload
+    - onchanges:
+      - file: /etc/systemd/system/certbot-renew.service
+      - file: /etc/systemd/system/certbot-renew.timer
+
+certbot-renew-timer:
+  service.running:
+    - name: certbot-renew.timer
+    - enable: True
+    - require:
+      - cmd: systemd-daemon-reload-certbot-renew
+{% endif %}{# if "webserver-external" in role or "jitsi meet" in role #}
+
+{% if ("webserver-external" in role or "jitsi meet" in role) and gcore_token %}
+#
+# Certificate for ffmuc.net (Gcore DNS)
+#
+
+certbot-venv-gcore-plugin:
+  pip.installed:
+    - bin_env: /opt/certbot-venv/bin/pip
+    - name: certbot-dns-gcore
+    - require:
+      - pip: certbot-venv-packages
+
+dns_gcore_credentials:
+  file.managed:
+    - name: /var/lib/cache/salt/dns_gcore_credentials.ini
+    - source: salt://certs/files/dns_gcore_credentials.ini
+    - makedirs: True
+    - mode: "0600"
+    - template: jinja
+    - defaults:
+        gcore_token: {{ gcore_token }}
+
+ffmuc-wildcard-cert:
+  cmd.run:
+    - name: >
+        /opt/certbot-venv/bin/certbot certonly -n --agree-tos -m hilfe@ffmuc.net
+        --cert-name ffmuc.net
+        --authenticator dns-gcore
+        --dns-gcore-credentials /var/lib/cache/salt/dns_gcore_credentials.ini
+        --dns-gcore-propagation-seconds=80
+        --preferred-challenges dns --expand
+        -d "ffmuc.net"
+        -d "*.ffmuc.net"
+        -d "*.ext.ffmuc.net"
+    - unless: >
+        test -f /etc/letsencrypt/live/ffmuc.net/fullchain.pem &&
+        openssl x509 -noout -checkend 2592000 -in /etc/letsencrypt/live/ffmuc.net/fullchain.pem
+    - require:
+      - pip: certbot-venv-gcore-plugin
+      - file: dns_gcore_credentials
+      {% if "webserver-external" in role %}
+      - file: /etc/letsencrypt/renewal-hooks/deploy/01-reload-nginx.sh
+      - file: /etc/letsencrypt/renewal-hooks/deploy/02-reload-dnsdist-certs.sh
+      - file: /etc/letsencrypt/renewal-hooks/deploy/03-reload-haproxy.sh
+      {% endif %}{# if "webserver-external" in role #}
+{% endif %}{# if ("webserver-external" in role or "jitsi meet" in role) and gcore_token #}
+
+
+{% if ("webserver-external" in role or "jitsi meet" in role) and cloudflare_token %}
+#
+# Certificate for non-ffmuc.net domains (Cloudflare DNS)
+#
+
+certbot-venv-cloudflare-plugin:
+  pip.installed:
+    - bin_env: /opt/certbot-venv/bin/pip
+    - name: certbot-dns-cloudflare
+    - require:
+      - pip: certbot-venv-packages
+
+dns_cloudflare_credentials:
+  file.managed:
+    - name: /var/lib/cache/salt/dns_cloudflare_credentials.ini
+    - source: salt://certs/files/dns_cloudflare_credentials.ini
     - makedirs: True
     - mode: "0600"
     - template: jinja
     - defaults:
         cloudflare_token: {{ cloudflare_token }}
 
-ffmuc-wildcard-cert:
-  acme.cert:
-  {% if "webserver-external" in role %}
-    - name: ffmuc.net
-    - aliases:
-        - "*.ffmuc.net"
-        - "*.ext.ffmuc.net"
-        - "ffmeet.net"
-        - "ffmuc.bayern"
-        - "*.ffmuc.bayern"
-        - "fnmuc.net"
-        - "*.fnmuc.net"
-        - "freie-netze.org"
-        - "freifunk-muenchen.de"
-        - "*.freifunk-muenchen.de"
-        - "freifunk-muenchen.net"
-        - "*.freifunk-muenchen.net"
-        - "xn--freifunk-mnchen-8vb.de"
-        - "*.xn--freifunk-mnchen-8vb.de"
-  {% else %}{# "jitsi meet" in role #}
-    - name: meet.ffmuc.net
-    - aliases:
-        - "ffmeet.de"
-        - "*.ffmeet.de"
-        - "ffmeet.net"
-        - "*.ffmeet.net"
-  {% endif %}
-    - email: hilfe@ffmuc.net
-    - dns_plugin: cloudflare
-    - dns_plugin_credentials: /var/lib/cache/salt/dns_plugin_credentials.ini
-    - owner: root
-    - group: ssl-cert
-    - mode: "0640"
-    #- renew: True
+ffmuc-cloudflare-domains-cert:
+  cmd.run:
+    - name: >
+        /opt/certbot-venv/bin/certbot certonly -n --agree-tos -m hilfe@ffmuc.net
+        --cert-name ffmuc-cloudflare
+        --authenticator dns-cloudflare
+        --dns-cloudflare-credentials /var/lib/cache/salt/dns_cloudflare_credentials.ini
+        --dns-cloudflare-propagation-seconds=80
+        --preferred-challenges dns --expand
+        -d "ffmeet.net"
+        -d "ffmuc.bayern"
+        -d "*.ffmuc.bayern"
+        -d "fnmuc.net"
+        -d "*.fnmuc.net"
+        -d "freie-netze.org"
+        -d "freifunk-muenchen.de"
+        -d "*.freifunk-muenchen.de"
+        -d "freifunk-muenchen.net"
+        -d "*.freifunk-muenchen.net"
+        -d "xn--freifunk-mnchen-8vb.de"
+        -d "*.xn--freifunk-mnchen-8vb.de"
+    - unless: >
+        test -f /etc/letsencrypt/live/ffmuc-cloudflare/fullchain.pem &&
+        openssl x509 -noout -checkend 2592000 -in /etc/letsencrypt/live/ffmuc-cloudflare/fullchain.pem
     - require:
-        - cmd: certbot
-        - cmd: certbot-dns-cloudflare
-        - pip: acme-client
-        - file: dns_credentials
-        - file: /etc/letsencrypt/renewal-hooks/deploy/01-reload-nginx.sh
-        {% if "webserver-external" in role %}
-        - file: /etc/letsencrypt/renewal-hooks/deploy/02-reload-dnsdist-certs.sh
-        - file: /etc/letsencrypt/renewal-hooks/deploy/03-reload-haproxy.sh
-        {% endif %}{# if "webserver-external" in role #}
+      - pip: certbot-venv-cloudflare-plugin
+      - file: dns_cloudflare_credentials
+      {% if "webserver-external" in role %}
+      - file: /etc/letsencrypt/renewal-hooks/deploy/01-reload-nginx.sh
+      - file: /etc/letsencrypt/renewal-hooks/deploy/02-reload-dnsdist-certs.sh
+      - file: /etc/letsencrypt/renewal-hooks/deploy/03-reload-haproxy.sh
+      {% endif %}{# if "webserver-external" in role #}
 
 {% endif %}{# if ("webserver-external" in role or "jitsi meet" in role) and cloudflare_token #}
 
@@ -259,7 +314,7 @@ cleanup-dns.sh:
 muenchen.freifunk.net-wildcard-cert:
   cmd.run:
     - name: >
-        certbot certonly -n --agree-tos -m hilfe@ffmuc.net
+        /opt/certbot-venv/bin/certbot certonly -n --agree-tos -m hilfe@ffmuc.net
         --manual --manual-auth-hook /var/lib/cache/salt/update-dns.sh --manual-cleanup-hook /var/lib/cache/salt/cleanup-dns.sh
         --preferred-challenges dns --expand
         -d "muenchen.freifunk.net" -d "*.muenchen.freifunk.net"
@@ -268,8 +323,7 @@ muenchen.freifunk.net-wildcard-cert:
         -d "donau-ries.freifunk.net" -d "*.donau-ries.freifunk.net"
         -d "augsburg.freifunk.net" -d "*.augsburg.freifunk.net"
     - require:
-        - cmd: certbot
-        - pip: acme-client
+        - pip: certbot-venv-packages
         - file: update-dns.sh
         - file: cleanup-dns.sh
         - file: /etc/letsencrypt/renewal-hooks/deploy/01-reload-nginx.sh
