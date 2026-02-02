@@ -63,7 +63,6 @@ import requests
 import logging
 import salt.exceptions
 
-
 logger = logging.getLogger(__name__)
 
 
