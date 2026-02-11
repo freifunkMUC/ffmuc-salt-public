@@ -10,14 +10,17 @@ prosody-repo-key:
     - name: "curl https://prosody.im/files/prosody-debian-packages.key | gpg --dearmor -o /usr/share/keyrings/prosody-keyring.gpg"
     - creates: /usr/share/keyrings/prosody-keyring.gpg
 
-prosody-repo:
-  pkgrepo.managed:
-    - humanname: Prosody
-    - name: deb [signed-by=/usr/share/keyrings/prosody-keyring.gpg] http://packages.prosody.im/debian {{ grains.oscodename }} main
-    - file: /etc/apt/sources.list.d/prosody.list
-    - clean_file: True
-    - require:
-      - cmd: prosody-repo-key
+/etc/apt/sources.list.d/prosody.list:
+  file.absent
+
+#prosody-repo:
+#  pkgrepo.managed:
+#    - humanname: Prosody
+#    - name: deb [signed-by=/usr/share/keyrings/prosody-keyring.gpg] http://packages.prosody.im/debian {{ grains.oscodename }} main
+#    - file: /etc/apt/sources.list.d/prosody.sources
+#    - clean_file: True
+#    - require:
+#      - cmd: prosody-repo-key
 
 prosody-dependencies:
   pkg.installed:
@@ -69,7 +72,7 @@ prosody:
 {# download and extract prosody plugins of jitsi #}
 download-jitsi-meet-prosody:
   file.managed:
-    - source: https://download.jitsi.org/stable/jitsi-meet-prosody_1.0.7874-1_all.deb
+    - source: https://download.jitsi.org/stable/jitsi-meet-prosody_{{ jitsi.jitsi_meet_prosody.version }}_all.deb
     - skip_verify: True
     - name: /var/cache/apt/archives/jitsi-meet-prosody.deb
     - required_in:

@@ -22,7 +22,7 @@ update-repo:
 haproxy:
   pkg.installed:
     - name: haproxy-awslc
-    - version: 3.3.1-0+ha33+ubuntu24.04u1
+    - version: 3.3.2-0+ha33+ubuntu24.04u3
 
 haproxy-keyring-dir:
   file.directory:
@@ -52,7 +52,7 @@ haproxy-service:
       - cmd: haproxy-configtest
 
 haproxy-configtest:
-  cmd.run:
+  cmd.wait:
     - name: /usr/sbin/haproxy -c -f /etc/haproxy/haproxy.cfg
 
 /etc/haproxy/haproxy.cfg:
@@ -97,5 +97,19 @@ haproxy-configtest:
       - pkg: haproxy
     - watch_in:
       - cmd: haproxy-configtest
+
+/etc/logrotate.d/haproxy:
+  file.managed:
+    - source: salt://haproxy/logrotate-haproxy
+    - user: root
+    - group: root
+    - mode: "0644"
+
+/etc/cron.d/haproxy-logrotate:
+  file.managed:
+    - source: salt://haproxy/haproxy-logrotate.cron
+    - user: root
+    - group: root
+    - mode: "0644"
 
 {% endif %}

@@ -11,6 +11,8 @@ jitsi-meet-web-pkgs:
       - jitsi-meet-web: salt://jitsi/meet/jitsi-meet-web_{{ jitsi.meet.version }}_all.deb
       - jitsi-meet-web-config: salt://jitsi/meet/jitsi-meet-web-config_{{ jitsi.meet.version }}_all.deb
     - hold: True
+    - force_yes: True
+    - update_holds: True
 
 {% for domain in ["meet.ffmuc.net","klassenkonferenz.de"] %}
 /etc/jitsi/meet/{{ domain }}-config.js:

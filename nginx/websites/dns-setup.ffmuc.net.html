@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FFMUC DNS — Setup Guide</title>
+    <meta name="description" content="Free, private, European DNS resolver by Freifunk München. Setup guide for DNS-over-HTTPS, DNS-over-TLS, DNS-over-QUIC, and plain DNS.">
+    <link rel="icon" href="https://ffmuc.net/assets/favicon/favicon-32x32.png" type="image/png">
+    <style>
+        :root {
+            --primary: #009ee0;
+            --primary-dark: #007ab8;
+            --primary-light: #e6f5fc;
+            --bg: #f5f7fa;
+            --card-bg: #ffffff;
+            --text: #1a1a2e;
+            --text-secondary: #5a5a7a;
+            --border: #e2e6ec;
+            --success: #10b981;
+            --code-bg: #f0f2f5;
+            --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+            --shadow-lg: 0 4px 14px rgba(0,0,0,0.1);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            --mono: 'SF Mono', 'Cascadia Code', 'Fira Code', Consolas, monospace;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0f1117;
+                --card-bg: #1a1c25;
+                --text: #e4e4ed;
+                --text-secondary: #9a9ab0;
+                --border: #2a2c38;
+                --code-bg: #22242e;
+                --primary-light: #0d2d3f;
+                --shadow: 0 1px 3px rgba(0,0,0,0.3);
+                --shadow-lg: 0 4px 14px rgba(0,0,0,0.4);
+            }
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a { color: var(--primary); }
+        a:hover { color: var(--primary-dark); }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #009ee0 0%, #0077b6 100%);
+            color: white;
+            padding: 48px 24px 56px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 32px;
+            background: var(--bg);
+            border-radius: 24px 24px 0 0;
+        }
+        .header-logo {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            margin-bottom: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+        }
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .badges {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 16px;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(255,255,255,0.18);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .badge svg { width: 14px; height: 14px; }
+
+        /* Donation banner */
+        .donate-banner {
+            background: linear-gradient(135deg, #ff6b35 0%, #e0520e 100%);
+            color: white;
+            text-align: center;
+            padding: 14px 24px;
+            font-size: 15px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .donate-banner:hover {
+            background: linear-gradient(135deg, #ff7d4d 0%, #f06020 100%);
+        }
+        .donate-banner svg { width: 20px; height: 20px; flex-shrink: 0; }
+        .donate-banner .donate-btn-inline {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255,255,255,0.25);
+            border: 1px solid rgba(255,255,255,0.4);
+            padding: 6px 18px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 700;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: background 0.2s;
+        }
+        .donate-banner:hover .donate-btn-inline {
+            background: rgba(255,255,255,0.35);
+        }
+
+        /* Warning box */
+        .warning-box {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: var(--radius-sm);
+            padding: 12px 14px;
+            font-size: 13px;
+            margin: 12px 0;
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            color: #92400e;
+        }
+        .warning-box svg {
+            width: 18px;
+            height: 18px;
+            color: #f59e0b;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+        @media (prefers-color-scheme: dark) {
+            .warning-box {
+                background: #451a03;
+                border-color: #b45309;
+                color: #fcd34d;
+            }
+            .warning-box svg { color: #fbbf24; }
+        }
+
+        /* Language switcher */
+        .lang-switch {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            display: flex;
+            gap: 4px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 8px;
+            padding: 3px;
+        }
+        .lang-btn {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.7);
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .lang-btn.active {
+            background: rgba(255,255,255,0.25);
+            color: white;
+        }
+        .lang-btn:hover { color: white; }
+
+        /* Main container */
+        .container {
+            max-width: 720px;
+            margin: -16px auto 0;
+            padding: 0 16px 48px;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Section */
+        .section {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin-bottom: 16px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        .section-header {
+            padding: 20px 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            user-select: none;
+            transition: background 0.15s;
+        }
+        .section-header:hover { background: var(--primary-light); }
+        .section-header .icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--primary-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .section-header .icon svg { width: 20px; height: 20px; color: var(--primary); }
+        .section-header .label { flex: 1; }
+        .section-header .label h3 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        .section-header .label p {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        .section-header .chevron {
+            width: 20px;
+            height: 20px;
+            color: var(--text-secondary);
+            transition: transform 0.2s;
+        }
+        .section.open .section-header .chevron { transform: rotate(180deg); }
+        .section-body {
+            display: none;
+            padding: 5px 24px 20px;
+            border-top: 1px solid var(--border);
+        }
+        .section.open .section-body { display: block; }
+
+        /* Endpoints card (always open) */
+        .endpoints { margin-bottom: 24px; }
+        .endpoints .section-body { display: block; border-top: none; padding-top: 0; }
+
+        /* Endpoint rows */
+        .endpoint-group {
+            margin-bottom: 16px;
+        }
+        .endpoint-group:last-child { margin-bottom: 0; }
+        .endpoint-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .protocol-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        .protocol-badge.dot { background: #dbeafe; color: #1d4ed8; }
+        .protocol-badge.doh { background: #dcfce7; color: #15803d; }
+        .protocol-badge.doq { background: #fef3c7; color: #a16207; }
+        .protocol-badge.dns { background: #f3e8ff; color: #7c3aed; }
+
+        @media (prefers-color-scheme: dark) {
+            .protocol-badge.dot { background: #1e3a5f; color: #93c5fd; }
+            .protocol-badge.doh { background: #14532d; color: #86efac; }
+            .protocol-badge.doq { background: #451a03; color: #fcd34d; }
+            .protocol-badge.dns { background: #3b0764; color: #d8b4fe; }
+        }
+
+        .endpoint-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+        .endpoint-value {
+            flex: 1;
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            font-family: var(--mono);
+            font-size: 13px;
+            word-break: break-all;
+            cursor: pointer;
+            transition: all 0.15s;
+            position: relative;
+        }
+        .endpoint-value:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+        .endpoint-value .ip-label {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            font-family: var(--font);
+            margin-right: 6px;
+        }
+        .copy-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.15s;
+            color: var(--text-secondary);
+        }
+        .copy-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--primary-light);
+        }
+        .copy-btn.copied {
+            border-color: var(--success);
+            color: var(--success);
+            background: #ecfdf5;
+        }
+        @media (prefers-color-scheme: dark) {
+            .copy-btn.copied { background: #052e16; }
+        }
+        .copy-btn svg { width: 16px; height: 16px; }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: var(--text);
+            color: var(--bg);
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: var(--shadow-lg);
+            z-index: 1000;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+
+        /* Setup steps */
+        .steps { counter-reset: step; }
+        .step {
+            position: relative;
+            padding: 12px 0 12px 40px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .step::before {
+            counter-increment: step;
+            content: counter(step);
+            position: absolute;
+            left: 0;
+            top: 12px;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 12px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .step code {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            padding: 2px 7px;
+            border-radius: 5px;
+            font-family: var(--mono);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .step code:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        /* Code block */
+        .code-block {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 14px 16px;
+            font-family: var(--mono);
+            font-size: 12px;
+            line-height: 1.6;
+            overflow-x: auto;
+            position: relative;
+            margin: 10px 0;
+            white-space: pre;
+        }
+        .code-block .copy-overlay {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+        }
+
+        /* Quick setup buttons */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin: 12px 0;
+        }
+        @media (max-width: 500px) {
+            .quick-actions { grid-template-columns: 1fr; }
+        }
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--card-bg);
+            cursor: pointer;
+            text-decoration: none;
+            color: var(--text);
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.15s;
+        }
+        .action-btn:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+        .action-btn svg { width: 20px; height: 20px; flex-shrink: 0; color: var(--text-secondary); }
+        .action-btn .action-label span {
+            display: block;
+            font-size: 11px;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        /* Info box */
+        .info-box {
+            background: var(--primary-light);
+            border: 1px solid rgba(0, 158, 224, 0.2);
+            border-radius: var(--radius-sm);
+            padding: 12px 14px;
+            font-size: 13px;
+            margin: 12px 0;
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+        .info-box svg {
+            width: 18px;
+            height: 18px;
+            color: var(--primary);
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        /* Divider */
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 16px 0;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 24px 16px 32px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        .footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+        .footer a:hover { text-decoration: underline; }
+        .footer-links {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 2px;
+            background: var(--code-bg);
+            border-radius: var(--radius-sm);
+            padding: 3px;
+            margin: 12px 0;
+        }
+        .tab {
+            flex: 1;
+            padding: 7px 10px;
+            border: none;
+            background: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: all 0.15s;
+            text-align: center;
+        }
+        .tab.active {
+            background: var(--card-bg);
+            color: var(--text);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+        }
+        .tab:hover:not(.active) { color: var(--text); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .header { padding: 36px 16px 44px; }
+            .header h1 { font-size: 22px; }
+            .container { padding: 0 12px 32px; }
+            .section-header { padding: 16px 18px; }
+            .section-body { padding: 0 18px 16px; }
+        }
+
+        /* hidden class for i18n */
+        [data-lang] { display: none; }
+        [data-lang].visible { display: initial; }
+        .step[data-lang], .info-box[data-lang], div[data-lang], p[data-lang], h3[data-lang] { display: none; }
+        .step[data-lang].visible, .info-box[data-lang].visible, div[data-lang].visible, p[data-lang].visible, h3[data-lang].visible { display: block; }
+        span[data-lang].visible { display: inline; }
+        .quick-actions[data-lang].visible { display: grid; }
+        .endpoint-group[data-lang].visible { display: block; }
+    </style>
+</head>
+<body>
+
+<!-- SVG Icons (hidden) -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+    <symbol id="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></symbol>
+    <symbol id="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></symbol>
+    <symbol id="icon-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></symbol>
+    <symbol id="icon-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+    <symbol id="icon-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></symbol>
+    <symbol id="icon-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></symbol>
+    <symbol id="icon-zap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></symbol>
+    <symbol id="icon-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></symbol>
+    <symbol id="icon-android" viewBox="0 0 24 24" fill="currentColor"><path d="M17.523 15.341a1 1 0 010-2 1 1 0 010 2m-11.046 0a1 1 0 010-2 1 1 0 010 2m11.405-6.02l1.997-3.46a.416.416 0 00-.152-.567.416.416 0 00-.568.152L17.12 8.95c-1.46-.674-3.1-1.05-4.87-1.05-1.77 0-3.41.376-4.87 1.05L5.34 5.446a.416.416 0 00-.568-.152.416.416 0 00-.152.567l1.997 3.46C3.05 11.2.93 14.584.93 18.5h22.14c0-3.916-2.12-7.3-5.588-9.179"/></symbol>
+    <symbol id="icon-apple" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></symbol>
+    <symbol id="icon-windows" viewBox="0 0 24 24" fill="currentColor"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></symbol>
+    <symbol id="icon-linux" viewBox="0 0 24 24" fill="currentColor"><path d="M12.504 0c-.155 0-.311.01-.455.034-.727.12-1.324.555-1.727 1.1-.398.548-.593 1.224-.593 1.898 0 .48.089.921.244 1.335.096.26.212.52.351.755a7.92 7.92 0 011.076 3.053c.06.385.09.782.09 1.18 0 .377-.04.762-.124 1.13a5.56 5.56 0 01-.781 1.892c-.31.463-.68.858-1.1 1.158-.42.298-.89.488-1.383.488-.493 0-.963-.19-1.383-.488-.42-.3-.79-.695-1.1-1.158a5.56 5.56 0 01-.781-1.892 5.88 5.88 0 01-.124-1.13c0-.398.03-.795.09-1.18a7.92 7.92 0 011.076-3.053 5.3 5.3 0 00.351-.755c.155-.414.244-.855.244-1.335 0-.674-.195-1.35-.593-1.898C6.276.589 5.679.154 4.952.034 4.808.01 4.651 0 4.496 0c-.236 0-.475.03-.694.094-.698.199-1.213.634-1.583 1.186-.362.548-.547 1.223-.547 1.912 0 .374.054.715.158 1.033.1.324.255.628.435.887.36.521.792.92 1.133 1.232.339.316.59.543.66.721.067.175.003.478-.182.935a10.8 10.8 0 00-.656 2.088c-.127.65-.19 1.32-.19 1.997 0 .85.104 1.7.302 2.487.197.784.485 1.505.854 2.04.368.534.816.878 1.342.878.33 0 .613-.13.876-.37.262-.24.496-.583.72-.949.227-.37.428-.767.657-1.122.227-.353.48-.664.79-.86a2.2 2.2 0 011.177-.348c.422 0 .81.13 1.177.348.31.196.563.507.79.86.23.355.43.753.657 1.122.224.366.458.71.72.949.263.24.546.37.876.37.526 0 .974-.344 1.342-.877.370-.536.657-1.257.854-2.041A10.89 10.89 0 0020 12.09c0-.677-.063-1.347-.19-1.997a10.8 10.8 0 00-.656-2.088c-.185-.457-.249-.76-.182-.935.07-.178.321-.405.66-.72.341-.313.773-.712 1.133-1.233.18-.259.335-.563.435-.887.104-.318.158-.659.158-1.033 0-.689-.185-1.364-.547-1.912-.37-.552-.885-.987-1.583-1.186A2.92 2.92 0 0018.534 0h-.03c-.155 0-.311.01-.455.034-.727.12-1.324.555-1.727 1.1-.398.548-.593 1.224-.593 1.898 0 .48.089.921.244 1.335.096.26.212.52.351.755a7.92 7.92 0 011.076 3.053c.06.385.09.782.09 1.18 0 .377-.04.762-.124 1.13a5.56 5.56 0 01-.781 1.892c-.31.463-.68.858-1.1 1.158-.42.298-.89.488-1.383.488h-.013z"/></symbol>
+    <symbol id="icon-firefox" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 5.235c.465.835.718 1.978.538 3.464-.26-.452-.588-.804-.99-1.06.13-.77.07-1.447-.168-2.044-.26.31-.467.7-.607 1.16a6.63 6.63 0 00-.488-.356c-1.348-.856-2.9-.943-4.21-.34-.81.374-1.5.994-2 1.782-.26-.152-.492-.35-.7-.598a3.75 3.75 0 01-.538-1.05c-.16.422-.23.87-.2 1.32-1.16-.02-2.09.66-2.56 1.56-.44-.7-.63-1.58-.4-2.48C4 8.1 3 10.12 3 12.32 3 17.66 7.34 22 12.68 22 17.56 22 21.6 18.34 22 13.64c.32-3.74-1.44-6.64-4.106-8.405z"/></symbol>
+    <symbol id="icon-chrome" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C8.21 0 4.831 1.757 2.632 4.501l3.953 6.848A5.454 5.454 0 0112 6.545h10.691A12 12 0 0012 0zM1.931 5.47A11.943 11.943 0 000 12c0 4.032 1.988 7.596 5.036 9.771l3.942-6.83A5.41 5.41 0 016.545 12c0-.69.128-1.35.364-1.958L1.931 5.47zM12 17.455a5.455 5.455 0 01-4.533-2.42l-3.95 6.842A11.945 11.945 0 0012 24c3.506 0 6.653-1.505 8.845-3.903H12.88A5.43 5.43 0 0112 17.455zM12 16.364a4.364 4.364 0 100-8.728 4.364 4.364 0 000 8.728z"/></symbol>
+    <symbol id="icon-router" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="14" width="20" height="8" rx="2"/><path d="M6.01 22v-4"/><path d="M10 22v-4"/><circle cx="18" cy="18" r="1"/><path d="M6 14V6a2 2 0 012-2h8a2 2 0 012 2v8"/><path d="M12 6v4"/><path d="M9 10h6"/></symbol>
+    <symbol id="icon-server" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></symbol>
+    <symbol id="icon-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
+    <symbol id="icon-external" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></symbol>
+</svg>
+
+<!-- Donation Banner -->
+<a class="donate-banner" href="https://spende.ffmuc.net" target="_blank" rel="noopener">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#dc0067"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+    <span data-lang="en" class="visible">This service is 100% donation-funded — help us keep it running!</span>
+    <span data-lang="de">Dieser Dienst wird zu 100% durch Spenden finanziert — hilf uns, ihn am Laufen zu halten!</span>
+    <span class="donate-btn-inline">
+        <span data-lang="en" class="visible">Donate Now</span>
+        <span data-lang="de">Jetzt Spenden</span>
+    </span>
+</a>
+
+<!-- Header -->
+<div class="header">
+    <div class="lang-switch">
+        <button class="lang-btn active" onclick="setLang('en')" id="btn-en">EN</button>
+        <button class="lang-btn" onclick="setLang('de')" id="btn-de">DE</button>
+    </div>
+    <img class="header-logo" src="https://ffmuc.net/assets/favicon/apple-touch-icon.png" alt="FFMUC">
+    <h1>FFMUC DNS</h1>
+    <p data-lang="en" class="visible">Free, private, European DNS resolver by Freifunk München</p>
+    <p data-lang="de">Freier, privater, europäischer DNS-Resolver von Freifunk München</p>
+    <div class="badges">
+        <span class="badge"><svg><use href="#icon-shield"/></svg> <span data-lang="en" class="visible">No Logging</span><span data-lang="de">Kein Logging</span></span>
+        <span class="badge"><svg><use href="#icon-globe"/></svg> <span data-lang="en" class="visible">EU Hosted</span><span data-lang="de">EU-gehostet</span></span>
+        <span class="badge"><svg><use href="#icon-lock"/></svg> DNSSEC</span>
+        <span class="badge"><svg><use href="#icon-zap"/></svg> <span data-lang="en" class="visible">Free forever</span><span data-lang="de">Für immer kostenlos</span></span>
+    </div>
+</div>
+
+<!-- Main -->
+<div class="container">
+
+    <!-- Endpoints (always visible) -->
+    <div class="section endpoints">
+        <div class="section-header" style="cursor:default;">
+            <div class="icon"><svg><use href="#icon-server"/></svg></div>
+            <div class="label">
+                <h3 data-lang="en" class="visible">Endpoints</h3>
+                <h3 data-lang="de">Endpunkte</h3>
+                <p data-lang="en" class="visible">Use all IPs for best redundancy even during maintenance</p>
+                <p data-lang="de">Bitte alle IPs für maximale Verfügbarkeit verwenden</p>
+            </div>
+        </div>
+        <div class="section-body">
+            <!-- DNS-over-TLS -->
+            <div class="endpoint-group">
+                <div class="endpoint-label"><span class="protocol-badge dot">DoT</span> DNS-over-TLS — Port 853</div>
+                <div class="endpoint-row">
+                    <div class="endpoint-value" onclick="copyText('dot.ffmuc.net', this)">dot.ffmuc.net</div>
+                    <button class="copy-btn" onclick="copyText('dot.ffmuc.net', this)" title="Copy"><svg><use href="#icon-copy"/></svg></button>
+                </div>
+            </div>
+
+            <!-- DNS-over-HTTPS -->
+            <div class="endpoint-group">
+                <div class="endpoint-label"><span class="protocol-badge doh">DoH</span> DNS-over-HTTPS — Port 443</div>
+                <div class="endpoint-row">
+                    <div class="endpoint-value" onclick="copyText('https://doh.ffmuc.net/dns-query', this)">https://doh.ffmuc.net/dns-query</div>
+                    <button class="copy-btn" onclick="copyText('https://doh.ffmuc.net/dns-query', this)" title="Copy"><svg><use href="#icon-copy"/></svg></button>
+                </div>
+            </div>
+
+            <!-- DNS-over-QUIC -->
+            <div class="endpoint-group">
+                <div class="endpoint-label"><span class="protocol-badge doq">DoQ</span> DNS-over-QUIC — Port 853</div>
+                <div class="endpoint-row">
+                    <div class="endpoint-value" onclick="copyText('doq.ffmuc.net', this)">doq.ffmuc.net</div>
+                    <button class="copy-btn" onclick="copyText('doq.ffmuc.net', this)" title="Copy"><svg><use href="#icon-copy"/></svg></button>
+                </div>
+            </div>
+
+            <!-- Plain DNS -->
+            <div class="endpoint-group">
+                <div class="endpoint-label"><span class="protocol-badge dns">DNS</span> <span data-lang="en" class="visible">Plain DNS — Port 53</span><span data-lang="de">Unverschlüsseltes DNS — Port 53</span></div>
+                <div class="endpoint-row">
+                    <div class="endpoint-value" onclick="copyText('5.1.66.255', this)"><span class="ip-label">IPv4</span>5.1.66.255</div>
+                    <button class="copy-btn" onclick="copyText('5.1.66.255', this)" title="Copy"><svg><use href="#icon-copy"/></svg></button>
+                </div>
+                <div class="endpoint-row">
+                    <div class="endpoint-value" onclick="copyText('185.150.99.255', this)"><span class="ip-label">IPv4</span>185.150.99.255</div>
+                    <button class="copy-btn" onclick="copyText('185.150.99.255', this)" title="Copy"><svg><use href="#icon-copy"/></svg></button>
+                </div>
+                <div class="endpoint-row">
+                    <div class="endpoint-value" onclick="copyText('2001:678:e68:f000::', this)"><span class="ip-label">IPv6</span>2001:678:e68:f000::</div>
+                    <button class="copy-btn" onclick="copyText('2001:678:e68:f000::', this)" title="Copy"><svg><use href="#icon-copy"/></svg></button>
+                </div>
+                <div class="endpoint-row">
+                    <div class="endpoint-value" onclick="copyText('2001:678:ed0:f000::', this)"><span class="ip-label">IPv6</span>2001:678:ed0:f000::</div>
+                    <button class="copy-btn" onclick="copyText('2001:678:ed0:f000::', this)" title="Copy"><svg><use href="#icon-copy"/></svg></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Privacy Policy Summary -->
+    <div class="section" id="sec-privacy">
+        <div class="section-header" onclick="toggleSection(this)">
+            <div class="icon"><svg style="color:var(--primary)"><use href="#icon-shield"/></svg></div>
+            <div class="label">
+                <h3 data-lang="en" class="visible">Our Privacy Promise</h3>
+                <h3 data-lang="de">Unser Datenschutz-Versprechen</h3>
+                <p data-lang="en" class="visible">Zero logging, zero tracking, full transparency</p>
+                <p data-lang="de">Kein Logging, kein Tracking, volle Transparenz</p>
+            </div>
+            <svg class="chevron"><use href="#icon-chevron"/></svg>
+        </div>
+        <div class="section-body">
+            <div data-lang="en" style="font-size:14px;line-height:1.7;">
+                <p style="margin-bottom:12px;">We take your privacy seriously. Here's what our DNS resolver <strong>does not do</strong>:</p>
+                <ul style="margin:0 0 12px 20px;">
+                    <li><strong>No query logging</strong> — We do not store, log, or record any DNS queries or your IP address.</li>
+                    <li><strong>No data selling</strong> — Your data is never shared with, sold to, or made available to third parties.</li>
+                    <li><strong>No tracking</strong> — We do not use cookies, analytics, or any form of user tracking.</li>
+                    <li><strong>No filtering or censorship</strong> — We return unmodified DNS responses, validated with DNSSEC.</li>
+                </ul>
+                <p style="margin-bottom:12px;">Our servers are hosted exclusively in the <strong>EU</strong> (Munich &amp; Vienna), operated by <strong>Freifunk München / Freie Netze München e.V.</strong>, a registered non-profit. We are funded entirely by donations — not by monetizing user data.</p>
+                <a href="https://ffmuc.net/dns-privacy/" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;color:var(--primary);font-weight:600;text-decoration:none;">
+                    <svg style="width:16px;height:16px;"><use href="#icon-external"/></svg>
+                    Read our full Privacy Policy →
+                </a>
+            </div>
+            <div data-lang="de" style="font-size:14px;line-height:1.7;">
+                <p style="margin-bottom:12px;">Wir nehmen deinen Datenschutz ernst. Folgendes macht unser DNS-Resolver <strong>nicht</strong>:</p>
+                <ul style="margin:0 0 12px 20px;">
+                    <li><strong>Kein Query-Logging</strong> — Wir speichern, protokollieren oder erfassen keine DNS-Anfragen oder deine IP-Adresse.</li>
+                    <li><strong>Kein Datenverkauf</strong> — Deine Daten werden niemals an Dritte weitergegeben, verkauft oder zugänglich gemacht.</li>
+                    <li><strong>Kein Tracking</strong> — Wir verwenden keine Cookies, Analysetools oder sonstige Nutzerverfolgung.</li>
+                    <li><strong>Keine Filterung oder Zensur</strong> — Wir liefern unveränderte DNS-Antworten, validiert mit DNSSEC.</li>
+                </ul>
+                <p style="margin-bottom:12px;">Unsere Server stehen ausschließlich in der <strong>EU</strong> (München &amp; Wien) und werden von <strong>Freifunk München / Freie Netze München e.V.</strong> betrieben, einem eingetragenen gemeinnützigen Verein. Wir finanzieren uns ausschließlich über Spenden — nicht durch Monetarisierung von Nutzerdaten.</p>
+                <a href="https://ffmuc.net/dns-privacy/" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;color:var(--primary);font-weight:600;text-decoration:none;">
+                    <svg style="width:16px;height:16px;"><use href="#icon-external"/></svg>
+                    Vollständige Datenschutzerklärung lesen →
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Android -->
+    <div class="section" id="sec-android">
+        <div class="section-header" onclick="toggleSection(this)">
+            <div class="icon"><svg style="color:var(--primary)"><use href="#icon-android"/></svg></div>
+            <div class="label">
+                <h3>Android</h3>
+                <p data-lang="en" class="visible">Private DNS (Android 9+)</p>
+                <p data-lang="de">Privates DNS (Android 9+)</p>
+            </div>
+            <svg class="chevron"><use href="#icon-chevron"/></svg>
+        </div>
+        <div class="section-body">
+            <div class="steps" data-lang="en">
+                <div class="step">Open <strong>Settings</strong> → <strong>Network & Internet</strong> (or <strong>Connections</strong>)</div>
+                <div class="step">Tap <strong>Private DNS</strong></div>
+                <div class="step">Select <strong>Private DNS provider hostname</strong></div>
+                <div class="step">Enter <code onclick="copyText('dot.ffmuc.net', this)">dot.ffmuc.net</code> and tap <strong>Save</strong></div>
+            </div>
+            <div class="steps" data-lang="de">
+                <div class="step">Öffne <strong>Einstellungen</strong> → <strong>Netzwerk & Internet</strong> (oder <strong>Verbindungen</strong>)</div>
+                <div class="step">Tippe auf <strong>Privates DNS</strong></div>
+                <div class="step">Wähle <strong>Hostname des privaten DNS-Anbieters</strong></div>
+                <div class="step">Gib <code onclick="copyText('dot.ffmuc.net', this)">dot.ffmuc.net</code> ein und tippe auf <strong>Speichern</strong></div>
+            </div>
+            <div class="info-box">
+                <svg><use href="#icon-info"/></svg>
+                <span data-lang="en" class="visible">Android 9+ uses DNS-over-TLS natively. For older versions or advanced features, try these apps:</span>
+                <span data-lang="de">Android 9+ nutzt DNS-over-TLS nativ. Für ältere Versionen oder erweiterte Funktionen probiere diese Apps:</span>
+            </div>
+            <div class="quick-actions" data-lang="en">
+                <a class="action-btn" href="https://play.google.com/store/apps/details?id=app.intra" target="_blank" rel="noopener">
+                    <svg><use href="#icon-external"/></svg>
+                    <div class="action-label">Intra<span>Simple DoH client by Google</span></div>
+                </a>
+                <a class="action-btn" href="https://play.google.com/store/apps/details?id=com.nickholtdev.nebulo" target="_blank" rel="noopener">
+                    <svg><use href="#icon-external"/></svg>
+                    <div class="action-label">Nebulo<span>Open Source, DoH/DoT</span></div>
+                </a>
+            </div>
+            <div class="quick-actions" data-lang="de">
+                <a class="action-btn" href="https://play.google.com/store/apps/details?id=app.intra" target="_blank" rel="noopener">
+                    <svg><use href="#icon-external"/></svg>
+                    <div class="action-label">Intra<span>Einfacher DoH-Client von Google</span></div>
+                </a>
+                <a class="action-btn" href="https://play.google.com/store/apps/details?id=com.nickholtdev.nebulo" target="_blank" rel="noopener">
+                    <svg><use href="#icon-external"/></svg>
+                    <div class="action-label">Nebulo<span>Open Source, DoH/DoT</span></div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- iOS / macOS -->
+    <div class="section" id="sec-apple">
+        <div class="section-header" onclick="toggleSection(this)">
+            <div class="icon"><svg style="color:var(--primary)"><use href="#icon-apple"/></svg></div>
+            <div class="label">
+                <h3>iOS & macOS</h3>
+                <p data-lang="en" class="visible">Install configuration profile (one tap)</p>
+                <p data-lang="de">Konfigurationsprofil installieren (ein Tipp)</p>
+            </div>
+            <svg class="chevron"><use href="#icon-chevron"/></svg>
+        </div>
+        <div class="section-body">
+            <p data-lang="en" class="visible" style="font-size:14px;margin-bottom:12px;">Download and install a configuration profile to enable encrypted DNS system-wide:</p>
+            <p data-lang="de" style="font-size:14px;margin-bottom:12px;">Lade ein Konfigurationsprofil herunter und installiere es, um verschlüsseltes DNS systemweit zu aktivieren:</p>
+
+            <div class="quick-actions" data-lang="en">
+                <a class="action-btn" href="#" onclick="downloadProfile('doh');return false;">
+                    <svg><use href="#icon-download"/></svg>
+                    <div class="action-label">DNS-over-HTTPS<span>Recommended for most users</span></div>
+                </a>
+                <a class="action-btn" href="#" onclick="downloadProfile('dot');return false;">
+                    <svg><use href="#icon-download"/></svg>
+                    <div class="action-label">DNS-over-TLS<span>Alternative option</span></div>
+                </a>
+            </div>
+            <div class="quick-actions" data-lang="de">
+                <a class="action-btn" href="#" onclick="downloadProfile('doh');return false;">
+                    <svg><use href="#icon-download"/></svg>
+                    <div class="action-label">DNS-over-HTTPS<span>Für die meisten Nutzer empfohlen</span></div>
+                </a>
+                <a class="action-btn" href="#" onclick="downloadProfile('dot');return false;">
+                    <svg><use href="#icon-download"/></svg>
+                    <div class="action-label">DNS-over-TLS<span>Alternative Option</span></div>
+                </a>
+            </div>
+
+            <div class="steps" data-lang="en">
+                <div class="step">Download the profile above</div>
+                <div class="step"><strong>iOS:</strong> Go to <strong>Settings</strong> → <strong>General</strong> → <strong>VPN & Device Management</strong> → Install the profile<br><strong>macOS:</strong> Open the downloaded file, then go to <strong>System Settings</strong> → <strong>Privacy & Security</strong> → <strong>Profiles</strong></div>
+                <div class="step">Tap <strong>Install</strong> and confirm</div>
+            </div>
+            <div class="steps" data-lang="de">
+                <div class="step">Lade das Profil oben herunter</div>
+                <div class="step"><strong>iOS:</strong> Öffne <strong>Einstellungen</strong> → <strong>Allgemein</strong> → <strong>VPN & Geräteverwaltung</strong> → Profil installieren<br><strong>macOS:</strong> Öffne die heruntergeladene Datei, dann <strong>Systemeinstellungen</strong> → <strong>Datenschutz & Sicherheit</strong> → <strong>Profile</strong></div>
+                <div class="step">Tippe auf <strong>Installieren</strong> und bestätige</div>
+            </div>
+            <div class="warning-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <span data-lang="en" class="visible"><strong>Note:</strong> When installing the profile, iOS will display a red warning about an unsigned profile. This is expected and harmless — you can safely proceed with the installation.</span>
+                <span data-lang="de"><strong>Hinweis:</strong> Bei der Installation des Profils zeigt iOS eine rote Warnung über ein nicht signiertes Profil an. Das ist normal und unbedenklich — du kannst die Installation bedenkenlos fortsetzen.</span>
+            </div>
+            <div class="info-box">
+                <svg><use href="#icon-info"/></svg>
+                <span data-lang="en" class="visible">Alternative apps: <a href="https://apps.apple.com/de/app/dnsecure/id1533413232" target="_blank" rel="noopener">DNSEcure</a> (DoH/DoT, easy setup), <a href="https://apps.apple.com/de/app/dns-cloak-secure-vpn-proxy/id6468986859" target="_blank" rel="noopener">DNSCloak</a> (Open Source, DoH) or <a href="https://apps.apple.com/de/app/adguard-adblock-privacy/id1047223162" target="_blank" rel="noopener">AdGuard</a> (user-friendly, DoH)</span>
+                <span data-lang="de">Alternative Apps: <a href="https://apps.apple.com/de/app/dnsecure/id1533413232" target="_blank" rel="noopener">DNSEcure</a> (DoH/DoT, einfache Einrichtung), <a href="https://apps.apple.com/de/app/dns-cloak-secure-vpn-proxy/id6468986859" target="_blank" rel="noopener">DNSCloak</a> (Open Source, DoH) oder <a href="https://apps.apple.com/de/app/adguard-adblock-privacy/id1047223162" target="_blank" rel="noopener">AdGuard</a> (benutzerfreundlich, DoH)</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Windows -->
+    <div class="section" id="sec-windows">
+        <div class="section-header" onclick="toggleSection(this)">
+            <div class="icon"><svg style="color:var(--primary)"><use href="#icon-windows"/></svg></div>
+            <div class="label">
+                <h3>Windows</h3>
+                <p data-lang="en" class="visible">Windows 11 / Windows 10</p>
+                <p data-lang="de">Windows 11 / Windows 10</p>
+            </div>
+            <svg class="chevron"><use href="#icon-chevron"/></svg>
+        </div>
+        <div class="section-body">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab(this, 'win11')">Windows 11</button>
+                <button class="tab" onclick="switchTab(this, 'win10')">Windows 10</button>
+            </div>
+            <div class="tab-content active" id="tab-win11">
+                <div class="steps" data-lang="en">
+                    <div class="step">Open <strong>Settings</strong> → <strong>Network & Internet</strong> → <strong>Wi-Fi</strong> (or <strong>Ethernet</strong>)</div>
+                    <div class="step">Click your connected network → <strong>Hardware properties</strong></div>
+                    <div class="step">Next to <strong>DNS server assignment</strong>, click <strong>Edit</strong></div>
+                    <div class="step">Select <strong>Manual</strong>, enable <strong>IPv4</strong>, set preferred DNS to <code onclick="copyText('5.1.66.255', this)">5.1.66.255</code> and alternate to <code onclick="copyText('185.150.99.255', this)">185.150.99.255</code></div>
+                    <div class="step">Set <strong>DNS over HTTPS</strong> to <strong>On (automatic template)</strong> for both</div>
+                    <div class="step">Enable <strong>IPv6</strong> and set to <code onclick="copyText('2001:678:e68:f000::', this)">2001:678:e68:f000::</code> / <code onclick="copyText('2001:678:ed0:f000::', this)">2001:678:ed0:f000::</code></div>
+                </div>
+                <div class="steps" data-lang="de">
+                    <div class="step">Öffne <strong>Einstellungen</strong> → <strong>Netzwerk & Internet</strong> → <strong>WLAN</strong> (oder <strong>Ethernet</strong>)</div>
+                    <div class="step">Klicke auf dein verbundenes Netzwerk → <strong>Hardwareeigenschaften</strong></div>
+                    <div class="step">Neben <strong>DNS-Serverzuweisung</strong> klicke auf <strong>Bearbeiten</strong></div>
+                    <div class="step">Wähle <strong>Manuell</strong>, aktiviere <strong>IPv4</strong>, setze bevorzugten DNS auf <code onclick="copyText('5.1.66.255', this)">5.1.66.255</code> und alternativen auf <code onclick="copyText('185.150.99.255', this)">185.150.99.255</code></div>
+                    <div class="step">Setze <strong>DNS über HTTPS</strong> auf <strong>Ein (automatische Vorlage)</strong></div>
+                    <div class="step">Aktiviere <strong>IPv6</strong> und setze auf <code onclick="copyText('2001:678:e68:f000::', this)">2001:678:e68:f000::</code> / <code onclick="copyText('2001:678:ed0:f000::', this)">2001:678:ed0:f000::</code></div>
+                </div>
+            </div>
+            <div class="tab-content" id="tab-win10">
+                <div class="info-box">
+                    <svg><use href="#icon-info"/></svg>
+                    <span data-lang="en" class="visible">Windows 10 does not natively support encrypted DNS. Use the browser-based setup (Firefox / Chrome / Edge) below, or upgrade to Windows 11.</span>
+                    <span data-lang="de">Windows 10 unterstützt verschlüsseltes DNS nicht nativ. Verwende die browserbasierte Einrichtung (Firefox / Chrome / Edge) unten, oder aktualisiere auf Windows 11.</span>
+                </div>
+                <div class="steps" data-lang="en">
+                    <div class="step">Open <strong>Control Panel</strong> → <strong>Network and Internet</strong> → <strong>Network Connections</strong></div>
+                    <div class="step">Right-click your connection → <strong>Properties</strong></div>
+                    <div class="step">Select <strong>Internet Protocol Version 4 (TCP/IPv4)</strong> → <strong>Properties</strong></div>
+                    <div class="step">Set DNS servers to <code onclick="copyText('5.1.66.255', this)">5.1.66.255</code> and <code onclick="copyText('185.150.99.255', this)">185.150.99.255</code></div>
+                    <div class="step">Also configure <strong>IPv6</strong> with <code onclick="copyText('2001:678:e68:f000::', this)">2001:678:e68:f000::</code> and <code onclick="copyText('2001:678:ed0:f000::', this)">2001:678:ed0:f000::</code></div>
+                </div>
+                <div class="steps" data-lang="de">
+                    <div class="step">Öffne <strong>Systemsteuerung</strong> → <strong>Netzwerk und Internet</strong> → <strong>Netzwerkverbindungen</strong></div>
+                    <div class="step">Rechtsklick auf deine Verbindung → <strong>Eigenschaften</strong></div>
+                    <div class="step">Wähle <strong>Internetprotokoll Version 4 (TCP/IPv4)</strong> → <strong>Eigenschaften</strong></div>
+                    <div class="step">Setze DNS-Server auf <code onclick="copyText('5.1.66.255', this)">5.1.66.255</code> und <code onclick="copyText('185.150.99.255', this)">185.150.99.255</code></div>
+                    <div class="step">Konfiguriere auch <strong>IPv6</strong> mit <code onclick="copyText('2001:678:e68:f000::', this)">2001:678:e68:f000::</code> und <code onclick="copyText('2001:678:ed0:f000::', this)">2001:678:ed0:f000::</code></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Browsers -->
+    <div class="section" id="sec-browsers">
+        <div class="section-header" onclick="toggleSection(this)">
+            <div class="icon"><svg style="color:var(--primary)"><use href="#icon-globe"/></svg></div>
+            <div class="label">
+                <h3 data-lang="en" class="visible">Browsers</h3>
+                <h3 data-lang="de">Browser</h3>
+                <p>Firefox, Chrome, Edge, Brave</p>
+            </div>
+            <svg class="chevron"><use href="#icon-chevron"/></svg>
+        </div>
+        <div class="section-body">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab(this, 'firefox')">Firefox</button>
+                <button class="tab" onclick="switchTab(this, 'chromium')">Chrome / Edge / Brave</button>
+            </div>
+            <div class="tab-content active" id="tab-firefox">
+                <div class="steps" data-lang="en">
+                    <div class="step">Open Firefox and navigate to <code onclick="copyText('about:preferences#general', this)">about:preferences#general</code></div>
+                    <div class="step">Scroll to the bottom and click <strong>Settings…</strong> under <strong>Network Settings</strong></div>
+                    <div class="step">At the bottom, check <strong>Enable DNS over HTTPS</strong></div>
+                    <div class="step">Select <strong>Max Protection</strong> and choose <strong>Custom</strong> provider</div>
+                    <div class="step">Enter <code onclick="copyText('https://doh.ffmuc.net/dns-query', this)">https://doh.ffmuc.net/dns-query</code></div>
+                </div>
+                <div class="steps" data-lang="de">
+                    <div class="step">Öffne Firefox und navigiere zu <code onclick="copyText('about:preferences#general', this)">about:preferences#general</code></div>
+                    <div class="step">Scrolle nach unten und klicke auf <strong>Einstellungen…</strong> unter <strong>Netzwerkeinstellungen</strong></div>
+                    <div class="step">Aktiviere unten <strong>DNS über HTTPS aktivieren</strong></div>
+                    <div class="step">Wähle <strong>Maximaler Schutz</strong> und <strong>Benutzerdefiniert</strong> als Anbieter</div>
+                    <div class="step">Gib ein: <code onclick="copyText('https://doh.ffmuc.net/dns-query', this)">https://doh.ffmuc.net/dns-query</code></div>
+                </div>
+            </div>
+            <div class="tab-content" id="tab-chromium">
+                <div class="steps" data-lang="en">
+                    <div class="step">Open <strong>Settings</strong> → <strong>Privacy and Security</strong> → <strong>Security</strong></div>
+                    <div class="step">Enable <strong>Use secure DNS</strong></div>
+                    <div class="step">Select <strong>With: Custom</strong></div>
+                    <div class="step">Enter <code onclick="copyText('https://doh.ffmuc.net/dns-query', this)">https://doh.ffmuc.net/dns-query</code></div>
+                </div>
+                <div class="steps" data-lang="de">
+                    <div class="step">Öffne <strong>Einstellungen</strong> → <strong>Datenschutz und Sicherheit</strong> → <strong>Sicherheit</strong></div>
+                    <div class="step">Aktiviere <strong>Sicheres DNS verwenden</strong></div>
+                    <div class="step">Wähle <strong>Mit: Benutzerdefiniert</strong></div>
+                    <div class="step">Gib ein: <code onclick="copyText('https://doh.ffmuc.net/dns-query', this)">https://doh.ffmuc.net/dns-query</code></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Linux -->
+    <div class="section" id="sec-linux">
+        <div class="section-header" onclick="toggleSection(this)">
+            <div class="icon"><svg style="color:var(--primary)"><use href="#icon-linux"/></svg></div>
+            <div class="label">
+                <h3>Linux</h3>
+                <p data-lang="en" class="visible">GUI, systemd-resolved, NetworkManager</p>
+                <p data-lang="de">GUI, systemd-resolved, NetworkManager</p>
+            </div>
+            <svg class="chevron"><use href="#icon-chevron"/></svg>
+        </div>
+        <div class="section-body">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab(this, 'linux-gui')"><span data-lang="en" class="visible">GUI (Desktop)</span><span data-lang="de">GUI (Desktop)</span></button>
+                <button class="tab" onclick="switchTab(this, 'systemd')">systemd-resolved</button>
+                <button class="tab" onclick="switchTab(this, 'nm')">NetworkManager</button>
+            </div>
+            <div class="tab-content active" id="tab-linux-gui">
+                <p data-lang="en" class="visible" style="font-size:14px;margin-bottom:12px;">You can configure DNS graphically in your desktop environment's network settings:</p>
+                <p data-lang="de" style="font-size:14px;margin-bottom:12px;">Du kannst DNS grafisch in den Netzwerkeinstellungen deiner Desktop-Umgebung konfigurieren:</p>
+
+                <p data-lang="en" class="visible" style="font-size:14px;font-weight:600;margin-bottom:8px;">GNOME (Ubuntu, Fedora, Pop!_OS, etc.)</p>
+                <p data-lang="de" style="font-size:14px;font-weight:600;margin-bottom:8px;">GNOME (Ubuntu, Fedora, Pop!_OS, etc.)</p>
+                <div class="steps" data-lang="en">
+                    <div class="step">Open <strong>Settings</strong> → <strong>Network</strong> (or <strong>Wi-Fi</strong>)</div>
+                    <div class="step">Click the <strong>gear icon</strong> next to your active connection</div>
+                    <div class="step">Go to the <strong>IPv4</strong> tab, set <strong>DNS</strong> to <strong>Manual</strong> and disable <strong>Automatic</strong> next to DNS</div>
+                    <div class="step">Enter DNS servers: <code onclick="copyText('5.1.66.255, 185.150.99.255', this)">5.1.66.255, 185.150.99.255</code></div>
+                    <div class="step">Go to the <strong>IPv6</strong> tab, also set DNS to Manual and enter: <code onclick="copyText('2001:678:e68:f000::, 2001:678:ed0:f000::', this)">2001:678:e68:f000::, 2001:678:ed0:f000::</code></div>
+                    <div class="step">Click <strong>Apply</strong> and reconnect to the network</div>
+                </div>
+                <div class="steps" data-lang="de">
+                    <div class="step">Öffne <strong>Einstellungen</strong> → <strong>Netzwerk</strong> (oder <strong>WLAN</strong>)</div>
+                    <div class="step">Klicke auf das <strong>Zahnrad-Symbol</strong> neben deiner aktiven Verbindung</div>
+                    <div class="step">Gehe zum Tab <strong>IPv4</strong>, setze <strong>DNS</strong> auf <strong>Manuell</strong> und deaktiviere <strong>Automatisch</strong> neben DNS</div>
+                    <div class="step">Trage die DNS-Server ein: <code onclick="copyText('5.1.66.255, 185.150.99.255', this)">5.1.66.255, 185.150.99.255</code></div>
+                    <div class="step">Gehe zum Tab <strong>IPv6</strong>, setze auch dort DNS auf Manuell und trage ein: <code onclick="copyText('2001:678:e68:f000::, 2001:678:ed0:f000::', this)">2001:678:e68:f000::, 2001:678:ed0:f000::</code></div>
+                    <div class="step">Klicke auf <strong>Anwenden</strong> und verbinde dich erneut</div>
+                </div>
+
+                <div class="divider"></div>
+
+                <p data-lang="en" class="visible" style="font-size:14px;font-weight:600;margin-bottom:8px;">KDE Plasma (Kubuntu, openSUSE, etc.)</p>
+                <p data-lang="de" style="font-size:14px;font-weight:600;margin-bottom:8px;">KDE Plasma (Kubuntu, openSUSE, etc.)</p>
+                <div class="steps" data-lang="en">
+                    <div class="step">Click the <strong>network icon</strong> in the system tray → <strong>Configure Network Connections</strong></div>
+                    <div class="step">Select your active connection and click the <strong>IPv4</strong> tab</div>
+                    <div class="step">Change <strong>Method</strong> to <strong>Automatic (Only addresses)</strong></div>
+                    <div class="step">In the <strong>DNS Servers</strong> field, enter: <code onclick="copyText('5.1.66.255, 185.150.99.255', this)">5.1.66.255, 185.150.99.255</code></div>
+                    <div class="step">Switch to the <strong>IPv6</strong> tab, also set to <strong>Automatic (Only addresses)</strong> and enter: <code onclick="copyText('2001:678:e68:f000::, 2001:678:ed0:f000::', this)">2001:678:e68:f000::, 2001:678:ed0:f000::</code></div>
+                    <div class="step">Click <strong>Apply</strong> and reconnect</div>
+                </div>
+                <div class="steps" data-lang="de">
+                    <div class="step">Klicke auf das <strong>Netzwerk-Symbol</strong> im System-Tray → <strong>Netzwerkverbindungen konfigurieren</strong></div>
+                    <div class="step">Wähle deine aktive Verbindung und klicke auf den Tab <strong>IPv4</strong></div>
+                    <div class="step">Ändere <strong>Methode</strong> auf <strong>Automatisch (nur Adressen)</strong></div>
+                    <div class="step">Im Feld <strong>DNS-Server</strong> eingeben: <code onclick="copyText('5.1.66.255, 185.150.99.255', this)">5.1.66.255, 185.150.99.255</code></div>
+                    <div class="step">Wechsle zum Tab <strong>IPv6</strong>, setze ebenfalls auf <strong>Automatisch (nur Adressen)</strong> und trage ein: <code onclick="copyText('2001:678:e68:f000::, 2001:678:ed0:f000::', this)">2001:678:e68:f000::, 2001:678:ed0:f000::</code></div>
+                    <div class="step">Klicke auf <strong>Anwenden</strong> und verbinde dich erneut</div>
+                </div>
+
+                <div class="info-box">
+                    <svg><use href="#icon-info"/></svg>
+                    <span data-lang="en" class="visible">This configures plain DNS (unencrypted). For encrypted DNS (DoT/DoH) on Linux, use the <strong>systemd-resolved</strong> or <strong>NetworkManager</strong> tabs, or set up DNS in your browser instead.</span>
+                    <span data-lang="de">Dies konfiguriert unverschlüsseltes DNS. Für verschlüsseltes DNS (DoT/DoH) unter Linux verwende die Tabs <strong>systemd-resolved</strong> oder <strong>NetworkManager</strong>, oder richte DNS alternativ im Browser ein.</span>
+                </div>
+            </div>
+            <div class="tab-content" id="tab-systemd">
+                <p data-lang="en" class="visible" style="font-size:14px;margin-bottom:8px;">Edit <strong>/etc/systemd/resolved.conf</strong>:</p>
+                <p data-lang="de" style="font-size:14px;margin-bottom:8px;">Bearbeite <strong>/etc/systemd/resolved.conf</strong>:</p>
+                <div class="code-block" id="code-systemd">[Resolve]
+DNS=5.1.66.255#dot.ffmuc.net 185.150.99.255#dot.ffmuc.net 2001:678:e68:f000::#dot.ffmuc.net 2001:678:ed0:f000::#dot.ffmuc.net
+DNSOverTLS=opportunistic</div>
+                <button class="copy-btn" onclick="copyBlock('code-systemd')" title="Copy" style="margin:8px 0;width:auto;padding:6px 12px;height:auto;font-size:12px;display:inline-flex;gap:4px;"><svg style="width:14px;height:14px"><use href="#icon-copy"/></svg> <span data-lang="en" class="visible">Copy</span><span data-lang="de">Kopieren</span></button>
+                <p data-lang="en" class="visible" style="font-size:14px;margin-top:8px;">Then restart: <code onclick="copyText('sudo systemctl restart systemd-resolved', this)">sudo systemctl restart systemd-resolved</code></p>
+                <p data-lang="de" style="font-size:14px;margin-top:8px;">Dann neustarten: <code onclick="copyText('sudo systemctl restart systemd-resolved', this)">sudo systemctl restart systemd-resolved</code></p>
+            </div>
+            <div class="tab-content" id="tab-nm">
+                <p data-lang="en" class="visible" style="font-size:14px;margin-bottom:8px;">Configure via command line:</p>
+                <p data-lang="de" style="font-size:14px;margin-bottom:8px;">Über Kommandozeile konfigurieren:</p>
+                <div class="code-block" id="code-nm">nmcli connection modify "YOUR_CONNECTION" \
+  ipv4.dns "5.1.66.255,185.150.99.255" \
+  ipv6.dns "2001:678:e68:f000::,2001:678:ed0:f000::" \
+  ipv4.ignore-auto-dns yes \
+  ipv6.ignore-auto-dns yes
+
+nmcli connection up "YOUR_CONNECTION"</div>
+                <button class="copy-btn" onclick="copyBlock('code-nm')" title="Copy" style="margin:8px 0;width:auto;padding:6px 12px;height:auto;font-size:12px;display:inline-flex;gap:4px;"><svg style="width:14px;height:14px"><use href="#icon-copy"/></svg> <span data-lang="en" class="visible">Copy</span><span data-lang="de">Kopieren</span></button>
+
+                <div class="divider"></div>
+                <p data-lang="en" class="visible" style="font-size:14px;margin-bottom:8px;"><strong>Optional: DNS-over-TLS with NetworkManager</strong></p>
+                <p data-lang="de" style="font-size:14px;margin-bottom:8px;"><strong>Optional: DNS-over-TLS mit NetworkManager</strong></p>
+                <p data-lang="en" class="visible" style="font-size:13px;margin-bottom:8px;">NetworkManager supports DNS-over-TLS via the <code>connection.dns-over-tls</code> setting:</p>
+                <p data-lang="de" style="font-size:13px;margin-bottom:8px;">NetworkManager unterstützt DNS-over-TLS über die Einstellung <code>connection.dns-over-tls</code>:</p>
+                <div class="code-block" id="code-nm-dot">nmcli connection modify "YOUR_CONNECTION" \
+  connection.dns-over-tls opportunistic
+
+nmcli connection up "YOUR_CONNECTION"</div>
+                <button class="copy-btn" onclick="copyBlock('code-nm-dot')" title="Copy" style="margin:8px 0;width:auto;padding:6px 12px;height:auto;font-size:12px;display:inline-flex;gap:4px;"><svg style="width:14px;height:14px"><use href="#icon-copy"/></svg> <span data-lang="en" class="visible">Copy</span><span data-lang="de">Kopieren</span></button>
+                <div class="warning-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <span data-lang="en" class="visible"><strong>Warning:</strong> This setting requires a DNS plugin that supports DoT (e.g. <code>systemd-resolved</code>). If no compatible plugin is configured, the setting has no effect and DNS queries will be sent unencrypted. Check the <a href="https://networkmanager.dev/docs/api/1.40/nm-settings-nmcli.html" target="_blank" rel="noopener">NetworkManager docs</a> for details.</span>
+                    <span data-lang="de"><strong>Warnung:</strong> Diese Einstellung erfordert ein DNS-Plugin, das DoT unterstützt (z.B. <code>systemd-resolved</code>). Wenn kein kompatibles Plugin konfiguriert ist, hat die Einstellung keinen Effekt und DNS-Anfragen werden unverschlüsselt gesendet. Siehe die <a href="https://networkmanager.dev/docs/api/1.40/nm-settings-nmcli.html" target="_blank" rel="noopener">NetworkManager-Dokumentation</a> für Details.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Routers -->
+    <div class="section" id="sec-routers">
+        <div class="section-header" onclick="toggleSection(this)">
+            <div class="icon"><svg style="color:var(--primary)"><use href="#icon-router"/></svg></div>
+            <div class="label">
+                <h3>Router</h3>
+                <p>Fritz!Box, Mikrotik, OpenWrt</p>
+            </div>
+            <svg class="chevron"><use href="#icon-chevron"/></svg>
+        </div>
+        <div class="section-body">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab(this, 'fritzbox')">Fritz!Box</button>
+                <button class="tab" onclick="switchTab(this, 'mikrotik')">Mikrotik</button>
+                <button class="tab" onclick="switchTab(this, 'openwrt')">OpenWrt</button>
+            </div>
+            <div class="tab-content active" id="tab-fritzbox">
+                <div class="steps" data-lang="en">
+                    <div class="step">Open the Fritz!Box admin panel at <a href="http://fritz.box" target="_blank" rel="noopener">http://fritz.box</a></div>
+                    <div class="step">Go to <strong>Internet</strong> → <strong>Account Information</strong> → <strong>DNS Server</strong></div>
+                    <div class="step">Select <strong>Use other DNSv4 servers</strong> and enter:<br>Preferred: <code onclick="copyText('185.150.99.255', this)">185.150.99.255</code> (<code onclick="copyText('185', this)">185</code>.<code onclick="copyText('150', this)">150</code>.<code onclick="copyText('99', this)">99</code>.<code onclick="copyText('255', this)">255</code>)<br>Alternative: <code onclick="copyText('5.1.66.255', this)">5.1.66.255</code> (<code onclick="copyText('5', this)">5</code>.<code onclick="copyText('1', this)">1</code>.<code onclick="copyText('66', this)">66</code>.<code onclick="copyText('255', this)">255</code>)</div>
+                    <div class="step">Select <strong>Use other DNSv6 servers</strong> and enter:<br>Preferred: <code onclick="copyText('2001:678:e68:f000::', this)">2001:678:e68:f000::</code><br>Alternative: <code onclick="copyText('2001:678:ed0:f000::', this)">2001:678:ed0:f000::</code></div>
+                    <div class="step"><strong>For encrypted DNS (DoT):</strong> Scroll down to DNS over TLS (DoT) and enter <code onclick="copyText('dot.ffmuc.net', this)">dot.ffmuc.net</code> as hostname (requires Fritz!OS 7.20+)</div>
+                    <div class="step">Click <strong>Apply</strong></div>
+                </div>
+                <div class="steps" data-lang="de">
+                    <div class="step">Öffne die Fritz!Box-Oberfläche unter <a href="http://fritz.box" target="_blank" rel="noopener">http://fritz.box</a></div>
+                    <div class="step">Gehe zu <strong>Internet</strong> → <strong>Zugangsdaten</strong> → <strong>DNS-Server</strong></div>
+                    <div class="step">Wähle <strong>Andere DNSv4-Server verwenden</strong> und trage ein:<br>Bevorzugt: <code onclick="copyText('185.150.99.255', this)">185.150.99.255</code> (<code onclick="copyText('185', this)">185</code>.<code onclick="copyText('150', this)">150</code>.<code onclick="copyText('99', this)">99</code>.<code onclick="copyText('255', this)">255</code>)<br>Alternativ: <code onclick="copyText('5.1.66.255', this)">5.1.66.255</code> (<code onclick="copyText('5', this)">5</code>.<code onclick="copyText('1', this)">1</code>.<code onclick="copyText('66', this)">66</code>.<code onclick="copyText('255', this)">255</code>)</div>
+                    <div class="step">Wähle <strong>Andere DNSv6-Server verwenden</strong> und trage ein:<br>Bevorzugt: <code onclick="copyText('2001:678:e68:f000::', this)">2001:678:e68:f000::</code><br>Alternativ: <code onclick="copyText('2001:678:ed0:f000::', this)">2001:678:ed0:f000::</code></div>
+                    <div class="step"><strong>Für verschlüsseltes DNS (DoT):</strong> Scrolle nach unten zu DNS over TLS (DoT) und trage <code onclick="copyText('dot.ffmuc.net', this)">dot.ffmuc.net</code> als Hostname ein (ab Fritz!OS 7.20)</div>
+                    <div class="step">Klicke auf <strong>Übernehmen</strong></div>
+                </div>
+            </div>
+            <div class="tab-content" id="tab-mikrotik">
+                <p data-lang="en" class="visible" style="font-size:14px;margin-bottom:8px;">First configure plain DNS, then import the ISRG Root cert and enable DoH:</p>
+                <p data-lang="de" style="font-size:14px;margin-bottom:8px;">Zuerst normales DNS konfigurieren, dann ISRG-Root-Zertifikat importieren und DoH aktivieren:</p>
+                <div class="code-block" id="code-mikrotik">/ip dns set servers=5.1.66.255,185.150.99.255
+/tool fetch url=https://letsencrypt.org/certs/isrgrootx1.pem
+/certificate import file-name=isrgrootx1.pem passphrase=""
+/ip dns set use-doh-server=https://doh.ffmuc.net/dns-query verify-doh-cert=yes</div>
+                <button class="copy-btn" onclick="copyBlock('code-mikrotik')" title="Copy" style="margin:8px 0;width:auto;padding:6px 12px;height:auto;font-size:12px;display:inline-flex;gap:4px;"><svg style="width:14px;height:14px"><use href="#icon-copy"/></svg> <span data-lang="en" class="visible">Copy</span><span data-lang="de">Kopieren</span></button>
+            </div>
+            <div class="tab-content" id="tab-openwrt">
+                <p data-lang="en" class="visible" style="font-size:14px;margin-bottom:8px;">Install and configure DNS-over-TLS with <strong>stubby</strong>:</p>
+                <p data-lang="de" style="font-size:14px;margin-bottom:8px;">DNS-over-TLS mit <strong>stubby</strong> installieren und konfigurieren:</p>
+                <div class="code-block" id="code-openwrt">opkg update && opkg install stubby
+
+# /etc/stubby/stubby.yml - add upstream:
+upstream_recursive_servers:
+  - address_data: 5.1.66.255
+    tls_auth_name: "dot.ffmuc.net"
+  - address_data: 185.150.99.255
+    tls_auth_name: "dot.ffmuc.net"
+  - address_data: 2001:678:e68:f000::
+    tls_auth_name: "dot.ffmuc.net"
+  - address_data: 2001:678:ed0:f000::
+    tls_auth_name: "dot.ffmuc.net"
+
+# Point dnsmasq to stubby:
+uci set dhcp.@dnsmasq[0].noresolv='1'
+uci -q delete dhcp.@dnsmasq[0].server
+uci add_list dhcp.@dnsmasq[0].server='127.0.0.1#5453'
+uci commit dhcp
+/etc/init.d/stubby enable && /etc/init.d/stubby start
+/etc/init.d/dnsmasq restart</div>
+                <button class="copy-btn" onclick="copyBlock('code-openwrt')" title="Copy" style="margin:8px 0;width:auto;padding:6px 12px;height:auto;font-size:12px;display:inline-flex;gap:4px;"><svg style="width:14px;height:14px"><use href="#icon-copy"/></svg> <span data-lang="en" class="visible">Copy</span><span data-lang="de">Kopieren</span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced -->
+    <div class="section" id="sec-advanced">
+        <div class="section-header" onclick="toggleSection(this)">
+            <div class="icon"><svg style="color:var(--primary)"><use href="#icon-server"/></svg></div>
+            <div class="label">
+                <h3 data-lang="en" class="visible">Advanced Setup</h3>
+                <h3 data-lang="de">Erweiterte Einrichtung</h3>
+                <p>Unbound, Pi-hole, AdGuard Home, Blocky</p>
+            </div>
+            <svg class="chevron"><use href="#icon-chevron"/></svg>
+        </div>
+        <div class="section-body">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab(this, 'unbound')">Unbound</button>
+                <button class="tab" onclick="switchTab(this, 'pihole')">Pi-hole</button>
+                <button class="tab" onclick="switchTab(this, 'adguard')">AdGuard Home</button>
+                <button class="tab" onclick="switchTab(this, 'blocky')">Blocky</button>
+            </div>
+            <div class="tab-content active" id="tab-unbound">
+                <p data-lang="en" class="visible" style="font-size:14px;margin-bottom:8px;">Add to your Unbound configuration:</p>
+                <p data-lang="de" style="font-size:14px;margin-bottom:8px;">Zu deiner Unbound-Konfiguration hinzufügen:</p>
+                <div class="code-block" id="code-unbound">forward-zone:
+    name: "."
+    forward-tls-upstream: yes
+    forward-addr: 5.1.66.255@853#dot.ffmuc.net
+    forward-addr: 185.150.99.255@853#dot.ffmuc.net
+    forward-addr: 2001:678:e68:f000::@853#dot.ffmuc.net
+    forward-addr: 2001:678:ed0:f000::@853#dot.ffmuc.net</div>
+                <button class="copy-btn" onclick="copyBlock('code-unbound')" title="Copy" style="margin:8px 0;width:auto;padding:6px 12px;height:auto;font-size:12px;display:inline-flex;gap:4px;"><svg style="width:14px;height:14px"><use href="#icon-copy"/></svg> <span data-lang="en" class="visible">Copy</span><span data-lang="de">Kopieren</span></button>
+            </div>
+            <div class="tab-content" id="tab-pihole">
+                <div class="steps" data-lang="en">
+                    <div class="step">Open Pi-hole admin panel → <strong>Settings</strong> → <strong>DNS</strong></div>
+                    <div class="step">Uncheck all default upstream DNS servers</div>
+                    <div class="step">Under <strong>Custom DNS (IPv4)</strong>, enter:<br><code onclick="copyText('5.1.66.255', this)">5.1.66.255</code> and <code onclick="copyText('185.150.99.255', this)">185.150.99.255</code></div>
+                    <div class="step">Under <strong>Custom DNS (IPv6)</strong>, enter:<br><code onclick="copyText('2001:678:e68:f000::', this)">2001:678:e68:f000::</code> and <code onclick="copyText('2001:678:ed0:f000::', this)">2001:678:ed0:f000::</code></div>
+                    <div class="step">Click <strong>Save</strong></div>
+                </div>
+                <div class="steps" data-lang="de">
+                    <div class="step">Öffne das Pi-hole Admin-Panel → <strong>Einstellungen</strong> → <strong>DNS</strong></div>
+                    <div class="step">Deaktiviere alle Standard-Upstream-DNS-Server</div>
+                    <div class="step">Unter <strong>Benutzerdefinierte DNS (IPv4)</strong> eingeben:<br><code onclick="copyText('5.1.66.255', this)">5.1.66.255</code> und <code onclick="copyText('185.150.99.255', this)">185.150.99.255</code></div>
+                    <div class="step">Unter <strong>Benutzerdefinierte DNS (IPv6)</strong> eingeben:<br><code onclick="copyText('2001:678:e68:f000::', this)">2001:678:e68:f000::</code> und <code onclick="copyText('2001:678:ed0:f000::', this)">2001:678:ed0:f000::</code></div>
+                    <div class="step">Klicke auf <strong>Speichern</strong></div>
+                </div>
+                <div class="info-box">
+                    <svg><use href="#icon-info"/></svg>
+                    <span data-lang="en" class="visible">For encrypted upstream with Pi-hole, pair it with <strong>Unbound</strong> or <strong>cloudflared</strong> as a local DoH/DoT proxy.</span>
+                    <span data-lang="de">Für verschlüsselte Upstream-Verbindung mit Pi-hole, kombiniere es mit <strong>Unbound</strong> oder <strong>cloudflared</strong> als lokalem DoH/DoT-Proxy.</span>
+                </div>
+            </div>
+            <div class="tab-content" id="tab-adguard">
+                <div class="steps" data-lang="en">
+                    <div class="step">Open AdGuard Home → <strong>Settings</strong> → <strong>DNS settings</strong></div>
+                    <div class="step">Under <strong>Upstream DNS servers</strong>, enter:</div>
+                </div>
+                <div class="steps" data-lang="de">
+                    <div class="step">Öffne AdGuard Home → <strong>Einstellungen</strong> → <strong>DNS-Einstellungen</strong></div>
+                    <div class="step">Unter <strong>Upstream-DNS-Server</strong> eingeben:</div>
+                </div>
+                <div class="code-block" id="code-adguard">tls://dot.ffmuc.net
+https://doh.ffmuc.net/dns-query
+quic://doq.ffmuc.net</div>
+                <button class="copy-btn" onclick="copyBlock('code-adguard')" title="Copy" style="margin:8px 0;width:auto;padding:6px 12px;height:auto;font-size:12px;display:inline-flex;gap:4px;"><svg style="width:14px;height:14px"><use href="#icon-copy"/></svg> <span data-lang="en" class="visible">Copy</span><span data-lang="de">Kopieren</span></button>
+            </div>
+            <div class="tab-content" id="tab-blocky">
+                <p data-lang="en" class="visible" style="font-size:14px;margin-bottom:8px;">Add FFMUC as upstream in your <a href="https://0xerr0r.github.io/blocky/latest/" target="_blank" rel="noopener">Blocky</a> configuration (<code>config.yml</code>):</p>
+                <p data-lang="de" style="font-size:14px;margin-bottom:8px;">Füge FFMUC als Upstream in deiner <a href="https://0xerr0r.github.io/blocky/latest/" target="_blank" rel="noopener">Blocky</a>-Konfiguration (<code>config.yml</code>) hinzu:</p>
+                <div class="code-block" id="code-blocky">upstreams:
+  groups:
+    default:
+      - https://doh.ffmuc.net/dns-query
+      - tcp-tls:dot.ffmuc.net:853
+
+bootstrapDns:
+  - upstream: tcp+udp:5.1.66.255
+  - upstream: tcp+udp:185.150.99.255
+  - upstream: tcp+udp:[2001:678:e68:f000::]
+  - upstream: tcp+udp:[2001:678:ed0:f000::]</div>
+                <button class="copy-btn" onclick="copyBlock('code-blocky')" title="Copy" style="margin:8px 0;width:auto;padding:6px 12px;height:auto;font-size:12px;display:inline-flex;gap:4px;"><svg style="width:14px;height:14px"><use href="#icon-copy"/></svg> <span data-lang="en" class="visible">Copy</span><span data-lang="de">Kopieren</span></button>
+                <div class="info-box">
+                    <svg><use href="#icon-info"/></svg>
+                    <span data-lang="en" class="visible"><a href="https://0xerr0r.github.io/blocky/latest/" target="_blank" rel="noopener">Blocky</a> is a lightweight DNS proxy and ad-blocker written in Go. It natively supports DoH and DoT upstreams. See the <a href="https://0xerr0r.github.io/blocky/latest/configuration/" target="_blank" rel="noopener">configuration docs</a> for more options.</span>
+                    <span data-lang="de"><a href="https://0xerr0r.github.io/blocky/latest/" target="_blank" rel="noopener">Blocky</a> ist ein leichtgewichtiger DNS-Proxy und Werbeblocker in Go. Er unterstützt DoH- und DoT-Upstreams nativ. Weitere Optionen findest du in der <a href="https://0xerr0r.github.io/blocky/latest/configuration/" target="_blank" rel="noopener">Konfigurationsdokumentation</a>.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verify -->
+    <div class="section" id="sec-verify">
+        <div class="section-header" onclick="toggleSection(this)">
+            <div class="icon"><svg style="color:var(--primary)"><use href="#icon-shield"/></svg></div>
+            <div class="label">
+                <h3 data-lang="en" class="visible">Verify Setup</h3>
+                <h3 data-lang="de">Einrichtung überprüfen</h3>
+                <p data-lang="en" class="visible">Check that everything is working</p>
+                <p data-lang="de">Überprüfe, ob alles funktioniert</p>
+            </div>
+            <svg class="chevron"><use href="#icon-chevron"/></svg>
+        </div>
+        <div class="section-body">
+            <p data-lang="en" class="visible" style="font-size:14px;margin-bottom:12px;">After setup, use these tools to verify your DNS is routed through FFMUC:</p>
+            <p data-lang="de" style="font-size:14px;margin-bottom:12px;">Nach der Einrichtung kannst du mit diesen Tools überprüfen, ob dein DNS über FFMUC läuft:</p>
+            <div class="quick-actions" data-lang="en">
+                <a class="action-btn" href="https://dnsleaktest.com" target="_blank" rel="noopener">
+                    <svg><use href="#icon-external"/></svg>
+                    <div class="action-label">DNS Leak Test<span>Should show FFMUC IPs</span></div>
+                </a>
+                <a class="action-btn" href="https://www.dnscheck.tools/" target="_blank" rel="noopener">
+                    <svg><use href="#icon-external"/></svg>
+                    <div class="action-label">DNS Check Tools<span>Tests DNSSEC & IPv6 too</span></div>
+                </a>
+            </div>
+            <div class="quick-actions" data-lang="de">
+                <a class="action-btn" href="https://dnsleaktest.com" target="_blank" rel="noopener">
+                    <svg><use href="#icon-external"/></svg>
+                    <div class="action-label">DNS Leak Test<span>Sollte FFMUC-IPs zeigen</span></div>
+                </a>
+                <a class="action-btn" href="https://www.dnscheck.tools/" target="_blank" rel="noopener">
+                    <svg><use href="#icon-external"/></svg>
+                    <div class="action-label">DNS Check Tools<span>Prüft auch DNSSEC & IPv6</span></div>
+                </a>
+            </div>
+            <div class="info-box">
+                <svg><use href="#icon-info"/></svg>
+                <span data-lang="en" class="visible">You should see IP addresses from the following ranges in the results:<br><strong>IPv4:</strong> <code>5.1.66.0/24</code> (Munich) or <code>185.150.99.0/24</code> (Vienna)<br><strong>IPv6:</strong> <code>2001:678:e68::/48</code> (Munich) or <code>2001:678:ed0::/48</code> (Vienna)</span>
+                <span data-lang="de">Du solltest IP-Adressen aus folgenden Bereichen in den Ergebnissen sehen:<br><strong>IPv4:</strong> <code>5.1.66.0/24</code> (München) oder <code>185.150.99.0/24</code> (Wien)<br><strong>IPv6:</strong> <code>2001:678:e68::/48</code> (München) oder <code>2001:678:ed0::/48</code> (Wien)</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="section" id="sec-stats">
+        <div class="section-header" onclick="toggleSection(this)">
+            <div class="icon"><svg style="color:var(--primary)"><use href="#icon-zap"/></svg></div>
+            <div class="label">
+                <h3 data-lang="en" class="visible">Live Statistics</h3>
+                <h3 data-lang="de">Live-Statistiken</h3>
+                <p data-lang="en" class="visible">Transparent, real-time service metrics</p>
+                <p data-lang="de">Transparente Echtzeit-Metriken</p>
+            </div>
+            <svg class="chevron"><use href="#icon-chevron"/></svg>
+        </div>
+        <div class="section-body">
+            <p data-lang="en" class="visible" style="font-size:14px;margin-bottom:12px;">We publish our DNS resolver statistics publicly. See how many queries we handle, response times, and more — full transparency, no secrets.</p>
+            <p data-lang="de" style="font-size:14px;margin-bottom:12px;">Wir veröffentlichen unsere DNS-Resolver-Statistiken öffentlich. Sieh dir an, wie viele Anfragen wir verarbeiten, Antwortzeiten und mehr — volle Transparenz, keine Geheimnisse.</p>
+            <div class="quick-actions" data-lang="en">
+                <a class="action-btn" href="https://stats.ffmuc.net/d/tlvoghcZk/doh-dot?orgId=1&refresh=1m" target="_blank" rel="noopener" style="grid-column: 1 / -1;">
+                    <svg><use href="#icon-external"/></svg>
+                    <div class="action-label">Open FFMUC DNS Dashboard<span>Live query stats, response times, cache rates and more</span></div>
+                </a>
+            </div>
+            <div class="quick-actions" data-lang="de">
+                <a class="action-btn" href="https://stats.ffmuc.net/d/tlvoghcZk/doh-dot?orgId=1&refresh=1m" target="_blank" rel="noopener" style="grid-column: 1 / -1;">
+                    <svg><use href="#icon-external"/></svg>
+                    <div class="action-label">FFMUC DNS Dashboard öffnen<span>Live-Anfrage-Statistiken, Antwortzeiten, Cache-Raten und mehr</span></div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Support -->
+    <div class="section" id="sec-support" style="background: linear-gradient(135deg, var(--primary-light), var(--card-bg)); border-color: var(--primary);">
+        <div class="section-body" style="display:block; border-top:none; padding: 20px 24px; text-align:center;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#dc0067" style="width:36px;height:36px;margin-bottom:8px;"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+            <p data-lang="en" class="visible" style="font-size:16px; font-weight:600; margin-bottom:6px;">Support Free DNS for Everyone</p>
+            <p data-lang="de" style="font-size:16px; font-weight:600; margin-bottom:6px;">Unterstütze kostenloses DNS für alle</p>
+            <p data-lang="en" class="visible" style="font-size:14px; margin-bottom:16px; color:var(--text-secondary);">This free DNS service is funded entirely by donations. We receive no corporate funding — every euro comes from people like you. Help us keep it running!</p>
+            <p data-lang="de" style="font-size:14px; margin-bottom:16px; color:var(--text-secondary);">Dieser kostenlose DNS-Dienst wird vollständig durch Spenden finanziert. Wir erhalten keine Firmengelder — jeder Euro kommt von Menschen wie dir. Hilf uns, ihn am Laufen zu halten!</p>
+            <div style="margin-bottom:16px;">
+                <a href="https://spende.ffmuc.net" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#ff6b35,#e0520e);color:white;padding:14px 32px;border-radius:12px;font-size:16px;font-weight:700;text-decoration:none;box-shadow:0 4px 14px rgba(224,82,14,0.3);transition:all 0.2s;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#dc0067" style="width:22px;height:22px;"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                    <span data-lang="en" class="visible">Donate Now</span>
+                    <span data-lang="de">Jetzt Spenden</span>
+                </a>
+            </div>
+            <div class="quick-actions" data-lang="en">
+                <a class="action-btn" href="https://mitglieder.ffmuc.net" target="_blank" rel="noopener" style="justify-content:center; border-color:var(--primary); font-weight:600;">
+                    <svg><use href="#icon-globe"/></svg>
+                    <div class="action-label">Become a Member<span>Join Freifunk München e.V.</span></div>
+                </a>
+                <a class="action-btn" href="https://european-alternatives.eu/product/ffmuc-dns" target="_blank" rel="noopener" style="justify-content:center;">
+                    <svg><use href="#icon-globe"/></svg>
+                    <div class="action-label">European Alternatives<span>Listed as EU privacy alternative</span></div>
+                </a>
+            </div>
+            <div class="quick-actions" data-lang="de">
+                <a class="action-btn" href="https://mitglieder.ffmuc.net" target="_blank" rel="noopener" style="justify-content:center; border-color:var(--primary); font-weight:600;">
+                    <svg><use href="#icon-globe"/></svg>
+                    <div class="action-label">Mitglied werden<span>Tritt Freifunk München e.V. bei</span></div>
+                </a>
+                <a class="action-btn" href="https://european-alternatives.eu/product/ffmuc-dns" target="_blank" rel="noopener" style="justify-content:center;">
+                    <svg><use href="#icon-globe"/></svg>
+                    <div class="action-label">European Alternatives<span>Gelistet als EU-Datenschutz-Alternative</span></div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <div class="footer-links">
+            <a href="https://ffmuc.net/dns-privacy/" target="_blank" rel="noopener"><span data-lang="en" class="visible">Privacy Policy</span><span data-lang="de">Datenschutz</span></a>
+            <a href="https://stats.ffmuc.net/d/tlvoghcZk/doh-dot?orgId=1&refresh=1m" target="_blank" rel="noopener"><span data-lang="en" class="visible">Statistics</span><span data-lang="de">Statistiken</span></a>
+            <a href="https://github.com/freifunkMUC/ffmuc-salt-public" target="_blank" rel="noopener">GitHub</a>
+            <a href="https://chat.ffmuc.net" target="_blank" rel="noopener">Chat</a>
+            <a href="https://mitglieder.ffmuc.net" target="_blank" rel="noopener"><span data-lang="en" class="visible">Membership</span><span data-lang="de">Mitgliedschaft</span></a>
+            <a href="https://ffmuc.net/impressum/" target="_blank" rel="noopener"><span data-lang="en" class="visible">Imprint</span><span data-lang="de">Impressum</span></a>
+        </div>
+        <p data-lang="en" class="visible">Operated by <a href="https://ffmuc.net" target="_blank" rel="noopener">Freifunk München</a> / Freie Netze München e.V.<br>No logging · No filtering · No censorship · DNSSEC validated</p>
+        <p data-lang="de">Betrieben von <a href="https://ffmuc.net" target="_blank" rel="noopener">Freifunk München</a> / Freie Netze München e.V.<br>Kein Logging · Keine Filterung · Keine Zensur · DNSSEC-validiert</p>
+    </div>
+</div>
+
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ---- Copy to clipboard ----
+function copyText(text, el) {
+    navigator.clipboard.writeText(text).then(() => {
+        showToast(currentLang === 'de' ? 'Kopiert: ' + text : 'Copied: ' + text);
+        if (el && el.classList.contains('copy-btn')) {
+            el.classList.add('copied');
+            el.innerHTML = '<svg><use href="#icon-check"/></svg>';
+            setTimeout(() => {
+                el.classList.remove('copied');
+                el.innerHTML = '<svg><use href="#icon-copy"/></svg>';
+            }, 2000);
+        }
+    });
+}
+
+function copyBlock(id) {
+    const block = document.getElementById(id);
+    if (block) copyText(block.textContent.trim(), event.currentTarget);
+}
+
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._timeout);
+    t._timeout = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ---- Section toggle ----
+function toggleSection(header) {
+    header.parentElement.classList.toggle('open');
+}
+
+// ---- Tabs ----
+function switchTab(btn, tabId) {
+    const tabs = btn.parentElement;
+    const body = tabs.parentElement;
+    tabs.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    body.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+    document.getElementById('tab-' + tabId).classList.add('active');
+}
+
+// ---- i18n ----
+let currentLang = 'en';
+
+function setLang(lang) {
+    currentLang = lang;
+    document.querySelectorAll('[data-lang]').forEach(el => {
+        el.classList.toggle('visible', el.dataset.lang === lang);
+    });
+    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('btn-' + lang).classList.add('active');
+    document.documentElement.lang = lang;
+    localStorage.setItem('ffmuc-dns-lang', lang);
+}
+
+// Auto-detect language
+(function() {
+    const stored = localStorage.getItem('ffmuc-dns-lang');
+    if (stored) { setLang(stored); return; }
+    const nav = navigator.language || '';
+    if (nav.startsWith('de')) setLang('de');
+    else setLang('en');
+})();
+
+// ---- Apple configuration profile generator ----
+function generateProfile(type) {
+    const uuid1 = crypto.randomUUID();
+    const uuid2 = crypto.randomUUID();
+    const uuid3 = crypto.randomUUID();
+
+    let dnsSettings;
+    if (type === 'doh') {
+        dnsSettings = `
+        <dict>
+            <key>DNSProtocol</key>
+            <string>HTTPS</string>
+            <key>ServerURL</key>
+            <string>https://doh.ffmuc.net/dns-query</string>
+            <key>ServerAddresses</key>
+            <array>
+                <string>5.1.66.255</string>
+                <string>185.150.99.255</string>
+                <string>2001:678:e68:f000::</string>
+                <string>2001:678:ed0:f000::</string>
+            </array>
+        </dict>`;
+    } else {
+        dnsSettings = `
+        <dict>
+            <key>DNSProtocol</key>
+            <string>TLS</string>
+            <key>ServerName</key>
+            <string>dot.ffmuc.net</string>
+            <key>ServerAddresses</key>
+            <array>
+                <string>5.1.66.255</string>
+                <string>185.150.99.255</string>
+                <string>2001:678:e68:f000::</string>
+                <string>2001:678:ed0:f000::</string>
+            </array>
+        </dict>`;
+    }
+
+    const label = type === 'doh' ? 'DNS over HTTPS' : 'DNS over TLS';
+
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>PayloadContent</key>
+    <array>
+        <dict>
+            <key>DNSSettings</key>
+            ${dnsSettings}
+            <key>PayloadDisplayName</key>
+            <string>FFMUC ${label}</string>
+            <key>PayloadIdentifier</key>
+            <string>net.ffmuc.dns.${type}.settings.${uuid2}</string>
+            <key>PayloadType</key>
+            <string>com.apple.dnsSettings.managed</string>
+            <key>PayloadUUID</key>
+            <string>${uuid2}</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>ProhibitDisablement</key>
+            <false/>
+        </dict>
+    </array>
+    <key>PayloadDescription</key>
+    <string>Configures device to use FFMUC ${label} encrypted DNS (Freifunk München)</string>
+    <key>PayloadDisplayName</key>
+    <string>FFMUC DNS (${type.toUpperCase()})</string>
+    <key>PayloadIdentifier</key>
+    <string>net.ffmuc.dns.${type}.${uuid1}</string>
+    <key>PayloadOrganization</key>
+    <string>Freifunk München / Freie Netze München e.V.</string>
+    <key>PayloadRemovalDisallowed</key>
+    <false/>
+    <key>PayloadType</key>
+    <string>Configuration</string>
+    <key>PayloadUUID</key>
+    <string>${uuid3}</string>
+    <key>PayloadVersion</key>
+    <integer>1</integer>
+    <key>ConsentText</key>
+    <dict>
+        <key>default</key>
+        <string>This profile configures your device to use the FFMUC DNS resolver (${label}). Privacy policy: https://ffmuc.net/dns-privacy/</string>
+    </dict>
+</dict>
+</plist>`;
+}
+
+function downloadProfile(type) {
+    const profile = generateProfile(type);
+    const blob = new Blob([profile], { type: 'application/x-apple-aspen-config' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ffmuc-dns-${type}.mobileconfig`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// ---- Auto-open relevant section based on user agent ----
+(function() {
+    const ua = navigator.userAgent.toLowerCase();
+    let target = null;
+    if (/android/.test(ua)) target = 'sec-android';
+    else if (/iphone|ipad|ipod|macintosh/.test(ua) && 'ontouchend' in document) target = 'sec-apple';
+    else if (/macintosh|mac os x/.test(ua)) target = 'sec-apple';
+    else if (/windows/.test(ua)) target = 'sec-windows';
+    else if (/linux/.test(ua)) target = 'sec-linux';
+
+    if (target) {
+        const sec = document.getElementById(target);
+        if (sec) sec.classList.add('open');
+    }
+})();
+</script>
+
+</body>
+</html>
