@@ -52,8 +52,13 @@ haproxy-service:
       - cmd: haproxy-configtest
 
 haproxy-configtest:
-  cmd.wait:
+  cmd.run:
     - name: /usr/sbin/haproxy -c -f /etc/haproxy/haproxy.cfg
+    - onchanges:
+      - file: /etc/haproxy/haproxy.cfg
+      - file: /etc/haproxy/abuse_ips.map
+      - file: /etc/haproxy/abuse_rooms.map
+      - file: /etc/haproxy/errors/403.http
 
 /etc/haproxy/haproxy.cfg:
   file.managed:
@@ -61,8 +66,6 @@ haproxy-configtest:
     - template: jinja
     - require:
       - pkg: haproxy
-    - watch_in:
-      - cmd: haproxy-configtest
 
 /etc/haproxy/abuse_ips.map:
   file.managed:
@@ -72,8 +75,6 @@ haproxy-configtest:
     - mode: "0644"
     - require:
       - pkg: haproxy
-    - watch_in:
-      - cmd: haproxy-configtest
 
 /etc/haproxy/abuse_rooms.map:
   file.managed:
@@ -83,8 +84,6 @@ haproxy-configtest:
     - mode: "0644"
     - require:
       - pkg: haproxy
-    - watch_in:
-      - cmd: haproxy-configtest
 
 /etc/haproxy/errors/403.http:
   file.managed:
@@ -95,8 +94,6 @@ haproxy-configtest:
     - makedirs: True
     - require:
       - pkg: haproxy
-    - watch_in:
-      - cmd: haproxy-configtest
 
 /etc/logrotate.d/haproxy:
   file.managed:
