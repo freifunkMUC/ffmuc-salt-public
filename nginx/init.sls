@@ -98,6 +98,8 @@ nginx-configtest:
     - rev: main-ffmuc
     - target: /srv/www/firmware.ffmuc.net/.gluon-firmware-selector
     - force_reset: True
+    # force fetching is required as the repo is force-pushed
+    - force_fetch: True
     - require:
       - file: /srv/www/firmware.ffmuc.net
 
