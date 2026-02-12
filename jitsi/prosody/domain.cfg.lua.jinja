@@ -53,7 +53,6 @@ Component "conference.{{ jitsi.public_domain }}" "muc"
     modules_enabled = {
         "muc_meeting_id";
         "muc_domain_mapper";
-        "polls";
     }
     muc_room_cache_size = 10000
     muc_room_locking = false
@@ -78,7 +77,6 @@ Component "breakout.{{ jitsi.public_domain }}" "muc"
     modules_enabled = {
         "muc_meeting_id";
         "muc_domain_mapper";
-        "polls";
     }
     admins = { "{{ jitsi.jicofo.username }}@{{ jitsi.xmpp.auth_domain }}", "{{ jitsi.videobridge.username }}@{{ jitsi.xmpp.auth_domain }}" }
     muc_room_locking = false
@@ -167,3 +165,5 @@ VirtualHost "recorder.{{ jitsi.public_domain }}"
 Component "metadata.{{ jitsi.public_domain }}" "room_metadata_component"
     muc_component = "conference.{{ jitsi.public_domain }}"
     breakout_rooms_component = "breakout.{{ jitsi.public_domain }}"
+
+Component "polls.{{ jitsi.public_domain }}" "polls_component"

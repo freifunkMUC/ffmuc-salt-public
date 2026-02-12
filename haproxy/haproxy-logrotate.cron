@@ -1,0 +1,2 @@
+# Rotate haproxy logs every 30 minutes to keep total size under 5G
+*/30 * * * * root /usr/sbin/logrotate /etc/logrotate.d/haproxy

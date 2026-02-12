@@ -22,7 +22,7 @@ update-repo:
 haproxy:
   pkg.installed:
     - name: haproxy-awslc
-    - version: 3.3.1-0+ha33+ubuntu24.04u1
+    - version: 3.3.2-0+ha33+ubuntu24.04u3
 
 haproxy-keyring-dir:
   file.directory:
@@ -54,6 +54,11 @@ haproxy-service:
 haproxy-configtest:
   cmd.run:
     - name: /usr/sbin/haproxy -c -f /etc/haproxy/haproxy.cfg
+    - onchanges:
+      - file: /etc/haproxy/haproxy.cfg
+      - file: /etc/haproxy/abuse_ips.map
+      - file: /etc/haproxy/abuse_rooms.map
+      - file: /etc/haproxy/errors/403.http
 
 /etc/haproxy/haproxy.cfg:
   file.managed:
@@ -61,8 +66,6 @@ haproxy-configtest:
     - template: jinja
     - require:
       - pkg: haproxy
-    - watch_in:
-      - cmd: haproxy-configtest
 
 /etc/haproxy/abuse_ips.map:
   file.managed:
@@ -72,8 +75,6 @@ haproxy-configtest:
     - mode: "0644"
     - require:
       - pkg: haproxy
-    - watch_in:
-      - cmd: haproxy-configtest
 
 /etc/haproxy/abuse_rooms.map:
   file.managed:
@@ -83,8 +84,6 @@ haproxy-configtest:
     - mode: "0644"
     - require:
       - pkg: haproxy
-    - watch_in:
-      - cmd: haproxy-configtest
 
 /etc/haproxy/errors/403.http:
   file.managed:
@@ -95,7 +94,19 @@ haproxy-configtest:
     - makedirs: True
     - require:
       - pkg: haproxy
-    - watch_in:
-      - cmd: haproxy-configtest
+
+/etc/logrotate.d/haproxy:
+  file.managed:
+    - source: salt://haproxy/logrotate-haproxy
+    - user: root
+    - group: root
+    - mode: "0644"
+
+/etc/cron.d/haproxy-logrotate:
+  file.managed:
+    - source: salt://haproxy/haproxy-logrotate.cron
+    - user: root
+    - group: root
+    - mode: "0644"
 
 {% endif %}
