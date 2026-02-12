@@ -56,9 +56,12 @@ haproxy-configtest:
     - name: /usr/sbin/haproxy -c -f /etc/haproxy/haproxy.cfg
     - onchanges:
       - file: /etc/haproxy/haproxy.cfg
-      - file: /etc/haproxy/abuse_ips.map
-      - file: /etc/haproxy/abuse_rooms.map
+      - file: /etc/haproxy/maps/abuse_ips.map
+      - file: /etc/haproxy/maps/abuse_rooms.map
       - file: /etc/haproxy/errors/403.http
+      - file: /etc/haproxy/responses/ip_response.json
+      - file: /etc/haproxy/responses/ip_response.html
+      - file: /etc/haproxy/responses/ip_response.txt
 
 /etc/haproxy/haproxy.cfg:
   file.managed:
@@ -67,23 +70,66 @@ haproxy-configtest:
     - require:
       - pkg: haproxy
 
-/etc/haproxy/abuse_ips.map:
+/etc/haproxy/responses:
+  file.directory:
+    - user: root
+    - group: root
+    - mode: "0755"
+    - require:
+      - pkg: haproxy
+
+/etc/haproxy/maps:
+  file.directory:
+    - user: root
+    - group: root
+    - mode: "0755"
+    - require:
+      - pkg: haproxy
+
+/etc/haproxy/responses/ip_response.json:
+  file.managed:
+    - source: salt://haproxy/files/ip_response.json
+    - user: root
+    - group: root
+    - mode: "0644"
+    - require:
+      - file: /etc/haproxy/responses
+
+/etc/haproxy/responses/ip_response.html:
+  file.managed:
+    - source: salt://haproxy/files/ip_response.html
+    - user: root
+    - group: root
+    - mode: "0644"
+    - require:
+      - file: /etc/haproxy/responses
+
+/etc/haproxy/responses/ip_response.txt:
+  file.managed:
+    - source: salt://haproxy/files/ip_response.txt
+    - user: root
+    - group: root
+    - mode: "0644"
+    - require:
+      - file: /etc/haproxy/responses
+
+/etc/haproxy/maps/abuse_ips.map:
   file.managed:
     - source: salt://haproxy/files/abuse_ips.map
     - user: root
     - group: root
     - mode: "0644"
     - require:
-      - pkg: haproxy
+      - file: /etc/haproxy/maps
 
-/etc/haproxy/abuse_rooms.map:
+/etc/haproxy/maps/abuse_rooms.map:
   file.managed:
     - source: salt://haproxy/files/abuse_rooms.map
     - user: root
     - group: root
     - mode: "0644"
     - require:
-      - pkg: haproxy
+      - file: /etc/haproxy/maps
 
 /etc/haproxy/errors/403.http:
   file.managed:
