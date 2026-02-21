@@ -128,7 +128,7 @@ systemd-networkd-reload:
 
 {%- set peer_wireguard_public_key = salt['mine.get'](node,'minion_wireguard_public', tgt_type='glob')[node] %}
 
-{%- set port_config = salt['pillar.get']('netbox:config_context:parker_backbone_config:wg_ports') %}
+{%- set port_config = salt['pillar.get']('netbox:config_context:parker:backbone:wg_ports') %}
 {# Port concept: each gateway gets assigned one port.
     This port will be used as the listen port on all other gateways on the interface connecting with this gateway.
     This means that "this" gateway uses the port of the respective peer as listen address on each interface.

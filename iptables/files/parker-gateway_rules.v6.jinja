@@ -7,10 +7,11 @@
 
 {% set own_external_address6 = salt['mine.get'](grains.id,'minion_external_ip6', tgt_type='glob')[grains.id][0].split('/')[0] %}
 {% set own_internal_address6 = salt['grains.get']('ip6_interfaces:' + uplink_iface + ':0') %}
-{#- TODO after client networks (& Jool netns IPv6 address) are properly routed to pgw VM, remove NAT rule #}
+{#- TODO after client networks (& Jool netns IPv6 address) are properly routed to pgw VM, remove NAT rule
 -A POSTROUTING -s {{ own_external_address6 }} -o {{ uplink_iface }} -j RETURN
 -A POSTROUTING -s {{ own_internal_address6 }} -o {{ uplink_iface }} -j RETURN
 -A POSTROUTING -o {{ uplink_iface }} -j SNAT --to-source {{ own_external_address6 }}
+#}
 COMMIT
 
 *filter

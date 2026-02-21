@@ -22,7 +22,7 @@ parker:
         tags:
           - slug: node-prefix
 
-broker_signing_key: '{{ salt['pillar.get']('netbox:config_context:parker_backbone_config:wgkex:nodeconfig_key') }}'
+broker_signing_key: '{{ salt['pillar.get']('netbox:config_context:parker:wgkex:nodeconfig_key') }}'
 
 # Not needed for parker
 domains: []
@@ -44,7 +44,7 @@ externalName: {{ grains['id'] | regex_replace('in\.ffmuc\.net','ext.ffmuc.net') 
 netbox:
   # URL for your NetBox instance, without the "/api" path
   url: https://nb-parker.ov.ffmuc.net
-  api_key: {{ salt['pillar.get']('netbox:config_context:parker_backbone_config:wgkex:netbox_token') }}
+  api_key: {{ salt['pillar.get']('netbox:config_context:parker:wgkex:netbox_token') }}
 
 # [broker, worker] MQTT connection informations
 mqtt:

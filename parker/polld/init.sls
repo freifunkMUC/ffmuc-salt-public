@@ -63,7 +63,7 @@ polld-python3-virtualenv:
     - source: salt://parker/polld/polld.yaml.jinja
     - template: jinja
     - context:
-        netbox_token: {{ salt['pillar.get']('netbox:config_context:parker_backbone_config:polld:netbox_token') }}
+        netbox_token: {{ salt['pillar.get']('netbox:config_context:parker:polld:netbox_token') }}
 
 polld-service:
   service.running:
