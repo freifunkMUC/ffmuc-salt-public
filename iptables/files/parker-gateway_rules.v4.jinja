@@ -20,7 +20,8 @@ COMMIT
 {%- set wireguard_port = salt['pillar.get']('netbox:config_context:wireguard:port') %}
 -A INPUT -i jool -d {{ nat_ip }} -p udp -m udp --dport {{ wireguard_port }} -j REJECT --reject-with icmp-port-unreachable -m comment --comment "Block tunnel in tunnel"
 
--A FORWARD -i jool -o {{ uplink_iface }} -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1240
+{#- Jool fragments incoming IPv4 packets so they result in 1280 byte IPv6 packets -> MSS = 1280 - 40 B (IPv6 header) - 8 B (IPv6 Fragment header) - 20 B (TCP header) #}
+-A FORWARD -i jool -o {{ uplink_iface }} -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1212
 
 {#- Block tunnel in tunnel to other gateways #}
 {%- for node,_ in salt['mine.get']('netbox:role:name:parker-gateway', 'minion_id', tgt_type='pillar').items() | sort if

@@ -25,11 +25,11 @@ bird2_configure:
 bird2_config:
     file.managed:
         - name: /etc/bird/bird.conf
-        - source: salt://bird2/files/bird.conf.jinja2
+        - source: salt://parker/bird2/files/bird.conf.jinja2
         - template: jinja
         - require:
             - file: /etc/bird
-            - service: systemd-networkd
+            {# - service: systemd-networkd #}
         - require_in:
             - service: bird
         - watch_in:

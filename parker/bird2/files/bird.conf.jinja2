@@ -1,7 +1,9 @@
+{%- set role = salt['pillar.get']('netbox:role:name') %}
 {%- set interfaces = salt['pillar.get']('netbox:interfaces') %}
 {%- set uplink_vlan = salt['pillar.get']('netbox:config_context:network:uplink_vlan') %}
 {%- set prefixes_v4 = [] %}
 {%- set prefixes_v6 = [] %}
+{%- set ns = namespace() %}
 log syslog all;
 
 protocol device {
@@ -11,7 +13,7 @@ protocol direct {
         ipv4;                   # Connect to default IPv4 table
         ipv6;                   # ... and to default IPv6 table
 }
-{%- if 'nextgen-gateway' in salt['pillar.get']('netbox:role:name') or 'roadwarrior' in salt['pillar.get']('netbox:role:name') or 'freifunk-transit' in salt['pillar.get']('netbox:role:name') %}
+{%- if role in ['nextgen-gateway', 'parker-gateway', 'roadwarrior', 'freifunk-transit'] %}
 {%- for iface in interfaces|sort %}
 {%- if 'br' in iface %}
 {%- for ipaddress in interfaces[iface]['ipaddresses'] %}
@@ -22,7 +24,7 @@ protocol direct {
 {%- endif %}{# 'br' in iface #}
 {%- endfor %}{# iface in interfaces #}
 {%- set nat66 = salt['pillar.get']('netbox:config_context:network:nat66_pool') %}
-{%- set additional_v6_prefix = salt['pillar.get']('netbox:config_context:network:additional_v6_prefix') %}
+{%- set ns.additional_v6_prefix = salt['pillar.get']('netbox:config_context:network:additional_v6_prefix') %}
 {%- if nat66 %}
 protocol static {
         ipv6;
@@ -30,51 +32,68 @@ protocol static {
 }
 {%- do prefixes_v6.append(nat66) %}
 {%- endif %}{# nat66 #}
-{%- if additional_v6_prefix %}
-{%- do prefixes_v6.append(additional_v6_prefix) %}
+{%- if ns.additional_v6_prefix | default(false) %}
+{%- do prefixes_v6.append(ns.additional_v6_prefix) %}
 {%- endif %}{# additional_v6_prefix #}
-{%- endif -%}{# 'nextgen-gateway' in salt['pillar.get']('netbox:role:name') or 'roadwarrior' in salt['pillar.get']('netbox:role:name') #}
+{%- endif -%}{# role in ['nextgen-gateway', 'parker-gateway', 'roadwarrior', 'freifunk-transit'] #}
 
+{#- Fetch public IP addresses to advertise #}
 {%- for iface in interfaces|sort %}
 {%- if 'dummy' in iface %}
 {%- for ipaddress in interfaces[iface]['ipaddresses']%}
 {%- if ipaddress['family']['value'] == 4 %}
 {%- if iface == 'dummy0' %}
-protocol kernel {
-        ipv4 {                  # Connect protocol to IPv4 table by channel
-              import all;       # Import to table, default is import all
-              export filter {
-                        if net ~ [ 0.0.0.0/0 ] then {
-                            krt_prefsrc = {{ ipaddress['address'].split('/')[0] }};
-                            accept;
-                        }
-                        };
-        };
-}
+{%- set ns.dummy0_ipv4 = ipaddress['address'].split('/')[0] %}
 {%- endif %}{# iface == 'dummy0' #}
 {%- do prefixes_v4.append(ipaddress['address']) %}
 {%- else %}{# ipaddress is v6 #}
 {%- if iface == 'dummy0' %}
-protocol kernel {
-        ipv6 {
-                import all;       # Import to table, default is import all
-                export filter {
-                        if net ~ [ ::/0 ] then {
-                                krt_prefsrc = {{ ipaddress['address'].split('/')[0] }};
-                                {%- if salt['pillar.get']('netbox:role:name') == 'webserver-external' %}
-                                krt_mtu = 1280;
-                                {%- endif %}
-                                accept;
-                        }
-                };
-         };
-}
+{%- set ns.dummy0_ipv6 = ipaddress['address'].split('/')[0] %}
 {%- endif %}{# iface == 'dummy0' #}
 {%- do prefixes_v6.append(ipaddress['address']) %}
 {%- endif %}{# ipaddress is v4 #}
 {%- endfor %}{# ipaddress in interfaces[iface] #}
 {%- endif %}{# 'dummy' in iface #}
 {%- endfor %}{# iface in interfaces #}
+
+protocol kernel {
+        ipv4 {                  # Connect protocol to IPv4 table by channel
+              import all;       # Import to table, default is import all
+              export filter {
+                        if net ~ [ 0.0.0.0/0 ] then {
+                            krt_prefsrc = {{ ns.dummy0_ipv4 }};
+                            accept;
+                        }
+                        };
+        };
+}
+
+protocol kernel {
+        {%- if role == 'parker-gateway' %}
+        learn;
+        {%- endif %}
+        ipv6 {
+                {%- if role == 'parker-gateway' %}
+                import filter {
+                        if ifname = "wg-nodes" then {
+                                accept;
+                        }
+                       reject;
+                };
+                {%- else %}
+                import all;
+                {%- endif %}
+                export filter {
+                        if net ~ [ ::/0 ] then {
+                                krt_prefsrc = {{ ns.dummy0_ipv6 }};
+                                {%- if role == 'webserver-external' %}
+                                krt_mtu = 1280;
+                                {%- endif %}
+                                accept;
+                        }
+                };
+        };
+}
 
 filter DEFAULT {
   if net ~ [ 0.0.0.0/0 ] then {
@@ -103,6 +122,11 @@ filter EXTERNAL6_OUT {
   if net ~ {{ prefixes_v6 | string | regex_replace('\'','') }} then {
     accept;
   }
+  {%- if role == 'parker-gateway' %}
+  if net ~ {{ ns.additional_v6_prefix }} then {
+    accept;
+  }
+  {%- endif %}
   reject;
 }
 {%- for ipaddress in interfaces[iface]['ipaddresses'] %}
@@ -131,7 +155,7 @@ protocol bgp {{ iface }}_v6 {
 {%- endif %}{# iface == uplink_vlan['interface'] #}
 {%- endfor %}{# iface in interfaces #}
 
-{%- if 'nextgen-gateway' in salt['pillar.get']('netbox:role:name') %}
+{%- if role == 'nextgen-gateway' %}
 # If we are a Gateway we announced OSPF default routes
 protocol ospf v2 {
         area 0 {
@@ -148,7 +172,12 @@ protocol ospf v2 {
                 export filter DEFAULT;
         };
 }
-{%- elif 'parker-gateway' in salt['pillar.get']('netbox:role:name') %}
+{%- elif role == 'parker-gateway' %}
+{# protocol static parker {
+        ipv6;
+        route 2001:678:ed0:4000::/50 blackhole;
+} #}
+
 filter BB_FILTER_IN {
         # TODO only accept routes within node super-prefix
         if net ~ [ 2001:678:e68::/48, 2001:678:ed0::/48 ] then {
@@ -166,7 +195,7 @@ filter BB_FILTER_OUT {
 }
 
 # Set up a mesh via the wg-bb links
-protocol ospf v2 {
+protocol ospf v3 parker_bb {
         area 0 {
                 interface "wg-bb-*" {
                         type broadcast;		# Detected by default
