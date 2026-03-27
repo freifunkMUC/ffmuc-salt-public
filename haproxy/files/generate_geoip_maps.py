@@ -9,6 +9,7 @@ import os
 GEOIP_DIR = "/etc/haproxy/geoip"
 MAP_DIR = "/etc/haproxy/maps"
 
+
 def generate_maps():
     city_db_path = os.path.join(GEOIP_DIR, "GeoLite2-City.mmdb")
     asn_db_path = os.path.join(GEOIP_DIR, "GeoLite2-ASN.mmdb")
@@ -61,13 +62,17 @@ def generate_maps():
     write_map(os.path.join(MAP_DIR, "geoip_provider.map"), provider_map)
     write_map(os.path.join(MAP_DIR, "geoip_asn.map"), asn_map)
 
-    print(f"Generated maps: country={len(country_map)} city={len(city_map)} provider={len(provider_map)} asn={len(asn_map)}")
+    print(
+        f"Generated maps: country={len(country_map)} city={len(city_map)} provider={len(provider_map)} asn={len(asn_map)}"
+    )
+
 
 def write_map(path, data):
     with open(path, "w") as f:
         for network, value in sorted(data.items()):
             # Escape spaces for HAProxy map format
             f.write(f"{network} {value}\n")
+
 
 if __name__ == "__main__":
     generate_maps()
