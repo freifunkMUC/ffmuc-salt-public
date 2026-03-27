@@ -1,0 +1,55 @@
+#!/bin/sh
+
+# Script to nsupdate all our authoritative servers for Traefik ACME DNS-01 challenges.
+# Used by Traefik's lego exec DNS provider.
+# Requires bind-tools (nsupdate) installed.
+
+# lego exec provider calls this script as:
+#   update-dns.sh present <fqdn> <token> <keyauth>
+#   update-dns.sh cleanup <fqdn> <token> <keyauth>
+# where <fqdn> is e.g. _acme-challenge.flow.ov.ffmuc.net
+
+if [ ! -f /usr/bin/nsupdate ]; then
+    apk update && apk add bind-tools
+fi
+
+ACTION="$1"
+FQDN="$2"
+TOKEN="$3"
+
+# Extract zone (last 3 labels) and record host (everything before the zone)
+# e.g. _acme-challenge.flow.ov.ffmuc.net -> ZONE=ov.ffmuc.net, HOST=_acme-challenge.flow
+HOST=$(echo "$FQDN" | cut -d. -f1-2)
+ZONE=$(echo "$FQDN" | cut -d. -f3-)
+
+{%- set update_key = salt['pillar.get']('netbox:config_context:dns_zones:update_keys:letsencrypt:key') %}
+UPDATE_KEY="{{ update_key }}"
+
+AUTH_SERVERS="webfrontend03.ov.ffmuc.net webfrontend04.ov.ffmuc.net webfrontend05.ov.ffmuc.net webfrontend06.ov.ffmuc.net"
+
+case "$ACTION" in
+  present)
+    for AUTH in $AUTH_SERVERS; do
+      nsupdate -y "hmac-sha512:letsencrypt:${UPDATE_KEY}" << EOM
+server ${AUTH} 553
+zone ${ZONE}
+update add ${HOST}.${ZONE} 5 TXT "${TOKEN}"
+send
+EOM
+    done
+    ;;
+  cleanup)
+    for AUTH in $AUTH_SERVERS; do
+      nsupdate -y "hmac-sha512:letsencrypt:${UPDATE_KEY}" << EOM
+server ${AUTH} 553
+zone ${ZONE}
+update delete ${HOST}.${ZONE} TXT "${TOKEN}"
+send
+EOM
+    done
+    ;;
+  *)
+    echo "Usage: $0 {present|cleanup} <fqdn> <token> <keyauth>"
+    exit 1
+    ;;
+esac

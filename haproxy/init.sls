@@ -22,7 +22,7 @@ update-repo:
 haproxy:
   pkg.installed:
     - name: haproxy-awslc
-    - version: 3.3.2-0+ha33+ubuntu24.04u3
+    - version: 3.3.6-0+ha33+ubuntu24.04u3
 
 haproxy-keyring-dir:
   file.directory:
@@ -151,6 +151,67 @@ haproxy-configtest:
 /etc/cron.d/haproxy-logrotate:
   file.managed:
     - source: salt://haproxy/haproxy-logrotate.cron
+    - user: root
+    - group: root
+    - mode: "0644"
+
+# GeoIP support for ip.ffmuc.net
+haproxy-geoip-deps:
+  pkg.installed:
+    - pkgs:
+      - python3-maxminddb
+
+/etc/haproxy/geoip:
+  file.directory:
+    - user: root
+    - group: root
+    - mode: "0755"
+    - require:
+      - pkg: haproxy
+
+/etc/haproxy/geoip/generate_geoip_maps.py:
+  file.managed:
+    - source: salt://haproxy/files/generate_geoip_maps.py
+    - user: root
+    - group: root
+    - mode: "0755"
+    - require:
+      - file: /etc/haproxy/geoip
+
+/etc/haproxy/geoip/GeoLite2-City.mmdb:
+  cmd.run:
+    - name: wget -qO /etc/haproxy/geoip/GeoLite2-City.mmdb https://github.com/P3TERX/GeoLite.mmdb/raw/download/GeoLite2-City.mmdb
+    - creates: /etc/haproxy/geoip/GeoLite2-City.mmdb
+    - require:
+      - file: /etc/haproxy/geoip
+
+/etc/haproxy/geoip/GeoLite2-ASN.mmdb:
+  cmd.run:
+    - name: wget -qO /etc/haproxy/geoip/GeoLite2-ASN.mmdb https://github.com/P3TERX/GeoLite.mmdb/raw/download/GeoLite2-ASN.mmdb
+    - creates: /etc/haproxy/geoip/GeoLite2-ASN.mmdb
+    - require:
+      - file: /etc/haproxy/geoip
+
+# Generate HAProxy map files from mmdb databases
+haproxy-generate-geoip-maps:
+  cmd.run:
+    - name: python3 /etc/haproxy/geoip/generate_geoip_maps.py
+    - creates: /etc/haproxy/maps/geoip_country.map
+    - require:
+      - pkg: haproxy-geoip-deps
+      - file: /etc/haproxy/geoip/generate_geoip_maps.py
+      - cmd: /etc/haproxy/geoip/GeoLite2-City.mmdb
+      - cmd: /etc/haproxy/geoip/GeoLite2-ASN.mmdb
+      - file: /etc/haproxy/maps
+    - require_in:
+      - cmd: haproxy-configtest
+
+# Update GeoIP databases and regenerate maps weekly
+/etc/cron.d/haproxy-geoip-update:
+  file.managed:
+    - contents: |
+        # Update GeoLite2 databases weekly (Sunday 3am) and regenerate maps
+        0 3 * * 0 root wget -qO /etc/haproxy/geoip/GeoLite2-City.mmdb https://github.com/P3TERX/GeoLite.mmdb/raw/download/GeoLite2-City.mmdb && wget -qO /etc/haproxy/geoip/GeoLite2-ASN.mmdb https://github.com/P3TERX/GeoLite.mmdb/raw/download/GeoLite2-ASN.mmdb && python3 /etc/haproxy/geoip/generate_geoip_maps.py && systemctl reload haproxy
     - user: root
     - group: root
     - mode: "0644"
