@@ -1,1 +1,86 @@
-<html><head><title>IP - Freifunk M&uuml;nchen</title></head><body style='font-family:monospace;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#1a1a2e;color:#e0e0e0;flex-direction:column'><h2>Your IP Addresses</h2><p>Connected via: <strong style='color:#00d4ff;font-size:1.3em'>%[src]</strong></p><div id='dual' style='text-align:center'><p>IPv4: <span id='v4' style='color:#00d4ff'>loading...</span></p><p>IPv6: <span id='v6' style='color:#00d4ff'>loading...</span></p></div><p style='margin-top:2em;color:#888'>Freifunk M&uuml;nchen</p><p style='font-size:0.85em;color:#888'><a href='https://ffmuc.net/impressum/' style='color:#888'>Impressum</a> | <a href='https://ffmuc.net/privacy/' style='color:#888'>Datenschutzerkl&auml;rung</a> | <a href='https://spende.ffmuc.net/' style='color:#00d4ff'>Spende</a></p><script>fetch('https://anycast-v4.ffmuc.net/json').then(r=>r.json()).then(d=>document.getElementById('v4').textContent=d.ip).catch(()=>document.getElementById('v4').textContent='not available');fetch('https://anycast-v6.ffmuc.net/json').then(r=>r.json()).then(d=>document.getElementById('v6').textContent=d.ip).catch(()=>document.getElementById('v6').textContent='not available');</script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IP - Freifunk M&uuml;nchen</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;min-height:100vh;background:#0a0e1a;color:#c8d6e5;display:flex;justify-content:center;align-items:center}
+.container{max-width:600px;width:100%%;padding:2rem;text-align:center}
+.logo{font-size:1.4rem;font-weight:700;color:#00d4ff;letter-spacing:0.05em;margin-bottom:2rem}
+.logo span{color:#fff}
+.card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:2rem;margin-bottom:1.5rem;backdrop-filter:blur(10px)}
+.label{font-size:0.75rem;text-transform:uppercase;letter-spacing:0.1em;color:#647486;margin-bottom:0.4rem}
+.ip-main{font-size:1.8rem;font-weight:700;color:#00d4ff;word-break:break-all;margin-bottom:1rem}
+.geo{display:flex;justify-content:center;gap:2rem;flex-wrap:wrap}
+.geo-item{text-align:center}
+.geo-value{font-size:0.95rem;color:#e0e0e0;font-weight:500}
+.divider{height:1px;background:rgba(255,255,255,0.06);margin:1.5rem 0}
+.dual{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media(max-width:480px){.dual{grid-template-columns:1fr}}
+.proto-card{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:1.2rem}
+.proto-label{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;color:#647486;margin-bottom:0.5rem}
+.proto-ip{font-size:1rem;font-weight:600;color:#00d4ff;word-break:break-all;min-height:1.4em}
+.proto-geo{font-size:0.8rem;color:#8899a6;margin-top:0.5rem;min-height:2.4em}
+.footer{margin-top:2rem;font-size:0.8rem;color:#4a5568}
+.footer a{color:#4a5568;text-decoration:none;transition:color 0.2s}
+.footer a:hover{color:#00d4ff}
+.footer .donate{color:#00d4ff;font-weight:500}
+.api-examples{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:1.2rem;margin-bottom:1.5rem;text-align:left}
+.api-examples .label{margin-bottom:0.8rem;text-align:center}
+.code-block{font-family:'SF Mono',Consolas,monospace;font-size:0.8rem;background:rgba(0,0,0,0.3);border-radius:8px;padding:0.6rem 0.9rem;margin-bottom:0.5rem;color:#00d4ff;line-height:1.6;word-break:break-all}
+.code-block:last-child{margin-bottom:0}
+.code-comment{color:#4a5568}
+.loading{color:#4a5568;animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%%,100%%{opacity:1}50%%{opacity:0.4}}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="logo"><span>Freifunk</span> M&uuml;nchen</div>
+<div class="card">
+<div class="label">IP Address you are connecting from</div>
+<div class="ip-main">%[src]</div>
+<div class="geo">
+<div class="geo-item"><div class="label">Location</div><div class="geo-value">%[var(txn.geoip_city)], %[var(txn.geoip_country)]</div></div>
+<div class="geo-item"><div class="label">Provider</div><div class="geo-value">%[var(txn.geoip_provider)] (AS%[var(txn.geoip_asn)])</div></div>
+</div>
+</div>
+<div class="dual">
+<div class="proto-card">
+<div class="proto-label">IPv4</div>
+<div class="proto-ip"><span id="v4" class="loading">checking...</span></div>
+<div class="proto-geo"><span id="v4geo"></span></div>
+</div>
+<div class="proto-card">
+<div class="proto-label">IPv6</div>
+<div class="proto-ip"><span id="v6" class="loading">checking...</span></div>
+<div class="proto-geo"><span id="v6geo"></span></div>
+</div>
+</div>
+<div class="footer">
+<div class="api-examples">
+<div class="label">API Usage</div>
+<div class="code-block"><span class="code-comment"># plain text (just your IP)</span><br>curl ip.ffmuc.net</div>
+<div class="code-block"><span class="code-comment"># JSON with GeoIP data</span><br>curl ip.ffmuc.net/json</div>
+<div class="code-block"><span class="code-comment"># force IPv4 / IPv6</span><br>curl -4 ip.ffmuc.net<br>curl -6 ip.ffmuc.net</div>
+</div>
+<a href="https://ffmuc.net/impressum/">Impressum</a> &middot; <a href="https://ffmuc.net/privacy/">Datenschutz</a> &middot; <a href="https://spende.ffmuc.net/" class="donate">Spende</a>
+</div>
+</div>
+<script>
+function load(url,ipEl,geoEl){
+fetch(url).then(r=>r.json()).then(d=>{
+var e=document.getElementById(ipEl);e.textContent=d.ip;e.classList.remove('loading');
+var parts=[];if(d.city&&d.city!=='Unknown')parts.push(d.city);if(d.country&&d.country!=='Unknown')parts.push(d.country);
+var g=document.getElementById(geoEl);
+if(parts.length)g.textContent=parts.join(', ');
+if(d.provider&&d.provider!=='Unknown')g.textContent=(g.textContent?g.textContent+' \u00b7 ':'')+d.provider+(d.asn&&d.asn!=='Unknown'?' (AS'+d.asn+')':'');
+}).catch(function(){var e=document.getElementById(ipEl);e.textContent='not available';e.classList.remove('loading');});
+}
+load('https://anycast-v4.ffmuc.net/json','v4','v4geo');
+load('https://anycast-v6.ffmuc.net/json','v6','v6geo');
+</script>
+</body>
+</html>

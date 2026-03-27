@@ -1,1 +1,1 @@
-{"ip":"%[src]"}
+{"ip":"%[src]","country":"%[var(txn.geoip_country)]","city":"%[var(txn.geoip_city)]","provider":"%[var(txn.geoip_provider)]","asn":"%[var(txn.geoip_asn)]"}

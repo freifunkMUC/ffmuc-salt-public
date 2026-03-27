@@ -975,18 +975,37 @@
             <div class="icon"><svg style="color:var(--primary)"><use href="#icon-linux"/></svg></div>
             <div class="label">
                 <h3>Linux</h3>
-                <p data-lang="en" class="visible">GUI, systemd-resolved, NetworkManager</p>
-                <p data-lang="de">GUI, systemd-resolved, NetworkManager</p>
+                <p data-lang="en" class="visible">CachyOS, GUI, systemd-resolved, NetworkManager</p>
+                <p data-lang="de">CachyOS, GUI, systemd-resolved, NetworkManager</p>
             </div>
             <svg class="chevron"><use href="#icon-chevron"/></svg>
         </div>
         <div class="section-body">
             <div class="tabs">
-                <button class="tab active" onclick="switchTab(this, 'linux-gui')"><span data-lang="en" class="visible">GUI (Desktop)</span><span data-lang="de">GUI (Desktop)</span></button>
+                <button class="tab active" onclick="switchTab(this, 'cachyos')">CachyOS</button>
+                <button class="tab" onclick="switchTab(this, 'linux-gui')"><span data-lang="en" class="visible">GUI (Desktop)</span><span data-lang="de">GUI (Desktop)</span></button>
                 <button class="tab" onclick="switchTab(this, 'systemd')">systemd-resolved</button>
                 <button class="tab" onclick="switchTab(this, 'nm')">NetworkManager</button>
             </div>
-            <div class="tab-content active" id="tab-linux-gui">
+            <div class="tab-content active" id="tab-cachyos">
+                <p data-lang="en" class="visible" style="font-size:14px;margin-bottom:12px;">FFMUC DNS is natively integrated in CachyOS, just a few clicks in the Hello app. See the <a href="https://github.com/CachyOS/CachyOS-Welcome/blob/develop/src/dns.rs" target="_blank" rel="noopener">source</a> and <a href="https://cachyos.org/blog/2603-march-release/" target="_blank" rel="noopener">March release notes</a>.</p>
+                <p data-lang="de" style="font-size:14px;margin-bottom:12px;">FFMUC DNS ist nativ in CachyOS integriert, nur wenige Klicks in der Hello-App. Siehe den <a href="https://github.com/CachyOS/CachyOS-Welcome/blob/develop/src/dns.rs" target="_blank" rel="noopener">Quellcode</a> und die <a href="https://cachyos.org/blog/2603-march-release/" target="_blank" rel="noopener">Release Notes vom März</a>.</p>
+                <div class="steps" data-lang="en">
+                    <div class="step">Open the <strong>CachyOS Hello</strong> application (launches automatically on startup, or search for it in your app menu)</div>
+                    <div class="step">Click on <strong>"Apps/Tweaks"</strong></div>
+                    <div class="step">Select <strong>"DNS Configuration"</strong></div>
+                    <div class="step">Choose <strong>"FFMUC DNS"</strong> from the list of providers</div>
+                    <div class="step">Click <strong>Apply</strong> — done! Your system now uses FFMUC DNS</div>
+                </div>
+                <div class="steps" data-lang="de">
+                    <div class="step">Öffne die <strong>CachyOS Hello</strong>-Anwendung (startet automatisch beim Hochfahren oder suche sie im App-Menü)</div>
+                    <div class="step">Klicke auf <strong>„Apps/Tweaks"</strong></div>
+                    <div class="step">Wähle <strong>„DNS-Konfiguration"</strong></div>
+                    <div class="step">Wähle <strong>„FFMUC DNS"</strong> aus der Liste der Anbieter</div>
+                    <div class="step">Klicke auf <strong>Anwenden</strong> — fertig! Dein System nutzt jetzt FFMUC DNS</div>
+                </div>
+            </div>
+            <div class="tab-content" id="tab-linux-gui">
                 <p data-lang="en" class="visible" style="font-size:14px;margin-bottom:12px;">You can configure DNS graphically in your desktop environment's network settings:</p>
                 <p data-lang="de" style="font-size:14px;margin-bottom:12px;">Du kannst DNS grafisch in den Netzwerkeinstellungen deiner Desktop-Umgebung konfigurieren:</p>
 

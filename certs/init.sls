@@ -68,6 +68,17 @@ generate-dhparam:
 
 {%- set role = salt['pillar.get']('netbox:role:name', salt['pillar.get']('netbox:role:name')) %}
 
+#
+# Traefik ACME DNS update script for docker hosts
+#
+{% if "docker" in role %}
+/srv/docker/traefik/update-dns.sh:
+  file.managed:
+    - source: salt://certs/files/traefik-dns-update.sh.jinja
+    - template: jinja
+    - mode: "0700"
+{% endif %}{# if "docker" in role #}
+
 {% set gcore_token = salt['pillar.get']('netbox:config_context:gcore:api_token') %}
 {% set cloudflare_token = salt['pillar.get']('netbox:config_context:cloudflare:api_token') %}
 
