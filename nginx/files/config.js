@@ -94,7 +94,8 @@ var config = {
   // experimental branches (show a warning for these branches)
   experimental_branches: ['experimental', 'gluon-main', 'gluon-next'],
   // path to preview pictures directory
-  preview_pictures: '/.gluon-firmware-selector/pictures/',
+  preview_pictures: '/device-pictures/pictures-svg/',
+  preview_pictures_ext: '.svg',
   // link to changelog
   changelog: 'https://github.com/freifunkMUC/site-ffm/releases',
   // links for instructions like flashing of certain devices (optional)

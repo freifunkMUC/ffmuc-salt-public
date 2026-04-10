@@ -112,6 +112,15 @@ nginx-configtest:
     - require:
       - git: /srv/www/firmware.ffmuc.net/.gluon-firmware-selector
 
+/srv/www/firmware.ffmuc.net/device-pictures:
+  git.latest:
+    - name: https://github.com/freifunk/device-pictures.git
+    - rev: main
+    - target: /srv/www/firmware.ffmuc.net/device-pictures
+    - force_reset: True
+    - require:
+      - file: /srv/www/firmware.ffmuc.net
+
 {% for domain in salt['pillar.get']('netbox:config_context:webserver:domains') %}
 /etc/nginx/sites-enabled/{{ domain }}.conf:
   file.managed:
