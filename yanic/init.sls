@@ -15,7 +15,7 @@
 yanic:
   pkg.installed:
     - sources:
-      - yanic: https://apt.ffmuc.net/yanic_1.8.3-2_amd64.deb
+      - yanic: https://apt.ffmuc.net/yanic_1.9.0%2Bbatmanv1-2_amd64.deb
   service.running:
     - enable: True
     - require:
