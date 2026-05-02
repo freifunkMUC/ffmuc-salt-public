@@ -1,3 +1,4 @@
+{%- if 'authorative-dns' in salt['pillar.get']('netbox:tag_list', []) %}
 #
 # Bind name server
 #
@@ -20,12 +21,9 @@ dnspython:
     - reload_modules: True
 
 
-
 #
 # Authoritive FFMUC DNS Server configuration
 #
-
-{%- if 'authorative-dns' in salt['pillar.get']('netbox:tag_list', []) -%}
 
 # Get all nodes for DNS records
 {% set nodes = salt['mine.get']('netbox:platform:slug:linux', 'minion_id', tgt_type='pillar') %}
