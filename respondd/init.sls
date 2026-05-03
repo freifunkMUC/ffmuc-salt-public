@@ -10,6 +10,9 @@
 python3-netifaces:
    pkg.installed
 
+python3-pyroute2:
+   pkg.installed
+
 {% set sites = salt['pillar.get']('netbox:config_context:sites') %}
 {% for prefix, domains in sites.items() %}
 {% for site in domains %}
