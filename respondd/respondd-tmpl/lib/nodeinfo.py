@@ -1,16 +1,25 @@
 #!/usr/bin/env python3
 
-import socket
+import logging
 import re
+import socket
+
 import netifaces as netif
 
+from lib.batadv_netlink import (
+    BATADV_CMD_GET_MESH,
+    BATADV_GW_MODE_SERVER,
+    list_hard_interfaces,
+)
 from lib.respondd import Respondd
 import lib.helper
 
+log = logging.getLogger(__name__)
+
 
 class Nodeinfo(Respondd):
-    def __init__(self, config):
-        Respondd.__init__(self, config)
+    def __init__(self, config, batadv_nl=None):
+        Respondd.__init__(self, config, batadv_nl)
 
     @staticmethod
     def getInterfaceAddresses(interface):
@@ -27,14 +36,16 @@ class Nodeinfo(Respondd):
 
         return addresses
 
-    def getBatmanInterfaces(self, batmanInterface):
+    def getBatmanInterfaces(self):
         ret = {}
 
-        lines = lib.helper.call(["batctl", "meshif", batmanInterface, "if"])
-        for line in lines:
-            lineMatch = re.match(r"^([^:]*)", line)
-            interface = lineMatch.group(0)
+        mesh_idx = self._mesh_idx()
+        if mesh_idx is None:
+            return ret
 
+        for interface, mac in list_hard_interfaces(
+            self._get_batadv(), mesh_idx
+        ).items():
             interfaceType = ""
             if (
                 "fastd" in self._config and interface == self._config["fastd"]
@@ -44,15 +55,13 @@ class Nodeinfo(Respondd):
                 interfaceType = "l2tp"
             elif "mesh-vpn" in self._config and interface in self._config["mesh-vpn"]:
                 interfaceType = "tunnel"
-            elif "mesh-wlan" in self._config and interface in self._config["mesh-wlan"]:
-                interfaceType = "wireless"
             else:
                 interfaceType = "other"
 
             if interfaceType not in ret:
                 ret[interfaceType] = []
 
-            ret[interfaceType].append(lib.helper.getInterfaceMAC(interface))
+            ret[interfaceType].append(mac)
 
         if "l2tp" in ret:
             if "tunnel" in ret:
@@ -77,24 +86,22 @@ class Nodeinfo(Respondd):
 
         return ret
 
-    @staticmethod
-    def getVPNFlag(batmanInterface):
-        lines = lib.helper.call(["batctl", "meshif", batmanInterface, "gw_mode"])
-        if re.match(r"^server", lines[0]):
-            return True
-        else:
+    def getVPNFlag(self):
+        mesh_idx = self._mesh_idx()
+        if mesh_idx is None:
             return False
+        reply = self._get_batadv().request_one(BATADV_CMD_GET_MESH, mesh_idx)
+        if reply is None:
+            return False
+        attrs = dict(reply["attrs"])
+        return attrs.get("BATADV_ATTR_GW_MODE", 0) == BATADV_GW_MODE_SERVER
 
     def _get(self):
         ret = {
             "hostname": socket.gethostname(),
             "network": {
                 "addresses": self.getInterfaceAddresses(self._config["bridge"]),
-                "mesh": {
-                    "bat0": {
-                        "interfaces": self.getBatmanInterfaces(self._config["batman"])
-                    }
-                },
+                "mesh": {"bat0": {"interfaces": self.getBatmanInterfaces()}},
                 "mac": lib.helper.getInterfaceMAC(self._config["batman"]),
             },
             "software": {
@@ -116,7 +123,7 @@ class Nodeinfo(Respondd):
             "owner": {},
             "system": {},
             "location": {},
-            "vpn": self.getVPNFlag(self._config["batman"]),
+            "vpn": self.getVPNFlag(),
         }
 
         #        if "mesh-vpn" in self._config and len(self._config["mesh-vpn"]) > 0:

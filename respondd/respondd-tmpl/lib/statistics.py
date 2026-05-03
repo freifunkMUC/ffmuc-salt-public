@@ -3,53 +3,60 @@
 import json
 import logging
 import os
-import re
 import socket
 
+from lib.batadv_netlink import (
+    BATADV_CMD_GET_GATEWAYS,
+    BATADV_CMD_GET_TRANSTABLE_LOCAL,
+    BATADV_TT_CLIENT_NOPURGE,
+    BATADV_TT_CLIENT_ROAM,
+    BATADV_TT_CLIENT_WIFI,
+)
 from lib.respondd import Respondd
 import lib.helper
 
 log = logging.getLogger(__name__)
 
+CLIENT_MAX_INACTIVITY_MSECS = 60_000
+
 
 class Statistics(Respondd):
-    def __init__(self, config):
-        Respondd.__init__(self, config)
+    def __init__(self, config, batadv_nl=None):
+        Respondd.__init__(self, config, batadv_nl)
 
     def getClients(self):
         ret = {"total": 0, "wifi": 0}
 
         macBridge = lib.helper.getInterfaceMAC(self._config["bridge"])
 
-        lines = lib.helper.call(
-            ["batctl", "meshif", self._config["batman"], "tl", "-n"]
-        )
-        for line in lines:
-            # batman-adv -> translation-table.c -> batadv_tt_local_seq_print_text
-            # R = BATADV_TT_CLIENT_ROAM
-            # P = BATADV_TT_CLIENT_NOPURGE
-            # N = BATADV_TT_CLIENT_NEW
-            # X = BATADV_TT_CLIENT_PENDING
-            # W = BATADV_TT_CLIENT_WIFI
-            # I = BATADV_TT_CLIENT_ISOLA
-            # . = unset
-            # * c0:11:73:b2:8f:dd   -1 [.P..W.]   1.710   (0xe680a836)
-            # d4:3d:7e:34:5c:b1   -1 [.P....]   0.000   (0x12a02817)
-            lineMatch = re.match(
-                r"^[\s*]*([0-9a-f:]+)\s+-\d\s\[([RPNXWI\.]+)\]", line, re.I
-            )
-            if lineMatch:
-                mac = lineMatch.group(1)
-                flags = lineMatch.group(2)
-                if (
-                    macBridge != mac and flags[0] != "R"
-                ):  # Filter bridge and roaming clients
-                    if not mac.startswith("33:33:") and not mac.startswith(
-                        "01:00:5e:"
-                    ):  # Filter Multicast
-                        ret["total"] += 1
-                        if flags[4] == "W":
-                            ret["wifi"] += 1
+        mesh_idx = self._mesh_idx()
+        if mesh_idx is None:
+            return ret
+
+        for reply in self._get_batadv().dump(BATADV_CMD_GET_TRANSTABLE_LOCAL, mesh_idx):
+            attrs = dict(reply["attrs"])
+            mac = attrs.get("BATADV_ATTR_TT_ADDRESS")
+            flags = attrs.get("BATADV_ATTR_TT_FLAGS", 0)
+            if mac is None:
+                continue
+            mac = mac.lower()
+            if mac == macBridge:
+                continue
+            if flags & BATADV_TT_CLIENT_ROAM:
+                continue
+            # NOPURGE marks non-ageing service entries (own node, bridge
+            # loop avoidance, …); counting them inflates clients.total.
+            # See gluon-mesh-batman-adv's respondd-statistics.c.
+            if flags & BATADV_TT_CLIENT_NOPURGE:
+                continue
+            lastseen = attrs.get("BATADV_ATTR_LAST_SEEN_MSECS")
+            if lastseen is None or lastseen > CLIENT_MAX_INACTIVITY_MSECS:
+                continue
+            if mac.startswith("33:33:") or mac.startswith("01:00:5e:"):
+                continue
+            ret["total"] += 1
+            if flags & BATADV_TT_CLIENT_WIFI:
+                ret["wifi"] += 1
 
         return ret
 
@@ -147,21 +154,21 @@ class Statistics(Respondd):
             return None
 
     def getGateway(self):
-        ret = None
+        mesh_idx = self._mesh_idx()
+        if mesh_idx is None:
+            return None
 
-        lines = lib.helper.call(
-            ["batctl", "meshif", self._config["batman"], "gwl", "-n"]
-        )
-        for line in lines:
-            lineMatch = re.match(
-                r"(\*|=>)\s+([0-9a-f:]+)\s\([\d \.]+\)\s+([0-9a-f:]+)", line
-            )
-            if lineMatch:
-                ret = {}
-                ret["gateway"] = lineMatch.group(2)
-                ret["gateway_nexthop"] = lineMatch.group(3)
+        for reply in self._get_batadv().dump(BATADV_CMD_GET_GATEWAYS, mesh_idx):
+            attrs = dict(reply["attrs"])
+            if not attrs.get("BATADV_ATTR_FLAG_BEST"):
+                continue
+            orig = attrs.get("BATADV_ATTR_ORIG_ADDRESS")
+            router = attrs.get("BATADV_ATTR_ROUTER")
+            if orig is None or router is None:
+                continue
+            return {"gateway": orig.lower(), "gateway_nexthop": router.lower()}
 
-        return ret
+        return None
 
     @staticmethod
     def getRootFS():

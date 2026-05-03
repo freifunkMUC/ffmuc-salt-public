@@ -35,6 +35,6 @@ def merge(a, b):
 def getInterfaceMAC(interface):
     try:
         addresses = netif.ifaddresses(interface)
-        return addresses[netif.AF_LINK][0]["addr"]
+        return addresses[netif.AF_LINK][0]["addr"].lower()
     except (ValueError, KeyError, IndexError):
         return None

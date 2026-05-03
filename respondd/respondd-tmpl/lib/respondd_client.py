@@ -2,13 +2,11 @@
 
 import json
 import logging
-import re
 import socket
 import struct
 import zlib
 
-import lib.helper
-
+from lib.batadv_netlink import BatadvNetlinkClient, list_hard_interfaces
 from lib.ratelimit import rateLimit
 from lib.nodeinfo import Nodeinfo
 from lib.neighbours import Neighbours
@@ -30,9 +28,10 @@ class ResponddClient:
         else:
             self.__RateLimit = None
 
-        self._nodeinfo = Nodeinfo(self._config)
-        self._neighbours = Neighbours(self._config)
-        self._statistics = Statistics(self._config)
+        self._batadv_nl = BatadvNetlinkClient()
+        self._nodeinfo = Nodeinfo(self._config, self._batadv_nl)
+        self._neighbours = Neighbours(self._config, self._batadv_nl)
+        self._statistics = Statistics(self._config, self._batadv_nl)
 
         self._sock = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
 
@@ -54,10 +53,18 @@ class ResponddClient:
         )
         self._sock.bind(("::", self._config["port"]))
 
-        lines = lib.helper.call(["batctl", "meshif", self._config["batman"], "if"])
-        for line in lines:
-            lineMatch = re.match(r"^([^:]*)", line)
-            self.joinMCAST(self._sock, self._config["addr"], lineMatch.group(1))
+        try:
+            mesh_idx = socket.if_nametoindex(self._config["batman"])
+        except OSError as e:
+            log.warning("batman iface %s missing: %s", self._config["batman"], e)
+            mesh_idx = None
+
+        if mesh_idx is not None:
+            for ifname in list_hard_interfaces(self._batadv_nl, mesh_idx):
+                try:
+                    self.joinMCAST(self._sock, self._config["addr"], ifname)
+                except OSError as e:
+                    log.warning("mcast join on %s failed: %s", ifname, e)
 
         self.joinMCAST(self._sock, self._config["addr"], self._config["bridge"])
 
