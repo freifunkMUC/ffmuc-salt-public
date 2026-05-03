@@ -187,7 +187,7 @@ class Statistics(Respondd):
         }
 
         gateway = self.getGateway()
-        if gateway != None:
+        if gateway is not None:
             ret = lib.helper.merge(ret, gateway)
 
         return ret

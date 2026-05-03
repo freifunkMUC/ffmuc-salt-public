@@ -22,7 +22,7 @@ class Nodeinfo(Respondd):
 
             for ip in netif.ifaddresses(interface)[netif.AF_INET]:
                 addresses.append(ip["addr"].split("%")[0])
-        except:
+        except (ValueError, KeyError):
             pass
 
         return addresses
