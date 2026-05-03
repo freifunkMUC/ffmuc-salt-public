@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 
-import socket
-import re
-import sys
 import json
+import logging
 import os
+import re
+import socket
 
 from lib.respondd import Respondd
 import lib.helper
+
+log = logging.getLogger(__name__)
 
 
 class Statistics(Respondd):
@@ -115,7 +117,7 @@ class Statistics(Respondd):
             sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             sock.connect(self._config["fastd_socket"])
         except socket.error as err:
-            print("socket error: ", sys.stderr, err)
+            log.warning("fastd socket error: %s", err)
             return None
 
         while True:

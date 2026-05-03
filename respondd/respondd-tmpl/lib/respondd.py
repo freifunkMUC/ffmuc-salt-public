@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 
 import json
+import logging
 import time
 
 import lib.helper
+
+log = logging.getLogger(__name__)
 
 
 class Respondd:
@@ -16,7 +19,7 @@ class Respondd:
             with open("alias.json", "r") as fh:
                 self._aliasOverlay = json.load(fh)
         except IOError:
-            print("can't load alias.json!")
+            log.warning("no alias.json found")
 
     def getNodeID(self):
         if (

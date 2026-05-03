@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 
-import socket
-import select
-import struct
 import json
-import zlib
-import time
+import logging
 import re
+import socket
+import struct
+import zlib
 
 import lib.helper
 
@@ -14,6 +13,8 @@ from lib.ratelimit import rateLimit
 from lib.nodeinfo import Nodeinfo
 from lib.neighbours import Neighbours
 from lib.statistics import Statistics
+
+log = logging.getLogger(__name__)
 
 
 class ResponddClient:
@@ -61,22 +62,38 @@ class ResponddClient:
         self.joinMCAST(self._sock, self._config["addr"], self._config["bridge"])
 
         while True:
-            msg, sourceAddress = self._sock.recvfrom(2048)
+            try:
+                msg, sourceAddress = self._sock.recvfrom(2048)
+            except OSError:
+                log.exception("recvfrom failed")
+                continue
 
-            msgSplit = str(msg, "UTF-8").split(" ")
+            try:
+                decoded = str(msg, "UTF-8")
+            except UnicodeDecodeError:
+                log.warning("non-UTF-8 probe from %s", sourceAddress[0])
+                continue
 
-            responseStruct = {}
-            if msgSplit[0] == "GET":  # multi_request
-                for request in msgSplit[1:]:
-                    responseStruct[request] = self.buildStruct(request)
-                self.sendStruct(sourceAddress, responseStruct, True)
-            else:  # single_request
-                responseStruct = self.buildStruct(msgSplit[0])
-                self.sendStruct(sourceAddress, responseStruct, False)
+            try:
+                msgSplit = decoded.split(" ")
+                log.info("request from %s: %s", sourceAddress[0], decoded.rstrip())
+
+                if msgSplit[0] == "GET":  # multi_request
+                    responseStruct = {}
+                    for request in msgSplit[1:]:
+                        responseStruct[request] = self.buildStruct(request)
+                    withCompression = True
+                else:  # single_request
+                    responseStruct = self.buildStruct(msgSplit[0])
+                    withCompression = False
+
+                self.sendStruct(sourceAddress, responseStruct, withCompression)
+            except Exception:
+                log.exception("error handling probe from %s", sourceAddress[0])
 
     def buildStruct(self, responseType):
         if self.__RateLimit is not None and not self.__RateLimit.limit():
-            print("rate limit reached!")
+            log.info("rate limit reached")
             return
 
         responseClass = None
@@ -87,32 +104,28 @@ class ResponddClient:
         elif responseType == "neighbours":
             responseClass = self._neighbours
         else:
-            print("unknown command: " + responseType)
+            log.warning("unknown command: %s", responseType)
             return
 
         return responseClass.getStruct()
 
     def sendStruct(self, destAddress, responseStruct, withCompression):
-        if self._config["verbose"] or self._config["dry_run"]:
-            print(
-                "%14.3f %35s %5d: " % (time.time(), destAddress[0], destAddress[1]),
-                end="",
-            )
-            print(json.dumps(responseStruct, sort_keys=True, indent=4))
-
         responseData = bytes(json.dumps(responseStruct, separators=(",", ":")), "UTF-8")
+        log.debug("response to %s: %s", destAddress[0], responseData.decode("utf-8"))
 
         if withCompression:
             encoder = zlib.compressobj(
                 zlib.Z_DEFAULT_COMPRESSION, zlib.DEFLATED, -15
             )  # The data may be decompressed using zlib and many zlib bindings using -15 as the window size parameter.
-            responseData = encoder.compress(responseData)
-            responseData += encoder.flush()
-            # return compress(str.encode(json.dumps(ret)))[2:-4] # bug? (mesh-announce strip here)
-        if not self._config["dry_run"]:
-            destAddressTmp = list(destAddress)
-            destAddressTmp[0] = destAddressTmp[0].replace(
-                "vrf_external", "br-{{ site }}"
-            )
-            destAddressNew = tuple(destAddressTmp)
-            self._sock.sendto(responseData, (destAddressNew[0], 45124))
+            responseData = encoder.compress(responseData) + encoder.flush()
+
+        if self._config.get("dry_run"):
+            return
+
+        # Scope-id rewrite is a ffmuc-specific quirk: probes arriving via the
+        # external VRF come back with scope id 'vrf_external', which isn't a
+        # valid outbound scope for unicast replies. Substitute the local
+        # client-bridge scope so sendto() can route the response.
+        destAddressTmp = list(destAddress)
+        destAddressTmp[0] = destAddressTmp[0].replace("vrf_external", "br-{{ site }}")
+        self._sock.sendto(responseData, (destAddressTmp[0], 45124))
