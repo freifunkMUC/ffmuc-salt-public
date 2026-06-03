@@ -333,6 +333,9 @@ muenchen.freifunk.net-wildcard-cert:
         -d "wertingen.freifunk.net" -d "*.wertingen.freifunk.net"
         -d "donau-ries.freifunk.net" -d "*.donau-ries.freifunk.net"
         -d "augsburg.freifunk.net" -d "*.augsburg.freifunk.net"
+    - unless: >
+        test -f /etc/letsencrypt/live/muenchen.freifunk.net/fullchain.pem &&
+        openssl x509 -noout -checkend 2592000 -in /etc/letsencrypt/live/muenchen.freifunk.net/fullchain.pem
     - require:
         - pip: certbot-venv-packages
         - file: update-dns.sh

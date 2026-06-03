@@ -34,6 +34,19 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;min-height:100vh;
 .code-comment{color:#4a5568}
 .loading{color:#4a5568;animation:pulse 1.5s ease-in-out infinite}
 @keyframes pulse{0%%,100%%{opacity:1}50%%{opacity:0.4}}
+.st-results{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0.8rem;margin-bottom:1.2rem}
+@media(max-width:480px){.st-results{grid-template-columns:1fr 1fr}}
+.st-metric{text-align:center;padding:0.8rem 0.4rem;background:rgba(0,0,0,0.2);border-radius:10px}
+.st-metric-label{font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#647486;margin-bottom:0.3rem}
+.st-metric-value{font-size:1.4rem;font-weight:700;color:#00d4ff;min-height:1.6em;line-height:1.6em}
+.st-metric-unit{font-size:0.7rem;color:#647486}
+.st-metric.active .st-metric-value{animation:pulse 1s ease-in-out infinite}
+.st-progress-wrap{height:4px;background:rgba(255,255,255,0.06);border-radius:2px;margin-bottom:1rem;overflow:hidden}
+.st-progress-bar{height:100%%;width:0%%;background:linear-gradient(90deg,#00d4ff,#00ffb3);border-radius:2px;transition:width 0.3s}
+.st-status{font-size:0.75rem;color:#647486;margin-bottom:0.8rem;min-height:1.2em}
+.st-btn{background:#00d4ff;color:#0a0e1a;border:none;padding:0.6rem 2.5rem;border-radius:8px;font-size:0.85rem;font-weight:600;cursor:pointer;transition:all 0.2s;letter-spacing:0.03em}
+.st-btn:hover{background:#00eaff;transform:translateY(-1px)}
+.st-btn:disabled{background:#1a2332;color:#647486;cursor:not-allowed;transform:none}
 </style>
 </head>
 <body>
@@ -59,6 +72,38 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;min-height:100vh;
 <div class="proto-geo"><span id="v6geo"></span></div>
 </div>
 </div>
+<div class="card" style="margin-top:1.5rem">
+<div class="label" style="margin-bottom:0.8rem">Speed Test</div>
+<div id="st-widget">
+<div class="st-results">
+<div class="st-metric">
+<div class="st-metric-label">Download</div>
+<div class="st-metric-value" id="st-dl">---</div>
+<div class="st-metric-unit">Mbps</div>
+</div>
+<div class="st-metric">
+<div class="st-metric-label">Upload</div>
+<div class="st-metric-value" id="st-ul">---</div>
+<div class="st-metric-unit">Mbps</div>
+</div>
+<div class="st-metric">
+<div class="st-metric-label">Ping</div>
+<div class="st-metric-value" id="st-ping">--</div>
+<div class="st-metric-unit">ms</div>
+</div>
+<div class="st-metric">
+<div class="st-metric-label">Jitter</div>
+<div class="st-metric-value" id="st-jitter">--</div>
+<div class="st-metric-unit">ms</div>
+</div>
+</div>
+<div class="st-progress-wrap" id="st-progress-wrap" style="display:none">
+<div class="st-progress-bar" id="st-progress-bar"></div>
+</div>
+<div class="st-status" id="st-status"></div>
+<button class="st-btn" id="st-btn" onclick="startSpeedTest()">Start</button>
+</div>
+</div>
 <div class="footer">
 <div class="api-examples">
 <div class="label">API Usage</div>
@@ -81,6 +126,139 @@ if(d.provider&&d.provider!=='Unknown')g.textContent=(g.textContent?g.textContent
 }
 load('https://anycast-v4.ffmuc.net/json','v4','v4geo');
 load('https://anycast-v6.ffmuc.net/json','v6','v6geo');
+</script>
+<script>
+var ST_URL='https://speed.ffmuc.net';
+var ST_THREADS=6;
+var ST_DL_DURATION=12;
+var ST_UL_DURATION=12;
+var ST_UL_SIZE=30*1024*1024;
+
+function $(id){return document.getElementById(id)}
+function setStatus(t){$('st-status').textContent=t}
+function setProgress(p){$('st-progress-bar').style.width=p+'%%'}
+
+function startSpeedTest(){
+  var btn=$('st-btn');
+  btn.disabled=true;btn.textContent='Testing...';
+  $('st-dl').textContent='---';$('st-ul').textContent='---';
+  $('st-ping').textContent='--';$('st-jitter').textContent='--';
+  $('st-progress-wrap').style.display='block';
+  setProgress(0);
+  runPing(function(){runDownload(function(){runUpload(function(){
+    btn.disabled=false;btn.textContent='Run Again';
+    setStatus('Complete');setProgress(100);
+  })})})
+}
+
+function runPing(cb){
+  setStatus('Measuring ping...');
+  var pings=[],count=0,total=20;
+  function ping(){
+    if(count>=total){
+      pings.sort(function(a,b){return a-b});
+      var best=pings.slice(0,Math.ceil(pings.length*0.5));
+      var avg=best.reduce(function(a,b){return a+b},0)/best.length;
+      var jitter=0;
+      for(var i=1;i<best.length;i++)jitter+=Math.abs(best[i]-best[i-1]);
+      jitter=best.length>1?jitter/(best.length-1):0;
+      $('st-ping').textContent=avg.toFixed(1);
+      $('st-jitter').textContent=jitter.toFixed(1);
+      setProgress(15);cb();return
+    }
+    var t=performance.now();
+    fetch(ST_URL+'/upload?r='+Math.random(),{method:'POST',body:'',mode:'cors',cache:'no-store'}).then(function(){
+      pings.push(performance.now()-t);count++;ping()
+    }).catch(function(){count++;ping()})
+  }
+  ping()
+}
+
+function runDownload(cb){
+  setStatus('Testing download...');
+  $('st-dl').parentElement.classList.add('active');
+  var totalBytes=0,startTime=performance.now(),done=false;
+  var xhrs=[];
+
+  function update(){
+    if(done)return;
+    var elapsed=(performance.now()-startTime)/1000;
+    var mbps=(totalBytes*8/elapsed)/1e6;
+    $('st-dl').textContent=mbps.toFixed(1);
+    var pct=15+Math.min(elapsed/ST_DL_DURATION,1)*40;
+    setProgress(pct);
+    if(elapsed>=ST_DL_DURATION){finish();return}
+    requestAnimationFrame(update)
+  }
+
+  function finish(){
+    if(done)return;done=true;
+    for(var i=0;i<xhrs.length;i++){try{xhrs[i].abort()}catch(e){}}
+    var elapsed=(performance.now()-startTime)/1000;
+    var mbps=(totalBytes*8/elapsed)/1e6;
+    $('st-dl').textContent=mbps.toFixed(1);
+    $('st-dl').parentElement.classList.remove('active');
+    setProgress(55);cb()
+  }
+
+  for(var i=0;i<ST_THREADS;i++){dlStream()}
+  requestAnimationFrame(update);
+
+  function dlStream(){
+    if(done)return;
+    var xhr=new XMLHttpRequest();
+    xhrs.push(xhr);
+    xhr.open('GET',ST_URL+'/downloading?r='+Math.random(),'true');
+    xhr.responseType='arraybuffer';
+    xhr.onprogress=function(e){if(e.loaded)totalBytes+=e.loaded-((this._prev)||0);this._prev=e.loaded};
+    xhr.onload=function(){if(!done)dlStream()};
+    xhr.onerror=function(){if(!done)dlStream()};
+    xhr.send()
+  }
+}
+
+function runUpload(cb){
+  setStatus('Testing upload...');
+  $('st-ul').parentElement.classList.add('active');
+  var totalBytes=0,startTime=performance.now(),done=false;
+  var xhrs=[];
+  var blob=new ArrayBuffer(ST_UL_SIZE);
+
+  function update(){
+    if(done)return;
+    var elapsed=(performance.now()-startTime)/1000;
+    var mbps=(totalBytes*8/elapsed)/1e6;
+    $('st-ul').textContent=mbps.toFixed(1);
+    var pct=55+Math.min(elapsed/ST_UL_DURATION,1)*40;
+    setProgress(pct);
+    if(elapsed>=ST_UL_DURATION){finish();return}
+    requestAnimationFrame(update)
+  }
+
+  function finish(){
+    if(done)return;done=true;
+    for(var i=0;i<xhrs.length;i++){try{xhrs[i].abort()}catch(e){}}
+    var elapsed=(performance.now()-startTime)/1000;
+    var mbps=(totalBytes*8/elapsed)/1e6;
+    $('st-ul').textContent=mbps.toFixed(1);
+    $('st-ul').parentElement.classList.remove('active');
+    setProgress(95);cb()
+  }
+
+  for(var i=0;i<ST_THREADS;i++){ulStream()}
+  requestAnimationFrame(update);
+
+  function ulStream(){
+    if(done)return;
+    var xhr=new XMLHttpRequest();
+    xhrs.push(xhr);
+    xhr.open('POST',ST_URL+'/upload?r='+Math.random(),'true');
+    xhr.upload.onprogress=function(e){if(e.loaded)totalBytes+=e.loaded-((this._prev)||0);this._prev=e.loaded};
+    xhr.onload=function(){if(!done)ulStream()};
+    xhr.onerror=function(){if(!done)ulStream()};
+    xhr.send(blob)
+  }
+}
 </script>
 </body>
 </html>
