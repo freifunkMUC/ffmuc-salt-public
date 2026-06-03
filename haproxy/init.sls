@@ -22,7 +22,7 @@ update-repo:
 haproxy:
   pkg.installed:
     - name: haproxy-awslc
-    - version: 3.3.6-0+ha33+ubuntu24.04u3
+    - version: 3.3.10-0+ha33+ubuntu24.04u1
 
 haproxy-keyring-dir:
   file.directory:
@@ -60,6 +60,7 @@ haproxy-configtest:
       - file: /etc/haproxy/maps/abuse_rooms.map
       - file: /etc/haproxy/errors/403.http
       - file: /etc/haproxy/responses/ip_response.json
+      - file: /etc/haproxy/responses/ip_lookup_response.json
       - file: /etc/haproxy/responses/ip_response.html
       - file: /etc/haproxy/responses/ip_response.txt
 
@@ -89,6 +90,15 @@ haproxy-configtest:
 /etc/haproxy/responses/ip_response.json:
   file.managed:
     - source: salt://haproxy/files/ip_response.json
+    - user: root
+    - group: root
+    - mode: "0644"
+    - require:
+      - file: /etc/haproxy/responses
+
+/etc/haproxy/responses/ip_lookup_response.json:
+  file.managed:
+    - source: salt://haproxy/files/ip_lookup_response.json
     - user: root
     - group: root
     - mode: "0644"
