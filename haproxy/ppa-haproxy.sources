@@ -1,5 +1,5 @@
 Types: deb
-URIs: https://www.haproxy.com/download/haproxy/performance/ubuntu/ha33
+URIs: https://www.haproxy.com/download/haproxy/performance/ubuntu/ha34
 Suites: {{ grains.oscodename }}
 Components: main
 Signed-By: /usr/share/keyrings/HAPROXY-key-community.asc

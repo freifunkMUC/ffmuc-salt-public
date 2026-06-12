@@ -5,12 +5,12 @@
 
 # Get all nodes for DNS records
 {% set nodes = salt['mine.get']('netbox:platform:slug:linux', 'minion_id', tgt_type='pillar') %}
-{% set cnames = salt['pillar.get']('netbox:config_context:dns_zones:cnames') %}
+{% set cnames = salt['config.get']('netbox:config_context:dns_zones:cnames') %}
 
 ffmuc.net:
   cloudflare.manage_zone_records:
     - zone:
-        api_token: {{ salt['pillar.get']('netbox:config_context:cloudflare:api_token') }}
+        api_token: {{ salt['config.get']('netbox:config_context:cloudflare:api_token') }}
         zone_id: d8d8e7a6ab00df3cc05f66fb0aa232e2
         exclude:
                - ^(?!.*(\.ext)).*

@@ -24,7 +24,7 @@ ssl_skip_verify = true
 bind_dn = "cn=binduser,dc=ffmuc,dc=net"
 # Search user bind password
 # If the password contains # or ; you have to wrap it with trippel quotes. Ex """#password;"""
-bind_password = "{{ salt['pillar.get']('netbox:services:ldap.in.ffmuc.net:custom_fields:api_token') }}"
+bind_password = "{{ salt['config.get']('netbox:services:ldap.in.ffmuc.net:custom_fields:api_token') }}"
 
 # User search filter, for example "(cn=%s)" or "(sAMAccountName=%s)" or "(uid=%s)"
 search_filter = "(cn=%s)"

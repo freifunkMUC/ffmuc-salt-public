@@ -5,10 +5,10 @@
 // Consider adding the 1918 zones here, if they are not used in your
 // organization
 //include "/etc/bind/zones.rfc1918";
-{%- set update_keys = salt['pillar.get']('netbox:config_context:dns_zones:update_keys') %}
-{%- set zones = salt['pillar.get']('netbox:config_context:dns_zones:zones') %}
-{%- set freifunk_net_zones = salt['pillar.get']('netbox:config_context:dns_zones:freifunk_net_zones') %}
-{%- set freifunk_net_axfr = salt['pillar.get']('netbox:config_context:dns_zones:freifunk_net_axfr_key') %}
+{%- set update_keys = salt['config.get']('netbox:config_context:dns_zones:update_keys') %}
+{%- set zones = salt['config.get']('netbox:config_context:dns_zones:zones') %}
+{%- set freifunk_net_zones = salt['config.get']('netbox:config_context:dns_zones:freifunk_net_zones') %}
+{%- set freifunk_net_axfr = salt['config.get']('netbox:config_context:dns_zones:freifunk_net_axfr_key') %}
 
 
 {%- for zone_key in update_keys | sort %}

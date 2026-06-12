@@ -16,8 +16,8 @@ ListenStream={{ ipaddress["address"].split('/')[0] }}:53
 {% endfor %}
 {% set dhcp_prefixes = salt['site_prefixes.get_site_prefixes'](
 	salt['pillar.get']('netbox:config_context:netbox:api_url'),
-	salt['pillar.get']('netbox:config_context:site_prefixes:netbox_token'),
-	salt['pillar.get']('netbox:config_context:site_prefixes:netbox_filter')
+	salt['config.get']('netbox:config_context:site_prefixes:netbox_token'),
+	salt['config.get']('netbox:config_context:site_prefixes:netbox_filter')
 ) %}
 {%- for name in dhcp_prefixes %}
 {%- for ip in salt['grains.get']('ipv4') %}

@@ -80,7 +80,7 @@ generate-dhparam:
 {% endif %}{# if "docker" in role #}
 
 {% set gcore_token = salt['pillar.get']('netbox:config_context:gcore:api_token') %}
-{% set cloudflare_token = salt['pillar.get']('netbox:config_context:cloudflare:api_token') %}
+{% set cloudflare_token = salt['config.get']('netbox:config_context:cloudflare:api_token') %}
 
 {% if "webserver-external" in role %}
 # Preparation / install deploy hooks

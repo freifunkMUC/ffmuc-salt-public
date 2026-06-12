@@ -34,7 +34,7 @@ Metric=1024
 
 {%- if 'wg' in interface %}
 [Network]
-Address={{ salt['wireguard_v6.generate'](salt['pillar.get']('netbox:config_context:wireguard:public_key')) }}/128
+Address={{ salt['wireguard_v6.generate'](salt['config.get']('netbox:config_context:wireguard:public_key')) }}/128
 # for systemd 250.4
 #IPv6AcceptRA=false # workaround for https://github.com/systemd/systemd/issues/23197
 VXLAN={{ interface | regex_replace('wg-', 'vx-') }}
