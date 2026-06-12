@@ -147,7 +147,7 @@ admin_user = admin
 admin_password = {{ salt['pillar.get']('netbox:config_context:grafana_admin_pw') }}
 
 # used for signing
-secret_key =  {{ salt['pillar.get']('netbox:config_context:grafana_secret') }}
+secret_key =  {{ salt['config.get']('netbox:config_context:grafana_secret') }}
 
 # Auto-login remember days
 ;login_remember_days = 7

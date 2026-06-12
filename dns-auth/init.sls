@@ -29,7 +29,7 @@ dnspython:
 
 # Get all nodes for DNS records
 {% set nodes = salt['mine.get']('netbox:platform:slug:linux', 'minion_id', tgt_type='pillar') %}
-{% set cnames = salt['pillar.get']('netbox:config_context:dns_zones:cnames') %}
+{% set cnames = salt['config.get']('netbox:config_context:dns_zones:cnames') %}
 {%- set node_has_overlay = [] %}{# List of node[0] #}
 
 {%- if 'dnsdist' in salt['pillar.get']('netbox:tag_list', []) %}
@@ -140,7 +140,7 @@ dnspython:
     - watch_in:
       - cmd: rndc-reload
 
-{% set freifunk_net_zones = salt['pillar.get']('netbox:config_context:dns_zones:freifunk_net_zones') %}
+{% set freifunk_net_zones = salt['config.get']('netbox:config_context:dns_zones:freifunk_net_zones') %}
 {% for domain in freifunk_net_zones %}
 {% set zonefile_path = '/etc/bind/zones/db.'+domain %}
 /etc/bind/zones/db.{{ domain }}:
@@ -384,8 +384,8 @@ record-CNAME-{{ cname_ov }}:
 # Create extra DNS entries for devices not in pillars
 {%- set extra_dns_entries = salt['extra_dns_entries.get_extra_dns_entries'](
   salt['pillar.get']('netbox:config_context:netbox:api_url'),
-  salt['pillar.get']('netbox:config_context:dns_zones:netbox_token'),
-  salt['pillar.get']('netbox:config_context:dns_zones:netbox_filter')
+  salt['config.get']('netbox:config_context:dns_zones:netbox_token'),
+  salt['config.get']('netbox:config_context:dns_zones:netbox_filter')
 ) %}
 
 {%- for dns_entry in extra_dns_entries %}
@@ -429,7 +429,7 @@ record-AAAA-extra-{{ dns_entry }}:
 {%- endfor %}{# for dns_entry in extra_dns_entries #}
 
 # Additional DNS records
-{%- set custom_records = salt['pillar.get']('netbox:config_context:dns_zones:custom_records', []) %}
+{%- set custom_records = salt['config.get']('netbox:config_context:dns_zones:custom_records', []) %}
 {%- for record in custom_records %}
 record-{{ loop.index }}-{{ record.get('type') }}-{{ record.get('name') }}.{{ record.get('zone') }}:
   ddns.present:

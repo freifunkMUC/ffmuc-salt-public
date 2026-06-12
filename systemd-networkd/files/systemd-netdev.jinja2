@@ -10,7 +10,7 @@ Kind={{ kind }}
 {%- if kind == "wireguard" %}
 # If we generate a wireguard interface we need additional stuff
 {%- set sites_config = salt['pillar.get']('netbox:config_context:site_config') %}
-{%- set wireguard_key = salt['pillar.get']('netbox:config_context:wireguard:secret_key') %}
+{%- set wireguard_key = salt['config.get']('netbox:config_context:wireguard:secret_key') %}
 {%- set site = interface | regex_replace('wg-', '')%}
 {%- set wireguard_port = sites_config[site]['wireguard_port'] %}
 [WireGuard]
@@ -36,7 +36,7 @@ Endpoint={{ node | regex_replace('in\.ffmuc\.net','ext.ffmuc.net') }}:{{ wiregua
 {%- set current_site = interface | regex_replace('vx-','') %}
 [VXLAN]
 VNI={{ sites[current_site]['vni'] }}
-Local={{ salt['wireguard_v6.generate'](salt['pillar.get']('netbox:config_context:wireguard:public_key')) }}
+Local={{ salt['wireguard_v6.generate'](salt['config.get']('netbox:config_context:wireguard:public_key')) }}
 {%- endif %}
 
 {%- if kind == "batadv" %}

@@ -8,13 +8,13 @@
 
 HOST="_acme-challenge"
 
-{%- set update_key = salt['pillar.get']('netbox:config_context:dns_zones:update_keys:letsencrypt:key') %}
+{%- set update_key = salt['config.get']('netbox:config_context:dns_zones:update_keys:letsencrypt:key') %}
 UPDATE_KEY="{{ update_key }}"
 
 {#- TODO: use netbox_vms:get_vms_by_filter to get authoritative DNS servers
 {%- set auth_servers = salt['netbox_vms:get_vms_by_filter'](
     salt['pillar.get']('netbox:config_context:netbox:api_url'),
-    salt['pillar.get']('netbox:config_context:dns_zones:netbox_token'),
+    salt['config.get']('netbox:config_context:dns_zones:netbox_token'),
     'tag=authorative-dns'
 ) %}
 AUTH_SERVERS=({{ auth_servers | join(" ") }})
