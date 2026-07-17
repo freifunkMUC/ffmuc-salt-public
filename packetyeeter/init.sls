@@ -186,7 +186,7 @@ packetyeeter-collector-pkg:
     - template: jinja
     - mode: "0644"
     - context:
-      collector: {{ collector | json }}
+        collector: {{ collector | json }}
     - require:
       - pkg: packetyeeter-collector-pkg
 
@@ -305,7 +305,7 @@ packetyeeter-analyzer-geoip-country:
     - template: jinja
     - mode: "0644"
     - context:
-      analyzer: {{ analyzer | json }}
+        analyzer: {{ analyzer | json }}
     - require:
       - file: /srv/docker/packetyeeter-analyzer
 
