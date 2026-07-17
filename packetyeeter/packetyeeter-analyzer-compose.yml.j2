@@ -1,0 +1,37 @@
+---
+
+version: "3.5"
+
+services:
+  analyzer:
+    image: {{ analyzer['image'] }}
+    container_name: packetyeeter-analyzer
+    restart: unless-stopped
+    command:
+      - "-listen-addr=0.0.0.0:9090"
+      - "-metrics-addr=0.0.0.0:9091"
+      - "-inspect-addr=0.0.0.0:9092"
+      - "-reputation-threshold={{ analyzer['reputation_threshold'] }}"
+      - "-ai-confidence-threshold={{ analyzer['ai_confidence_threshold'] }}"
+      {%- if analyzer['geoip_enabled'] %}
+      - "-geoip-asn={{ analyzer['geoip_container_path'] }}"
+      {%- endif %}
+      - "-geoip-country={{ analyzer['geoip_country_container_path'] }}"
+      {%- if analyzer['dry_run'] %}
+      - "-dry-run"
+      {%- endif %}
+      {%- if analyzer['verbose'] %}
+      - "-v"
+      {%- endif %}
+    ports:
+      - "{{ analyzer['listen_port'] }}:9090"
+      - "{{ analyzer['metrics_port'] }}:9091"
+      - "127.0.0.1:{{ analyzer['inspect_port'] }}:9092"
+    volumes:
+      - "./data:/data"
+      - "./ml-data:/var/lib/packetyeeter"
+      - "./ml-data/sessions:/var/cache/packetyeeter/sessions"
+      - "{{ analyzer['geoip_country_host_path'] }}:{{ analyzer['geoip_country_container_path'] }}:ro"
+      {%- if analyzer['geoip_enabled'] %}
+      - "{{ analyzer['geoip_host_path'] }}:{{ analyzer['geoip_container_path'] }}:ro"
+      {%- endif %}

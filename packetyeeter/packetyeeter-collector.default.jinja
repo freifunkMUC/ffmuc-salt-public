@@ -1,0 +1,46 @@
+# Managed by Salt: packetyeeter formula
+# Host-specific options should come from netbox:config_context:packetyeeter:collector
+#
+# NOTE: the officially packaged packetyeeter-collector.service (v0.1.0) uses
+# bash-only ${VAR:-default}/${VAR:+...} expansion in ExecStart, which native
+# systemd does not support (fails even when the variable IS set). This
+# formula installs a systemd drop-in override
+# (packetyeeter-collector-override.conf) with a corrected ExecStart using
+# only plain ${VAR} substitution, and folds dry-run/allowlist/policy/verbose
+# into EXTRA_ARGS below (composed here, not via shell conditionals) since
+# only ${EXTRA_ARGS} is actually read by that ExecStart line.
+
+# Network interface to attach eBPF programs to
+INTERFACE={{ collector.get('interface', 'eth0') }}
+
+# Address of the analyzer daemon (host:port)
+ANALYZER_ADDR={{ collector.get('analyzer_addr', '127.0.0.1:9090') }}
+
+# Prometheus metrics HTTP listen address
+METRICS_ADDR={{ collector.get('metrics_addr', ':2112') }}
+
+# HAProxy peer protocol port
+HAPROXY_PORT={{ collector.get('haproxy_port', 8765) }}
+
+# SPOE agent port
+SPOE_PORT={{ collector.get('spoe_port', 9876) }}
+
+# Unix socket for yeetctl/CLI management
+SOCKET_PATH={{ collector.get('socket_path', '/var/run/packetyeeter-collector.sock') }}
+
+# GeoIP ASN database path
+GEOIP_ASN_PATH={{ collector.get('geoip_asn', '/var/lib/GeoIP/GeoLite2-ASN.mmdb') }}
+
+# Default duration to keep an IP blocked
+BLOCK_DURATION={{ collector.get('block_duration', '5m') }}
+
+{%- set extra_parts = [] %}
+{%- if collector.get('dry_run', True) %}{% do extra_parts.append('-dry-run') %}{% endif %}
+{%- if collector.get('allowlist') %}{% do extra_parts.append('-allowlist ' ~ collector['allowlist']) %}{% endif %}
+{%- if collector.get('policy') %}{% do extra_parts.append('-policy ' ~ collector['policy']) %}{% endif %}
+{%- if collector.get('verbose', False) %}{% do extra_parts.append('-v') %}{% endif %}
+# Additional flags (dry-run/allowlist/policy/verbose composed above; the
+# packaged unit only reads ${EXTRA_ARGS}, not separate DRY_RUN/ALLOWLIST vars)
+EXTRA_ARGS={{ extra_parts | join(' ') }}
+
+

@@ -4,7 +4,7 @@
 {%- if 'influxdb_server' in salt['pillar.get']('netbox:tag_list', []) %}
 influx-db-repo-key2:
   cmd.run:
-    - name: "curl https://repos.influxdata.com/influxdata-archive_compat.key | gpg --batch --yes --dearmor -o /usr/share/keyrings/influxdb-keyring.gpg"
+    - name: "curl https://repos.influxdata.com/influxdata-archive.key | gpg --batch --yes --dearmor -o /usr/share/keyrings/influxdb-keyring.gpg"
 
 influx-db-repo2:
   pkgrepo.managed:

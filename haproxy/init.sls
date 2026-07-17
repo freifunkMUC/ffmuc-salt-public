@@ -1,4 +1,7 @@
-{% set tags = salt['pillar.get']('netbox:tag_list', []) %}
+{# NOTE: use config.get, not pillar.get, for netbox reads. Salt wraps netbox sub-dicts
+   containing a sensitive key as a MaskedDict whose redacted repr ('**********') leaks
+   through, masking sibling values (e.g. tag_list entries). config.get returns a plain copy. #}
+{% set tags = salt['config.get']('netbox:tag_list', []) %}
 {% if "haproxy" in tags %}
 
 haproxy-ppa:
@@ -22,7 +25,7 @@ update-repo:
 haproxy:
   pkg.installed:
     - name: haproxy-awslc
-    - version: 3.4.0-0+ha34+ubuntu24.04u4
+    - version: 3.4.2-0+ha34+ubuntu24.04u1
 
 haproxy-keyring-dir:
   file.directory:
@@ -63,6 +66,92 @@ haproxy-configtest:
       - file: /etc/haproxy/responses/ip_lookup_response.json
       - file: /etc/haproxy/responses/ip_response.html
       - file: /etc/haproxy/responses/ip_response.txt
+{% if "packetyeeter-collector" in tags %}
+      - file: /etc/haproxy/lua/ja4.lua
+      - file: /etc/haproxy/lua/ja4h.lua
+      - file: packetyeeter-spoe-conf
+      - file: packetyeeter-spoe-tune-timeout-hello
+      - file: packetyeeter-spoe-tune-timeout-processing
+{% endif %}
+
+{% if "packetyeeter-collector" in tags %}
+{# JA4/JA4H fingerprinting (Lua) + the SPOE config that exports signals to the
+   local packetyeeter collector (127.0.0.1:9876). Fetched directly from the
+   upstream repo (same pattern as other third-party assets in this repo, e.g.
+   GeoLite mmdb) rather than vendoring a copy, to avoid transcription risk in
+   security-sensitive fingerprinting code and stay in sync with upstream. #}
+/etc/haproxy/lua:
+  file.directory:
+    - user: root
+    - group: root
+    - mode: "0755"
+    - require:
+      - pkg: haproxy
+
+/etc/haproxy/lua/ja4.lua:
+  file.managed:
+    - source: https://raw.githubusercontent.com/awlx/packetyeeter/main/examples/ja4.lua
+    - skip_verify: True
+    - mode: "0644"
+    - require:
+      - file: /etc/haproxy/lua
+
+/etc/haproxy/lua/ja4h.lua:
+  file.managed:
+    - source: https://raw.githubusercontent.com/awlx/packetyeeter/main/examples/ja4h.lua
+    - skip_verify: True
+    - mode: "0644"
+    - require:
+      - file: /etc/haproxy/lua
+
+/etc/haproxy/spoe:
+  file.directory:
+    - user: root
+    - group: root
+    - mode: "0755"
+    - require:
+      - pkg: haproxy
+
+packetyeeter-spoe-conf:
+  file.managed:
+    - name: /etc/haproxy/spoe/packetyeeter.conf
+    - source: https://raw.githubusercontent.com/awlx/packetyeeter/main/examples/packetyeeter.spoe.conf
+    - skip_verify: True
+    - mode: "0644"
+    - require:
+      - file: /etc/haproxy/spoe
+
+{# Tighten the upstream example's default timeouts, which are far more
+   generous than real measured processing time (observed avg ~14us/message
+   in production - see packetyeeter_spoe_processing_seconds metric). This
+   filter runs synchronously on every HTTP response (event on-http-response),
+   so "timeout processing" directly bounds worst-case added latency per
+   request when the local collector is slow/stuck; "on-timeout ignore" +
+   "option continue-on-error" mean a timeout just skips this request's
+   signal rather than failing it, so tightening is safe. Patched via
+   file.replace (not a local template) to stay in sync with upstream's
+   message/args definitions, which we intentionally fetch rather than
+   vendor (see comment above). #}
+packetyeeter-spoe-tune-timeout-hello:
+  file.replace:
+    - name: /etc/haproxy/spoe/packetyeeter.conf
+    - pattern: '^(\s*timeout hello\s+).*$'
+    - repl: '\g<1>100ms'
+    - flags:
+      - MULTILINE
+    - require:
+      - file: packetyeeter-spoe-conf
+
+packetyeeter-spoe-tune-timeout-processing:
+  file.replace:
+    - name: /etc/haproxy/spoe/packetyeeter.conf
+    - pattern: '^(\s*timeout processing\s+).*$'
+    - repl: '\g<1>50ms'
+    - flags:
+      - MULTILINE
+    - require:
+      - file: packetyeeter-spoe-conf
+{% endif %}
 
 /etc/haproxy/haproxy.cfg:
   file.managed:

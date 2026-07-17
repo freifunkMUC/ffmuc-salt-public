@@ -1,33 +1,15 @@
+{% set sites = salt['pillar.get']('netbox:config_context:sites') -%}
 ---
 
 # [broker, worker] The domains that should be accepted by clients and for which matching WireGuard interfaces exist
 domains:
-  - ffmuc_augsburg
-  - ffmuc_freising
-  - ffmuc_gauting
-  - ffmuc_muc_cty
-  - ffmuc_muc_nord
-  - ffmuc_muc_ost
-  - ffmuc_muc_sued
-  - ffmuc_muc_west
-  - ffmuc_uml_nord
-  - ffmuc_uml_ost
-  - ffmuc_uml_sued
-  - ffmuc_uml_west
-  - ffmuc_ulm
-  - ffmuc_welt
-  - ffmuc_dlg
-  - ffdon_mitte
-  - ffdon_nordwest
-  - ffdon_sued
-  - ffwert_city
-  - ffwert_events
+{% for site, domains in sites.items() %}{% for domain in domains %}
+  - {{site}}_{{ domain }}{% endfor %}{% endfor %}
 # [broker, worker] The prefix is trimmed from the domain name and replaced with 'wg-' and 'vx-'
 # to calculate the WireGuard and VXLAN interface names
 domain_prefixes:
-  - ffmuc_
-  - ffdon_
-  - ffwert_
+{% for site in sites.keys() %}
+  - {{site}}_{% endfor %}
 # [worker] The external hostname of this worker
 externalName: {{ grains['id'] | regex_replace('in\.ffmuc\.net','ext.ffmuc.net') }}
 # [broker, worker] MQTT connection informations

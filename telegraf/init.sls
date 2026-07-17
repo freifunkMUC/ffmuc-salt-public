@@ -11,7 +11,7 @@
 
 influx-db-repo-key:
   cmd.run:
-    - name: "curl https://repos.influxdata.com/influxdata-archive_compat.key | gpg --batch --yes --dearmor -o /usr/share/keyrings/influxdb-keyring.gpg"
+    - name: "curl https://repos.influxdata.com/influxdata-archive.key | gpg --batch --yes --dearmor -o /usr/share/keyrings/influxdb-keyring.gpg"
 
 influx-db-repo:
   pkgrepo.managed:
@@ -185,6 +185,31 @@ remove_asterisk_monitoring:
 {% if salt["service.available"]("pdns-recursor") %}
   file.managed:
     - source: salt://telegraf/files/in_powerdns_recursor.conf
+{% else %}
+  file.absent:
+{% endif %}
+    - watch_in:
+          service: telegraf
+
+/etc/telegraf/telegraf.d/in-packetyeeter.conf:
+  file.absent:
+    - watch_in:
+          service: telegraf
+
+/etc/telegraf/telegraf.d/in-packetyeeter-collector.conf:
+{% if 'packetyeeter-collector' in tags %}
+  file.managed:
+    - source: salt://telegraf/files/in_packetyeeter-collector.conf
+{% else %}
+  file.absent:
+{% endif %}
+    - watch_in:
+          service: telegraf
+
+/etc/telegraf/telegraf.d/in-packetyeeter-analyzer.conf:
+{% if 'packetyeeter-analyzer' in tags %}
+  file.managed:
+    - source: salt://telegraf/files/in_packetyeeter-analyzer.conf
 {% else %}
   file.absent:
 {% endif %}
