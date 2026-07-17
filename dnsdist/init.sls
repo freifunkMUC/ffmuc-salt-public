@@ -8,7 +8,8 @@
 dnsdist-repo-key:
   cmd.run:
     - name: "/usr/lib/apt/apt-helper download-file https://repo.powerdns.com/FD380FBB-pub.asc /tmp/FD380FBB-pub.asc && mv /tmp/FD380FBB-pub.asc /etc/apt/trusted.gpg.d/FD380FBB.asc"
-    - creates: /etc/apt/trusted.gpg.d/FD380FBB.asc
+    # NOTE: no 'creates' guard: PowerDNS periodically re-signs the FD380FBB key to
+    # extend its expiry. Always re-fetch so an expired key (EXPKEYSIG) is refreshed.
 
 dnsdist-repo:
   pkgrepo.managed:

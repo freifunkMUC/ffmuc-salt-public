@@ -19,7 +19,8 @@ include:
 icinga2-repo-key:
   cmd.run:
     - name: "curl -fsSL https://packages.icinga.com/icinga.key | gpg --batch --yes --dearmor -o /usr/share/keyrings/icinga2-keyring.gpg"
-    - creates: /usr/share/keyrings/icinga2-keyring.gpg
+    # NOTE: no 'creates' guard: Icinga rotates the signing key. Always re-fetch so a
+    # stale keyring (NO_PUBKEY) is refreshed to the current icinga.key.
 
 icinga2-repo:
   pkgrepo.managed:

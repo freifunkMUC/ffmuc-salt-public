@@ -38,3 +38,27 @@ ffmuc_removed_packages:
     - pkgs:
       - postfix
       - rpcbind
+
+/etc/apt/keyrings:
+  file.directory:
+    - makedirs: True
+
+bandwidth-monitor-repo-key:
+  cmd.run:
+    - name: "curl -fsSL https://awlx.github.io/bandwidth-monitor/bandwidth-monitor.gpg.key | gpg --batch --yes --dearmor -o /etc/apt/keyrings/bandwidth-monitor.gpg"
+    - require:
+      - file: /etc/apt/keyrings
+
+bandwidth-monitor-repo:
+  pkgrepo.managed:
+    - name: deb [signed-by=/etc/apt/keyrings/bandwidth-monitor.gpg] https://awlx.github.io/bandwidth-monitor stable main
+    - file: /etc/apt/sources.list.d/bandwidth-monitor.list
+    - clean_file: True
+    - require:
+      - cmd: bandwidth-monitor-repo-key
+
+bandwidth-top:
+  pkg.installed:
+    - version: '0.0.34'
+    - require:
+      - pkgrepo: bandwidth-monitor-repo
