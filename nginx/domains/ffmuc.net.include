@@ -18,6 +18,10 @@ location = /captive {
 	default_type application/captive+json;
 }
 
+location = /captive-bachtal {
+	default_type application/captive+json;
+}
+
 # Point SSID-URL to ffmuc.net
 rewrite ^/(uml_.*|muc_.*|gauting|freising|augsburg|welt|ulm)$ https://ffmuc.net redirect;
 
