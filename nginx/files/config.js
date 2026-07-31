@@ -59,20 +59,32 @@ var config = {
     // '/gluon-v2023.1.x_v2021.1.x/stable/sysupgrade/': 'stable',
 
     // OpenWrt 23.05
-    '/gluon-v2023.2.x_v2023.1.x/experimental/factory/': 'experimental',
-    '/gluon-v2023.2.x_v2023.1.x/experimental/other/': 'experimental',
-    '/gluon-v2023.2.x_v2023.1.x/experimental/sysupgrade/': 'experimental',
-    '/gluon-v2023.2.x_v2023.1.x/testing/factory/': 'testing',
-    '/gluon-v2023.2.x_v2023.1.x/testing/other/': 'testing',
+    // '/gluon-v2023.2.x_v2023.1.x/experimental/factory/': 'experimental',
+    // '/gluon-v2023.2.x_v2023.1.x/experimental/other/': 'experimental',
+    // '/gluon-v2023.2.x_v2023.1.x/experimental/sysupgrade/': 'experimental',
+    // '/gluon-v2023.2.x_v2023.1.x/testing/factory/': 'testing',
+    // '/gluon-v2023.2.x_v2023.1.x/testing/other/': 'testing',
+    // '/gluon-v2023.2.x_v2023.1.x/testing/sysupgrade/': 'testing',
+    // '/v2025.12.3/stable/factory/': 'stable',
+    // '/v2025.12.3/stable/other/': 'stable',
+    // '/v2025.12.3/stable/sysupgrade/': 'stable',
+
+
+   // OpenWrt 24.10
+    '/gluon-v2025.1.x_v2023.1.x/experimental/factory/': 'experimental',
+    '/gluon-v2025.1.x_v2023.1.x/experimental/other/': 'experimental',
+    '/gluon-v2025.1.x_v2023.1.x/experimental/sysupgrade/': 'experimental',
+    '/gluon-v2025.1.x_v2023.1.x/testing/factory/': 'testing',
+    '/gluon-v2025.1.x_v2023.1.x/testing/other/': 'testing',
     '/gluon-v2023.2.x_v2023.1.x/testing/sysupgrade/': 'testing',
-    '/v2025.12.3/stable/factory/': 'stable',
-    '/v2025.12.3/stable/other/': 'stable',
-    '/v2025.12.3/stable/sysupgrade/': 'stable',
+    '/gluon-v2025.1.x_v2023.1.x/stable/factory/': 'stable',
+    '/gluon-v2025.1.x_v2023.1.x/stable/other/': 'stable',
+    '/gluon-v2025.1.x_v2023.1.x/stable/sysupgrade/': 'stable',    
 
     // OpenWrt 24.10
-    '/gluon-main/experimental/factory/': 'gluon-main',
-    '/gluon-main/experimental/other/': 'gluon-main',
-    '/gluon-main/experimental/sysupgrade/': 'gluon-main',
+    // '/gluon-main/experimental/factory/': 'gluon-main',
+    // '/gluon-main/experimental/other/': 'gluon-main',
+    // '/gluon-main/experimental/sysupgrade/': 'gluon-main',
 
     // OpenWrt master
     '/gluon-next/experimental/factory/': 'gluon-next',
