@@ -1,0 +1,11 @@
+[Unit]
+Description=Cleans FFmuc-rustic-backup every month at 5 am
+
+[Timer]
+OnCalendar=*-*-01 5:00:00
+RandomizedDelaySec=1h
+Unit=ffmuc-rustic-backup-cleaner.service
+Persistent=true
+
+[Install]
+WantedBy=timers.target

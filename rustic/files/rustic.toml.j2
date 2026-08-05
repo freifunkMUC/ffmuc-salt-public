@@ -1,0 +1,52 @@
+# rustic config file to use B2 storage via Apache OpenDAL
+[repository]
+repository = "opendal:b2" # just specify the opendal service here
+password = "{{ salt['config.get']('netbox:config_context:backup:password') }}"
+cache-dir = "/var/cache/rustic"
+
+# B2 specific options
+[repository.options]
+# Here, we give the required b2 options, see https://opendal.apache.org/docs/rust/opendal/services/struct.B2.html
+application_key_id = "{{ salt['config.get']('netbox:config_context:backblaze:keyid') }}"
+application_key = "{{ salt['config.get']('netbox:config_context:backblaze:application_key')  }}"
+bucket = "{{ salt['config.get']('netbox:config_context:backup:bucket:name', "") }}"
+bucket_id = "{{ salt['config.get']('netbox:config_context:backup:bucket:id', "") }}"
+root = "/restic-repo" # Set a repository root directory if not using the root directory of the bucket
+
+[snapshot-filter]
+filter-hosts = ["{{ grains.id }}"]
+
+[backup]
+host = "{{ grains.id }}"
+exclude-if-present = [".nobackup", "CACHEDIR.TAG"] # Default: not set
+{#- mastodon-data is on external filesystem in /srv/docker. if this is true it wont be backed up #}
+one-file-system = false
+
+# Note that if you call "rustic backup" without any source, all sources from this config
+# file will be processed.
+[[backup.snapshots]]
+sources = [{% for backup_dir in salt['config.get']('netbox:config_context:backup:directories') %}
+    "{{ backup_dir }}",
+{%- endfor %}
+]
+{%- for name, command in salt['config.get']('netbox:config_context:backup:stdin_commands', {}).items() %}
+
+[[backup.snapshots]]
+name = "stdin-{{ name }}"
+sources = ["-"]
+stdin-command = "{{ command }}"
+as-path = "{{ name }}"
+{%- endfor %}
+
+[forget]
+prune = false # done centrally by host tagged with 'backup-cleaner'
+filter-hosts = ["{{ grains.id }}"]
+
+keep-last = 7
+keep-hourly = 5
+keep-daily = 14
+keep-weekly = 4
+keep-monthly = 0
+keep-quarter-yearly = 0
+keep-half-yearly = 0
+keep-yearly = 0

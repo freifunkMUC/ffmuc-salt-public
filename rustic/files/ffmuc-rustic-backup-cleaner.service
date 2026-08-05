@@ -1,0 +1,7 @@
+[Unit]
+Description=FFMuc rustic Backup Cleaner
+
+[Service]
+Nice=19
+IOSchedulingClass=idle
+ExecStart=/usr/local/bin/rustic prune
