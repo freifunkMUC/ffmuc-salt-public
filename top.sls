@@ -25,7 +25,7 @@ base:
     - certs
     - docker
     - dphys-swapfile
-    - duplicity
+    - rustic
     - grafana
     - icinga2
     - influxdb

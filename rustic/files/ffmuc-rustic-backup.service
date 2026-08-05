@@ -1,0 +1,7 @@
+[Unit]
+Description=FFMuc rustic Backup
+
+[Service]
+Nice=19
+IOSchedulingClass=idle
+ExecStart=/bin/bash /usr/local/sbin/rustic-backup.sh
