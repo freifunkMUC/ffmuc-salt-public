@@ -81,15 +81,15 @@ var config = {
     '/gluon-v2025.1.x_v2023.1.x/stable/other/': 'stable',
     '/gluon-v2025.1.x_v2023.1.x/stable/sysupgrade/': 'stable',    
 
-    // OpenWrt 24.10
-    // '/gluon-main/experimental/factory/': 'gluon-main',
-    // '/gluon-main/experimental/other/': 'gluon-main',
-    // '/gluon-main/experimental/sysupgrade/': 'gluon-main',
+    // OpenWrt 25.12
+    '/gluon-main/experimental/factory/': 'gluon-main',
+    '/gluon-main/experimental/other/': 'gluon-main',
+    '/gluon-main/experimental/sysupgrade/': 'gluon-main',
 
     // OpenWrt master
-    '/gluon-next/experimental/factory/': 'gluon-next',
-    '/gluon-next/experimental/other/': 'gluon-next',
-    '/gluon-next/experimental/sysupgrade/': 'gluon-next',
+    // '/gluon-next/experimental/factory/': 'gluon-next',
+    // '/gluon-next/experimental/other/': 'gluon-next',
+    // '/gluon-next/experimental/sysupgrade/': 'gluon-next',
   },
   // page title
   title: 'Firmware',
