@@ -31,9 +31,7 @@ def request_cert(ca_url, certname):
                 "CN": certname,
                 "hosts": [certname],
                 "key": {"algo": "rsa", "size": 2048},
-                "names": [
-                    {"C": "DE", "ST": "Bavaria", "L": "Munich", "O": "FFMUC"}
-                ],
+                "names": [{"C": "DE", "ST": "Bavaria", "L": "Munich", "O": "FFMUC"}],
             }
         }
     )
