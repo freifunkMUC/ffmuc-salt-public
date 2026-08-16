@@ -10,20 +10,22 @@
 python3-netifaces:
    pkg.installed
 
+python3-pyroute2:
+   pkg.installed
+
 {% set sites = salt['pillar.get']('netbox:config_context:sites') %}
 {% for prefix, domains in sites.items() %}
 {% for site in domains %}
 
-{% if not salt['file.directory_exists']('/opt/respondd-' ~ site ) %}
 /opt/respondd-{{ site }}:
   file.recurse:
     - source: salt://respondd/respondd-tmpl
-    # try template: jinja option and get rid of below overridings
     - exclude_pat:
       - ".git/*"
+      - "lib/respondd_client.py"
+      - "*.example"
     - watch_in:
         - service: respondd@{{ site }}
-{% endif %}
 
 /opt/respondd-{{ site }}/alias.json:
   file.managed:
@@ -67,6 +69,8 @@ respondd@{{ site }}:
     - require:
       - file: /opt/respondd-{{ site }}/alias.json
       - file: /opt/respondd-{{ site }}/config.json
+      - file: /opt/respondd-{{ site }}/lib/respondd_client.py
+      - file: /opt/respondd-{{ site }}/ext-respondd.py
       - file: /etc/systemd/system/respondd@.service
 {% endfor %}
 {% endfor %}

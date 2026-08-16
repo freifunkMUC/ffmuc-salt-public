@@ -6,6 +6,7 @@ After=syslog.target network-online.target
 Type=simple
 User=root
 Group=root
+Environment=PYTHONUNBUFFERED=1
 WorkingDirectory=/opt/respondd-%I
 ExecStart=/opt/respondd-%I/ext-respondd.py
 
