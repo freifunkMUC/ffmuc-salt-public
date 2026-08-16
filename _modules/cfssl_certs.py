@@ -4,6 +4,8 @@
 #  --  Wed 03 April 2019
 #
 __virtualname__ = "cfssl_certs"
+import json
+
 try:
     import requests
 
@@ -23,9 +25,17 @@ def __virtual__():
 
 
 def request_cert(ca_url, certname):
-    cert_req = (
-        '{ "request": {"CN": "%s","hosts":["%s"],"key": { "algo": "rsa","size": 2048 }, "names": [{"C":"DE","ST":"Bavaria", "L":"Munich","O":"FFMUC"}]}}'
-        % (certname, certname)
+    cert_req = json.dumps(
+        {
+            "request": {
+                "CN": certname,
+                "hosts": [certname],
+                "key": {"algo": "rsa", "size": 2048},
+                "names": [
+                    {"C": "DE", "ST": "Bavaria", "L": "Munich", "O": "FFMUC"}
+                ],
+            }
+        }
     )
     print(cert_req)
     headers = {"Content-type": "application/json"}
