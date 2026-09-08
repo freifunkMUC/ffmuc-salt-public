@@ -1,10 +1,15 @@
 #!/usr/bin/python
 """WIP module to get virtual machine data from netbox, e.g. to get all VMs with a certain tag.."""
 
-import requests
 import logging
 
+import requests
+from salt.exceptions import CommandExecutionError
+
 log = logging.getLogger(__name__)
+
+# (connect, read) - bound the call so a hanging Netbox cannot stall a render.
+REQUEST_TIMEOUT = (5, 30)
 
 
 def get_vms_by_filter(netbox_api, netbox_token, filter):
@@ -14,16 +19,15 @@ def get_vms_by_filter(netbox_api, netbox_token, filter):
         "Accept": "application/json",
     }
     url = f"{netbox_api}/virtualization/virtual-machines/?{filter}"
-    auth_servers = []
     try:
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, timeout=REQUEST_TIMEOUT)
         response.raise_for_status()
-        response = response.json()
-        log.info(response)
-        for auth in response["results"]:
-            auth_servers.append(auth["name"])
-    except Exception as e:
-        log.error(str(e))
-        __context__["retcode"] = 1
-        return e
-    return auth_servers
+        results = response.json()["results"]
+    except Exception as exc:
+        raise CommandExecutionError(
+            "netbox_vms: querying Netbox for virtual machines failed ({}): {}".format(
+                url, exc
+            )
+        )
+
+    return [vm["name"] for vm in results]
