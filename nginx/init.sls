@@ -13,7 +13,7 @@
 
 nginx-repo-key:
   cmd.run:
-    - name: "curl https://nginx.org/keys/nginx_signing.key | gpg --dearmor -o /usr/share/keyrings/nginx-archive-keyring.gpg"
+    - name: "curl -fsSL https://nginx.org/keys/nginx_signing.key | gpg --batch --yes --dearmor -o /usr/share/keyrings/nginx-archive-keyring.gpg.tmp && mv /usr/share/keyrings/nginx-archive-keyring.gpg.tmp /usr/share/keyrings/nginx-archive-keyring.gpg"
     - creates: /usr/share/keyrings/nginx-archive-keyring.gpg
 
 /etc/apt/sources.list.d/nginx.list:

@@ -45,7 +45,7 @@ ffmuc_removed_packages:
 
 bandwidth-monitor-repo-key:
   cmd.run:
-    - name: "curl -fsSL https://awlx.github.io/bandwidth-monitor/bandwidth-monitor.gpg.key | gpg --batch --yes --dearmor -o /etc/apt/keyrings/bandwidth-monitor.gpg"
+    - name: "curl -fsSL https://awlx.github.io/bandwidth-monitor/bandwidth-monitor.gpg.key | gpg --batch --yes --dearmor -o /etc/apt/keyrings/bandwidth-monitor.gpg.tmp && mv /etc/apt/keyrings/bandwidth-monitor.gpg.tmp /etc/apt/keyrings/bandwidth-monitor.gpg"
     - require:
       - file: /etc/apt/keyrings
 

@@ -5,7 +5,7 @@
 
 grafana-repo-key:
   cmd.run:
-    - name: "curl https://apt.grafana.com/gpg.key | gpg --dearmor -o /usr/share/keyrings/grafana-keyring.gpg"
+    - name: "curl -fsSL https://apt.grafana.com/gpg.key | gpg --batch --yes --dearmor -o /usr/share/keyrings/grafana-keyring.gpg.tmp && mv /usr/share/keyrings/grafana-keyring.gpg.tmp /usr/share/keyrings/grafana-keyring.gpg"
     - creates: /usr/share/keyrings/grafana-keyring.gpg
 
 grafana:

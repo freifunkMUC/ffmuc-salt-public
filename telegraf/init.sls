@@ -11,7 +11,7 @@
 
 influx-db-repo-key:
   cmd.run:
-    - name: "curl https://repos.influxdata.com/influxdata-archive.key | gpg --batch --yes --dearmor -o /usr/share/keyrings/influxdb-keyring.gpg"
+    - name: "curl -fsSL https://repos.influxdata.com/influxdata-archive.key | gpg --batch --yes --dearmor -o /usr/share/keyrings/influxdb-keyring.gpg.tmp && mv /usr/share/keyrings/influxdb-keyring.gpg.tmp /usr/share/keyrings/influxdb-keyring.gpg"
 
 influx-db-repo:
   pkgrepo.managed:

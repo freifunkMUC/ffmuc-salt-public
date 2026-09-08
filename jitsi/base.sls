@@ -1,6 +1,6 @@
 jitsi-repo-key:
   cmd.run:
-    - name: "curl https://download.jitsi.org/jitsi-key.gpg.key | gpg --dearmor -o /usr/share/keyrings/jitsi-keyring.gpg"
+    - name: "curl -fsSL https://download.jitsi.org/jitsi-key.gpg.key | gpg --batch --yes --dearmor -o /usr/share/keyrings/jitsi-keyring.gpg.tmp && mv /usr/share/keyrings/jitsi-keyring.gpg.tmp /usr/share/keyrings/jitsi-keyring.gpg"
     - creates: /usr/share/keyrings/jitsi-keyring.gpg
 
 jitsi-repo:

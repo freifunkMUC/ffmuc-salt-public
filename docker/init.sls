@@ -6,7 +6,7 @@
 {% if 'docker' in role or 'mailserver' in role or 'roadwarrior' in role %}
 docker-repo-key:
   cmd.run:
-    - name: "curl https://download.docker.com/linux/{{ grains.lsb_distrib_id | lower }}/gpg | gpg --dearmor -o /usr/share/keyrings/docker-keyring.gpg"
+    - name: "curl -fsSL https://download.docker.com/linux/{{ grains.lsb_distrib_id | lower }}/gpg | gpg --batch --yes --dearmor -o /usr/share/keyrings/docker-keyring.gpg.tmp && mv /usr/share/keyrings/docker-keyring.gpg.tmp /usr/share/keyrings/docker-keyring.gpg"
     - creates: /usr/share/keyrings/docker-keyring.gpg
 
 docker-repo:
