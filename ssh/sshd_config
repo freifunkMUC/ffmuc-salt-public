@@ -97,7 +97,10 @@ X11Forwarding yes
 PrintMotd no
 #PrintLastLog yes
 #TCPKeepAlive yes
-PermitUserEnvironment yes
+# Keep this off: it lets anyone with an authorized key set environment
+# variables via ~/.ssh/environment, which sshd_config(5) notes can be used
+# to bypass access restrictions (e.g. LD_PRELOAD). Nothing here uses it.
+PermitUserEnvironment no
 #Compression delayed
 #ClientAliveInterval 0
 #ClientAliveCountMax 3
