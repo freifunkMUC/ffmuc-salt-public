@@ -4,42 +4,31 @@ This is the salt repo for Freifunk Munich
 ## Dependencies
 This repo makes heavy use of Netbox based ext-pillar information especially config_contexts, services and ip information
 
+Netbox is a hard dependency at *render* time: `_modules/site_prefixes.py`,
+`_modules/extra_dns_entries.py` and `_modules/cfssl_certs.py` are called from
+Jinja while states are being rendered. They fail closed - if Netbox cannot be
+reached the render aborts and the highstate goes red, rather than quietly
+producing a config with no prefixes or no DNS records.
+
+## Docker
+
+The `docker` state installs the engine plus the `docker-compose-plugin`.
+Compose stacks live in `docker-containers/`; see the README there for the
+pattern and conventions. Use `docker compose` (v2) - the v1 `docker-compose`
+binary is deliberately removed by the `docker` state.
+
 ## Sample config_context
 ```
 {
     "docker": {
-        "cfssl": {
-            "container_dir": "/srv/docker/cfssl",
-            "credentials": {
-                "db_password": "password"
-            },
-            "mounts": [
-                "/srv/docker/postgresql-cfssl/data",
-                "/srv/docker/cfssl/data",
-                "/srv/docker/postgresql-cfssl/data"
-            ]
+        "diun": {
+            "enabled": true,
+            "webhookURL": "https://hooks.slack.com/services/..."
         },
-        "openldap": {
-            "container_dir": "/srv/docker/openldap",
-            "credentials": {
-                "admin_user": "password",
-                "readonly_user": "password"
-            },
-            "mounts": [
-                "/srv/docker/openldap/data",
-                "/srv/docker/openldap/config",
-                "/srv/docker/openldap/certs"
-            ]
-        },
-        "zammad": {
-            "container_dir": "/srv/docker/zammad-docker-compose",
-            "git": "https://github.com/zammad/zammad-docker-compose.git",
-            "mounts": [
-                "/srv/docker/zammad-backup",
-                "/srv/docker/zammad-data",
-                "/srv/docker/elasticsearch-zammad/data",
-                "/srv/docker/postgresql-zammad/data"
-            ]
+        "speedtest": {
+            "enabled": false,
+            "frontend_port": 80,
+            "backend_port": 8082
         }
     },
     "roles": [
@@ -63,4 +52,15 @@ This repo makes heavy use of Netbox based ext-pillar information especially conf
     },
     "user_home": {}
 }
+```
+
+## Linting
+
+CI runs `black`, `yamllint`, `salt-lint` and `shellcheck`. To run them locally:
+
+```
+black --check --diff .
+yamllint -c .yamllint .
+salt-lint -x 204,205 $(find . -name '*.sls' -o -name '*.jinja' -o -name '*.j2' -o -name '*.tmpl')
+shellcheck $(grep -rl '^#!.*sh' --include='*.sh' .)
 ```

@@ -1,7 +1,9 @@
 #
 # Setup docker.io
 #
-{%- set role = salt['pillar.get']('netbox:role:name', salt['pillar.get']('netbox:role:name')) %}
+{#- Default to '' rather than to the same lookup again: an unset role made
+    this None, and `'docker' in None` aborts the render with a TypeError. #}
+{%- set role = salt['pillar.get']('netbox:role:name', '') or '' %}
 
 {% if 'docker' in role or 'mailserver' in role or 'roadwarrior' in role %}
 docker-repo-key:
@@ -33,6 +35,11 @@ docker-pkgs:
 {# limit log-file-size #}
 /etc/docker/daemon.json:
   file.managed:
+    - user: root
+    - group: root
+    - mode: "0644"
+    - require:
+      - pkg: docker-pkgs
     - contents: |
         {
           "log-driver": "json-file",
@@ -52,6 +59,21 @@ docker-pkgs:
           ]
         }
 
+{#- Nothing used to restart dockerd, so daemon.json only ever took effect
+    after a manual restart or a reboot - meaning the log size limits above
+    were not actually in force on long-running hosts. Note that a change to
+    daemon.json now bounces the containers on that host; the file is a static
+    literal, so this only fires when someone edits it here. #}
+docker-service:
+  service.running:
+    - name: docker
+    - enable: True
+    - require:
+      - pkg: docker-pkgs
+    - watch:
+      - file: /etc/docker/daemon.json
+
+{#- Compose v1 is gone; everything uses the `docker compose` plugin. #}
 /usr/local/bin/docker-compose:
   file.absent
 {% endif  %}
