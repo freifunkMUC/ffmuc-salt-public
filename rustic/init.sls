@@ -1,6 +1,6 @@
 {%- if 'backup' in salt['pillar.get']('netbox:tag_list', []) -%}
 
-{% set rustic_version = "v0.11.3" %}
+{% set rustic_version = "v0.11.4" %}
 install_rustic:
   #archive.extracted:
   #  - name: /tmp/rustic
@@ -15,7 +15,9 @@ install_rustic:
   #  - unless: test -f /usr/local/bin/rustic
   file.managed:
     - name: /usr/local/bin/rustic
-    - source: salt://rustic/files/rustic
+    - source:
+        - salt://rustic/files/rustic-{{ rustic_version }}
+        - salt://rustic/files/rustic
     - mode: "0755"
 
 backup-config:
@@ -31,25 +33,20 @@ backup-config:
       - file: install_rustic
 
 backup-script:
-  file.managed:
+  file.absent:
     - name: /usr/local/sbin/rustic-backup.sh
-    - source: salt://rustic/files/rustic-backup.sh.j2
-    - mode: "0750"
-    - template: jinja
-    - require:
-      - file: backup-config
 
 /etc/systemd/system/ffmuc-rustic-backup.service:
   file.managed:
     - source: salt://rustic/files/ffmuc-rustic-backup.service
     - require:
-      - file: backup-script
+      - file: backup-config
 
 /etc/systemd/system/ffmuc-rustic-backup.timer:
   file.managed:
     - source: salt://rustic/files/ffmuc-rustic-backup.timer
     - require:
-      - file: backup-script
+      - file: backup-config
 
 systemd-reload-ffmuc-backup:
   cmd.run:
