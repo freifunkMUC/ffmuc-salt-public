@@ -2,6 +2,8 @@
 Description=FFMuc rustic Backup
 
 [Service]
+Type=oneshot
 Nice=19
 IOSchedulingClass=idle
-ExecStart=/bin/bash /usr/local/sbin/rustic-backup.sh
+ExecStart=/usr/local/bin/rustic backup
+ExecStart=/usr/local/bin/rustic forget
