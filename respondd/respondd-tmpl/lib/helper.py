@@ -1,22 +1,22 @@
 #!/usr/bin/env python3
 
-import netifaces as netif
+import itertools
+import logging
 import subprocess
-import sys
+
+import netifaces as netif
+
+log = logging.getLogger(__name__)
 
 
 def call(cmdnargs):
     try:
         output = subprocess.check_output(cmdnargs, stderr=None)
-        lines = output.splitlines()
-        lines = [line.decode("utf-8") for line in lines]
+        return [line.decode("utf-8") for line in output.splitlines()]
     except subprocess.CalledProcessError as err:
-        print(err)
-    except:
-        print(str(sys.exc_info()[0]))
-    else:
-        return lines
-
+        log.warning("command failed: %s: %s", cmdnargs, err)
+    except Exception as err:
+        log.warning("command error: %s: %s", cmdnargs, err)
     return []
 
 
@@ -27,15 +27,14 @@ def merge(a, b):
         return d
 
     if isinstance(a, list) and isinstance(b, list):
-        return [merge(x, y) for x, y in itertools.izip_longest(a, b)]
+        return [merge(x, y) for x, y in itertools.zip_longest(a, b)]
 
     return a if b is None else b
 
 
 def getInterfaceMAC(interface):
     try:
-        interface = netif.ifaddresses(interface)
-        mac = interface[netif.AF_LINK]
-        return mac[0]["addr"]
-    except:
+        addresses = netif.ifaddresses(interface)
+        return addresses[netif.AF_LINK][0]["addr"].lower()
+    except (ValueError, KeyError, IndexError):
         return None
