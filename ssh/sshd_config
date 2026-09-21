@@ -97,10 +97,9 @@ X11Forwarding yes
 PrintMotd no
 #PrintLastLog yes
 #TCPKeepAlive yes
-# Keep this off: it lets anyone with an authorized key set environment
-# variables via ~/.ssh/environment, which sshd_config(5) notes can be used
-# to bypass access restrictions (e.g. LD_PRELOAD). Nothing here uses it.
-PermitUserEnvironment no
+# Required: ssh/authorized_keys.tmpl sets environment="SSH_USER=..." per
+# admin key, and ssh/sshrc logs it to attribute root logins (6ac45df).
+PermitUserEnvironment yes
 #Compression delayed
 #ClientAliveInterval 0
 #ClientAliveCountMax 3
