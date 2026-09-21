@@ -75,10 +75,9 @@ a wrapper around the Python `docker-compose` v1 library and has since been
 removed from Salt, so the loop could not work. The state had been commented out
 of `top.sls` since December 2020.
 
-## Reference compose files
+## Removed stacks
 
-The `*-compose.yml` files at the top of this directory (cfssl, graylog,
-mattermost, netbox, openldap, zammad) are **not deployed by Salt**. They are
-kept as a record of how those services were set up, for recovery and for other
-communities building on this repo. Image versions in them date from
-2019/2020 and should not be used as-is.
+The stack definitions the old loop carried (Graylog 3.2, NetBox 2.5, Postgres
+9.6, Mongo 3, Elasticsearch 6.6, openldap 1.2, Zammad, Mattermost) and the
+GeoLite2-City.mmdb only the Graylog file referenced were removed. `git log`
+has them if any are ever needed again.
