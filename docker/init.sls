@@ -1,12 +1,14 @@
 #
 # Setup docker.io
 #
-{%- set role = salt['pillar.get']('netbox:role:name', salt['pillar.get']('netbox:role:name')) %}
+{#- Default to '' rather than to the same lookup again: an unset role made
+    this None, and `'docker' in None` aborts the render with a TypeError. #}
+{%- set role = salt['pillar.get']('netbox:role:name', '') or '' %}
 
 {% if 'docker' in role or 'mailserver' in role or 'roadwarrior' in role %}
 docker-repo-key:
   cmd.run:
-    - name: "curl https://download.docker.com/linux/{{ grains.lsb_distrib_id | lower }}/gpg | gpg --dearmor -o /usr/share/keyrings/docker-keyring.gpg"
+    - name: "curl -fsSL https://download.docker.com/linux/{{ grains.lsb_distrib_id | lower }}/gpg | gpg --batch --yes --dearmor -o /usr/share/keyrings/docker-keyring.gpg.tmp && mv /usr/share/keyrings/docker-keyring.gpg.tmp /usr/share/keyrings/docker-keyring.gpg"
     - creates: /usr/share/keyrings/docker-keyring.gpg
 
 docker-repo:
@@ -33,6 +35,11 @@ docker-pkgs:
 {# limit log-file-size #}
 /etc/docker/daemon.json:
   file.managed:
+    - user: root
+    - group: root
+    - mode: "0644"
+    - require:
+      - pkg: docker-pkgs
     - contents: |
         {
           "log-driver": "json-file",
@@ -52,6 +59,9 @@ docker-pkgs:
           ]
         }
 
+{#- Deliberately no service watch on daemon.json: restarting dockerd would
+    restart every container on the host. Changes here take effect on the
+    next manual docker restart or reboot. #}
 /usr/local/bin/docker-compose:
   file.absent
 {% endif  %}

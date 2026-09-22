@@ -7,7 +7,7 @@
 
 prosody-repo-key:
   cmd.run:
-    - name: "curl https://prosody.im/files/prosody-debian-packages.key | gpg --dearmor -o /usr/share/keyrings/prosody-keyring.gpg"
+    - name: "curl -fsSL https://prosody.im/files/prosody-debian-packages.key | gpg --batch --yes --dearmor -o /usr/share/keyrings/prosody-keyring.gpg.tmp && mv /usr/share/keyrings/prosody-keyring.gpg.tmp /usr/share/keyrings/prosody-keyring.gpg"
     - creates: /usr/share/keyrings/prosody-keyring.gpg
 
 /etc/apt/sources.list.d/prosody.list:

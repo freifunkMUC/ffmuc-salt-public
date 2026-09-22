@@ -24,4 +24,4 @@ def generate(pubkey):
         + hash_as_list[4]
     )
 
-    return re.sub("\/\d+$", "", mac2eui64(mac=temp_mac, prefix="fe80::/10"))
+    return re.sub(r"/\d+$", "", mac2eui64(mac=temp_mac, prefix="fe80::/10"))

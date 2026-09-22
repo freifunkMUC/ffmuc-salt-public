@@ -4,6 +4,12 @@ This is the salt repo for Freifunk Munich
 ## Dependencies
 This repo makes heavy use of Netbox based ext-pillar information especially config_contexts, services and ip information
 
+Netbox is a hard dependency at *render* time: `_modules/site_prefixes.py`,
+`_modules/extra_dns_entries.py` and `_modules/cfssl_certs.py` are called from
+Jinja while states are being rendered. They fail closed - if Netbox cannot be
+reached the render aborts and the highstate goes red, rather than quietly
+producing a config with no prefixes or no DNS records.
+
 ## Sample config_context
 ```
 {
@@ -63,4 +69,15 @@ This repo makes heavy use of Netbox based ext-pillar information especially conf
     },
     "user_home": {}
 }
+```
+
+## Linting
+
+CI runs `black`, `yamllint`, `salt-lint` and `shellcheck`. To run them locally:
+
+```
+black --check --diff .
+yamllint -c .yamllint .
+salt-lint -x 204,205 $(find . -name '*.sls' -o -name '*.jinja' -o -name '*.j2' -o -name '*.tmpl')
+shellcheck $(grep -rl '^#!.*sh' --include='*.sh' .)
 ```

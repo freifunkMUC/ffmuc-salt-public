@@ -5,6 +5,9 @@
 #
 __virtualname__ = "cfssl_certs"
 import json
+import logging
+
+log = logging.getLogger(__name__)
 
 try:
     import requests
@@ -12,6 +15,10 @@ try:
     IMPORT_WORKED = True
 except ImportError:
     IMPORT_WORKED = False
+
+# The CA is contacted while certs/init.sls is being rendered, so a hanging CA
+# would stall the whole highstate. Always bound the request.
+REQUEST_TIMEOUT = (5, 30)
 
 
 def __virtual__():
@@ -35,11 +42,17 @@ def request_cert(ca_url, certname):
             }
         }
     )
-    print(cert_req)
     headers = {"Content-type": "application/json"}
-    r = requests.post(ca_url + "/api/v1/cfssl/newcert", data=cert_req, headers=headers)
     try:
+        r = requests.post(
+            ca_url + "/api/v1/cfssl/newcert",
+            data=cert_req,
+            headers=headers,
+            timeout=REQUEST_TIMEOUT,
+        )
+        r.raise_for_status()
         cert_bundle = r.json()
         return cert_bundle["result"]
-    except Exception as e:
+    except Exception as exc:
+        log.error("cfssl_certs: requesting cert for %s failed: %s", certname, exc)
         return False

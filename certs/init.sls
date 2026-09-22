@@ -66,7 +66,9 @@ generate-dhparam:
 {% endif %}{# Certificate wont expire #}
 {% endif %}{# can ping ca #}
 
-{%- set role = salt['pillar.get']('netbox:role:name', salt['pillar.get']('netbox:role:name')) %}
+{#- Default to '' rather than to the same lookup again: an unset role made
+    this None, and `'...' in None` aborts the render with a TypeError. #}
+{%- set role = salt['pillar.get']('netbox:role:name', '') or '' %}
 
 #
 # Traefik ACME DNS update script for docker hosts

@@ -1,7 +1,9 @@
 ###
 # nginx
 ###
-{%- set role = salt['pillar.get']('netbox:role:name', salt['pillar.get']('netbox:role:name')) %}
+{#- Default to '' rather than to the same lookup again: an unset role made
+    this None, and `'... ' in None` aborts the render with a TypeError. #}
+{%- set role = salt['pillar.get']('netbox:role:name', '') or '' %}
 {% set tags = salt['pillar.get']('netbox:tag_list', []) %}
 {% if not "jitsi meet" in role and ("webserver" in role or "webserver" in tags) %}
 
@@ -13,7 +15,7 @@
 
 nginx-repo-key:
   cmd.run:
-    - name: "curl https://nginx.org/keys/nginx_signing.key | gpg --dearmor -o /usr/share/keyrings/nginx-archive-keyring.gpg"
+    - name: "curl -fsSL https://nginx.org/keys/nginx_signing.key | gpg --batch --yes --dearmor -o /usr/share/keyrings/nginx-archive-keyring.gpg.tmp && mv /usr/share/keyrings/nginx-archive-keyring.gpg.tmp /usr/share/keyrings/nginx-archive-keyring.gpg"
     - creates: /usr/share/keyrings/nginx-archive-keyring.gpg
 
 /etc/apt/sources.list.d/nginx.list:
