@@ -13,15 +13,17 @@ dnsdist-repo-key:
 
 dnsdist-repo:
   pkgrepo.managed:
-    - name: deb [arch={{ grains.osarch }}] https://repo.powerdns.com/{{ grains.lsb_distrib_id | lower }} {{ grains.oscodename }}-dnsdist-20 main
+    - name: deb [arch={{ grains.osarch }}] https://repo.powerdns.com/{{ grains.lsb_distrib_id | lower }} {{ grains.oscodename }}-dnsdist-21 main
     - file: /etc/apt/sources.list.d/dnsdist.list
     - clean_file: True
     - require:
       - cmd: dnsdist-repo-key
 
-{#- repo.powerdns.com only serves the latest build: bump on each release #}
-{%- set pdns_suffix = '1pdns.' ~ (grains.os | lower) ~ (grains.osrelease if grains.os == 'Ubuntu' else grains.osmajorrelease | string) %}
-{%- set dnsdist_version = salt['config.get']('netbox:config_context:dnsdist:version', '2.0.11-' ~ pdns_suffix) %}
+{#- Pinned so upgrades are rolled out deliberately; the wildcard covers the
+    distro suffix (e.g. 2.1.2-1pdns.ubuntu24.04). Override per host via the
+    NetBox config context if a distro lacks this build (bullseye: 2.1.1).
+    The override has to be a 2.1 build, the repo above is dnsdist-21. #}
+{%- set dnsdist_version = salt['config.get']('netbox:config_context:dnsdist:version', '2.1.2-*') %}
 dnsdist:
   pkg.installed:
     - version: '{{ dnsdist_version }}'
@@ -30,6 +32,7 @@ dnsdist:
       - pkgrepo: dnsdist-repo
   service.running:
     - enable: True
+    - restart: True
     - require:
       - file: /etc/dnsdist/dnsdist.conf
       - file: /var/lib/dnsdist
@@ -83,29 +86,5 @@ add_dnsdist_group_ssl-cert:
     - groups:
       - ssl-cert
 {% endif %}{# if 'webfrontend' #}
-
-# Larger socket buffers/backlogs: with kernel defaults (208 KB) UDP bursts overflow the receive buffers
-# (RcvbufErrors) of dnsdist and nebula. The defaults only apply to sockets opened after the change.
-# Same values as the long-standing manual tuning on the gateways.
-{%- for key, value in {
-  'net.core.rmem_default': 31457280,
-  'net.core.rmem_max': 33554432,
-  'net.core.wmem_default': 31457280,
-  'net.core.wmem_max': 33554432,
-  'net.core.somaxconn': 65535,
-  'net.core.netdev_max_backlog': 65536,
-  'net.ipv4.tcp_rmem': '8192 87380 33554432',
-  'net.ipv4.tcp_wmem': '8192 65536 33554432',
-  'net.ipv4.udp_rmem_min': 16384,
-  'net.ipv4.udp_wmem_min': 16384,
-}.items() %}
-dnsdist-sysctl-{{ key }}:
-  sysctl.present:
-    - name: {{ key }}
-    - value: {{ value }}
-    - config: /etc/sysctl.d/10-tuning.conf
-    - require_in:
-      - service: dnsdist
-{%- endfor %}
 
 {% endif %}{# if 'dnsdist' in tag_list #}

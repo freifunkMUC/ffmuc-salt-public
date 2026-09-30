@@ -175,6 +175,8 @@ addAction({'in-addr.arpa', 'ip6.arpa'}, NoneAction(), {name="RDNS"})
 -- (Zonemaster/RIPE pre-delegation check). Stub clients always send RD=1.
 addAction(NotRule(RDRule()), RCodeAction(DNSRCode.REFUSED, {ra=false}), {name="Refuse-Non-Recursive"})
 function clearRA(dr)
+  -- dr.dh is deprecated since 2.1 and removed in 2.2; switch to
+  -- dr:getHeader()/dr:setHeader() (2.1+) before upgrading to 2.2
   dr.dh:setRA(false)
   return DNSResponseAction.None, ""
 end
