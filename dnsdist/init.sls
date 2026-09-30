@@ -13,16 +13,17 @@ dnsdist-repo-key:
 
 dnsdist-repo:
   pkgrepo.managed:
-    - name: deb [arch={{ grains.osarch }}] https://repo.powerdns.com/{{ grains.lsb_distrib_id | lower }} {{ grains.oscodename }}-dnsdist-20 main
+    - name: deb [arch={{ grains.osarch }}] https://repo.powerdns.com/{{ grains.lsb_distrib_id | lower }} {{ grains.oscodename }}-dnsdist-21 main
     - file: /etc/apt/sources.list.d/dnsdist.list
     - clean_file: True
     - require:
       - cmd: dnsdist-repo-key
 
 {#- Pinned so upgrades are rolled out deliberately; the wildcard covers the
-    distro suffix (e.g. 2.0.10-1pdns.ubuntu24.04). Override per host via the
-    NetBox config context if a distro lacks this build (bullseye: 2.0.8). #}
-{%- set dnsdist_version = salt['config.get']('netbox:config_context:dnsdist:version', '2.0.10-*') %}
+    distro suffix (e.g. 2.1.2-1pdns.ubuntu24.04). Override per host via the
+    NetBox config context if a distro lacks this build (bullseye: 2.1.1).
+    The override has to be a 2.1 build, the repo above is dnsdist-21. #}
+{%- set dnsdist_version = salt['config.get']('netbox:config_context:dnsdist:version', '2.1.2-*') %}
 dnsdist:
   pkg.installed:
     - version: '{{ dnsdist_version }}'
