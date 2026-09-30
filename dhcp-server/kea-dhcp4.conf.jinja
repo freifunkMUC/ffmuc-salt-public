@@ -55,6 +55,11 @@
 }) %}
 {%- endfor %}
 
+{#- Ping check like dhcpd's ping-check: one echo, wait 1s (dhcpd's
+    ping-timeout) instead of Kea's 100ms, which is short across the mesh.
+    An address that answers is declined; Kea keeps it out of the pool for 24h
+    by default, while dhcpd reused abandoned leases when the pool ran short,
+    so keep the decline probation at 1h. #}
 {%- set config = {
 	'Dhcp4': {
 		'interfaces-config': {
@@ -67,10 +72,11 @@
 		'authoritative': true,
 		'valid-lifetime': 600,
 		'max-valid-lifetime': 3600,
+		'decline-probation-period': 3600,
 		'hooks-libraries': [
 			{
 				'library': 'libdhcp_ping_check.so',
-				'parameters': {'enable-ping-check': true},
+				'parameters': {'enable-ping-check': true, 'min-ping-requests': 1, 'reply-timeout': 1000},
 			},
 		],
 		'option-def': [
