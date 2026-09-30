@@ -2,7 +2,9 @@
 # script and the ffmuc-backup timer that duplicity/disable.sls kept running.
 
 duplicity:
-  pkg.removed
+  pkg.removed:
+    - require:
+      - service: ffmuc-backup-service-stop
 
 remove_duplicity_files:
   file.absent:
@@ -13,7 +15,7 @@ remove_duplicity_files:
         - /etc/systemd/system/ffmuc-backup.service
         - /etc/systemd/system/ffmuc-backup.timer
     - require:
-      - service: ffmuc-backup-timer-disable
+      - service: ffmuc-backup-service-stop
       - pkg: duplicity
 
 systemd-reload-duplicity-removed:
@@ -27,3 +29,10 @@ ffmuc-backup-timer-disable:
   service.dead:
     - name: ffmuc-backup.timer
     - enable: false
+
+# stopping the timer does not stop a backup/prune run it already started
+ffmuc-backup-service-stop:
+  service.dead:
+    - name: ffmuc-backup.service
+    - require:
+      - service: ffmuc-backup-timer-disable
