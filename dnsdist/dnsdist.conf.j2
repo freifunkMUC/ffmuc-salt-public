@@ -161,9 +161,26 @@ addAction({'in.ffmuc.net', 'ov.ffmuc.net', 'ffmuc.net', 'ffmuc.bayern', 'fnmuc.n
 addAction(AndRule({OpcodeRule(DNSOpcode.Notify), NotRule(makeRule("213.160.72.212"))}), RCodeAction(DNSRCode.REFUSED))
 addAction({'freifunk.net'}, PoolAction("auth"), {name="Redirect-Auth-freifunk.net"})
 addAction({'resolver.arpa'}, PoolAction("auth"), {name="Redirect-resolver.arpa"})
+{%- set reverse_zones = salt['config.get']('reverse_dns:zones', {}) %}
+{%- if reverse_zones %}
+addAction({ {%- for zone in reverse_zones.values() | sort %}'{{ zone }}'{{ ', ' if not loop.last }}{%- endfor %} }, PoolAction("auth"), {name="Redirect-Auth-RDNS"})
+{%- endif %}
 
 {#- some stats #}
 addAction({'in-addr.arpa', 'ip6.arpa'}, NoneAction(), {name="RDNS"})
+
+{%- if 'authorative-dns' in salt['pillar.get']('netbox:tag_list', []) %}
+-- Non-recursive (RD=0) queries only get answers for the auth zones redirected above: refuse
+-- everything else and never set RA, so the anycast addresses are not seen as recursors
+-- (Zonemaster/RIPE pre-delegation check). Stub clients always send RD=1.
+addAction(NotRule(RDRule()), RCodeAction(DNSRCode.REFUSED, {ra=false}), {name="Refuse-Non-Recursive"})
+function clearRA(dr)
+  dr.dh:setRA(false)
+  return DNSResponseAction.None, ""
+end
+addResponseAction(NotRule(RDRule()), LuaResponseAction(clearRA), {name="Clear-RA-Non-Recursive"})
+addCacheHitResponseAction(NotRule(RDRule()), LuaResponseAction(clearRA), {name="Clear-RA-Non-Recursive-Cache"})
+{%- endif %}{# authoritative #}
 
 -- OpenNIC
 newServer({address="88.198.92.222:53", name="v4.ns25.opennic", pool="opennic", healthCheckMode="lazy"})
