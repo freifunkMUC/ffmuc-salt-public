@@ -415,5 +415,10 @@ concurrent_render_request_limit = 30
 
 [plugin.grafana-image-renderer]
 rendering_ignore_https_errors = true
+
+#################################### Plugins ##########################
+[plugins]
+allow_loading_unsigned_plugins = ovhcloud-akvorado-datasource,knightss27-weathermap-panel
+
 [feature_toggles]
 autoMigrateOldPanels = true

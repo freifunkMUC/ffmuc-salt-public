@@ -19,9 +19,6 @@ ANALYZER_ADDR={{ collector.get('analyzer_addr', '127.0.0.1:9090') }}
 # Prometheus metrics HTTP listen address
 METRICS_ADDR={{ collector.get('metrics_addr', ':2112') }}
 
-# HAProxy peer protocol port
-HAPROXY_PORT={{ collector.get('haproxy_port', 8765) }}
-
 # SPOE agent port
 SPOE_PORT={{ collector.get('spoe_port', 9876) }}
 
@@ -39,6 +36,14 @@ BLOCK_DURATION={{ collector.get('block_duration', '5m') }}
 {%- if collector.get('allowlist') %}{% do extra_parts.append('-allowlist ' ~ collector['allowlist']) %}{% endif %}
 {%- if collector.get('policy') %}{% do extra_parts.append('-policy ' ~ collector['policy']) %}{% endif %}
 {%- if collector.get('verbose', False) %}{% do extra_parts.append('-v') %}{% endif %}
+{#- v0.1.9+ sustained-download egress accounting. Emitted ONLY when enabled,
+    so a <=v0.1.8 binary never sees these unknown flags (which would exit 2 ->
+    crash loop under Restart=on-failure). -egress-min-bytes is only added
+    alongside -egress-accounting since it is meaningless without it. #}
+{%- if collector.get('egress_accounting', False) %}
+{%-   do extra_parts.append('-egress-accounting') %}
+{%-   if collector.get('egress_min_bytes') %}{% do extra_parts.append('-egress-min-bytes ' ~ collector['egress_min_bytes']) %}{% endif %}
+{%- endif %}
 # Additional flags (dry-run/allowlist/policy/verbose composed above; the
 # packaged unit only reads ${EXTRA_ARGS}, not separate DRY_RUN/ALLOWLIST vars)
 EXTRA_ARGS={{ extra_parts | join(' ') }}

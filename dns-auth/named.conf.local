@@ -9,6 +9,7 @@
 {%- set zones = salt['config.get']('netbox:config_context:dns_zones:zones') %}
 {%- set freifunk_net_zones = salt['config.get']('netbox:config_context:dns_zones:freifunk_net_zones') %}
 {%- set freifunk_net_axfr = salt['config.get']('netbox:config_context:dns_zones:freifunk_net_axfr_key') %}
+{%- set reverse_zones = salt['config.get']('reverse_dns:zones', {}) %}
 
 
 {%- for zone_key in update_keys | sort %}
@@ -50,6 +51,17 @@ zone "{{ zone }}" {
 	update-policy  {
 	{%- for zone_key in update_keys | sort %}
 		grant {{ zone_key }} zonesub {{ update_keys[zone_key]['type'] }}; 
+	{%- endfor %}
+	};
+};
+{%- endfor %}
+{%- for zone in reverse_zones.values() | sort %}
+zone "{{ zone }}" {
+	type master;
+	file "/etc/bind/zones/db.{{ zone }}";
+	update-policy  {
+	{%- for zone_key in update_keys | sort %}
+		grant {{ zone_key }} zonesub {{ update_keys[zone_key]['type'] }};
 	{%- endfor %}
 	};
 };

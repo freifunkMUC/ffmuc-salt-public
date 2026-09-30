@@ -83,7 +83,7 @@
 {# Shared default release version for both daemons - bump this when a new
    packetyeeter version is published, so the collector .deb and the analyzer
    Docker image stay in lockstep by default. #}
-{% set default_version = '0.1.7' %}
+{% set default_version = '0.1.9' %}
 
 {# The collector runs natively (systemd) since it needs to load eBPF/XDP/TC
    programs against a host interface - this isn't practical to containerize.
@@ -93,19 +93,27 @@
    Defaults to default_version; override collector:version (or
    collector:deb_url) via config_context to pin a different/newer release
    independently of the analyzer. #}
+{# egress_accounting / egress_min_bytes are v0.1.9+ collector flags for the
+   sustained-download detection feature. Both default OFF: -egress-accounting
+   is only emitted when egress_accounting is truthy (and -egress-min-bytes
+   only alongside it), so an older (<=v0.1.8) collector binary never receives
+   an unknown flag - Go's flag parser would exit 2 on that, and with
+   Restart=on-failure that turns into a crash loop, not a clean failure. Do
+   NOT enable these until the host actually runs v0.1.9. #}
 {% set collector_defaults = {
   'version': default_version,
   'deb_url': '',
   'interface': default_iface,
   'analyzer_addr': ns.analyzer_addr if ns.analyzer_addr else '127.0.0.1:9090',
   'metrics_addr': ':2112',
-  'haproxy_port': 8765,
   'spoe_port': 9876,
   'socket_path': '/var/run/packetyeeter-collector.sock',
   'geoip_asn': default_geoip_asn,
   'block_duration': '5m',
   'allowlist': default_allowlist,
   'dry_run': True,
+  'egress_accounting': True,
+  'egress_min_bytes': 1048576,
 } %}
 {% set collector = {} %}
 {% do collector.update(collector_defaults) %}
@@ -143,6 +151,11 @@
 {% set haproxy_geoip_city_exists = salt['file.file_exists'](haproxy_geoip_city) %}
 {% set analyzer_geoip_country_host_path = haproxy_geoip_city if haproxy_geoip_city_exists else docker_geoip_country %}
 {% set geoip_country_container_path = '/data/geoip/GeoLite2-Country.mmdb' %}
+{# sustained_enabled / sustained_enforce are v0.1.9+ analyzer flags for the
+   sustained-download detection feature. Both default OFF and are only
+   emitted into the compose command when truthy, so an older (<=v0.1.8)
+   analyzer image never receives an unknown flag. Enable sustained_enabled
+   for detect-only first; do NOT set sustained_enforce on the first rollout. #}
 {% set analyzer_defaults = {
   'version': default_version,
   'image': '',
@@ -153,6 +166,8 @@
   'ai_confidence_threshold': 0.8,
   'dry_run': True,
   'verbose': False,
+  'sustained_enabled': True,
+  'sustained_enforce': False,
   'geoip_enabled': True,
   'geoip_host_path': analyzer_geoip_host_path,
   'geoip_container_path': geoip_container_path,
