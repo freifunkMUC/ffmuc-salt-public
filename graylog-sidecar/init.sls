@@ -30,11 +30,14 @@ elasticsearch-repo-key:
 /etc/apt/sources.list.d/elastic-7.x.list:
   file.absent
 
+/etc/apt/sources.list.d/elastic-8.x.list:
+  file.absent
+
 filebeat-repo:
   pkgrepo.managed:
     - humanname: Elastic-Repo
-    - name: deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/elasticsearch-keyring.gpg] https://artifacts.elastic.co/packages/oss-8.x/apt stable main
-    - file: /etc/apt/sources.list.d/elastic-8.x.list
+    - name: deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/elasticsearch-keyring.gpg] https://artifacts.elastic.co/packages/oss-9.x/apt stable main
+    - file: /etc/apt/sources.list.d/elastic-9.x.list
     - clean_file: True
     - require:
       - cmd: elasticsearch-repo-key
