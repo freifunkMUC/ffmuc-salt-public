@@ -27,7 +27,6 @@ telegraf:
         - pkgrepo: influx-db-repo
   service.running:
     - enable: True
-    - running: True
 
 systemd-reload-telegraf:
   cmd.run:

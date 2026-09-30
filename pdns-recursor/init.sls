@@ -26,7 +26,6 @@ pdns-recursor:
       - pkgrepo: pdns-repo
   service.running:
     - enable: True
-    - restart: True
     - require:
       - file: /etc/powerdns/recursor.conf
     - watch:
