@@ -1,6 +1,7 @@
 {%- if 'backup' in salt['pillar.get']('netbox:tag_list', []) -%}
 
 {% set rustic_version = "v0.11.4" %}
+{% set rustic_version = "nightly" %}
 install_rustic:
   #archive.extracted:
   #  - name: /tmp/rustic
