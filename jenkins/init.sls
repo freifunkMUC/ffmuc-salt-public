@@ -1,17 +1,17 @@
 #
 # Jenkins
 #
-{% if salt['pillar.get']('netbox:role:name') %}
-{%- set role = salt['pillar.get']('netbox:role:name') %}
-{% else %}
-{%- set role = salt['pillar.get']('netbox:role:name') %}
-{% endif %}
+{#- Default to '' rather than to the same lookup again: an unset role made
+    this None, and `'...' in None` aborts the render with a TypeError. #}
+{%- set role = salt['pillar.get']('netbox:role:name', '') or '' %}
 
 {% if 'buildserver' in role %}
 jenkins-repo-key:
   cmd.run:
-    - name: "curl -fsSL https://pkg.jenkins.io/debian/jenkins.io.key | gpg --batch --yes --dearmor -o /usr/share/keyrings/jenkins-keyring.gpg.tmp && mv /usr/share/keyrings/jenkins-keyring.gpg.tmp /usr/share/keyrings/jenkins-keyring.gpg"
-    - creates: /usr/share/keyrings/jenkins-keyring.gpg
+    - name: "curl -fsSL https://pkg.jenkins.io/debian/jenkins.io-2026.key | gpg --batch --yes --dearmor -o /usr/share/keyrings/jenkins-keyring.gpg.tmp && mv /usr/share/keyrings/jenkins-keyring.gpg.tmp /usr/share/keyrings/jenkins-keyring.gpg"
+    # check the fingerprint instead of 'creates': Jenkins rotates the key and
+    # an existing file would otherwise keep the expired one forever
+    - unless: gpg --show-keys --with-colons /usr/share/keyrings/jenkins-keyring.gpg 2>/dev/null | grep -q '^fpr:.*:5E386EADB55F01504CAE8BCF7198F4B714ABFC68:'
 
 jenkins:
   pkgrepo.managed:
