@@ -23,6 +23,16 @@ services:
       {%- if analyzer['verbose'] %}
       - "-v"
       {%- endif %}
+      {#- v0.1.9+ sustained-download detection. Emitted ONLY when enabled, so
+          a <=v0.1.8 image never sees these unknown flags. -sustained-enforce
+          is only added alongside -sustained-enabled (enforce is meaningless
+          without detection); keep enforce off on the first rollout. #}
+      {%- if analyzer['sustained_enabled'] %}
+      - "-sustained-enabled"
+      {%- if analyzer['sustained_enforce'] %}
+      - "-sustained-enforce"
+      {%- endif %}
+      {%- endif %}
     ports:
       - "{{ analyzer['listen_port'] }}:9090"
       - "{{ analyzer['metrics_port'] }}:9091"
