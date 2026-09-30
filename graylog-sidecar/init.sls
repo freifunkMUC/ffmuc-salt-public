@@ -5,6 +5,10 @@ graylog-sidecar-pkg:
     - sources:
       - graylog-sidecar: https://github.com/Graylog2/collector-sidecar/releases/download/1.5.6/graylog-sidecar_1.5.6-1_armv7.deb
       - filebeat: https://apt.ffmuc.net/filebeat-oss-8.0.0-SNAPSHOT-armhf.deb
+    # the .deb has no postinst and the service only watches pkg.latest below,
+    # so restart it here when the package changes
+    - watch_in:
+      - service: graylog-sidecar-service
 
 {% else %}{# if grains.osfullname in 'Raspbian' #}
 
