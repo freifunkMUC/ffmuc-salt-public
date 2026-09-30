@@ -113,6 +113,7 @@ remove_asterisk_monitoring:
 {% if 'gateway' in role or 'nextgen-gateway' in role %}
   file.managed:
     - source: salt://telegraf/files/in_dhcpd-pool.conf
+    - template: jinja
 {% else %}
   file.absent:
 {% endif %}
