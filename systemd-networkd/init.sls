@@ -3,7 +3,10 @@
 {%- set role = salt['pillar.get']('netbox:role:name', '') or '' %}
 
 {%- if 'nextgen-gateway' in role %}
-{%- set batman_version = '2024.1' %}
+{#- 2026.3 builds against Linux 5.15 - 7.3 (2024.1 only up to 6.8, so not
+    against the noble HWE kernels) and keeps compat version 15. #}
+{%- set batman_version = '2026.3' %}
+{%- set batman_old_versions = ['2024.1'] %}
 /usr/src/batman-adv-{{ batman_version }}:
   git.latest:
     - name: https://github.com/open-mesh-mirror/batman-adv.git
@@ -31,6 +34,41 @@
     - require_in:
       - pkg: systemd-packages
 {%- endif %}
+
+batman-adv-dkms-deps:
+  pkg.installed:
+    - pkgs:
+      - dkms
+      - linux-headers-{{ grains.kernelrelease }}
+
+# Build and install the module for the running kernel; AUTOINSTALL rebuilds
+# it for new kernels. The new module is loaded on the next reboot.
+batman-adv-dkms-install:
+  cmd.run:
+    - name: >-
+        (dkms status batman-adv/{{ batman_version }} | grep -q .
+        || dkms add batman-adv/{{ batman_version }})
+        && dkms install batman-adv/{{ batman_version }} -k {{ grains.kernelrelease }}
+    - unless: dkms status batman-adv/{{ batman_version }} -k {{ grains.kernelrelease }} | grep -q installed
+    - require:
+      - git: /usr/src/batman-adv-{{ batman_version }}
+      - file: /usr/src/batman-adv-{{ batman_version }}/dkms.conf
+      - pkg: batman-adv-dkms-deps
+
+{%- for old_version in batman_old_versions %}
+
+batman-adv-dkms-remove-{{ old_version }}:
+  cmd.run:
+    - name: dkms remove batman-adv/{{ old_version }} --all
+    - onlyif: dkms status batman-adv/{{ old_version }} | grep -q .
+    - require:
+      - cmd: batman-adv-dkms-install
+
+/usr/src/batman-adv-{{ old_version }}:
+  file.absent:
+    - require:
+      - cmd: batman-adv-dkms-remove-{{ old_version }}
+{%- endfor %}
 
 # for gateways we need v249+ (not in Ubuntu 20.04 repos) to to configure Batman-Adv and FDB entries
 {% if grains.os == 'Ubuntu' and grains.osmajorrelease < 24 %}
