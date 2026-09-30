@@ -25,7 +25,12 @@ DNR, UniFi and Omada controller address).
   also requires every `br-<site>` interface to exist.
 - **VRF:** on gateways with `vrf_external`, a drop-in runs kea-dhcp4 through
   `ip vrf exec` as root, like dhcpd before.
-- **Ping check:** `libdhcp_ping_check.so` replaces dhcpd's `ping-check`.
+- **Ping check:** `libdhcp_ping_check.so` replaces dhcpd's `ping-check`. On
+  DHCPDISCOVER Kea holds the offer and pings the address once, waiting up to
+  1 s like dhcpd's `ping-timeout`. If it answers, the address is declined and
+  the offer dropped, so the client retries and gets another address.
+  Clients renewing their own active lease are not pinged. Declined addresses
+  return to the pool after 1 h (`decline-probation-period`).
 - **DNR (RFC 9463):** the option advertises DoH, DoT and DoQ on the anycast
   resolver (`netbox:config_context:dhcp:dnr_address`, default
   `185.150.99.255`). Unlike the raw dhcpd option it includes the resolver
