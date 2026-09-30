@@ -81,4 +81,28 @@ add_dnsdist_group_ssl-cert:
       - ssl-cert
 {% endif %}{# if 'webfrontend' #}
 
+# Larger socket buffers/backlogs: with kernel defaults (208 KB) UDP bursts overflow the receive buffers
+# (RcvbufErrors) of dnsdist and nebula. The defaults only apply to sockets opened after the change.
+# Same values as the long-standing manual tuning on the gateways.
+{%- for key, value in {
+  'net.core.rmem_default': 31457280,
+  'net.core.rmem_max': 33554432,
+  'net.core.wmem_default': 31457280,
+  'net.core.wmem_max': 33554432,
+  'net.core.somaxconn': 65535,
+  'net.core.netdev_max_backlog': 65536,
+  'net.ipv4.tcp_rmem': '8192 87380 33554432',
+  'net.ipv4.tcp_wmem': '8192 65536 33554432',
+  'net.ipv4.udp_rmem_min': 16384,
+  'net.ipv4.udp_wmem_min': 16384,
+}.items() %}
+dnsdist-sysctl-{{ key }}:
+  sysctl.present:
+    - name: {{ key }}
+    - value: {{ value }}
+    - config: /etc/sysctl.d/10-tuning.conf
+    - require_in:
+      - service: dnsdist
+{%- endfor %}
+
 {% endif %}{# if 'dnsdist' in tag_list #}
