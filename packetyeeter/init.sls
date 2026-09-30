@@ -6,7 +6,7 @@
      - packetyeeter-analyzer  -> installs/runs the analyzer (decision service) on this host
 
    The collector and analyzer share one default release version (see
-   default_version below), so tagging alone is enough for both: the collector
+   default_version in defaults.jinja), so tagging alone is enough for both: the collector
    installs the matching .deb, and the analyzer pulls the matching
    ghcr.io/awlx/packetyeeter-analyzer:v<version> image (not :latest, for
    reproducible deploys). Override netbox:config_context:packetyeeter:collector:version
@@ -80,10 +80,7 @@
 {% endfor %}
 {% set default_allowlist = own_site_prefixes | join(',') %}
 
-{# Shared default release version for both daemons - bump this when a new
-   packetyeeter version is published, so the collector .deb and the analyzer
-   Docker image stay in lockstep by default. #}
-{% set default_version = '0.1.9' %}
+{% from "packetyeeter/defaults.jinja" import default_version %}
 
 {# The collector runs natively (systemd) since it needs to load eBPF/XDP/TC
    programs against a host interface - this isn't practical to containerize.
