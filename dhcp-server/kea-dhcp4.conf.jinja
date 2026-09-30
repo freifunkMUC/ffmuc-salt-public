@@ -1,0 +1,116 @@
+{#-
+  Gateway Kea DHCPv4 configuration (Salt managed), the Kea counterpart of
+  dhcpd.conf. Built as a data structure and rendered with tojson so the
+  result is always valid JSON.
+#}
+{%- set dhcp_prefixes = salt['site_prefixes.get_site_prefixes'](
+	salt['pillar.get']('netbox:config_context:netbox:api_url'),
+	salt['config.get']('netbox:config_context:site_prefixes:netbox_token'),
+	salt['config.get']('netbox:config_context:site_prefixes:netbox_filter')
+) %}
+{%- set sites = salt['pillar.get']('netbox:config_context:sites', {}).values() | sum(start=[]) %}
+{%- set controller = salt['config.get']('netbox:config_context:dhcp:controller_address', '5.1.66.255') %}
+{%- set dnr_address = salt['config.get']('netbox:config_context:dhcp:dnr_address', '185.150.99.255') %}
+
+{#- RFC 9463 DNR: DoH, DoT and DoQ on the anycast resolvers. Unlike the raw
+    dhcpd option this includes the resolver address, which RFC 9463 section
+    3.1.8 requires when SvcParams are present (Kea rejects it otherwise). #}
+{%- set dnr = [
+	'1, doh.ffmuc.net., ' ~ dnr_address ~ ', alpn=h2 dohpath=/dns-query{?dns}',
+	'1, dot.ffmuc.net., ' ~ dnr_address ~ ', alpn=dot port=853',
+	'1, doq.ffmuc.net., ' ~ dnr_address ~ ', alpn=doq port=853',
+] | join(' | ') %}
+
+{%- set shared_networks = [] %}
+{%- for name in dhcp_prefixes | sort %}
+{%- set prefix = dhcp_prefixes[name]['prefix'] %}
+{%- set net = salt['network.convert_cidr'](prefix) %}
+{%- set octets = net['network'].split('.') | map('int') | list %}
+{%- set custom_fields = dhcp_prefixes[name].get('custom_fields') %}
+{%- if custom_fields is mapping and custom_fields.get('captive_portal_url') %}
+{%- set captive_portal = custom_fields['captive_portal_url'] %}
+{%- else %}
+{%- set captive_portal = 'urn:ietf:params:capport:unrestricted' %}
+{%- endif %}
+{%- set options = [
+	{'name': 'broadcast-address', 'data': net['broadcast']},
+	{'name': 'interface-mtu', 'data': '1280'},
+	{'name': 'v4-captive-portal', 'data': captive_portal},
+	{'name': 'v4-dnr', 'data': dnr},
+] %}
+{%- for ip in salt['grains.get']('ipv4') %}
+{%- if salt['network.ip_in_subnet'](ip, prefix) %}
+{%- do options.append({'name': 'routers', 'data': ip}) %}
+{%- do options.append({'name': 'domain-name-servers', 'data': ip}) %}
+{%- endif %}
+{%- endfor %}
+{%- do shared_networks.append({
+	'name': name,
+	'subnet4': [{
+		'id': octets[0] * 16777216 + octets[1] * 65536 + octets[2] * 256 + octets[3],
+		'subnet': net['network'] ~ '/' ~ prefix.split('/')[1],
+		'pools': [{'pool': net['network'] | regex_replace('\.0$', '.10') ~ ' - ' ~ net['broadcast'] | regex_replace('\.255', '.254')}],
+		'option-data': options,
+	}],
+}) %}
+{%- endfor %}
+
+{#- Ping check like dhcpd's ping-check: one echo, wait 1s (dhcpd's
+    ping-timeout) instead of Kea's 100ms, which is short across the mesh.
+    An address that answers is declined; Kea keeps it out of the pool for 24h
+    by default, while dhcpd reused abandoned leases when the pool ran short,
+    so keep the decline probation at 1h. #}
+{%- set config = {
+	'Dhcp4': {
+		'interfaces-config': {
+			'interfaces': sites | map('regex_replace', '^', 'br-') | list,
+		},
+		'control-sockets': [
+			{'socket-type': 'unix', 'socket-name': 'kea4-ctrl-socket'},
+		],
+		'lease-database': {'type': 'memfile', 'lfc-interval': 3600},
+		'authoritative': true,
+		'valid-lifetime': 600,
+		'max-valid-lifetime': 3600,
+		'decline-probation-period': 3600,
+		'hooks-libraries': [
+			{
+				'library': 'libdhcp_ping_check.so',
+				'parameters': {'enable-ping-check': true, 'min-ping-requests': 1, 'reply-timeout': 1000},
+			},
+		],
+		'option-def': [
+			{'name': 'unifi-address', 'code': 1, 'space': 'ubnt', 'type': 'ipv4-address'},
+		],
+		'client-classes': [
+			{
+				'name': 'ubnt',
+				'test': "substring(option[vendor-class-identifier].hex, 0, 4) == 'ubnt'",
+				'option-def': [
+					{'name': 'vendor-encapsulated-options', 'code': 43, 'type': 'empty', 'encapsulate': 'ubnt'},
+				],
+				'option-data': [
+					{'name': 'vendor-class-identifier', 'data': 'ubnt', 'always-send': true},
+					{'name': 'vendor-encapsulated-options', 'always-send': true},
+					{'name': 'unifi-address', 'space': 'ubnt', 'data': controller},
+				],
+			},
+			{
+				'name': 'omada',
+				'test': "lcase(option[vendor-class-identifier].text) == 'tp-link'",
+				'option-data': [
+					{'name': 'capwap-ac-v4', 'data': controller, 'always-send': true},
+				],
+			},
+		],
+		'shared-networks': shared_networks if dhcp_prefixes | length > 0 else [],
+		'loggers': [
+			{
+				'name': 'kea-dhcp4',
+				'output-options': [{'output': 'stdout'}],
+				'severity': 'INFO',
+			},
+		],
+	},
+} -%}
+{{ config | tojson(indent=2) }}
