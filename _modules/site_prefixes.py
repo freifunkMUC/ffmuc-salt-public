@@ -1,9 +1,8 @@
 #!/usr/bin/python
 """Look up IPAM prefixes in Netbox.
 
-This module is called at Jinja render time by dhcp-server/dhcpd.conf,
-wireguard/wg.jinja2 and knot-resolver/kresd.override.socket. Those templates
-render *network service configuration*, so a failed lookup must never be
+This module is called at Jinja render time by the dhcp-server templates
+and wireguard/wg.jinja2. Those templates render *network service configuration*, so a failed lookup must never be
 turned into "no prefixes": dhcpd.conf would then render without any subnet,
 get written, and restart isc-dhcp-server into a config that hands out no
 leases at all - while Salt reports success. Fail closed instead, so the
