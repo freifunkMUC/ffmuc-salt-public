@@ -59,6 +59,6 @@ bandwidth-monitor-repo:
 
 bandwidth-top:
   pkg.installed:
-    - version: '0.0.34'
+    - version: '0.0.36'
     - require:
       - pkgrepo: bandwidth-monitor-repo
