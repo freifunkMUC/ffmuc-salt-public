@@ -16,17 +16,11 @@ include:
   - apt
   - sudo
 
-# https://packages.icinga.com/icinga.key returns 404, and the
-# icinga-archive-keyring package Icinga now recommends does not exist for
-# Raspbian or focal. The keyring is taken from icinga-archive-keyring 2.0.0
-# (key DD3AF6198ED000B4C0B73956CC116F55AA7F2382, rotated 2024-09-30) and
-# validates the ubuntu, debian and raspbian repos. Replace it on the next
-# rotation.
 icinga2-repo-key:
-  file.managed:
-    - name: /usr/share/keyrings/icinga2-keyring.gpg
-    - source: salt://icinga2/icinga-archive-keyring.gpg
-    - mode: "0644"
+  cmd.run:
+    - name: "curl -fsSL https://packages.icinga.com/icinga.key | gpg --batch --yes --dearmor -o /usr/share/keyrings/icinga2-keyring.gpg.tmp && mv /usr/share/keyrings/icinga2-keyring.gpg.tmp /usr/share/keyrings/icinga2-keyring.gpg"
+    # NOTE: no 'creates' guard: Icinga rotates the signing key. Always re-fetch so a
+    # stale keyring (NO_PUBKEY) is refreshed to the current icinga.key.
 
 icinga2-repo:
   pkgrepo.managed:
@@ -40,7 +34,7 @@ icinga2-repo:
     - file: /etc/apt/sources.list.d/icinga2.list
     - clean_file: True
     - require:
-      - file: icinga2-repo-key
+      - cmd: icinga2-repo-key
 
 # Install icinga2 package
 {% set node_config = salt['pillar.get']('nodes:' ~ grains.id, {}) %}
