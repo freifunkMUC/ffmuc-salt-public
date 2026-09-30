@@ -26,6 +26,8 @@ base:
     - docker
     - dphys-swapfile
     - rustic
+    # duplicity was replaced by rustic; drop once all hosts are cleaned up
+    - duplicity.remove
     - grafana
     - icinga2
     - influxdb

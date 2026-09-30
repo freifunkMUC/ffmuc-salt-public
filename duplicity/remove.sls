@@ -1,3 +1,5 @@
+# duplicity was replaced by rustic. Removes the package, the old backup
+# script and the ffmuc-backup timer that duplicity/disable.sls kept running.
 
 duplicity:
   pkg.removed
@@ -14,7 +16,7 @@ remove_duplicity_files:
       - service: ffmuc-backup-timer-disable
       - pkg: duplicity
 
-systemd-reload-ffmuc-backup:
+systemd-reload-duplicity-removed:
   cmd.run:
     - name: systemctl --system daemon-reload
     - onchanges:
