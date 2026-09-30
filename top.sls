@@ -29,7 +29,6 @@ base:
     - grafana
     - icinga2
     - influxdb
-    - jenkins
     - kvm
     - ntp
     - snmpd
