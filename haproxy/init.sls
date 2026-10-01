@@ -25,7 +25,29 @@ update-repo:
 haproxy:
   pkg.installed:
     - name: haproxy-awslc
-    - version: 3.4.3-0+ha34+ubuntu24.04u1
+    - version: 3.4.6-0+ha34+ubuntu24.04u1
+
+{# haproxy runs chrooted and logs to /dev/log; haproxy.service bind-mounts the journal socket to
+   /var/lib/haproxy/dev/log (BindReadOnlyPaths). The package's rsyslog snippet additionally creates its own
+   socket at that path ($AddUnixListenSocket): every rsyslog restart (e.g. an unattended upgrade) recreates
+   it, which silently detaches the bind mount, so haproxy's logs no longer reach the journal. #}
+haproxy-rsyslog-conf:
+  file.managed:
+    - name: /etc/rsyslog.d/49-haproxy.conf
+    - contents: |
+        # Managed by Salt - haproxy logs via the journal; no socket in the chroot (see haproxy/init.sls)
+        :programname, startswith, "haproxy" {
+          /var/log/haproxy.log
+          stop
+        }
+
+haproxy-rsyslog:
+  service.running:
+    - name: rsyslog
+    - watch:
+      - file: haproxy-rsyslog-conf
+    - require_in:
+      - pkg: haproxy
 
 haproxy-keyring-dir:
   file.directory:
