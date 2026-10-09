@@ -121,6 +121,7 @@ Any key you don't set keeps its built-in default.
 ## Installed files
 
 - `formulars/packetyeeter/init.sls`
+- `formulars/packetyeeter/defaults.jinja` (shared default version; `haproxy` fetches the JA4/SPOE files from the same tag)
 - `formulars/packetyeeter/packetyeeter-collector.default.jinja`
 - `formulars/packetyeeter/packetyeeter-analyzer-compose.yml.j2`
 

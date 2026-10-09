@@ -110,9 +110,13 @@ haproxy-configtest:
     - require:
       - pkg: haproxy
 
+{#- Take the Lua/SPOE files from the tag of the collector version running
+    next to haproxy (not main), so they only change with a deliberate bump. #}
+{%- from "packetyeeter/defaults.jinja" import default_version %}
+{%- set packetyeeter_ref = 'v' ~ salt['config.get']('netbox:config_context:packetyeeter:collector:version', default_version) %}
 /etc/haproxy/lua/ja4.lua:
   file.managed:
-    - source: https://raw.githubusercontent.com/awlx/packetyeeter/main/examples/ja4.lua
+    - source: https://raw.githubusercontent.com/awlx/packetyeeter/{{ packetyeeter_ref }}/examples/ja4.lua
     - skip_verify: True
     - mode: "0644"
     - require:
@@ -120,7 +124,7 @@ haproxy-configtest:
 
 /etc/haproxy/lua/ja4h.lua:
   file.managed:
-    - source: https://raw.githubusercontent.com/awlx/packetyeeter/main/examples/ja4h.lua
+    - source: https://raw.githubusercontent.com/awlx/packetyeeter/{{ packetyeeter_ref }}/examples/ja4h.lua
     - skip_verify: True
     - mode: "0644"
     - require:
@@ -137,7 +141,7 @@ haproxy-configtest:
 packetyeeter-spoe-conf:
   file.managed:
     - name: /etc/haproxy/spoe/packetyeeter.conf
-    - source: https://raw.githubusercontent.com/awlx/packetyeeter/main/examples/packetyeeter.spoe.conf
+    - source: https://raw.githubusercontent.com/awlx/packetyeeter/{{ packetyeeter_ref }}/examples/packetyeeter.spoe.conf
     - skip_verify: True
     - mode: "0644"
     - require:
