@@ -26,9 +26,14 @@ nginx-repo-key:
     - require:
       - cmd: nginx-repo-key
 
+{#- Pinned so upgrades are rolled out deliberately; the wildcard covers the
+    distro suffix (e.g. 1.30.5-1~noble). Override per host via the NetBox
+    config context if a distro lacks this build (focal ends at 1.28.0). #}
+{%- set nginx_pkg_version = salt['config.get']('netbox:config_context:nginx:version', '1.30.5-*') %}
 nginx:
   pkg.installed:
     - name: nginx
+    - version: '{{ nginx_pkg_version }}'
     - require:
       - pkgrepo: /etc/apt/sources.list.d/nginx.list
   service.running:
@@ -57,11 +62,6 @@ nginx-configtest:
     - watch_in:
       - cmd: nginx-configtest
 
-{% if salt["service.available"]("nginx") %}
-{% set nginx_version = salt["pkg.info_installed"]("nginx").get("nginx", {}).get("version","").split("-")[0] %}
-{% else %}
-{% set nginx_version = "1.26.2" %}{# current on 02.11.2020 #}
-{% endif %}
 
 
 /etc/nginx/nginx.conf:
