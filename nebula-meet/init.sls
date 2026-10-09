@@ -81,6 +81,7 @@ nebula-meet-service:
     - watch:
         - file: /etc/nebula-meet/config.yml
         - cmd: systemd-reload-nebula-meet
+        - pkg: nebula-pkg
 
 {% else %}
 {# remove old config to allow migration to new file destination #}

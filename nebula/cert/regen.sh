@@ -29,14 +29,21 @@ read -r
 
 # Regenerate CA with validity of 10 years
 rm ca.crt ca.key
-nebula-cert ca -duration 87600h -name "Freifunk Muenchen Nebula CA G2"
+# nebula-cert >= 1.10 defaults to v2 certificates, which hosts older than
+# 1.10 cannot use. Stay on v1 until the whole mesh runs a v2-capable version.
+ca_version_args=()
+if nebula-cert ca -help 2>&1 | grep -q -- '-version'; then
+  ca_version_args=(-version 1)
+fi
+nebula-cert ca ${ca_version_args[@]+"${ca_version_args[@]}"} -duration 87600h -name "Freifunk Muenchen Nebula CA G2"
 
 for i in "${certs[@]}"; do
 
-  _data=$(nebula-cert print -json -path "$i")
-  name=$(echo "$_data" | jq '.details.name' | tr -d '"')
-  groups=$(echo "$_data" | jq '.details.groups' | tr -cd 'a-z,')
-  ip=$(echo "$_data" | jq '.details.ips[0]' | tr -d '"')
+  # nebula-cert >= 1.10 prints a JSON array and calls the IPs "networks"
+  _data=$(nebula-cert print -json -path "$i" | jq 'if type == "array" then .[0] else . end')
+  name=$(echo "$_data" | jq -r '.details.name')
+  groups=$(echo "$_data" | jq -r '.details.groups | join(",")')
+  ip=$(echo "$_data" | jq -r '(.details.networks // .details.ips)[0]')
 
   rm -v "$name.crt" "$name.key"
 
