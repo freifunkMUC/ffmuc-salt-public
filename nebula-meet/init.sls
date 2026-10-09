@@ -72,7 +72,6 @@ nebula-meet-service-file:
 nebula-meet-service:
   service.running:
     - enable: True
-    - running: True
     #- reload: True
     - name: nebula-meet
     - require:

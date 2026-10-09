@@ -7,7 +7,6 @@ radvd:
     - name: radvd
   service.running:
     - enable: True
-    - restart: True
     - require:
       - file: /etc/radvd.conf
     - watch:

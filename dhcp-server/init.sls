@@ -16,7 +16,6 @@ isc-dhcp-server:
     - name: isc-dhcp-server
   service.running:
     - enable: True
-    - restart: True
     - require:
       - file: /etc/systemd/system/isc-dhcp-server.service
       - file: /var/lib/dhcp/dhcpd.leases

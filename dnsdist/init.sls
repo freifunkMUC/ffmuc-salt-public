@@ -26,7 +26,6 @@ dnsdist:
       - pkgrepo: dnsdist-repo
   service.running:
     - enable: True
-    - restart: True
     - require:
       - file: /etc/dnsdist/dnsdist.conf
       - file: /var/lib/dnsdist

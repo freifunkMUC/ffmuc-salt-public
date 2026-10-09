@@ -8,7 +8,6 @@ install_bird2:
 bird:
     service.running:
         - enable: True
-        - running: True
 
 bird2_configure:
   cmd.run:
