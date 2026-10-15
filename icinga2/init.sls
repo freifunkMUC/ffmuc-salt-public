@@ -162,6 +162,16 @@ icinga2-ca:
     - require:
       - pkg: icinga2-pkg
 
+# reload icinga2 when the host cert behind the symlink gets renewed
+icinga2-hostcert-fingerprint:
+  cmd.run:
+    - name: openssl x509 -noout -fingerprint -sha256 -in /etc/ssl/certs/{{ grains['id'] }}.cert.pem > /var/lib/icinga2/hostcert.fingerprint
+    - unless: openssl x509 -noout -fingerprint -sha256 -in /etc/ssl/certs/{{ grains['id'] }}.cert.pem | cmp -s - /var/lib/icinga2/hostcert.fingerprint
+    - require:
+      - file: icinga2-hostcert
+    - watch_in:
+      - service: icinga2-service
+
 # Install and activate Icinga2 features
 {% for feature in icinga2_features %}
 /etc/icinga2/features-available/{{ feature }}.conf:
