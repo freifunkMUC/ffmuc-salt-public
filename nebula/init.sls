@@ -70,6 +70,16 @@ nebula-service:
         - file: /etc/nebula/{{ grains['id'] }}.crt
         - file: /etc/nebula/{{ grains['id'] }}.key
 
+# the package does not restart the service on upgrade and a reload keeps the
+# old binary running, so restart explicitly when the package changed
+nebula-restart-on-upgrade:
+  cmd.run:
+    - name: systemctl restart nebula
+    - onchanges:
+        - pkg: nebula-pkg
+    - require:
+        - service: nebula-service
+
 {% else %}
 {# remove old config to allow migration to new file destination #}
 /etc/nebula/ca.crt:

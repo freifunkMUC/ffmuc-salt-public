@@ -4,7 +4,7 @@
 
 nebula-meet:
   enabled: false
-  version: 1.5.2-2
+  # the binary version is taken from nebula:version (nebula.install)
 
   am_lighthouse: false
   lighthouses:

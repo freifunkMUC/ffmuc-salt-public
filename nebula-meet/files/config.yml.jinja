@@ -34,12 +34,19 @@ sshd:
   authorized_users:
     - user: loop
       keys:
-      {% for key in nebula.loophole.keys %}
+      {#- nebula.loophole.keys would resolve to dict.keys() #}
+      {% for key in nebula.loophole.get('ssh_keys', nebula.loophole.get('keys', [])) %}
        - {{ key }}
       {%- endfor %}
 {%- endif %}
 
-local_range: "{{ nebula.local_range }}"
+{#- local_range was removed in nebula 1.9, preferred_ranges replaces it #}
+{%- set preferred_ranges = nebula.get('preferred_ranges', nebula.local_range) %}
+{%- if preferred_ranges is string %}{% set preferred_ranges = [preferred_ranges] %}{% endif %}
+preferred_ranges:
+{%- for range in preferred_ranges %}
+  - "{{ range }}"
+{%- endfor %}
 
 tun:
   dev: {{ nebula.interface }}
