@@ -381,7 +381,10 @@ function pickLang() {
   const q = new URLSearchParams(location.search).get("lang");
   let saved = null; try { saved = localStorage.getItem("ffmuc-reserve-lang"); } catch (e) {}
   const norm = (l) => { l = (l || "").toLowerCase().slice(0, 2); return l === "ua" ? "uk" : l; };
-  for (const c of [q, saved, ...(navigator.languages || [navigator.language])]) { if (T[norm(c)]) return norm(c); }
+  for (const c of [q, saved, ...(navigator.languages || [navigator.language])]) {
+    const hit = Object.keys(LANGS).find(k => k === norm(c));
+    if (hit) return hit;
+  }
   return "en";
 }
 const lang = pickLang();
