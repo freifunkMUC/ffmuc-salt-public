@@ -83,7 +83,7 @@
 {# Shared default release version for both daemons - bump this when a new
    packetyeeter version is published, so the collector .deb and the analyzer
    Docker image stay in lockstep by default. #}
-{% set default_version = '0.1.9' %}
+{% set default_version = '0.2.0' %}
 
 {# The collector runs natively (systemd) since it needs to load eBPF/XDP/TC
    programs against a host interface - this isn't practical to containerize.
@@ -151,6 +151,13 @@
 {% set haproxy_geoip_city_exists = salt['file.file_exists'](haproxy_geoip_city) %}
 {% set analyzer_geoip_country_host_path = haproxy_geoip_city if haproxy_geoip_city_exists else docker_geoip_country %}
 {% set geoip_country_container_path = '/data/geoip/GeoLite2-Country.mmdb' %}
+{# Inspector hostname = Netbox service "packetyeeter*.in.ffmuc.net" on this VM, served as .ov (dns-auth creates both CNAMEs). #}
+{% set ns_traefik = namespace(host='') %}
+{% for svc_name, svc in salt['config.get']('netbox:services', {}).items() %}
+  {% if svc_name.startswith('packetyeeter') and (svc.get('virtual_machine') or {}).get('name') == grains['id'] %}
+    {% set ns_traefik.host = svc_name | replace('.in.ffmuc.net', '.ov.ffmuc.net') %}
+  {% endif %}
+{% endfor %}
 {# sustained_enabled / sustained_enforce are v0.1.9+ analyzer flags for the
    sustained-download detection feature. Both default OFF and are only
    emitted into the compose command when truthy, so an older (<=v0.1.8)
@@ -173,6 +180,7 @@
   'geoip_container_path': geoip_container_path,
   'geoip_country_host_path': analyzer_geoip_country_host_path,
   'geoip_country_container_path': geoip_country_container_path,
+  'traefik_host': ns_traefik.host,
 } %}
 {% set analyzer = {} %}
 {% do analyzer.update(analyzer_defaults) %}
@@ -243,6 +251,7 @@ packetyeeter-collector-service:
     - watch:
       - file: /etc/default/packetyeeter-collector
       - file: /etc/systemd/system/packetyeeter-collector.service.d/override.conf
+      - pkg: packetyeeter-collector-pkg
 {% else %}
 packetyeeter-collector-version-missing:
   test.fail_without_changes:
