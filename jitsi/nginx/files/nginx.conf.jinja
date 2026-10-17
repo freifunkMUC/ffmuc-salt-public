@@ -1,0 +1,94 @@
+user www-data;
+
+pid /run/nginx.pid;
+
+include /etc/nginx/modules-enabled/*.conf;
+
+
+worker_processes       8;
+worker_rlimit_nofile   100768; # We need to allow as many openfiles as worker_connections
+events {
+	multi_accept       on;
+	worker_connections 100768; # Raise as much as we think is needed
+	use                epoll;
+}
+
+http {
+	##
+	# Basic Settings
+	##
+	sendfile on;
+	tcp_nopush on;
+	tcp_nodelay off;
+	keepalive_timeout 65;
+	types_hash_max_size 2048;
+	sendfile_max_chunk 512k;
+	server_tokens off;
+
+	http2 on;
+
+	server_names_hash_bucket_size 128;
+	# server_name_in_redirect off;
+
+	include /etc/nginx/mime.types;
+	types {
+		text/plain                 manifest;
+		application/manifest+json  webmanifest;
+		application/geo+json       geojson;
+	}
+	default_type application/octet-stream;
+
+	##
+	# SSL Settings
+	##
+	ssl_protocols TLSv1.2 TLSv1.3;
+	ssl_prefer_server_ciphers on;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
+	ssl_session_cache shared:SSL:32m;
+	ssl_session_timeout 30m;
+	resolver 1.1.1.1;
+	##
+	# Gzip Settings
+	##
+	gzip on;
+	gzip_disable "msie6";
+
+	gzip_vary on;
+	gzip_min_length 150;
+	gzip_proxied any;
+	gzip_comp_level 6;
+	gzip_buffers 16 8k;
+	gzip_http_version 1.1;
+	gzip_types application/atom+xml application/javascript application/json
+		application/ld+json application/manifest+json application/rss+xml
+		application/vnd.geo+json application/vnd.ms-fontobject
+		application/x-font-ttf application/x-web-app-manifest+json
+		application/xhtml+xml application/xml font/opentype image/bmp
+		image/svg+xml image/x-icon text/cache-manifest text/css text/plain
+		text/vcard text/vnd.rim.location.xloc text/vtt text/x-component
+		text/x-cross-domain-policy text/xml application/xml+rss
+		text/javascript images/svg+sml application/x-javascript;
+
+	# Set hint which webfrontend is used
+	add_header X-FFMuc-Edge "{{ grains.id.split(".")[0] }}" always;
+	map $http_upgrade $connection_upgrade {
+		default upgrade;
+		''      close;
+	}
+
+	##
+	# Virtual Host Configs
+	##
+	include /etc/nginx/conf.d/*.conf;
+	include /etc/nginx/sites-enabled/*.conf;
+
+	##
+	# Logging Settings
+	##
+	access_log /var/log/nginx/access.log json_normal;
+	error_log /var/log/nginx/error.log;
+}
+
+stream {
+	include /etc/nginx/streams-enabled/*.conf;
+}

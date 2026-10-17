@@ -1,0 +1,169 @@
+{%- from "jitsi/map.jinja" import jitsi with context -%}
+{%- set vhost = "v" ~ vnode ~ "." ~ jitsi.visitors.domain -%}
+{%- set vauth = "auth." ~ jitsi.visitors.domain -%}
+-- Visitor prosody v{{ vnode }} (vnode), managed by SaltStack
+-- based on jitsi-meet resources/extra-large-conference/prosody.cfg.lua.visitor.template
+
+---------- Server-wide settings ----------
+-- everything is reached locally: jicofo (c2s), nginx (http) and the main prosody (s2s)
+c2s_ports = { 5222{{ vnode }} }
+c2s_interfaces = { "127.0.0.1" }
+s2s_ports = { 5269{{ vnode }} }
+s2s_interfaces = { "127.0.0.1" }
+http_ports = { 5280{{ vnode }} }
+http_interfaces = { "127.0.0.1" }
+https_ports = {}
+component_ports = {}
+
+-- systemd runs prosody with -F
+daemonize = false;
+
+-- we use a common jid for jicofo
+admins = {
+    "{{ jitsi.jicofo.username }}@{{ vauth }}"
+}
+component_admins_as_room_owners = true
+
+network_backend = "epoll";
+network_settings = {
+    tcp_backlog = 511;
+}
+
+modules_enabled = {
+      "saslauth";
+      "tls";
+      "disco";
+      "posix";
+      "ping";
+
+    -- jitsi
+      "websocket";
+      "bosh";
+      "s2s_bidi";
+      "s2s_whitelist";
+      "s2sout_override";
+      "certs_s2soutinjection";
+};
+
+s2s_whitelist = {
+    "conference.{{ jitsi.public_domain }}"; -- needed for visitors to send messages to main room
+    "visitors.{{ jitsi.public_domain }}"; -- needed for sending promotion request to visitors.{{ jitsi.public_domain }} component
+    "{{ jitsi.xmpp.xmpp_domain }}"; -- unavailable presences back to main room
+    "polls.{{ jitsi.public_domain }}"; -- polls component
+};
+
+s2sout_override = {
+    ["conference.{{ jitsi.public_domain }}"] = "tcp://127.0.0.1:5269"; -- needed for visitors to send messages to main room
+    ["{{ jitsi.xmpp.xmpp_domain }}"] = "tcp://127.0.0.1:5269"; -- needed for the main room when connecting in to send main participants
+    ["visitors.{{ jitsi.public_domain }}"] = "tcp://127.0.0.1:5269"; -- needed for sending promotion request to visitors.{{ jitsi.public_domain }} component
+    ["polls.{{ jitsi.public_domain }}"] = "tcp://127.0.0.1:5269"; -- polls component
+}
+
+external_service_secret = "{{ jitsi.turn.secret }}"
+external_services = {
+{%- for host in jitsi.turn.hosts %}
+    { type = "stun", host = "{{ host.hostname }}", port = {{ host.port }}, transport = "udp", secret = true, ttl = 86400, algorithm = "turn" },
+    { type = "turn", host = "{{ host.hostname }}", port = {{ host.port }}, transport = "udp", secret = true, ttl = 86400, algorithm = "turn" },
+    { type = "turn", host = "{{ host.hostname }}", port = {{ host.port }}, transport = "tcp", secret = true, ttl = 86400, algorithm = "turn" },
+    { type = "turns", host = "{{ host.hostname }}", port = {{ host.port }}, transport = "tcp", secret = true, ttl = 86400, algorithm = "turn" },
+{%- endfor %}
+};
+
+muc_mapper_domain_base = "{{ vhost }}";
+main_domain = "{{ jitsi.xmpp.xmpp_domain }}";
+http_default_host = "{{ vhost }}";
+
+smacks_max_unacked_stanzas = 5;
+smacks_hibernation_time = 60;
+smacks_max_hibernated_sessions = 1;
+smacks_max_old_sessions = 1;
+
+unlimited_jids = { "{{ jitsi.jicofo.username }}@{{ vauth }}" }
+limits = {
+    c2s = {
+        rate = "512kb/s";
+    };
+}
+
+modules_disabled = {
+    "offline";
+    "pubsub";
+    "register";
+};
+
+allow_registration = false;
+authentication = "internal_hashed"
+storage = "internal"
+data_path = "/var/lib/prosody-v{{ vnode }}"
+pidfile = "/run/prosody-v{{ vnode }}/prosody.pid";
+log = {
+    info = "/var/log/prosody-v{{ vnode }}/prosody.log";
+    error = "/var/log/prosody-v{{ vnode }}/prosody.err";
+}
+
+consider_websocket_secure = true;
+consider_bosh_secure = true;
+bosh_max_inactivity = 60;
+
+plugin_paths = { "/usr/share/jitsi-meet/prosody-plugins", "/usr/lib/prosody/modules" }
+
+certificates = "certs"
+
+----------- Virtual hosts -----------
+VirtualHost "{{ vhost }}"
+    authentication = "jitsi-anonymous"
+    ssl = {
+        key = "/etc/prosody/certs/{{ jitsi.public_domain }}.key";
+        certificate = "/etc/prosody/certs/{{ jitsi.public_domain }}.crt";
+    }
+    modules_enabled = {
+      "bosh";
+      "websocket";
+      "ping";
+      "external_services";
+      "smacks";
+      "jiconop";
+      "conference_duration";
+      "features_identity";
+    }
+    main_muc = "conference.{{ vhost }}";
+
+VirtualHost "{{ vauth }}"
+    modules_enabled = {
+          "limits_exception";
+          "ping";
+          "smacks";
+    }
+    authentication = "internal_hashed"
+    smacks_hibernation_time = 15;
+
+Component "conference.{{ vhost }}" "muc"
+    storage = "memory"
+    muc_room_cache_size = 10000
+    restrict_room_creation = true
+    modules_enabled = {
+        "muc_hide_all";
+        "muc_domain_mapper";
+        "muc_meeting_id";
+        "fmuc";
+        "s2s_bidi";
+        "s2s_whitelist";
+        "s2sout_override";
+        "muc_max_occupants";
+    }
+    muc_room_default_presence_broadcast = {
+        visitor = false;
+        participant = true;
+        moderator = true;
+    };
+    muc_room_locking = false
+    muc_room_default_public_jids = true
+    muc_max_occupants = {{ jitsi.visitors.max_visitors_per_node }}
+    muc_access_whitelist = {
+        "{{ jitsi.xmpp.xmpp_domain }}";
+    }
+    muc_tombstones = false
+    muc_room_allow_persistent = false
+    transcriptions_default_language = "{{ jitsi.transcription.default_language }}"
+
+Component "polls.{{ vhost }}" "polls_component"
