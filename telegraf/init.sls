@@ -235,6 +235,27 @@ remove_asterisk_monitoring:
     - watch_in:
           service: telegraf
 
+/etc/telegraf/telegraf.d/in-wgkex-broker.conf:
+{#- the broker runs from a hand-managed docker compose project #}
+{%- if salt['file.file_exists']('/srv/docker/wgkex/config/broker/wgkex.yaml') %}
+  file.managed:
+    - source: salt://telegraf/files/in_wgkex-broker.conf
+{% else %}
+  file.absent:
+{% endif %}
+    - watch_in:
+          service: telegraf
+
+/etc/telegraf/telegraf.d/in-wgkex-worker.conf:
+{%- if 'nextgen-gateway' in role %}
+  file.managed:
+    - source: salt://telegraf/files/in_wgkex-worker.conf
+{% else %}
+  file.absent:
+{% endif %}
+    - watch_in:
+          service: telegraf
+
 {% if grains.virtual == 'physical' %}
 smartmontools:
   pkg.installed:

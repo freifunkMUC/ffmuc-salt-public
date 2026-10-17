@@ -22,6 +22,15 @@ load_balancing:
     interval: 60
     max_evictions_ratio: 0.01
     eviction_cooldown: 3600
+# [worker] Drain mode for planned maintenance (wgkex >= 7606d8f, #298): while this file exists (or after
+# `systemctl kill -s USR1 wgkex`, undone with USR2) the worker reports status 2, brokers stop assigning new
+# peers to it and ask it to evict its peers at drain_rate per interval. /run is cleared on reboot.
+drain:
+  file: /run/wgkex/drain
+# [worker] Prometheus metrics (queue depth, peer operations, netlink latency), scraped by telegraf
+metrics:
+  worker_port: 9101
+  worker_host: 127.0.0.1
 # [broker, worker] MQTT connection informations
 mqtt:
   broker_url: broker.ov.ffmuc.net
@@ -30,6 +39,7 @@ mqtt:
   tls: False
   broker_port: 1883
   keepalive: 20
+log_level: INFO
 logging_config:
   formatters:
     standard:
