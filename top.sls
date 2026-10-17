@@ -44,10 +44,11 @@ base:
     - jitsi.jicofo
     - jitsi.meet
     - certs
-#    - nginx # broken, old nginx versions
+    - jitsi.nginx
   'call*':
     - jitsi.asterisk
     - jitsi.jigasi
+    - jitsi.vosk
   'gw*':
     - dhcp-server
     - knot-resolver.remove

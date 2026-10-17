@@ -10,6 +10,21 @@ consider_bosh_secure = true;
 muc_mapper_domain_base = "{{ jitsi.public_domain }}";
 
 http_default_host = "{{ jitsi.xmpp.xmpp_domain }}";
+{%- if jitsi.transcription.enabled and jitsi.transcription.disable_dial_out %}
+
+-- the jigasi brewery is used for transcription only, keep SIP dial-out off for moderators
+jitsi_default_permissions = {
+    livestreaming = true;
+    recording = true;
+    transcription = true;
+    ['outbound-call'] = false;
+    ['create-polls'] = true;
+    ['send-groupchat'] = true;
+    flip = true;
+    ['live-translation'] = true;
+    ['live-translation-subscribe'] = true;
+}
+{%- endif %}
 
 VirtualHost "{{ jitsi.xmpp.xmpp_domain }}"
     authentication = {% if jitsi.authentication %}"internal_plain"{% else %}"token"{% endif %}
@@ -19,7 +34,6 @@ VirtualHost "{{ jitsi.xmpp.xmpp_domain }}"
     }
     av_moderation_component = "avmoderation.{{ jitsi.public_domain }}"
     speakerstats_component = "speakerstats.{{ jitsi.public_domain }}"
-    conference_duration_component = "conferenceduration.{{ jitsi.public_domain }}"
     {%- if jitsi.end_conference_enabled %}
     end_conference_component = "endconference.{{ jitsi.public_domain }}"
     {%- endif %}
@@ -28,14 +42,14 @@ VirtualHost "{{ jitsi.xmpp.xmpp_domain }}"
         "bosh";
         "websocket";
         "ping"; -- Enable mod_ping
-        "speakerstats";
         "conference_duration";
-        {% if jitsi.end_conference_enabled %}"end_conference";{% endif %}
         {% if jitsi.lobby_enabled %}"muc_lobby_rooms";{% endif %}
         {% if jitsi.breakout_enabled %}"muc_breakout_rooms";{% endif %}
-        "av_moderation";
-        "room_metadata";
         "external_services";
+        "features_identity"; -- advertises speakerstats/avmoderation/polls/metadata components
+        {%- if jitsi.visitors.enabled %}
+        "visitors";
+        {%- endif %}
     }
     {%- if jitsi.lobby_enabled %}
     lobby_muc = "lobby.{{ jitsi.public_domain }}"
@@ -47,24 +61,45 @@ VirtualHost "{{ jitsi.xmpp.xmpp_domain }}"
     app_id = ""
     app_secret = ""
     allow_empty_token = true
+    {%- if jitsi.visitors.enabled %}
+    -- jibri and transcribers stay in the main room
+    visitors_ignore_list = { "recorder.{{ jitsi.public_domain }}" }
+    {%- endif %}
+    {%- if jitsi.transcription.enabled %}
+    muc_lobby_whitelist = { "recorder.{{ jitsi.public_domain }}" }
+    {%- endif %}
 
 Component "conference.{{ jitsi.public_domain }}" "muc"
+    restrict_room_creation = true
     storage = "memory"
     modules_enabled = {
+        "muc_hide_all";
         "muc_meeting_id";
         "muc_domain_mapper";
+        "muc_rate_limit";
+        "muc_password_whitelist";
+        "muc_message_moderation";
     }
+    admins = { "{{ jitsi.jicofo.username }}@{{ jitsi.xmpp.auth_domain }}" }
+    muc_password_whitelist = { "{{ jitsi.jicofo.username }}@{{ jitsi.xmpp.auth_domain }}"{% if jitsi.transcription.enabled %}, "{{ jitsi.transcription.transcriber_username }}@recorder.{{ jitsi.public_domain }}"{% endif %} }
     muc_room_cache_size = 10000
     muc_room_locking = false
     muc_room_default_public_jids = true
 
 {% for domain in jitsi.subdomains %}
 Component "conference.{{ domain }}.{{ jitsi.public_domain }}" "muc"
+    restrict_room_creation = true
     storage = "memory"
     modules_enabled = {
+        "muc_hide_all";
         "muc_meeting_id";
         "muc_domain_mapper";
+        "muc_rate_limit";
+        "muc_password_whitelist";
+        "muc_message_moderation";
     }
+    admins = { "{{ jitsi.jicofo.username }}@{{ jitsi.xmpp.auth_domain }}" }
+    muc_password_whitelist = { "{{ jitsi.jicofo.username }}@{{ jitsi.xmpp.auth_domain }}"{% if jitsi.transcription.enabled %}, "{{ jitsi.transcription.transcriber_username }}@recorder.{{ jitsi.public_domain }}"{% endif %} }
     muc_room_cache_size = 10000
     muc_room_locking = false
     muc_room_default_public_jids = true
@@ -75,8 +110,11 @@ Component "breakout.{{ jitsi.public_domain }}" "muc"
     restrict_room_creation = true
     storage = "memory"
     modules_enabled = {
+        "muc_hide_all";
         "muc_meeting_id";
         "muc_domain_mapper";
+        "muc_rate_limit";
+        "muc_message_moderation";
     }
     admins = { "{{ jitsi.jicofo.username }}@{{ jitsi.xmpp.auth_domain }}", "{{ jitsi.videobridge.username }}@{{ jitsi.xmpp.auth_domain }}" }
     muc_room_locking = false
@@ -87,6 +125,7 @@ Component "breakout.{{ jitsi.public_domain }}" "muc"
 Component "internal.auth.{{ jitsi.public_domain }}" "muc"
     storage = "memory"
     modules_enabled = {
+      "muc_hide_all";
       "ping";
     }
     admins = { "{{ jitsi.jicofo.username }}@{{ jitsi.xmpp.auth_domain }}", "{{ jitsi.videobridge.username }}@{{ jitsi.xmpp.auth_domain }}" }
@@ -109,11 +148,8 @@ Component "focus.{{ jitsi.public_domain }}" "client_proxy"
 Component "speakerstats.{{ jitsi.public_domain }}" "speakerstats_component"
     muc_component = "conference.{{ jitsi.public_domain }}"
 
-Component "conferenceduration.{{ jitsi.public_domain }}" "conference_duration_component"
-    muc_component = "conference.{{ jitsi.public_domain }}"
-
 {%- if jitsi.end_conference_enabled %}
-Component "endconference.{{ jitsi.public_domain }}" "https://meet.ffmuc.net/asfasgeag4"
+Component "endconference.{{ jitsi.public_domain }}" "end_conference"
     muc_component = "conference.{{ jitsi.public_domain }}"
 {% endif %}{# if end_conference_enabled #}
 
@@ -129,18 +165,19 @@ VirtualHost "guest.{{ jitsi.public_domain }}"
             certificate = "/etc/prosody/certs/{{ jitsi.public_domain }}.crt";
     }
     speakerstats_component = "speakerstats.{{ jitsi.public_domain }}"
-    conference_duration_component = "conferenceduration.{{ jitsi.public_domain }}"
     -- we need bosh
     modules_enabled = {
         "bosh";
         "websocket";
         "pubsub";
         "ping"; -- Enable mod_ping
-        "speakerstats";
         "external_services";
         "conference_duration";
     }
     c2s_require_encryption = false
+    {%- if jitsi.visitors.enabled %}
+    allow_anonymous_s2s = true
+    {%- endif %}
 {% endif %}{# if guests_enabled #}
 
 {%- if jitsi.lobby_enabled %}
@@ -150,9 +187,13 @@ Component "lobby.{{ jitsi.public_domain }}" "muc"
     restrict_room_creation = true
     muc_room_locking = false
     muc_room_default_public_jids = true
+    modules_enabled = {
+        "muc_hide_all";
+        "muc_rate_limit";
+    }
 {% endif %}{# if lobby_enabled #}
 
-{%- if jitsi.jibri_enabled %}
+{%- if jitsi.jibri_enabled or jitsi.transcription.enabled %}
 VirtualHost "recorder.{{ jitsi.public_domain }}"
     modules_enabled = {
         "ping";
@@ -167,3 +208,9 @@ Component "metadata.{{ jitsi.public_domain }}" "room_metadata_component"
     breakout_rooms_component = "breakout.{{ jitsi.public_domain }}"
 
 Component "polls.{{ jitsi.public_domain }}" "polls_component"
+{%- if jitsi.visitors.enabled %}
+
+Component "visitors.{{ jitsi.public_domain }}" "visitors_component"
+    auto_allow_visitor_promotion = {{ 'true' if jitsi.visitors.auto_allow_promotion else 'false' }}
+    admins = { "{{ jitsi.jicofo.username }}@{{ jitsi.xmpp.auth_domain }}" }
+{%- endif %}

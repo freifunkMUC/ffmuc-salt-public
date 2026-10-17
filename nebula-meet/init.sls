@@ -82,6 +82,23 @@ nebula-meet-service:
         - file: /etc/nebula-meet/config.yml
         - cmd: systemd-reload-nebula-meet
 
+{#- the nebula package ships a default nebula.service without config; keep it off unless the main nebula state is used #}
+{%- from "nebula/map.jinja" import nebula as nebula_main with context %}
+{% if not nebula_main.enabled %}
+nebula-default-unit-dead:
+  service.dead:
+    - name: nebula
+    - enable: False
+    - require:
+      - pkg: nebula-pkg
+
+nebula-default-unit-masked:
+  service.masked:
+    - name: nebula
+    - require:
+      - service: nebula-default-unit-dead
+{% endif %}
+
 {% else %}
 {# remove old config to allow migration to new file destination #}
 /etc/nebula-meet/ca.crt:
