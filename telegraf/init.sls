@@ -246,6 +246,19 @@ remove_asterisk_monitoring:
     - watch_in:
           service: telegraf
 
+/etc/telegraf/telegraf.d/in-meet-reserve.conf:
+{%- if salt["pillar.get"]("netbox:config_context:meet_reserve:enabled", False) %}
+  file.managed:
+    - source: salt://telegraf/files/in_meet-reserve.conf
+    - template: jinja
+    - context:
+        port: {{ salt["pillar.get"]("netbox:config_context:meet_reserve:metrics_port", 9195) }}
+{% else %}
+  file.absent:
+{% endif %}
+    - watch_in:
+          service: telegraf
+
 /etc/telegraf/telegraf.d/in-wgkex-worker.conf:
 {%- if 'nextgen-gateway' in role %}
   file.managed:

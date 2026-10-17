@@ -81,6 +81,7 @@ prosody:
     - watch:
       - file: /etc/prosody/prosody.cfg.lua
       - file: /etc/prosody/conf.d/{{ jitsi.public_domain }}.cfg.lua
+      - file: /usr/local/share/ffmuc-prosody-plugins/mod_ffmuc_signed_rooms.lua
 
 {# download and extract prosody plugins of jitsi #}
 download-jitsi-meet-prosody:
@@ -115,6 +116,12 @@ remove-temporary-files:
       - file: copy-prosody-plugins
     - require_in:
       - service: prosody
+
+/usr/local/share/ffmuc-prosody-plugins/mod_ffmuc_signed_rooms.lua:
+  file.managed:
+    - source: salt://jitsi/prosody/files/mod_ffmuc_signed_rooms.lua
+    - makedirs: True
+    - mode: "0644"
 
 /etc/prosody/prosody.cfg.lua:
   file.managed:

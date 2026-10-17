@@ -136,6 +136,10 @@ firewall:
   - port: 5000
     proto: tcp
     group: webfrontend
+  # Allow connections for meet.ffmuc.net/reserve signer (docker-containers/meet-reserve)
+  - port: 8095
+    proto: tcp
+    group: webfrontend
    # Allow connections for http backend of broker.ffmuc.net
   - port: 8888
     proto: tcp
@@ -174,6 +178,10 @@ firewall:
     group: webfrontend
   # Allow connections for http backend of broker.ffmuc.net
   - port: 5000
+    proto: tcp
+    group: webfrontend
+  # Allow connections for meet.ffmuc.net/reserve signer (docker-containers/meet-reserve)
+  - port: 8095
     proto: tcp
     group: webfrontend
   # Allow connections for mqtt backend of broker.ffmuc.net
@@ -241,6 +249,10 @@ firewall:
     host: any
   # Allow connections for mqtt backend of broker.ffmuc.net
   - port: 5000
+    proto: tcp
+    group: webfrontend
+  # Allow connections for meet.ffmuc.net/reserve signer (docker-containers/meet-reserve)
+  - port: 8095
     proto: tcp
     group: webfrontend
   # Allow connections for http backend of broker.ffmuc.net
@@ -351,6 +363,10 @@ firewall:
     group: webfrontend
   # Allow connections for http backend of broker.ffmuc.net
   - port: 5000
+    proto: tcp
+    group: webfrontend
+  # Allow connections for meet.ffmuc.net/reserve signer (docker-containers/meet-reserve)
+  - port: 8095
     proto: tcp
     group: webfrontend
   # Allow connections for mqtt backend of broker.ffmuc.net
