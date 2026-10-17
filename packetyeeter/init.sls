@@ -6,7 +6,7 @@
      - packetyeeter-analyzer  -> installs/runs the analyzer (decision service) on this host
 
    The collector and analyzer share one default release version (see
-   default_version below), so tagging alone is enough for both: the collector
+   default_version in defaults.jinja), so tagging alone is enough for both: the collector
    installs the matching .deb, and the analyzer pulls the matching
    ghcr.io/awlx/packetyeeter-analyzer:v<version> image (not :latest, for
    reproducible deploys). Override netbox:config_context:packetyeeter:collector:version
