@@ -45,3 +45,25 @@ services:
       {%- if analyzer['geoip_enabled'] %}
       - "{{ analyzer['geoip_host_path'] }}:{{ analyzer['geoip_container_path'] }}:ro"
       {%- endif %}
+    {%- if analyzer['traefik_host'] %}
+    networks:
+      - default
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.middlewares.packetyeeter-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.packetyeeter.entrypoints=http"
+      - "traefik.http.routers.packetyeeter.rule=Host(`{{ analyzer['traefik_host'] }}`)"
+      - "traefik.http.routers.packetyeeter.middlewares=packetyeeter-https-redirect"
+      - "traefik.http.routers.packetyeeter-secure.entrypoints=https"
+      - "traefik.http.routers.packetyeeter-secure.rule=Host(`{{ analyzer['traefik_host'] }}`)"
+      - "traefik.http.routers.packetyeeter-secure.tls=true"
+      - "traefik.http.routers.packetyeeter-secure.tls.certresolver=http"
+      - "traefik.http.routers.packetyeeter-secure.service=packetyeeter"
+      - "traefik.http.services.packetyeeter.loadbalancer.server.port=9092"
+
+networks:
+  proxy:
+    external: true
+    {%- endif %}
