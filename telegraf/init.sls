@@ -237,7 +237,7 @@ remove_asterisk_monitoring:
 
 /etc/telegraf/telegraf.d/in-wgkex-broker.conf:
 {#- the broker runs from a hand-managed docker compose project #}
-{%- if salt['file.file_exists']('/srv/docker/wgkex/docker-compose.yml') %}
+{%- if salt['file.file_exists']('/srv/docker/wgkex/config/broker/wgkex.yaml') %}
   file.managed:
     - source: salt://telegraf/files/in_wgkex-broker.conf
 {% else %}
