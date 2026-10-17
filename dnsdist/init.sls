@@ -19,8 +19,13 @@ dnsdist-repo:
     - require:
       - cmd: dnsdist-repo-key
 
+{#- Pinned so upgrades are rolled out deliberately; the wildcard covers the
+    distro suffix (e.g. 2.0.10-1pdns.ubuntu24.04). Override per host via the
+    NetBox config context if a distro lacks this build (bullseye: 2.0.8). #}
+{%- set dnsdist_version = salt['config.get']('netbox:config_context:dnsdist:version', '2.0.10-*') %}
 dnsdist:
   pkg.installed:
+    - version: '{{ dnsdist_version }}'
     - refresh: True
     - require:
       - pkgrepo: dnsdist-repo
