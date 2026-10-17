@@ -25,7 +25,7 @@ update-repo:
 haproxy:
   pkg.installed:
     - name: haproxy-awslc
-    - version: 3.4.6-0+ha34+ubuntu24.04u1
+    - version: 3.4.7-0+ha34+ubuntu24.04u1
 
 {# haproxy runs chrooted and logs to /dev/log; haproxy.service bind-mounts the journal socket to
    /var/lib/haproxy/dev/log (BindReadOnlyPaths). The package's rsyslog snippet additionally creates its own
