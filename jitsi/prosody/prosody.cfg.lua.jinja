@@ -25,6 +25,9 @@ admins = {
     "{{ jitsi.jicofo.username }}@{{ jitsi.xmpp.auth_domain }}",
     "{{ jitsi.videobridge.username }}@{{ jitsi.xmpp.auth_domain }}"
 }
+-- Prosody 13: let component admins (focus) own MUC rooms
+component_admins_as_room_owners = true
+
 unlimited_jids = {
     "{{ jitsi.jicofo.username }}@{{ jitsi.xmpp.auth_domain }}",
     "{{ jitsi.videobridge.username }}@{{ jitsi.xmpp.auth_domain }}"
@@ -110,6 +113,14 @@ modules_enabled = {
 		--"proxy65"; -- Enables a file transfer proxy service which clients behind NAT can use
 
 		"smacks"; --XEP-0198: Stream Management
+{%- if jitsi.visitors.enabled %}
+
+	-- visitors: s2s links to the local visitor prosodies (prosody-v@N)
+		"s2s_bidi";
+		"certs_s2soutinjection";
+		"s2sout_override";
+		"s2s_whitelist";
+{%- endif %}
 }
 modules_disabled = {
      "offline"; -- Store offline messages
@@ -126,12 +137,29 @@ smacks_max_old_sessions = 1;
 external_service_secret = "{{ jitsi.turn.secret }}"
 external_services = {
 {%- for host in jitsi.turn.hosts %}
-    { type = "stun", host = "{{ host.hostname }}", port = "{{ host.port }}", transport = "udp", secret = true, ttl = 86400, algorithm = "turn" },
-    { type = "turn", host = "{{ host.hostname }}", port = "{{ host.port }}", transport = "udp", secret = true, ttl = 86400, algorithm = "turn" },
-    { type = "turn", host = "{{ host.hostname }}", port = "{{ host.port }}", transport = "tcp", secret = true, ttl = 86400, algorithm = "turn" },
-    { type = "turns", host = "{{ host.hostname }}", port = "{{ host.port }}", transport = "tcp", secret = true, ttl = 86400, algorithm = "turn" },
+    { type = "stun", host = "{{ host.hostname }}", port = {{ host.port }}, transport = "udp", secret = true, ttl = 86400, algorithm = "turn" },
+    { type = "turn", host = "{{ host.hostname }}", port = {{ host.port }}, transport = "udp", secret = true, ttl = 86400, algorithm = "turn" },
+    { type = "turn", host = "{{ host.hostname }}", port = {{ host.port }}, transport = "tcp", secret = true, ttl = 86400, algorithm = "turn" },
+    { type = "turns", host = "{{ host.hostname }}", port = {{ host.port }}, transport = "tcp", secret = true, ttl = 86400, algorithm = "turn" },
 {%- endfor %}
 };
+{%- if jitsi.visitors.enabled %}
+
+-- visitors: s2s only towards the local visitor prosodies, targets must be IPs
+s2s_interfaces = { "127.0.0.1" }
+s2sout_override = {
+{%- for i in range(1, jitsi.visitors.vnodes | int + 1) %}
+    ["conference.v{{ i }}.{{ jitsi.visitors.domain }}"] = "tcp://127.0.0.1:5269{{ i }}";
+    ["v{{ i }}.{{ jitsi.visitors.domain }}"] = "tcp://127.0.0.1:5269{{ i }}";
+    ["polls.v{{ i }}.{{ jitsi.visitors.domain }}"] = "tcp://127.0.0.1:5269{{ i }}";
+{%- endfor %}
+}
+s2s_whitelist = {
+{%- for i in range(1, jitsi.visitors.vnodes | int + 1) %}
+    "conference.v{{ i }}.{{ jitsi.visitors.domain }}", "polls.v{{ i }}.{{ jitsi.visitors.domain }}";
+{%- endfor %}
+}
+{%- endif %}
 
 -- Disable account creation by default, for security
 -- For more information see https://prosody.im/doc/creating_accounts

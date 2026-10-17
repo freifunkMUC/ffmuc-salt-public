@@ -22,11 +22,12 @@ dnspython:
 /etc/apparmor.d/local/usr.sbin.named:
   file.managed:
     - contents: "/etc/bind/** rw,"
-    - watch_in: apparmor-reload
 
 apparmor-reload:
   cmd.run:
     - name: apparmor_parser -r /etc/apparmor.d/usr.sbin.named
+    - onchanges:
+      - file: /etc/apparmor.d/local/usr.sbin.named
 
 
 #

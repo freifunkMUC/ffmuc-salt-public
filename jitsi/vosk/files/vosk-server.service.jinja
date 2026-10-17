@@ -1,0 +1,26 @@
+{%- from "jitsi/map.jinja" import jitsi with context -%}
+# Managed by SaltStack
+[Unit]
+Description=Vosk speech recognition websocket server (jigasi transcription)
+Wants=network-online.target
+After=network-online.target
+Before=jigasi.service
+
+[Service]
+Type=simple
+User=vosk
+Environment=VOSK_SERVER_INTERFACE={{ jitsi.vosk.interface }}
+Environment=VOSK_SERVER_PORT={{ jitsi.vosk.port }}
+Environment=VOSK_MODEL_PATH={{ model_path }}
+ExecStart={{ vosk_home }}/venv/bin/python3 {{ vosk_home }}/asr_server.py
+Restart=on-failure
+RestartSec=5
+# recognition is CPU heavy, keep jigasi/asterisk audio processing ahead of it
+Nice=10
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

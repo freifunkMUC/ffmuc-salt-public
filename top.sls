@@ -2,6 +2,8 @@ base:
   # Base config for all minions
   '*':
     - bash
+    # duplicity was replaced by rustic; drop once all hosts are cleaned up
+    - duplicity.remove
     - fail2ban
     - ff_base
     - graylog-sidecar
@@ -29,7 +31,6 @@ base:
     - grafana
     - icinga2
     - influxdb
-    - jenkins
     - kvm
     - ntp
     - snmpd
@@ -43,10 +44,11 @@ base:
     - jitsi.jicofo
     - jitsi.meet
     - certs
-#    - nginx # broken, old nginx versions
+    - jitsi.nginx
   'call*':
     - jitsi.asterisk
     - jitsi.jigasi
+    - jitsi.vosk
   'gw*':
     - dhcp-server
     - knot-resolver.remove

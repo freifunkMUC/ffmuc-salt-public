@@ -27,7 +27,6 @@ telegraf:
         - pkgrepo: influx-db-repo
   service.running:
     - enable: True
-    - running: True
 
 systemd-reload-telegraf:
   cmd.run:
@@ -235,6 +234,38 @@ remove_asterisk_monitoring:
 {% endif %}
     - watch_in:
           service: telegraf
+
+{% if grains.virtual == 'physical' %}
+smartmontools:
+  pkg.installed:
+    - pkgs:
+      - smartmontools
+      - nvme-cli
+
+/etc/sudoers.d/telegraf_smart:
+  file.managed:
+    - mode: "0440"
+    - contents: |
+        telegraf    ALL=(root) NOPASSWD:/usr/sbin/smartctl, /usr/sbin/nvme
+    - check_cmd: /usr/sbin/visudo -c -f
+
+/etc/telegraf/telegraf.d/in-smart.conf:
+  file.managed:
+    - source: salt://telegraf/files/in_smart.conf
+    - require:
+      - pkg: smartmontools
+      - file: /etc/sudoers.d/telegraf_smart
+    - watch_in:
+          service: telegraf
+{% else %}
+remove_smart_monitoring:
+  file.absent:
+    - names:
+      - /etc/sudoers.d/telegraf_smart
+      - /etc/telegraf/telegraf.d/in-smart.conf
+    - watch_in:
+          service: telegraf
+{% endif %}
 
 /etc/telegraf/telegraf.d/out-influxdb.conf:
   file.managed:
