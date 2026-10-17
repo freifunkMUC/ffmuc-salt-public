@@ -50,6 +50,9 @@ VirtualHost "{{ jitsi.xmpp.xmpp_domain }}"
         {%- if jitsi.visitors.enabled %}
         "visitors";
         {%- endif %}
+        {%- if jitsi.visitors.enabled and jitsi.signed_rooms.enabled %}
+        "ffmuc_signed_rooms";
+        {%- endif %}
     }
     {%- if jitsi.lobby_enabled %}
     lobby_muc = "lobby.{{ jitsi.public_domain }}"
@@ -64,6 +67,17 @@ VirtualHost "{{ jitsi.xmpp.xmpp_domain }}"
     {%- if jitsi.visitors.enabled %}
     -- jibri and transcribers stay in the main room
     visitors_ignore_list = { "recorder.{{ jitsi.public_domain }}" }
+    {%- endif %}
+    {%- if jitsi.visitors.enabled and jitsi.signed_rooms.enabled %}
+    -- meet.ffmuc.net/reserve rooms; normal rooms keep auto-promoting visitors via room metadata
+    ffmuc_signed_rooms_public_keys = {
+        {%- for kid, key in jitsi.signed_rooms.public_keys | dictsort %}
+        ["{{ kid }}"] = "{{ key }}";
+        {%- endfor %}
+    }
+    ffmuc_signed_rooms_max_extension = {{ jitsi.signed_rooms.max_extension }}
+    ffmuc_signed_rooms_auto_promote_unsigned = {{ "true" if jitsi.visitors.auto_allow_promotion else "false" }}
+    ffmuc_signed_rooms_focus_jid = "focus@{{ jitsi.xmpp.auth_domain }}"
     {%- endif %}
     {%- if jitsi.transcription.enabled %}
     muc_lobby_whitelist = { "recorder.{{ jitsi.public_domain }}" }
@@ -211,6 +225,7 @@ Component "polls.{{ jitsi.public_domain }}" "polls_component"
 {%- if jitsi.visitors.enabled %}
 
 Component "visitors.{{ jitsi.public_domain }}" "visitors_component"
-    auto_allow_visitor_promotion = {{ 'true' if jitsi.visitors.auto_allow_promotion else 'false' }}
+    {#- with signed rooms the per-room metadata decides (mod_ffmuc_signed_rooms sets autoPromote on normal rooms) #}
+    auto_allow_visitor_promotion = {{ 'true' if jitsi.visitors.auto_allow_promotion and not jitsi.signed_rooms.enabled else 'false' }}
     admins = { "{{ jitsi.jicofo.username }}@{{ jitsi.xmpp.auth_domain }}" }
 {%- endif %}
