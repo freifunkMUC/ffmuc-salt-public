@@ -1,0 +1,51 @@
+---
+services:
+  hedgedoc:
+    image: lscr.io/linuxserver/hedgedoc:1.12.0-ls207@sha256:104452bf9b2fb48ee14230377f265adde765e5d4a9542b1514ac399a560d24b0
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Berlin
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_USER=hedgedoc
+      - DB_PASS=${HEDGEDOC_DB_PASSWORD}
+      - DB_NAME=hedgedoc
+      - CMD_DOMAIN=hedgedoc.ffmuc.net
+      - CMD_URL_ADDPORT=false
+      - CMD_PROTOCOL_USESSL=true
+      - CMD_PORT=3000
+      - CMD_HSTS_ENABLE=true
+      - CMD_ALLOW_ORIGIN=['hedgedoc.ffmuc.net']
+      - CMD_ALLOW_EMAIL_REGISTER=false
+      - CMD_ALLOW_EMAIL_SIGNIN=false
+      - CMD_RATE_LIMIT_NEW_NOTES=0
+      - CMD_OAUTH2_USER_PROFILE_URL=https://keycloak.ffmuc.net/realms/master/protocol/openid-connect/userinfo
+      - CMD_OAUTH2_USER_PROFILE_USERNAME_ATTR=preferred_username
+      - CMD_OAUTH2_USER_PROFILE_DISPLAY_NAME_ATTR=name
+      - CMD_OAUTH2_USER_PROFILE_EMAIL_ATTR=email
+      - CMD_OAUTH2_TOKEN_URL=https://keycloak.ffmuc.net/realms/master/protocol/openid-connect/token
+      - CMD_OAUTH2_AUTHORIZATION_URL=https://keycloak.ffmuc.net/realms/master/protocol/openid-connect/auth
+      - CMD_OAUTH2_CLIENT_ID=hedgedoc
+      - CMD_OAUTH2_CLIENT_SECRET=${HEDGEDOC_OAUTH2_CLIENT_SECRET}
+      - CMD_OAUTH2_PROVIDERNAME=Keycloak
+      - CMD_OAUTH2_SCOPE=openid email profile
+      - CMD_SESSION_SECRET=${HEDGEDOC_SESSION_SECRET}
+    volumes:
+      - /srv/docker/hedgedoc/data:/config
+    ports:
+      - "0.0.0.0:8085:3000"
+  db:
+    image: mariadb:11.8.9-noble@sha256:2d2f4095530294735a857cfe22bb101e19b0849b416911c796ec4aa81b164a62
+    restart: always
+    environment:
+      - MARIADB_RANDOM_ROOT_PASSWORD=yes
+      - MYSQL_DATABASE=hedgedoc
+      - MYSQL_USER=hedgedoc
+      - MYSQL_PASSWORD=${HEDGEDOC_DB_PASSWORD}
+      - MARIADB_AUTO_UPGRADE=1
+    volumes:
+      - /srv/docker/hedgedoc/database:/var/lib/mysql

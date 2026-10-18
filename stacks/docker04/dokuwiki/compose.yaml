@@ -1,0 +1,11 @@
+---
+services:
+  dokuwiki:
+    image: dokuwiki/dokuwiki:2026-07-14c@sha256:bcf6e4da6ac661da6e07527b76c6dd5a556afec1015e84aea4fca71fbc6f9586
+    user: "1000:1000"
+    restart: always
+    ports:
+      - "8084:8080"
+    volumes:
+      - /srv/docker/dokuwiki/storage:/storage
+      - /srv/docker/dokuwiki/ldap.conf:/etc/ldap/ldap.conf:ro

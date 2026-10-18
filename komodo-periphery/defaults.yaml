@@ -1,0 +1,16 @@
+# -*- coding: utf-8 -*-
+# vim: ft=yaml
+---
+komodo:
+  periphery:
+    enabled: false
+    version: 2.3.3
+    sha256:
+      x86_64: 40b78f377626799afad8331246a501f077d4ebcfb6d9096894cf55b64f6dcf13
+      aarch64: 60334780d7115ddc7a35fad062f4c606a4c814ae9a7dd8710ca96a0c1a37d85c
+    interface: nebula0
+    port: 8120
+    allowed_ips:
+      - 10.8.0.15
+    disable_terminals: true
+    disable_container_terminals: false
