@@ -129,6 +129,11 @@ VirtualHost "{{ vhost }}"
     main_muc = "conference.{{ vhost }}";
 
 VirtualHost "{{ vauth }}"
+    -- no cert exists for the internal vnode auth domain, jicofo skips verification
+    ssl = {
+        key = "/etc/prosody/certs/{{ jitsi.xmpp.auth_domain }}.key";
+        certificate = "/etc/prosody/certs/{{ jitsi.xmpp.auth_domain }}.crt";
+    }
     modules_enabled = {
           "limits_exception";
           "ping";
