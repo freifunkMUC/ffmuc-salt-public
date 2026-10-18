@@ -260,7 +260,9 @@ Cleanup /etc/icinga2/zones.d/master/ffmuc-conf.d/hosts/generated/:
       - service: icinga2-service
 
   # Generate config file for every client known to pillar
-{% for node_id in salt['mine.get']('netbox:tag_list:icinga2_client', 'minion_id', tgt_type='pillar').keys() %}
+{%- set icinga2_clients = salt['mine.get']('netbox:tag_list:icinga2_client', 'minion_id', tgt_type='pillar').keys() | list %}
+{%- set icinga2_agentless = salt['mine.get']('netbox:tag_list:icinga2_agentless', 'minion_id', tgt_type='pillar').keys() | list %}
+{% for node_id in icinga2_clients %}
 /etc/icinga2/zones.d/master/ffmuc-conf.d/hosts/generated/{{ node_id }}.conf:
   file.managed:
     - source: salt://icinga2/host.conf.jinja
@@ -274,6 +276,57 @@ Cleanup /etc/icinga2/zones.d/master/ffmuc-conf.d/hosts/generated/:
     - watch_in:
       - service: icinga2-service
   {% endfor %}
+
+  # Minions without an agent (NetBox tag icinga2_agentless, e.g. the Jitsi hosts,
+  # which cannot reach the master's overlay address): host checks from the master
+{%- set external_ips = salt['mine.get']('*', 'minion_external_ip') %}
+{%- set primary_ips = salt['mine.get']('*', 'minion_address') %}
+{%- set roles = salt['mine.get']('*', 'minion_role') %}
+{%- set locations = salt['mine.get']('*', 'minion_location') %}
+{%- for node_id in icinga2_agentless if node_id not in icinga2_clients %}
+  {%- set external = external_ips.get(node_id) or [] %}
+  {%- set primary = primary_ips.get(node_id) or '' %}
+  {%- set address = external[0] if external else primary | regex_replace('/\d+$', '') %}
+  {%- if address %}
+/etc/icinga2/zones.d/master/ffmuc-conf.d/hosts/generated/{{ node_id }}.conf:
+  file.managed:
+    - source: salt://icinga2/host_agentless.conf.jinja
+    - template: jinja
+    - context:
+        node_id: {{ node_id }}
+        address: {{ address | yaml_dquote }}
+        role: {{ (roles.get(node_id) or '') | string | yaml_dquote }}
+        location: {{ (locations.get(node_id) or '') | string | yaml_dquote }}
+        notes: ""
+    - require:
+      - file: Create /etc/icinga2/zones.d/master/ffmuc-conf.d/hosts/generated/
+    - require_in:
+      - file: Cleanup /etc/icinga2/zones.d/master/ffmuc-conf.d/hosts/generated/
+    - watch_in:
+      - service: icinga2-service
+  {%- endif %}
+{%- endfor %}
+
+  # Hosts that are no (working) minions, from icinga2/static_hosts.yaml
+{%- import_yaml 'icinga2/static_hosts.yaml' as static_hosts %}
+{%- for node_id, host in static_hosts.items() if node_id not in icinga2_clients and node_id not in icinga2_agentless %}
+/etc/icinga2/zones.d/master/ffmuc-conf.d/hosts/generated/{{ node_id }}.conf:
+  file.managed:
+    - source: salt://icinga2/host_agentless.conf.jinja
+    - template: jinja
+    - context:
+        node_id: {{ node_id }}
+        address: {{ host.address | yaml_dquote }}
+        role: {{ host.get('role', '') | yaml_dquote }}
+        location: {{ host.get('location', '') | yaml_dquote }}
+        notes: {{ host.get('notes', '') | yaml_dquote }}
+    - require:
+      - file: Create /etc/icinga2/zones.d/master/ffmuc-conf.d/hosts/generated/
+    - require_in:
+      - file: Cleanup /etc/icinga2/zones.d/master/ffmuc-conf.d/hosts/generated/
+    - watch_in:
+      - service: icinga2-service
+{%- endfor %}
 
 /etc/icinga2/scripts/mattermost-notifications.py:
   file.managed:
