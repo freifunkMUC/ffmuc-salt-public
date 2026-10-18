@@ -12,8 +12,8 @@ stacks/<host>/<project>/<config file>   # optional, non-secret only
 ```
 
 `<host>` is the short host name (`docker04`), `<project>` the compose project
-name that `docker compose ls` shows on the host today. Komodo uses the project
-name to adopt a running project, so keep it unchanged.
+name that `docker compose ls` shows on the host today. Komodo adopts a running
+project by its project name, so keep it unchanged.
 
 ## Conventions
 
@@ -59,7 +59,8 @@ secret. Values come from the running setup on the host; never commit them.
 
 - One Komodo Stack per directory: repo `freifunkMUC/ffmuc-salt-public`,
   branch `main`, run directory `stacks/<host>/<project>`, file
-  `compose.yaml`, server `<host>`, Stack name = compose project name.
+  `compose.yaml`, server `<host>`. Stack names are `<host>-<project>`
+  (several hosts run a `diun` or `traefik`), with `project_name = "<project>"`.
 - The Komodo resources (servers, stacks, non-secret variables) are declared as
   TOML and applied by a Komodo Resource Sync, so the Komodo configuration is
   code as well. Changes in the UI that are not in the TOML show up as pending
