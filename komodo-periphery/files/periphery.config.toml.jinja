@@ -1,5 +1,6 @@
 {%- from "komodo-periphery/map.jinja" import komodo with context %}
 {%- set periphery = komodo.periphery %}
+{%- set secrets = salt['pillar.get']('komodo:periphery:secrets', {}) %}
 # Managed by Salt (komodo-periphery)
 root_directory = "/etc/komodo"
 disable_terminals = {{ periphery.disable_terminals | lower }}
@@ -12,3 +13,10 @@ bind_ip = "{{ bind_ip }}"
 port = {{ periphery.port }}
 allowed_ips = {{ periphery.allowed_ips | tojson }}
 ssl_enabled = true
+{%- if secrets %}
+
+[secrets]
+{%- for name, value in secrets | dictsort %}
+{{ name | tojson }} = {{ value | string | tojson }}
+{%- endfor %}
+{%- endif %}

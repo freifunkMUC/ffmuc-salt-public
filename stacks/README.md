@@ -19,7 +19,7 @@ project by its project name, so keep it unchanged.
 
 - Images are pinned by version and digest: `image: name:1.2.3@sha256:...`.
   Update both together.
-- Every service has a `restart:` policy (`unless-stopped` or `always`).
+- Every service has `restart: unless-stopped`.
 - Add a `healthcheck:` when the image ships a way to check itself; for
   existing projects only after testing it, a failing check makes Komodo report
   the stack as unhealthy.
@@ -34,26 +34,92 @@ project by its project name, so keep it unchanged.
 - No `version:` key.
 - No secrets in this repository: no passwords, tokens, client secrets, cookie
   or session secrets, keys. Not in compose files, not in config files, not in
-  comments.
+  comments. See Secrets.
+- Taking a project over: see the checklist under Secrets.
 
-## Secrets and variables
+## Secrets
 
-Compose files reference secrets as environment variables (`${NAME}`). Komodo
-fills them: the Stack's *Environment* maps each name to a Komodo variable or
-secret (`NAME = [[NAME]]`), Komodo writes the result to `.env` in the run
-directory and runs `docker compose --env-file .env`. Komodo does not
-interpolate `[[...]]` inside compose files that come from git, only in the
-Stack's environment.
+Secrets never go into this repository, into compose files or into Komodo Core:
+Core variables end up in its database, its update log and its backups. The
+source is the Salt pillar; Salt renders each host's secrets into the
+`[secrets]` table of its Periphery config, and Periphery fills them in when it
+deploys. Core only knows the names.
 
-Create the variables in Komodo under *Settings / Variables* and mark them as
-secret. Values come from the running setup on the host; never commit them.
+```
+pillar komodo:periphery:secrets:<NAME>       master: /srv/docker/salt/pillar/komodo-secrets/<host>.sls
+  -> state komodo-periphery                  /etc/komodo/periphery.config.toml [secrets], 0600
+  -> Stack environment  VAR = [[<NAME>]]     resolved by Periphery on deploy
+  -> .env in the run directory (0600)        compose reads ${VAR}
+```
 
-| Stack | Variables |
+- Names are `<APP>_<KEY>` in upper case (`ETHERPAD_DB_PASS`).
+- Pillar files below `komodo-secrets/` are `#!yaml` (no Jinja), mode 0640,
+  and `top.sls` maps each one to its minion only:
+  `'docker04.in.ffmuc.net': [komodo-secrets.docker04]`. Never in NetBox
+  config contexts.
+- The config file is managed with `show_changes: False`, so values do not show
+  up in Salt output. Periphery reads its config only at start; the state
+  restarts it on change. Running containers are not affected.
+- No Core variable with the same name: Core interpolates `[[...]]` first, its
+  value would win.
+- Values: printable ASCII without `$`, without leading quotes and without
+  ` #`. Komodo writes `.env` as plain `VAR=value`, compose interpolates `$`, and
+  Komodo masks a secret in its logs and in the stored `docker compose config`
+  output only where it appears verbatim.
+- `[[...]]` works in the Stack's environment and pre/post deploy commands, not
+  inside compose files from git. Images that want `*_FILE` get a file that
+  lives on the host outside the repo (for example managed by Salt).
+
+| Stack | Secrets |
 |---|---|
-| `docker04/etherpad` | from `/srv/docker/etherpad/.env`: `ETHERPAD_MYSQL_HOST`, `ETHERPAD_MYSQL_ROOT_PASSWORD`, `ETHERPAD_MYSQL_USER`, `ETHERPAD_MYSQL_PASSWORD`, `ETHERPAD_TITLE`, `ETHERPAD_DEFAULT_PAD_TEXT`, `ETHERPAD_HOST_PORT`, `ETHERPAD_ADMIN_PASSWORD`, `ETHERPAD_ADMIN_USER`, `ETHERPAD_DB_TYPE`, `ETHERPAD_DB_HOST`, `ETHERPAD_DB_PORT`, `ETHERPAD_DB_USER`, `ETHERPAD_DB_PASS`, `ETHERPAD_DB_NAME`, `ETHERPAD_DB_CHARSET`, `ETHERPAD_NODE_ENV`, `ETHERPAD_IMPORT_EXPORT_RATE_LIMIT_WINDOW`, `ETHERPAD_IMPORT_EXPORT_MAX_REQ_PER_IP` (each mapped to the `.env` name without the prefix) |
-| `docker04/hedgedoc` | `HEDGEDOC_DB_PASSWORD` (also the MariaDB user password), `HEDGEDOC_OAUTH2_CLIENT_SECRET`, `HEDGEDOC_SESSION_SECRET` |
+| `docker04/etherpad` | `ETHERPAD_<KEY>` for the 19 keys of `/srv/docker/etherpad/.env` (the Stack maps `KEY = [[ETHERPAD_KEY]]`) |
+| `docker04/hedgedoc` | `HEDGEDOC_DB_PASS` (also the MariaDB user password), `HEDGEDOC_CMD_OAUTH2_CLIENT_SECRET`, `HEDGEDOC_CMD_SESSION_SECRET`, from `/srv/docker/hedgedoc/docker-compose.yaml` |
 | `docker04/dokuwiki` | none; `/srv/docker/dokuwiki/ldap.conf` stays on the host |
 | `docker05/salt-master` | none |
+| `docker06/komodo` | none in Komodo; Core's own secrets stay in its bootstrap `.env` |
+
+### Taking a project over
+
+One project at a time:
+
+1. Secrets into the pillar. With the admin script
+   `pillar-secrets-from-env.sh <host> <app> check`, then `apply [KEY ...]`: it
+   reads `.env` and literal secret values of the compose files on the host as
+   root and writes them straight into the pillar file on the master, printing
+   names only. By hand: `komodo: periphery: secrets: <NAME>: <value>` in
+   `komodo-secrets/<host>.sls` plus the `top.sls` entry.
+2. `salt '<host>.in.ffmuc.net' saltutil.refresh_pillar`, check the names with
+   `pillar.keys komodo:periphery:secrets`, then
+   `state.apply komodo-periphery test=True` and for real.
+3. Move the compose file to `stacks/<host>/<project>/compose.yaml`: literal
+   secrets become `${VAR}`, the project goes through the checklist below, the
+   Stack in `stacks.toml` switches from `files_on_host` to the repo with
+   `environment` lines `VAR = [[<NAME>]]`. PR, merge, run the sync.
+4. Compare the Stack's diff in Komodo, *Deploy*, check the service. Rollback:
+   the old compose file on the host (see Deployment).
+5. Rotate every secret that was in the old files (they are in old copies and
+   backups): new value into the pillar, `state.apply komodo-periphery`,
+   redeploy; database passwords also in the database. Then remove the old
+   `.env` and literal values on the host.
+
+### Checklist
+
+Compare with the upstream project's current recommended deployment (official
+compose example and docs), then bring the project to:
+
+- [ ] image `name:version@sha256:...`, picked up by Renovate
+- [ ] `restart: unless-stopped`
+- [ ] non-root `user:` where the image supports it
+- [ ] `read_only: true` plus `tmpfs:` for the paths it writes, where the app allows it
+- [ ] `cap_drop: [ALL]`, `cap_add` only for what is needed
+- [ ] `security_opt: ["no-new-privileges:true"]`
+- [ ] `healthcheck:` from upstream or tested
+- [ ] memory and CPU limits (`mem_limit`, `cpus`), sized from `docker stats`
+- [ ] secrets only as `${VAR}` from the Periphery secrets or as `*_FILE`
+- [ ] ports only where needed, backends on the nebula address
+- [ ] data in absolute bind mounts below `/srv/docker/<project>/`
+
+Note deviations from upstream and the reason in the PR.
 
 ## Deployment
 
@@ -76,8 +142,8 @@ secret. Values come from the running setup on the host; never commit them.
   have moved: docker04 `cfssl`, `tuwunel-test`; docker05 `nextcloud`, `unifi`;
   docker06 `graylog`, `mastodon`; docker07 `akvorado`, `keycloak`,
   `vaultwarden`; mail01 `mailserver`; rw-vpn01/02 `wg-access-server`.
-- Taking over a running project: create the variables, sync, compare the
-  Stack's diff, then *Deploy*. The old `/srv/docker/<project>/docker-compose.y*ml`
+- Taking over a running project: see Secrets, then compare the Stack's diff
+  and *Deploy*. The old `/srv/docker/<project>/docker-compose.y*ml`
   stays on the host as rollback: `docker compose -p <project> -f <old file> up -d`
   in that directory restores the previous state, the data directories are the
   same.
@@ -108,13 +174,12 @@ FerretDB/Postgres is only suggested for CPUs without AVX, docker06 has AVX2.
   install -m 600 /dev/null .env   # fill in the variables below
   docker compose -p komodo up -d
   ```
-  Log in first (to become admin), create the variables below as Komodo
-  secrets, create the Resource Sync `ffmuc-salt-public` by hand once (repo
+  Log in first (to become admin), create the Resource Sync `ffmuc-salt-public` by hand once (repo
   `freifunkMUC/ffmuc-salt-public`, branch `main`, resource path
   `stacks/komodo-sync`) and run it. From then on the sync manages itself
   (`sync.toml`). The `docker06-komodo` Stack lets Komodo show Core and
   MongoDB; redeploy Core from a shell rather than from its own UI.
-- Variables (bootstrap `.env` and Komodo secrets): `KOMODO_HOST`
+- Variables (bootstrap `.env` only, never as Komodo variables): `KOMODO_HOST`
   (`https://komodo.ov.ffmuc.net`), `KOMODO_DATABASE_PASSWORD`,
   `KOMODO_JWT_SECRET`, `KOMODO_WEBHOOK_SECRET`, `KOMODO_OIDC_PROVIDER`
   (`https://<keycloak>/realms/<realm>`), `KOMODO_OIDC_CLIENT_ID`,
@@ -148,7 +213,7 @@ FerretDB/Postgres is only suggested for CPUs without AVX, docker06 has AVX2.
 
 ### Rollout
 
-1. Merge, bootstrap Core, configure Keycloak and the variables.
+1. Merge, bootstrap Core, configure Keycloak.
 2. Enable the config context on docker06 and docker04, set the pillar,
    `state.apply komodo-periphery` and `nebula` on both.
 3. Run the sync; the servers `docker04` and `docker06` should become healthy.

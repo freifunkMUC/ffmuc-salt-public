@@ -37,6 +37,7 @@ komodo-periphery-config:
     - user: root
     - group: root
     - mode: "0600"
+    - show_changes: False
     - context:
         bind_ip: "{{ addresses[0]['address'].split('/')[0] }}"
         core_public_key: "{{ core_public_key }}"
