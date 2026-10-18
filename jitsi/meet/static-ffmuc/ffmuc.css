@@ -407,3 +407,7 @@ button {
         padding: 24px 20px;
     }
 }
+
+/* Welcome page language switch: Jitsi sets <html lang> to the UI language */
+html[lang|="de"] .ffm-en,
+html:not([lang|="de"]) .ffm-de { display: none !important; }
