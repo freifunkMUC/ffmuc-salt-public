@@ -8,6 +8,10 @@ Defaults: nagios lecture=never
 # Network basics (IP, conntrack, routing)
 nagios	ALL=NOPASSWD:	/usr/local/share/monitoring-plugins/check_conntrack_size
 
+# BGP sessions in bird, WireGuard handshake age (read only)
+nagios	ALL=NOPASSWD:	/usr/sbin/birdc show protocols
+nagios	ALL=NOPASSWD:	/usr/bin/wg show all latest-handshakes
+
 # DHCP
 nagios  ALL=NOPASSWD:	/usr/local/sbin/dhcpd-pool
 

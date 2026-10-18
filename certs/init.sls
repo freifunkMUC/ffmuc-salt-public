@@ -131,10 +131,11 @@ python3-venv:
 python3-pip:
   pkg.installed
 
+# Recreate the venv when certbot no longer imports (e.g. Python changed by a release upgrade)
 certbot-venv:
   cmd.run:
-    - name: python3 -m venv /opt/certbot-venv
-    - creates: /opt/certbot-venv/bin/python3
+    - name: python3 -m venv --clear /opt/certbot-venv
+    - unless: /opt/certbot-venv/bin/python3 -c 'import certbot'
     - require:
       - pkg: python3-venv
 

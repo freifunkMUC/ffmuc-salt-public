@@ -2,7 +2,11 @@
 [repository]
 repository = "opendal:b2" # just specify the opendal service here
 password = "{{ salt['config.get']('netbox:config_context:backup:password') }}"
+{%- if salt['config.get']('netbox:config_context:backup:no_cache', False) %}
+no-cache = true
+{%- else %}
 cache-dir = "/var/cache/rustic"
+{%- endif %}
 
 # B2 specific options
 [repository.options]

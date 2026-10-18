@@ -12,19 +12,12 @@ jitsi-videobridge2:
   pkg.installed:
     - version: {{ jitsi.videobridge.version }}
     - hold: True
+    - update_holds: True
     - require:
       - pkgrepo: jitsi-repo
+      - cmd: jitsi-java17
   service.running:
     - enable: True
-
-#jvb-ffmuc-version:
-#  pkg.installed:
-#    - require:
-#      - pkg: jitsi-videobridge2 # for dependencies
-#    - required_in:
-#      - service: jitsi-videobridge2 # only start if this version got installed
-#    #- sources:
-#    #  - jitsi-videobridge2: https://apt.ffmuc.net/unstable/jitsi-videobridge2_2.1-411-g9754898e-1_all.deb
 
 systemd-reload-jvb:
   cmd.run:
@@ -79,6 +72,15 @@ stats.in.ffmuc.net:
   file.managed:
     - source: salt://jitsi/videobridge/systemd-override.conf
     - makedirs: True
+{%- if grains.virtual != 'container' %}
+{%- for name, value in jitsi.videobridge.sysctl.items() %}
+
+{{ name }}:
+  sysctl.present:
+    - value: {{ value }}
+    - config: /etc/sysctl.d/25-jvb-udp.conf
+{%- endfor %}
+{%- endif %}
 
 {% else %}
 jitsi-videobridge2:

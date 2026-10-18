@@ -38,20 +38,12 @@ ffmuc.net:
 {%- set services = salt['pillar.get']('netbox:services') %}
 {%- for service in services %}
 {%- if services[service]['custom_fields']['cname'] %}
-{%- if services[service]['virtual_machine'] %}
+{%- set parent = services[service].get('parent') or services[service].get('virtual_machine') or services[service].get('device') %}
 {%- if services[service]['custom_fields']['public'] %}
-{%- set target = services[service]['virtual_machine']['name'] | regex_search('(^\w+(-)?(\w+)?(\d+)?)') %}
+{%- set target = parent['name'] | regex_search('(^\w+(-)?(\w+)?(\d+)?)') %}
 {%- do cnames.update({service: target[0] ~ '.ext.ffmuc.net' }) %}
 {%- else %}
-{%- do cnames.update({service: services[service]['virtual_machine']['name'] }) %}
-{%- endif %}
-{%- else %}
-{%- if services[service]['custom_fields']['public'] %}
-{%- set target = services[service]['device']['name'] | regex_search('(^\w+(-)?(\w+)?(\d+)?)') %}
-{%- do cnames.update({service: target[0] ~ '.ext.ffmuc.net' }) %}
-{%- else %}
-{%- do cnames.update({service: services[service]['device']['name'] }) %}
-{%- endif %}
+{%- do cnames.update({service: parent['name'] }) %}
 {%- endif %}
 {%- endif %}
 {%- endfor %}

@@ -1,0 +1,20 @@
+{
+  "dialog": {
+    "recordAndTranscribe": "Aufnehmen & Transkribieren",
+    "startBoth": "Beides starten"
+  },
+  "recording": {
+    "recordAudioAndVideo": "Lokal auf diesem Gerät aufzeichnen",
+    "localRecordingWarning": "Die Aufzeichnung wird nur als Datei auf Ihrem Gerät gespeichert, nicht auf FFMUC-Servern. Wählen Sie bei der Abfrage den aktuellen Tab aus, damit Bild und Ton richtig aufgezeichnet werden.",
+    "localRecordingStartWarning": "Die Datei wird erst beim Beenden der Aufzeichnung auf Ihrem Gerät gespeichert. Bitte beenden Sie die Aufzeichnung vor dem Verlassen der Konferenz.",
+    "localRecording": "Lokale Aufzeichnung",
+    "recordingOptions": "Aufzeichnungsoptionen",
+    "storageLocation": "Speicherort",
+    "transcriptionLanguage": "Sprache der Transkription",
+    "transcriptionOptions": "Transkriptionsoptionen",
+    "notSignedIn": "Nicht angemeldet",
+    "linkShared": "Link mit Teilnehmenden geteilt",
+    "linkNotShared": "Link nicht geteilt",
+    "dropboxSignInPrompt": "Verbinden, um die Aufzeichnung zu speichern"
+  }
+}

@@ -30,6 +30,15 @@ jitsi-meet-web-pkgs:
     - source:
       - salt://jitsi/meet/interface_config.js
 
+/usr/share/jitsi-meet/static/ffmuc:
+  file.recurse:
+    - source: salt://jitsi/meet/static-ffmuc
+    - file_mode: '0644'
+    - dir_mode: '0755'
+    - clean: True
+    - require:
+      - pkg: jitsi-meet-web-pkgs
+
 /etc/jitsi/meet/numbers.json:
   file.managed:
     - source: salt://jitsi/meet/numbers.json

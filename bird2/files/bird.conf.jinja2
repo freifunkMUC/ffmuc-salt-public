@@ -94,6 +94,12 @@ filter DEFAULT6 {
 {%- if iface == uplink_vlan['interface'] %}
 filter EXTERNAL_OUT {
   if net ~ {{ prefixes_v4 | string | regex_replace('\'','') }} then {
+    {%- if salt['grains.get']('bgp_drain', False) %}
+    # drained (grain bgp_drain): longer AS path so the site router prefers the other nodes
+    bgp_path.prepend({{ uplink_vlan['local_asn'] }});
+    bgp_path.prepend({{ uplink_vlan['local_asn'] }});
+    bgp_path.prepend({{ uplink_vlan['local_asn'] }});
+    {%- endif %}
     accept;
   }
   reject;
@@ -101,6 +107,11 @@ filter EXTERNAL_OUT {
 
 filter EXTERNAL6_OUT {
   if net ~ {{ prefixes_v6 | string | regex_replace('\'','') }} then {
+    {%- if salt['grains.get']('bgp_drain', False) %}
+    bgp_path.prepend({{ uplink_vlan['local_asn'] }});
+    bgp_path.prepend({{ uplink_vlan['local_asn'] }});
+    bgp_path.prepend({{ uplink_vlan['local_asn'] }});
+    {%- endif %}
     accept;
   }
   reject;

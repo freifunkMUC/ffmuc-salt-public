@@ -30,8 +30,8 @@ Whether this formula does anything is controlled purely by Netbox tags
 A host can carry either tag, both, or neither. No `config_context` entry is
 required to activate the formula - tagging alone is enough for both
 components. The collector and analyzer share one default release version
-(currently `0.1.9`); the collector installs the matching `.deb`, and the
-analyzer pulls the matching `ghcr.io/awlx/packetyeeter-analyzer:v0.1.9` image
+(currently `0.2.0`); the collector installs the matching `.deb`, and the
+analyzer pulls the matching `ghcr.io/awlx/packetyeeter-analyzer:v0.2.0` image
 (not `:latest`, for reproducible deploys).
 
 ## Deployment model
@@ -54,8 +54,8 @@ analyzer pulls the matching `ghcr.io/awlx/packetyeeter-analyzer:v0.1.9` image
 
 | Setting | Default |
 | :--- | :--- |
-| collector version | `0.1.9` (matches the published release tag `v0.1.9`). The `.deb` filename embeds the version (nfpm default `packetyeeter-collector_<version>_amd64.deb`); override `config_context:packetyeeter:collector:version` to pin a newer release once available, or set `deb_url` directly to override the computed URL entirely. |
-| analyzer version / image | `0.1.9`, computed into `ghcr.io/awlx/packetyeeter-analyzer:v0.1.9` (CI publishes an image tagged with the release tag itself for every `vX.Y.Z` push - not `:latest`, for reproducible deploys). Override `config_context:packetyeeter:analyzer:version` to bump just the analyzer, or set `image` directly to override the computed reference entirely. Collector and analyzer versions are independent config keys - they only share the same *default*. |
+| collector version | `0.2.0` (matches the published release tag `v0.2.0`). The `.deb` filename embeds the version (nfpm default `packetyeeter-collector_<version>_amd64.deb`); override `config_context:packetyeeter:collector:version` to pin a newer release once available, or set `deb_url` directly to override the computed URL entirely. |
+| analyzer version / image | `0.2.0`, computed into `ghcr.io/awlx/packetyeeter-analyzer:v0.2.0` (CI publishes an image tagged with the release tag itself for every `vX.Y.Z` push - not `:latest`, for reproducible deploys). Override `config_context:packetyeeter:analyzer:version` to bump just the analyzer, or set `image` directly to override the computed reference entirely. Collector and analyzer versions are independent config keys - they only share the same *default*. |
 | collector allowlist | auto-computed from this site's own Netbox-registered prefixes (`netbox:site:prefixes`), comma-joined. Excludes the site's own IP ranges from both the collector's kernel-space detections and the analyzer's reputation tracking (the SPOE handler checks the allowlist before ever emitting a signal, so the analyzer never sees allowlisted traffic). Override `config_context:packetyeeter:collector:allowlist` to add ranges beyond the site's own prefixes, or set it to an explicit value to replace the auto-computed list entirely. |
 | collector interface | `eth0` |
 | collector analyzer_addr | auto-discovered: the mine is queried for a host tagged `packetyeeter-analyzer` in the same Netbox site; falls back to `127.0.0.1:9090` if none is found |
@@ -66,6 +66,7 @@ analyzer pulls the matching `ghcr.io/awlx/packetyeeter-analyzer:v0.1.9` image
 | collector dry_run | `true` (safe by default) |
 | collector egress_accounting / egress_min_bytes (v0.1.9+) | `true` / `1048576`. On by default - enables sustained-download egress accounting (feeds the analyzer's detection). `-egress-accounting` (and `-egress-min-bytes` alongside it) is only emitted into `EXTRA_ARGS` when `egress_accounting` is truthy, so an older (<=v0.1.8) collector binary never receives an unknown flag (which would exit 2 -> crash loop under `Restart=on-failure`); the formula upgrades the `.deb` to v0.1.9 before rendering the flag, so this is safe. Leave `egress_min_bytes` at the `1 MiB` floor. Set `egress_accounting: false` to disable. |
 | analyzer listen_port / metrics_port / inspect_port | `9090` / `9091` / `9092` (inspect is published as `127.0.0.1:9092` only) |
+| analyzer traefik_host | From the Netbox service `packetyeeter*.in.ffmuc.net` attached to this VM (`cname: true`, `public: false`), served as `packetyeeter*.ov.ffmuc.net` via Traefik (`proxy` network, `http` certresolver) to the inspector. dns-auth creates the `.in`/`.ov` CNAMEs. Nebula-only; the inspector has no auth. Empty (no service) -> no Traefik labels. |
 | analyzer reputation_threshold | `75.0` (reputation score, not a percentage - an entity is marked a "Bad Actor" once its accumulated score exceeds this) |
 | analyzer ai_confidence_threshold | `0.8` (raised from the upstream default of `0.7`, which was producing too many false positives in production - requires 80% AI confidence before flagging a bot/scraper) |
 | analyzer dry_run | `true` (safe by default) |
@@ -91,7 +92,7 @@ non-default analyzer address:
 ```yaml
 packetyeeter:
   collector:
-    # version: "0.2.0"              # optional: override the default (0.1.9) once a newer release ships
+    # version: "0.2.1"              # optional: override the default (0.2.0) once a newer release ships
     # deb_url: https://...          # optional: override the computed URL entirely
     interface: ens192
     analyzer_addr: 10.0.0.5:9090   # override auto-discovery if needed
@@ -99,8 +100,8 @@ packetyeeter:
     dry_run: false
 
   analyzer:
-    # version: "0.2.0"              # optional: override the default (0.1.9) independently of the collector
-    # image: ghcr.io/awlx/packetyeeter-analyzer:v0.2.0   # optional: override the computed image entirely
+    # version: "0.2.1"              # optional: override the default (0.2.0) independently of the collector
+    # image: ghcr.io/awlx/packetyeeter-analyzer:v0.2.1   # optional: override the computed image entirely
     reputation_threshold: 80.0
     ai_confidence_threshold: 0.85   # optional: override the default (0.8) if still seeing too many/few false positives
     dry_run: false
@@ -121,6 +122,7 @@ Any key you don't set keeps its built-in default.
 ## Installed files
 
 - `formulars/packetyeeter/init.sls`
+- `formulars/packetyeeter/defaults.jinja` (shared default version; `haproxy` fetches the JA4/SPOE files from the same tag)
 - `formulars/packetyeeter/packetyeeter-collector.default.jinja`
 - `formulars/packetyeeter/packetyeeter-analyzer-compose.yml.j2`
 

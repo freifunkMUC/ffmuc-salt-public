@@ -33,6 +33,13 @@ backup-config:
       #- cmd: install_rustic
       - file: install_rustic
 
+{% if salt['config.get']('netbox:config_context:backup:no_cache', False) %}
+# the cache holds the index of the whole shared repository (several GB)
+rustic-cache-absent:
+  file.absent:
+    - name: /var/cache/rustic
+{% endif %}
+
 backup-script:
   file.absent:
     - name: /usr/local/sbin/rustic-backup.sh

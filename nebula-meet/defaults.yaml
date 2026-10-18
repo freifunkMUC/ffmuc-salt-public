@@ -4,7 +4,15 @@
 
 nebula-meet:
   enabled: false
-  version: 1.5.2-2
+  # the binary version is taken from nebula:version (nebula.install)
+
+  pki:
+    cas:
+      - ca.crt
+    cert_versions:
+      - 1
+    initiating_version: ~
+    disconnect_invalid: ~
 
   am_lighthouse: false
   lighthouses:

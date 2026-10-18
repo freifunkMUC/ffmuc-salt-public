@@ -31,7 +31,6 @@ Unattended-Upgrade::Origins-Pattern {
         // Software will be the latest available for the named release,
         // but the Debian release itself will not be automatically upgraded.
         "origin={{ grains.os }},codename=${distro_codename}-updates";
-        "origin={{ grains.os }},codename=${distro_codename}-proposed-updates";
         "origin={{ grains.os }},codename=${distro_codename},label={{ grains.os }}";
         "origin={{ grains.os }},codename=${distro_codename},label={{ grains.os }}-Security";
         "origin={{ grains.os }},codename=${distro_codename}-security,label={{ grains.os }}-Security";
@@ -42,7 +41,6 @@ Unattended-Upgrade::Origins-Pattern {
         // new stable).
         "o={{ grains.os }},a=stable";
         "o={{ grains.os }},a=stable-updates";
-        "o={{ grains.os }},a=proposed-updates";
         "o={{ grains.os }} Backports,a=${distro_codename}-backports,l={{ grains.os }} Backports";
 };
 
