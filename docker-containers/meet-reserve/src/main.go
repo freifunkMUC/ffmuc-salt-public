@@ -53,6 +53,7 @@ type config struct {
 	metricsListen string
 	keyID         byte
 	priv          ed25519.PrivateKey
+	powKey        []byte
 	domain        string
 	publicURL     string
 	basePath      string
@@ -104,6 +105,12 @@ func loadConfig() (config, error) {
 	}
 	c.priv = ed25519.NewKeyFromSeed(seed)
 
+	// Separate from the signing key so either can be rotated on its own. Must be
+	// identical on all signers behind the load balancer.
+	if c.powKey, err = base64.StdEncoding.DecodeString(os.Getenv("RESERVE_POW_KEY")); err != nil || len(c.powKey) < 32 {
+		return c, errors.New("RESERVE_POW_KEY must be base64 with at least 32 bytes")
+	}
+
 	for _, d := range strings.Split(env("RESERVE_DURATIONS", "24h,72h,168h"), ",") {
 		v, err := time.ParseDuration(strings.TrimSpace(d))
 		if err != nil || v <= 0 || v > 31*24*time.Hour {
@@ -124,11 +131,9 @@ func loadConfig() (config, error) {
 }
 
 func newServer(c config) *server {
-	m := hmac.New(sha256.New, c.priv.Seed())
-	m.Write([]byte("ffmuc-pow-v1"))
 	return &server{
 		cfg:      c,
-		powKey:   m.Sum(nil),
+		powKey:   c.powKey,
 		used:     map[string]time.Time{},
 		active:   map[string]time.Time{},
 		rejected: map[string]uint64{},
