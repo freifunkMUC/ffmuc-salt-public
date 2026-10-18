@@ -16,6 +16,13 @@ include:
   - apt
   - sudo
 
+{%- if grains.os == 'Raspbian' %}
+# packages.icinga.com/raspbian has no bookworm and debian has no armhf: use Raspbian's icinga2
+/etc/apt/sources.list.d/icinga2.list:
+  file.absent:
+    - require_in:
+      - pkg: icinga2-pkg
+{%- else %}
 icinga2-repo-key:
   cmd.run:
     - name: "curl -fsSL https://packages.icinga.com/icinga.key | gpg --batch --yes --dearmor -o /usr/share/keyrings/icinga2-keyring.gpg.tmp && mv /usr/share/keyrings/icinga2-keyring.gpg.tmp /usr/share/keyrings/icinga2-keyring.gpg"
@@ -24,9 +31,7 @@ icinga2-repo-key:
 
 icinga2-repo:
   pkgrepo.managed:
-    {% if grains.osfullname in 'Raspbian' %}
-    - name: deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/icinga2-keyring.gpg] https://packages.icinga.com/raspbian icinga-{{ grains.oscodename }} main
-    {% elif grains.osfullname in 'Ubuntu' %}
+    {% if grains.osfullname in 'Ubuntu' %}
     - name: deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/icinga2-keyring.gpg] https://packages.icinga.com/{{ grains.lsb_distrib_id | lower }} icinga-{{ grains.oscodename }} main
     {% else %}
     - name: deb [signed-by=/usr/share/keyrings/icinga2-keyring.gpg] https://packages.icinga.com/debian icinga-{{ grains.oscodename }} main
@@ -35,6 +40,7 @@ icinga2-repo:
     - clean_file: True
     - require:
       - cmd: icinga2-repo-key
+{%- endif %}
 
 # Install icinga2 package
 {% set node_config = salt['pillar.get']('nodes:' ~ grains.id, {}) %}
