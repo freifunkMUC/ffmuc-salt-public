@@ -22,7 +22,11 @@
             return;
         }
         input.dataset.ffmLang = lang;
-        text(lang).then(function (t) { input.placeholder = t; });
+        text(lang).then(function (t) {
+            if (input.dataset.ffmLang === lang) {
+                input.placeholder = t;
+            }
+        });
     }
 
     var obs = new MutationObserver(apply);
