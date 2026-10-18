@@ -154,7 +154,7 @@
 {# Inspector hostname = Netbox service "packetyeeter*.in.ffmuc.net" on this VM, served as .ov (dns-auth creates both CNAMEs). #}
 {% set ns_traefik = namespace(host='') %}
 {% for svc_name, svc in salt['config.get']('netbox:services', {}).items() %}
-  {% if svc_name.startswith('packetyeeter') and (svc.get('virtual_machine') or {}).get('name') == grains['id'] %}
+  {% if svc_name.startswith('packetyeeter') and (svc.get('parent') or svc.get('virtual_machine') or {}).get('name') == grains['id'] %}
     {% set ns_traefik.host = svc_name | replace('.in.ffmuc.net', '.ov.ffmuc.net') %}
   {% endif %}
 {% endfor %}

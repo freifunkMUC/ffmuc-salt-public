@@ -6,6 +6,8 @@
 {%- set arch = "arm-7" if grains.osarch == "armhf" else grains.osarch %}
 {%- set deb = "/var/cache/nebula/nebula_" ~ nebula.version ~ "_" ~ grains.osarch ~ ".deb" %}
 
+# upstream does not publish .deb packages (https://github.com/slackhq/nebula/pull/514
+# was closed unmerged), so we use the packages built in krombel's fork
 nebula-deb:
   file.managed:
     - name: {{ deb }}
