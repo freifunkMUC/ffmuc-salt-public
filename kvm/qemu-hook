@@ -27,7 +27,7 @@ if ! which xmlstarlet >/dev/null 2>/dev/null; then
 	exit 1
 fi
 
-xmlstarlet sel -t -m '//interface[@type="bridge"]' -v 'concat(target/@dev, " ", source/@bridge)'  --nl | while read iface bridge; do
+xmlstarlet sel -t -m '//interface[@type="bridge"]' -v 'concat(target/@dev, " ", source/@bridge)'  --nl | while read -r iface bridge; do
 	if [ ! -d "/sys/class/net/${bridge}/bridge" ]; then
 		logger -t "${my_name}" "Bridge \"${bridge}\" for iface \"${iface}\" doesn't exist or isn't a bridge."
 		exit 2
@@ -43,10 +43,10 @@ xmlstarlet sel -t -m '//interface[@type="bridge"]' -v 'concat(target/@dev, " ", 
 	# If the interface is named *_vXXXX, with XXXX being a 1-4 digit number
 	# we assume that this iface should be connected to Vlan XXXX with
 	# an untagged port.
-	vlan_id=$(echo ${iface} | grep -o '_v[0-9]\{1,4\}$' | cut -c3-)
+	vlan_id=$(echo "${iface}" | grep -o '_v[0-9]\{1,4\}$' | cut -c3-)
 
 	# If vlan filtering is activated and we found a vlan id, kindly do the needful.
-	if [ "${vlan_filtering}" -a "${vlan_id}" ]; then
+	if [ -n "${vlan_filtering}" ] && [ -n "${vlan_id}" ]; then
 		# Remove association with vlan 1 and add association with
 		# vlan $vlan_id with packages being sent out untagged and
 		# untagged ingress packets get tagged accordingly.
@@ -56,7 +56,7 @@ xmlstarlet sel -t -m '//interface[@type="bridge"]' -v 'concat(target/@dev, " ", 
 
 	# If vlan filtering isn't activated or supported but we found a vlan id,
 	# this probably is an error!
-	elif [ ! "${vlan_filtering}" -a "${vlan_id}" ]; then
+	elif [ -z "${vlan_filtering}" ] && [ -n "${vlan_id}" ]; then
 		logger -t "${my_name}" -p user.error "ERROR: Should configure untagged pvid ${vlan_id} for ${iface} in bridge ${bridge}, but bridge does not support vlan filtering!"
 	fi
 
@@ -67,7 +67,7 @@ xmlstarlet sel -t -m '//interface[@type="bridge"]' -v 'concat(target/@dev, " ", 
 	# for this interfaces, we try to get it up and running. Proceed
 	# with fingers crossed.
 	if grep -q "^iface\s\+${iface}" /etc/network/interfaces; then
-		if ifup $iface; then
+		if ifup "$iface"; then
 			logger -t "${my_name}" "ifup'ed ${iface}."
 		else
 			logger -t "${my_name}" -p user.error "ifup ${iface} FAILED."
