@@ -152,7 +152,7 @@ jitsi:
     model: vosk-model-small-de-0.15
     model_base_url: https://alphacephei.com/vosk/models
     server_script_url: https://raw.githubusercontent.com/alphacep/vosk-server/9f1ae2d6355f6fb9d4b31bef721f533da31cd67a/websocket/asr_server.py
-    server_script_hash: sha256=d010d1c0a5e48e65eb52402b51e842a522708638767d011cd6a9bf1affb520ab
+    server_script_hash: sha256=e43640b3db99b95f50fb7b0e1f8679a8cdd5c08a69e0a89ce96bfd37f38d62af
     pip_packages:
       - vosk==0.3.45
       - websockets==12.0    # asr_server.py uses the legacy (websocket, path) handler signature
