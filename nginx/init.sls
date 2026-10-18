@@ -172,7 +172,7 @@ nginx-systemd-daemon-reload:
 {% endif %}{# if domain == "recorder.ffmuc.net" #}
 
 {% if domain == "apt.ffmuc.net" %}
-{% for old in ["nebula", "systemd-packages", "filebeat-oss-8.0.0-SNAPSHOT-armhf.deb", "ifupdown2_1.2.8-1_all.deb",
+{% for old in ["nebula", "systemd-packages", "ifupdown2_1.2.8-1_all.deb",
                "jitsi-videobridge2_2.1-394-g36698039-1_all.deb", "yanic_1.2.1-1_amd64.deb", "yanic_1.5.2-2_amd64.deb",
                "yanic_1.8.3-2_amd64.deb"] %}
 /srv/www/apt.ffmuc.net/{{ old }}:
