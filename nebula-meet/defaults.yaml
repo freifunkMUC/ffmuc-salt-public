@@ -6,6 +6,14 @@ nebula-meet:
   enabled: false
   version: 1.5.2-2
 
+  pki:
+    cas:
+      - ca.crt
+    cert_versions:
+      - 1
+    initiating_version: ~
+    disconnect_invalid: ~
+
   am_lighthouse: false
   lighthouses:
     127.0.0.1:

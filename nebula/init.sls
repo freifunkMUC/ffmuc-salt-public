@@ -4,20 +4,34 @@
 
 {%- from "nebula/map.jinja" import nebula with context %}
 {% if nebula.enabled %}
+{%- set ca_files = [] %}
+{%- for ca in nebula.pki.cas %}
+{%- do ca_files.append("nebula/cert/" ~ ca) %}
+{%- endfor %}
+{%- set crt_files = [] %}
+{%- for v in nebula.pki.cert_versions %}
+{%- do crt_files.append("nebula/cert/" ~ ("" if v == 1 else "v" ~ v ~ "/") ~ grains["id"] ~ ".crt") %}
+{%- endfor %}
 
 include:
   - nebula.install
 
 /etc/nebula/ca.crt:
   file.managed:
-    - source: salt://nebula/cert/ca.crt
+    - source: salt://nebula/files/bundle.pem.jinja
+    - template: jinja
+    - context:
+        files: {{ ca_files | tojson }}
     - require:
         - file: /etc/nebula/config.yml
         - file: /etc/nebula/{{ grains['id'] }}.crt
 
 /etc/nebula/{{ grains['id'] }}.crt:
   file.managed:
-    - source: salt://nebula/cert/{{ grains['id'] }}.crt
+    - source: salt://nebula/files/bundle.pem.jinja
+    - template: jinja
+    - context:
+        files: {{ crt_files | tojson }}
     - makedirs: True
     - user: root
     - group: root

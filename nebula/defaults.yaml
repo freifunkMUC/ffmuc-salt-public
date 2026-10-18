@@ -13,6 +13,14 @@ nebula:
       armhf: aaa804caf0897fd47bf088e8f0e7ff9a78282aa43cfbca6c1080fef975c90494
       arm64: 97256ffc6239abc2cb6e5a82b464026a236b7554e175acef8e74c889516e69b5
 
+  pki:
+    cas:
+      - ca.crt
+    cert_versions:
+      - 1
+    initiating_version: ~
+    disconnect_invalid: ~
+
   am_lighthouse: false
   lighthouses:
     127.0.0.1:

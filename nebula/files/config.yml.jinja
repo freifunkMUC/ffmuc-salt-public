@@ -6,6 +6,12 @@ pki:
   ca: /etc/nebula/ca.crt
   cert: /etc/nebula/{{ grains.id }}.crt
   key: /etc/nebula/{{ grains.id }}.key
+{%- if nebula.pki.initiating_version %}
+  initiating_version: {{ nebula.pki.initiating_version }}
+{%- endif %}
+{%- if nebula.pki.disconnect_invalid is not none %}
+  disconnect_invalid: {{ nebula.pki.disconnect_invalid | lower }}
+{%- endif %}
 
 static_host_map:
 {%- for lighthouse, public_addrs in nebula.lighthouses.items() %}
