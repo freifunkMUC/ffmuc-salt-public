@@ -43,6 +43,8 @@ ffmuc_removed_packages:
   file.directory:
     - makedirs: True
 
+{%- if grains.osarch in ['amd64', 'arm64'] %}
+{#- the bandwidth-monitor repo builds amd64 and arm64 only #}
 bandwidth-monitor-repo-key:
   cmd.run:
     - name: "curl -fsSL https://awlx.github.io/bandwidth-monitor/bandwidth-monitor.gpg.key | gpg --batch --yes --dearmor -o /etc/apt/keyrings/bandwidth-monitor.gpg.tmp && mv /etc/apt/keyrings/bandwidth-monitor.gpg.tmp /etc/apt/keyrings/bandwidth-monitor.gpg"
@@ -62,3 +64,4 @@ bandwidth-top:
     - version: '0.0.36'
     - require:
       - pkgrepo: bandwidth-monitor-repo
+{%- endif %}
