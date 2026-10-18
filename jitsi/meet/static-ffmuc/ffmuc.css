@@ -177,6 +177,28 @@ button {
     border-radius: 10px;
 }
 
+/* keep long (e.g. reserved r-...) room names on one line */
+.meetings-list .item .left-column {
+    flex: 0 0 7.5rem;
+}
+
+.meetings-list .item .left-column .title {
+    white-space: nowrap;
+}
+
+.meetings-list .item .right-column {
+    min-width: 0;
+    padding-right: 48px;
+}
+
+.meetings-list .item .right-column .title {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    word-break: normal;
+}
+
 /* our info card (welcomePageAdditionalCard.html) */
 .welcome .welcome-card-text {
     padding: 32px;
