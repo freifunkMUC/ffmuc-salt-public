@@ -19,8 +19,12 @@ pdns-repo:
     - require:
       - cmd: pdns-repo-key
 
+{#- repo.powerdns.com only serves the latest build: bump on each release #}
+{%- set pdns_suffix = '1pdns.' ~ (grains.os | lower) ~ (grains.osrelease if grains.os == 'Ubuntu' else grains.osmajorrelease | string) %}
+{%- set pdns_recursor_version = salt['config.get']('netbox:config_context:pdns-recursor:version', '5.4.7-' ~ pdns_suffix) %}
 pdns-recursor:
   pkg.installed:
+    - version: '{{ pdns_recursor_version }}'
     - refresh: True
     - require:
       - pkgrepo: pdns-repo
