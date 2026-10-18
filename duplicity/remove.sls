@@ -1,5 +1,7 @@
 # duplicity was replaced by rustic. Removes the package, the old backup
 # script and the ffmuc-backup timer that duplicity/disable.sls kept running.
+# Only where rustic runs (amd64, see rustic/init.sls): the guardians keep duplicity.
+{%- if grains.osarch == 'amd64' %}
 
 duplicity:
   pkg.removed:
@@ -36,3 +38,4 @@ ffmuc-backup-service-stop:
     - name: ffmuc-backup.service
     - require:
       - service: ffmuc-backup-timer-disable
+{%- endif %}
