@@ -13,15 +13,15 @@ dnsdist-repo-key:
 
 dnsdist-repo:
   pkgrepo.managed:
-    - name: deb [arch={{ grains.osarch }}] https://repo.powerdns.com/{{ grains.lsb_distrib_id | lower }} {{ grains.oscodename }}-dnsdist-20 main
+    - name: deb [arch={{ grains.osarch }}] https://repo.powerdns.com/{{ grains.lsb_distrib_id | lower }} {{ grains.oscodename }}-dnsdist-21 main
     - file: /etc/apt/sources.list.d/dnsdist.list
     - clean_file: True
     - require:
       - cmd: dnsdist-repo-key
 
-{#- repo.powerdns.com only serves the latest build: bump on each release #}
+{#- repo.powerdns.com only serves the latest build: bump on each release; an override has to be a 2.1 build #}
 {%- set pdns_suffix = '1pdns.' ~ (grains.os | lower) ~ (grains.osrelease if grains.os == 'Ubuntu' else grains.osmajorrelease | string) %}
-{%- set dnsdist_version = salt['config.get']('netbox:config_context:dnsdist:version', '2.0.11-' ~ pdns_suffix) %}
+{%- set dnsdist_version = salt['config.get']('netbox:config_context:dnsdist:version', '2.1.3-' ~ pdns_suffix) %}
 dnsdist:
   pkg.installed:
     - version: '{{ dnsdist_version }}'
