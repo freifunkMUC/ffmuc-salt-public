@@ -1,0 +1,291 @@
+#!/bin/bash
+#
+# Installs the xRX500 OpenWrt build output from a GitHub Actions run into the
+# firmware web root. Run it with --help for the details.
+
+set -eEu
+set -o pipefail
+shopt -s nullglob
+umask 022
+
+REPO=grische/openwrt
+WORKFLOW=xrx500.yml
+BRANCH=intel-mips-xrx500-ci
+API=https://api.github.com/repos/${REPO}
+KINDS=(targets packages)
+MARKER=.installed-run
+
+usage() {
+    cat <<EOF
+Usage: ${0##*/} [RUN_ID|latest] [DEST]
+
+Installs the xRX500 OpenWrt snapshot built by the ${WORKFLOW} workflow of
+${REPO}. It takes the openwrt-<rev>-intel-mips-xrx500-targets and
+openwrt-<rev>-intel-mips-xrx500-packages artifacts of one workflow run.
+
+Without RUN_ID the latest successful run on the ${BRANCH} branch is used.
+An explicit RUN_ID must be a successful run of the same workflow.
+
+DEST defaults to /srv/www/firmware.ffmuc.net/xrx500, which the images use as
+their package source. XRX500_DEST overrides the default as well.
+
+Each run is a complete snapshot that replaces the previous tree, so no stale
+packages remain. The new tree is unpacked next to DEST and then swapped in by
+an atomic symlink update. DEST becomes a symlink to a hidden directory. Nothing
+is downloaded when DEST already holds the selected run. To force a reinstall,
+delete DEST/${MARKER}.
+
+GitHub only serves workflow artifacts to authenticated clients, even for
+public repositories. The token comes from the GITHUB_TOKEN environment
+variable, or else from /etc/github-downloader/token. GITHUB_TOKEN_FILE
+overrides that path. A fine-grained personal access token with "Public
+repositories" (read-only) access and no further permissions is enough. Salt
+writes the token file from the pillar key
+netbox:config_context:github_downloader:token.
+EOF
+}
+
+die() {
+    echo "ERROR: $*" >&2
+    exit 1
+}
+
+case "${1:-}" in
+    -h|--help)
+        usage
+        exit 0
+        ;;
+esac
+if [[ $# -gt 2 ]]; then
+    usage >&2
+    exit 1
+fi
+
+RUN=${1:-latest}
+DEST=${2:-${XRX500_DEST:-/srv/www/firmware.ffmuc.net/xrx500}}
+DEST=${DEST%/}
+[[ -n "${DEST}" ]] || die "DEST must not be empty."
+TOKEN_FILE=${GITHUB_TOKEN_FILE:-/etc/github-downloader/token}
+
+if [[ "${RUN}" != latest && ! "${RUN}" =~ ^[0-9]+$ ]]; then
+    die "RUN_ID must be a number or \"latest\", got \"${RUN}\"."
+fi
+
+for tool in curl jq unzip sha256sum flock df; do
+    command -v "${tool}" >/dev/null || die "${tool} is missing. The github-downloader salt state installs it."
+done
+
+if [[ -z "${GITHUB_TOKEN:-}" && -e "${TOKEN_FILE}" ]]; then
+    [[ -r "${TOKEN_FILE}" ]] || die "Cannot read ${TOKEN_FILE}. Run as root."
+    GITHUB_TOKEN=$(tr -d '[:space:]' < "${TOKEN_FILE}")
+fi
+if [[ -z "${GITHUB_TOKEN:-}" ]]; then
+    die "No GitHub token found. Set GITHUB_TOKEN or write the token to ${TOKEN_FILE}." \
+        "GitHub requires a token to download workflow artifacts, even from public repositories."
+fi
+
+# get URL OUTPUT stores the response body in OUTPUT and dies unless GitHub
+# answers with HTTP 200. The token is passed as a header file so it never
+# shows up in the process list. Curl drops the Authorization header when the
+# artifact download redirects to the blob storage host.
+get() {
+    local url=$1 out=$2 status message
+    status=$(curl --silent --show-error --location \
+        --proto '=https' --proto-redir '=https' \
+        --connect-timeout 30 --speed-limit 1024 --speed-time 120 \
+        --retry 3 --retry-delay 10 \
+        --header @<(printf 'Authorization: Bearer %s\n' "${GITHUB_TOKEN}") \
+        --header 'Accept: application/vnd.github+json' \
+        --header 'X-GitHub-Api-Version: 2022-11-28' \
+        --output "${out}" --write-out '%{http_code}' "${url}") \
+        || die "Request to ${url} failed."
+    [[ "${status}" == 200 ]] && return 0
+
+    message=$(jq -r '.message? // empty' "${out}" 2>/dev/null || true)
+    case "${status}" in
+        401)
+            die "GitHub rejected the token (HTTP 401 ${message}). It is invalid, expired or revoked."
+            ;;
+        403|404)
+            die "HTTP ${status} ${message} for ${url}." \
+                "Either the resource does not exist or the token lacks read access to ${REPO}."
+            ;;
+        410)
+            die "HTTP 410 for ${url}. The artifact has expired."
+            ;;
+    esac
+    die "HTTP ${status} ${message} for ${url}."
+}
+
+PARENT=$(dirname -- "${DEST}")
+NAME=$(basename -- "${DEST}")
+mkdir -p -- "${PARENT}"
+
+# Only one instance may work on DEST at a time. The lock also makes it safe to
+# remove the leftovers of an interrupted run below.
+exec 9>"${PARENT}/.${NAME}.lock"
+flock -n 9 || die "Another run holds ${PARENT}/.${NAME}.lock."
+
+WORK=""
+NEW=""
+cleanup() {
+    if [[ -n "${WORK}" && -d "${WORK}" ]]; then
+        rm -r -- "${WORK}"
+    fi
+    if [[ -n "${NEW}" && -d "${NEW}" ]]; then
+        rm -r -- "${NEW}"
+    fi
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+# Every hidden .NAME.* directory except the live tree is a leftover.
+LIVE=""
+if [[ -L "${DEST}" ]]; then
+    LIVE=$(readlink -f -- "${DEST}")
+fi
+for dir in "${PARENT}/.${NAME}."*/; do
+    dir=${dir%/}
+    if [[ "$(readlink -f -- "${dir}")" == "${LIVE}" ]]; then
+        continue
+    fi
+    echo "Removing leftover ${dir}"
+    rm -r -- "${dir}"
+done
+
+WORK=$(mktemp -d "${PARENT}/.${NAME}.tmp.XXXXXX")
+
+get "${API}" "${WORK}/repo.json"
+
+if [[ "${RUN}" == latest ]]; then
+    get "${API}/actions/workflows/${WORKFLOW}/runs?branch=${BRANCH}&status=success&per_page=1" \
+        "${WORK}/runs.json"
+    RUN=$(jq -r '.workflow_runs[0].id // empty' "${WORK}/runs.json")
+    [[ -n "${RUN}" ]] || die "No successful ${WORKFLOW} run found on branch ${BRANCH}."
+fi
+
+get "${API}/actions/runs/${RUN}" "${WORK}/run.json"
+IFS=$'\t' read -r run_path run_conclusion run_branch run_sha run_url < <(
+    jq -r '[(.path | split("@")[0]), (.conclusion // .status), .head_branch, .head_sha, .html_url]
+           | map(. // "-") | @tsv' \
+        "${WORK}/run.json")
+[[ "${run_path}" == ".github/workflows/${WORKFLOW}" ]] \
+    || die "Run ${RUN} belongs to ${run_path}, not to ${WORKFLOW}."
+[[ "${run_conclusion}" == success ]] \
+    || die "Run ${RUN} has not succeeded (${run_conclusion})."
+
+installed=$(sed -n 's/^run_id=//p' "${DEST}/${MARKER}" 2>/dev/null || true)
+if [[ "${installed}" == "${RUN}" ]]; then
+    echo "Run ${RUN} is already installed in ${DEST}. Nothing to do."
+    exit 0
+fi
+echo "Installing run ${RUN} (branch ${run_branch}, commit ${run_sha:0:10}) into ${DEST}"
+
+page=1
+while :; do
+    get "${API}/actions/runs/${RUN}/artifacts?per_page=100&page=${page}" "${WORK}/artifacts-${page}.json"
+    total=$(jq -r '.total_count' "${WORK}/artifacts-${page}.json")
+    (( page * 100 < total )) || break
+    page=$((page + 1))
+done
+jq -s '[.[].artifacts[]]' "${WORK}"/artifacts-*.json > "${WORK}/artifacts.json"
+
+declare -A ids names sizes digests
+needed=0
+largest=0
+for kind in "${KINDS[@]}"; do
+    suffix="-intel-mips-xrx500-${kind}"
+    mapfile -t matches < <(jq -r --arg suffix "${suffix}" \
+        '.[] | select((.name | startswith("openwrt-")) and (.name | endswith($suffix)))
+         | [.id, .size_in_bytes, .expired, (.expires_at // "-"), .name, (.digest // "")] | @tsv' \
+        "${WORK}/artifacts.json")
+    [[ ${#matches[@]} -eq 1 ]] \
+        || die "Run ${RUN} has ${#matches[@]} artifacts named openwrt-*${suffix}, expected exactly one."
+    IFS=$'\t' read -r id size expired expires_at name digest <<< "${matches[0]}"
+    [[ "${expired}" == false ]] \
+        || die "Artifact ${name} expired at ${expires_at}. GitHub keeps artifacts for 90 days."
+    ids[${kind}]=${id}
+    names[${kind}]=${name}
+    sizes[${kind}]=${size}
+    digests[${kind}]=${digest}
+    needed=$((needed + size))
+    if (( size > largest )); then
+        largest=${size}
+    fi
+done
+revision=${names[targets]#openwrt-}
+revision=${revision%-intel-mips-xrx500-targets}
+
+# The unpacked trees take about as much space as the zips. The largest zip is
+# kept until it is unpacked. The old tree stays until the swap and is already
+# accounted for in the free space.
+needed=$(( (needed + largest) * 11 / 10 ))
+available=$(df --output=avail -B1 -- "${PARENT}" | tail -n 1)
+(( available >= needed )) \
+    || die "Not enough space in ${PARENT}. Need $((needed >> 20)) MiB, have $((available >> 20)) MiB."
+
+NEW=$(mktemp -d "${PARENT}/.${NAME}.${RUN}.XXXXXX")
+for kind in "${KINDS[@]}"; do
+    zip="${WORK}/${kind}.zip"
+    echo "Downloading ${names[${kind}]} ($((sizes[${kind}] >> 20)) MiB)"
+    get "${API}/actions/artifacts/${ids[${kind}]}/zip" "${zip}"
+
+    if [[ "${digests[${kind}]}" == sha256:* ]]; then
+        sum=$(sha256sum -- "${zip}" | cut -d' ' -f1)
+        [[ "sha256:${sum}" == "${digests[${kind}]}" ]] \
+            || die "Checksum mismatch for ${names[${kind}]}."
+    else
+        echo "GitHub publishes no sha256 digest for ${names[${kind}]}, so the checksum test is skipped."
+    fi
+
+    # Each zip must hold only its own top-level directory, so nothing else
+    # lands in the web root.
+    top=$(unzip -Z1 "${zip}" | cut -d/ -f1 | sort -u | paste -sd' ') \
+        || die "Cannot list the contents of ${names[${kind}]}."
+    [[ "${top}" == "${kind}" ]] \
+        || die "${names[${kind}]} holds \"${top}\" at its root, expected \"${kind}\"."
+
+    echo "Unpacking ${names[${kind}]}"
+    unzip -q -o "${zip}" -d "${NEW}" || die "Unpacking ${names[${kind}]} failed."
+    rm -- "${zip}"
+done
+
+[[ -f "${NEW}/targets/intel-mips/xrx500/packages/packages.adb" ]] \
+    || die "The new tree lacks targets/intel-mips/xrx500/packages/packages.adb."
+compgen -G "${NEW}/packages/mips_24kc/*/packages.adb" >/dev/null \
+    || die "The new tree lacks packages/mips_24kc/*/packages.adb."
+
+cat > "${NEW}/${MARKER}" <<EOF
+run_id=${RUN}
+revision=${revision}
+head_sha=${run_sha}
+run_url=${run_url}
+installed_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+EOF
+chmod -R u=rwX,go=rX -- "${NEW}"
+
+# Swap the new tree in. Renaming a symlink over DEST is atomic, so clients see
+# either the old or the new tree. A plain directory at DEST, for example from
+# a manual install, is moved aside first and removed with the work directory.
+ln -s -- "$(basename -- "${NEW}")" "${WORK}/link"
+OLD=""
+if [[ -L "${DEST}" ]]; then
+    OLD=$(readlink -f -- "${DEST}")
+elif [[ -d "${DEST}" ]]; then
+    echo "Moving the plain directory ${DEST} out of the way"
+    mv -T -- "${DEST}" "${WORK}/old"
+elif [[ -e "${DEST}" ]]; then
+    die "${DEST} exists and is neither a directory nor a symlink."
+fi
+mv -T -- "${WORK}/link" "${DEST}"
+NEW=""
+
+# Only remove the previous tree when it is one of ours.
+if [[ -n "${OLD}" && -d "${OLD}" && "$(dirname -- "${OLD}")" == "$(readlink -f -- "${PARENT}")" \
+    && "$(basename -- "${OLD}")" == ".${NAME}."* ]]; then
+    echo "Removing the previous tree ${OLD}"
+    rm -r -- "${OLD}"
+fi
+
+echo "Installed run ${RUN} (${revision}) into ${DEST}"
