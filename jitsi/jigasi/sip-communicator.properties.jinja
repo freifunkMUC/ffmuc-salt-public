@@ -123,6 +123,13 @@ org.jitsi.jigasi.transcription.SAVE_TXT={{ 'true' if jitsi.transcription.save_tr
 org.jitsi.jigasi.transcription.DIRECTORY=/var/lib/jigasi/transcripts
 org.jitsi.jigasi.transcription.SEND_JSON=true
 org.jitsi.jigasi.transcription.SEND_TXT=false
+{%- if jitsi.transcription.translation.enabled %}
+
+# live translated subtitles
+org.jitsi.jigasi.transcription.ENABLE_TRANSLATION=true
+org.jitsi.jigasi.transcription.translationService=org.jitsi.jigasi.transcription.LibreTranslateTranslationService
+org.jitsi.jigasi.transcription.libreTranslate.api_url={{ jitsi.transcription.translation.api_url }}
+{%- endif %}
 
 # the transcriber joins as hidden participant, SIP calls stay anonymous (PREVENT_AUTH_LOGIN)
 org.jitsi.jigasi.xmpp.acc.USER_ID={{ jitsi.transcription.transcriber_username }}@recorder.{{ jitsi.public_domain }}

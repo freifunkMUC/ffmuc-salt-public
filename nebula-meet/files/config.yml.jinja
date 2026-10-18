@@ -165,3 +165,9 @@ firewall:
     proto: udp
     group: jibri
 {%- endif %}
+{%- if salt["pillar.get"]("netbox:config_context:libretranslate:enabled", False) %}
+  # LibreTranslate for live translated subtitles, used by jigasi (docker-containers/libretranslate)
+  - port: {{ salt["pillar.get"]("netbox:config_context:libretranslate:port", 5010) }}
+    proto: tcp
+    group: jigasi
+{%- endif %}

@@ -81,6 +81,15 @@ stats.in.ffmuc.net:
   file.managed:
     - source: salt://jitsi/videobridge/systemd-override.conf
     - makedirs: True
+{%- if grains.virtual != 'container' %}
+{%- for name, value in jitsi.videobridge.sysctl.items() %}
+
+{{ name }}:
+  sysctl.present:
+    - value: {{ value }}
+    - config: /etc/sysctl.d/25-jvb-udp.conf
+{%- endfor %}
+{%- endif %}
 
 {% else %}
 jitsi-videobridge2:
