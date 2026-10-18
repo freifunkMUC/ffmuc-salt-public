@@ -19,11 +19,9 @@ pdns-repo:
     - require:
       - cmd: pdns-repo-key
 
-{#- Pinned so upgrades are rolled out deliberately; the wildcard covers the
-    distro suffix (e.g. 5.4.7-1pdns.ubuntu24.04). Override per host via the
-    NetBox config context if a distro lacks this build (bullseye: 5.4.6).
-    repo.powerdns.com only serves the latest build, bump on each release. #}
-{%- set pdns_recursor_version = salt['config.get']('netbox:config_context:pdns-recursor:version', '5.4.7-*') %}
+{#- repo.powerdns.com only serves the latest build: bump on each release #}
+{%- set pdns_suffix = '1pdns.' ~ (grains.os | lower) ~ (grains.osrelease if grains.os == 'Ubuntu' else grains.osmajorrelease | string) %}
+{%- set pdns_recursor_version = salt['config.get']('netbox:config_context:pdns-recursor:version', '5.4.7-' ~ pdns_suffix) %}
 pdns-recursor:
   pkg.installed:
     - version: '{{ pdns_recursor_version }}'

@@ -26,10 +26,7 @@ nginx-repo-key:
     - require:
       - cmd: nginx-repo-key
 
-{#- Pinned so upgrades are rolled out deliberately; the wildcard covers the
-    distro suffix (e.g. 1.30.6-1~noble). Override per host via the NetBox
-    config context if a distro lacks this build (bullseye: 1.30.5, focal: 1.28.0). #}
-{%- set nginx_pkg_version = salt['config.get']('netbox:config_context:nginx:version', '1.30.6-*') %}
+{%- set nginx_pkg_version = salt['config.get']('netbox:config_context:nginx:version', '1.30.6-1~' ~ grains.oscodename) %}
 nginx:
   pkg.installed:
     - name: nginx

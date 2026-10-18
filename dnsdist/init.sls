@@ -19,11 +19,9 @@ dnsdist-repo:
     - require:
       - cmd: dnsdist-repo-key
 
-{#- Pinned so upgrades are rolled out deliberately; the wildcard covers the
-    distro suffix (e.g. 2.0.11-1pdns.ubuntu24.04). Override per host via the
-    NetBox config context if a distro lacks this build (bullseye: 2.0.8).
-    repo.powerdns.com only serves the latest build, bump on each release. #}
-{%- set dnsdist_version = salt['config.get']('netbox:config_context:dnsdist:version', '2.0.11-*') %}
+{#- repo.powerdns.com only serves the latest build: bump on each release #}
+{%- set pdns_suffix = '1pdns.' ~ (grains.os | lower) ~ (grains.osrelease if grains.os == 'Ubuntu' else grains.osmajorrelease | string) %}
+{%- set dnsdist_version = salt['config.get']('netbox:config_context:dnsdist:version', '2.0.11-' ~ pdns_suffix) %}
 dnsdist:
   pkg.installed:
     - version: '{{ dnsdist_version }}'
