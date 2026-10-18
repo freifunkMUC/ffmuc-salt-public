@@ -1,0 +1,13 @@
+# -*- coding: utf-8 -*-
+# vim: ft=jinja
+
+{%- import_yaml "komodo-periphery/defaults.yaml" as default_settings %}
+
+{%- set _config = salt['pillar.get']("netbox:config_context:komodo", default={}) %}
+
+{% set komodo = salt['grains.filter_by'](
+    default_settings,
+    default='komodo',
+    merge=_config,
+)
+%}

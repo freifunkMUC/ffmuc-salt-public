@@ -1,0 +1,66 @@
+---
+services:
+  mongo:
+    image: mongo:8.0.34-noble@sha256:c2d54fddfb3738fb27fe117f51692e3f44e640a3e7aeb8da3937ee9cd33a650b
+    labels:
+      komodo.skip: ""
+    command: --quiet --wiredTigerCacheSizeGB 0.25
+    restart: unless-stopped
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=komodo
+      - MONGO_INITDB_ROOT_PASSWORD=${KOMODO_DATABASE_PASSWORD}
+    volumes:
+      - /srv/docker/komodo/mongo/db:/data/db
+      - /srv/docker/komodo/mongo/configdb:/data/configdb
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - komodo
+
+  core:
+    image: ghcr.io/moghtech/komodo-core:2.3.3@sha256:bca73d0eee143066228fb9b80c38a5a2726e573ad2758f7aa92b5c91a8aef1c7
+    init: true
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      - TZ=Europe/Berlin
+      - KOMODO_HOST=${KOMODO_HOST}
+      - KOMODO_TITLE=FFMUC Komodo
+      - KOMODO_DATABASE_ADDRESS=mongo:27017
+      - KOMODO_DATABASE_USERNAME=komodo
+      - KOMODO_DATABASE_PASSWORD=${KOMODO_DATABASE_PASSWORD}
+      - KOMODO_JWT_SECRET=${KOMODO_JWT_SECRET}
+      - KOMODO_WEBHOOK_SECRET=${KOMODO_WEBHOOK_SECRET}
+      - KOMODO_LOCAL_AUTH=false
+      - KOMODO_DISABLE_LOCAL_USER_REGISTRATION=true
+      - KOMODO_ENABLE_NEW_USERS=false
+      - KOMODO_DISABLE_NON_ADMIN_CREATE=true
+      - KOMODO_OIDC_ENABLED=true
+      - KOMODO_OIDC_PROVIDER=${KOMODO_OIDC_PROVIDER}
+      - KOMODO_OIDC_CLIENT_ID=${KOMODO_OIDC_CLIENT_ID}
+      - KOMODO_OIDC_CLIENT_SECRET=${KOMODO_OIDC_CLIENT_SECRET}
+    ports:
+      - "10.8.0.15:9120:9120"
+    volumes:
+      - /srv/docker/komodo/keys:/config/keys
+      - /srv/docker/komodo/backups:/backups
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:9120/version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    networks:
+      - komodo
+
+networks:
+  komodo:
+    ipam:
+      config:
+        - subnet: 172.31.255.0/28

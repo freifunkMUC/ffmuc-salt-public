@@ -31,6 +31,7 @@ base:
     - grafana
     - icinga2
     - influxdb
+    - komodo-periphery
     - kvm
     - ntp
     - snmpd

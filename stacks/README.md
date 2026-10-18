@@ -61,15 +61,91 @@ secret. Values come from the running setup on the host; never commit them.
   branch `main`, run directory `stacks/<host>/<project>`, file
   `compose.yaml`, server `<host>`. Stack names are `<host>-<project>`
   (several hosts run a `diun` or `traefik`), with `project_name = "<project>"`.
-- The Komodo resources (servers, stacks, non-secret variables) are declared as
-  TOML and applied by a Komodo Resource Sync, so the Komodo configuration is
-  code as well. Changes in the UI that are not in the TOML show up as pending
-  sync diffs.
+- The Komodo resources (servers, stacks) are declared as TOML in
+  `stacks/komodo-sync/` and applied by the Resource Sync `ffmuc-salt-public`,
+  so the Komodo configuration is code as well. Changes in the UI that are not
+  in the TOML show up as pending sync diffs. The sync never deletes
+  (`delete = false`) and does not deploy (`deploy = false` on every Stack).
 - Taking over a running project: create the variables, sync, compare the
   Stack's diff, then *Deploy*. The old `/srv/docker/<project>/docker-compose.y*ml`
   stays on the host as rollback: `docker compose -p <project> -f <old file> up -d`
   in that directory restores the previous state, the data directories are the
   same.
+
+## Komodo
+
+Komodo v2.3.3: Core with MongoDB on docker06 (`stacks/docker06/komodo`),
+Periphery as systemd service on every managed host (Salt state
+`komodo-periphery`). MongoDB is the backend the Komodo docs recommend;
+FerretDB/Postgres is only suggested for CPUs without AVX, docker06 has AVX2.
+
+### Core on docker06
+
+- Listens on `10.8.0.15:9120` (nebula) only. The UI is meant to be published
+  through the webfrontends like the other backends: a `komodo.ffmuc.net` ACL
+  in `haproxy/haproxy.cfg` and a backend
+  `server komodo docker06.ov.ffmuc.net:9120 check` with `timeout tunnel`
+  for the websockets (`/ws/...`). Until then use an SSH tunnel to
+  `10.8.0.15:9120`. The nebula firewall already lets the `webfrontend` group
+  reach port 9120 on docker06.
+- Login only via OIDC against Keycloak, local login is off. The first user who
+  logs in becomes super admin; later users are created disabled and an admin
+  enables them. Keycloak client: confidential, redirect URI
+  `<KOMODO_HOST>/auth/oidc/callback`.
+- Bootstrap once by hand, as root on docker06:
+  ```
+  git clone https://github.com/freifunkMUC/ffmuc-salt-public /srv/docker/komodo/checkout
+  cd /srv/docker/komodo/checkout/stacks/docker06/komodo
+  install -m 600 /dev/null .env   # fill in the variables below
+  docker compose -p komodo up -d
+  ```
+  Log in first (to become admin), create the variables below as Komodo
+  secrets, create the Resource Sync `ffmuc-salt-public` by hand once (repo
+  `freifunkMUC/ffmuc-salt-public`, branch `main`, resource path
+  `stacks/komodo-sync`) and run it. From then on the sync manages itself
+  (`sync.toml`). The `docker06-komodo` Stack lets Komodo show Core and
+  MongoDB; redeploy Core from a shell rather than from its own UI.
+- Variables (bootstrap `.env` and Komodo secrets): `KOMODO_HOST`
+  (e.g. `https://komodo.ffmuc.net`), `KOMODO_DATABASE_PASSWORD`,
+  `KOMODO_JWT_SECRET`, `KOMODO_WEBHOOK_SECRET`, `KOMODO_OIDC_PROVIDER`
+  (`https://<keycloak>/realms/<realm>`), `KOMODO_OIDC_CLIENT_ID`,
+  `KOMODO_OIDC_CLIENT_SECRET`.
+- Data below `/srv/docker/komodo/`: `mongo/`, `keys/` (Core key pair),
+  `backups/` (database dumps of Komodo's backup procedure).
+
+### Periphery
+
+- Salt state `komodo-periphery`, enabled per host by NetBox config context:
+  ```
+  {"komodo": {"periphery": {"enabled": true}}}
+  ```
+  Options and defaults: `komodo-periphery/defaults.yaml`. docker06 also needs
+  the Core container network in `allowed_ips`, because Core reaches the local
+  Periphery from `172.31.255.0/28`:
+  ```
+  {"komodo": {"periphery": {"enabled": true, "allowed_ips": ["10.8.0.15", "172.31.255.0/28"]}}}
+  ```
+- Pillar on the master (not in this repo): `komodo:core_public_key`, the Core
+  public key from *Settings* in the Komodo UI (or
+  `/srv/docker/komodo/keys/core.pub`). Periphery only accepts Core with this
+  key; without it the state fails instead of starting an unauthenticated
+  agent. Komodo v2 replaced the old passkeys with these key pairs.
+- Periphery binds to the host's nebula address on port 8120, accepts only
+  docker06 (`allowed_ips` plus the nebula firewall rule), and runs as root
+  with its working directory `/etc/komodo`. Shell terminals are disabled,
+  container terminals are allowed.
+- Updating: bump `version` and both `sha256` values in `defaults.yaml`
+  (digests from the GitHub release assets) together with the Core image.
+
+### Rollout
+
+1. Merge, bootstrap Core, configure Keycloak and the variables.
+2. Enable the config context on docker06 and docker04, set the pillar,
+   `state.apply komodo-periphery` and `nebula` on both.
+3. Run the sync; the servers `docker04` and `docker06` should become healthy.
+4. Take over the docker04 stacks one by one (see Deployment).
+5. Further hosts: set `enabled = true` in `servers.toml`, enable the config
+   context.
 
 ## Salt master
 

@@ -131,7 +131,17 @@ firewall:
   - port: 60001-60010
     proto: udp
     host: any
+{%- if salt["pillar.get"]("netbox:config_context:komodo:periphery:enabled", False) %}
+    # Komodo Periphery, reached by Komodo Core
+  - port: 8120
+    proto: tcp
+    host: docker06.in.ffmuc.net
+{%- endif %}
 {%- if "docker06.in.ffmuc.net" == grains["id"] %}
+  # Komodo Core
+  - port: 9120
+    proto: tcp
+    group: webfrontend
   # Allow connections for http backend of broker.ffmuc.net
   - port: 5000
     proto: tcp
