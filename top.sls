@@ -63,5 +63,7 @@ base:
     - dns-auth
     - pdns-recursor
     - github-downloader
+  'guardian-*.in.ffmuc.net':
+    - sflowtool
   'vpn0*.in.ffmuc.net':
     - wireguard

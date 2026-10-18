@@ -1,4 +1,5 @@
-{%- if 'backup' in salt['pillar.get']('netbox:tag_list', []) -%}
+{#- salt://rustic/files/rustic* are x86_64 builds #}
+{%- if 'backup' in salt['pillar.get']('netbox:tag_list', []) and grains.osarch == 'amd64' -%}
 
 {% set rustic_version = "v0.11.4" %}
 {% set rustic_version = "nightly" %}

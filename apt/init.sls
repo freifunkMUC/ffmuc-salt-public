@@ -22,6 +22,13 @@
 /etc/apt/sources.list.d/hetzner-security-updates.list:
   file.absent
 
+{%- if grains.os == 'Raspbian' %}
+# Broadcom builds no armhf packages, the guardians run salt from a venv
+/etc/apt/sources.list.d/saltstack.list:
+  file.absent
+/etc/apt/sources.list.d/salt.sources:
+  file.absent
+{%- else %}
 salt-repo-key:
   cmd.run:
     - name: "curl -fsSL https://packages.broadcom.com/artifactory/api/security/keypair/SaltProjectKey/public | gpg --batch --yes --dearmor -o /usr/share/keyrings/salt-archive-keyring.gpg.tmp && mv /usr/share/keyrings/salt-archive-keyring.gpg.tmp /usr/share/keyrings/salt-archive-keyring.gpg"
@@ -34,6 +41,7 @@ salt-repo:
     - clean_file: True
     - require:
       - cmd: salt-repo-key
+{%- endif %}
 
 /etc/cron.d/apt:
   file.managed:
@@ -45,9 +53,16 @@ apt-transport-https:
 python3-apt:
   pkg.installed
 
+{%- if grains.os == 'Raspbian' %}
+# kernel, firmware and bootloader of the Raspberry Pi
+/etc/apt/sources.list.d/raspi.list:
+  file.managed:
+    - contents: deb http://archive.raspberrypi.org/debian/ {{ grains.oscodename }} main
+{%- else %}
 # Purge old stuff
 /etc/apt/sources.list.d/raspi.list:
   file.absent
+{%- endif %}
 
 /etc/apt/sources.list.d/universe-factory.list:
   file.absent

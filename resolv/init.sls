@@ -7,10 +7,14 @@
 # Otherwise:
 #   - Use systemd-resolved with anycast servers
 #   - Create symlink to systemd-resolved's stub-resolv.conf
+# Raspbian (guardians): left alone, dhcpcd/NetworkManager write resolv.conf and
+# systemd-resolved is not installed
 
 {% set has_recursor = 'recursor' in salt['pillar.get']('netbox:tag_list', []) %}
 {% set has_dnsdist = 'dnsdist' in salt['pillar.get']('netbox:tag_list', []) %}
 {% set use_local_resolver = has_recursor or has_dnsdist %}
+
+{%- if grains.os != 'Raspbian' %}
 
 {% if use_local_resolver %}
 # Machine runs local DNS resolver - disable systemd-resolved and use static resolv.conf
@@ -71,3 +75,4 @@ systemd-resolved:
       - service: systemd-resolved
 
 {% endif %}
+{%- endif %}{# if not Raspbian #}
