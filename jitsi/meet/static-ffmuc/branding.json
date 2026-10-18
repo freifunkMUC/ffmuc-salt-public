@@ -1,0 +1,9 @@
+{
+  "defaultBranding": true,
+  "avatarBackgrounds": [],
+  "virtualBackgrounds": [],
+  "labels": {
+    "en": "/static/ffmuc/labels-en.json",
+    "de": "/static/ffmuc/labels-de.json"
+  }
+}
