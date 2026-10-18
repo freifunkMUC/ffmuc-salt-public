@@ -1,0 +1,14 @@
+---
+# Known-dead BGP sessions and WireGuard tunnels per Icinga client (Salt managed data).
+# The services bgp_sessions and wireguard_handshakes report them but stay OK.
+# Patterns use fnmatch syntax (bird protocol names, WireGuard interface names).
+# Only add an entry when the session is down on purpose (peer gone, being
+# decommissioned) and remove it once that is settled.
+#
+# Example:
+# ft03.in.ffmuc.net:
+#   bgp:
+#     - "gasteig_*"
+#   wireguard:
+#     - wg-gasteig
+{}

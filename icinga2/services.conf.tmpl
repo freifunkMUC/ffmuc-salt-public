@@ -86,8 +86,20 @@ apply Service "load" {
   import "generic-service"
 
   check_command = "load"
+  vars.load_percpu = true
+  vars.load_wload1 = 2.0
+  vars.load_wload5 = 1.5
+  vars.load_wload15 = 1.2
+  vars.load_cload1 = 4.0
+  vars.load_cload5 = 3.0
+  vars.load_cload15 = 2.0
 
-   assign where host.vars.os == "Linux"
+  if (host.name != NodeName) {
+      command_endpoint = host.name
+  }
+
+  assign where host.vars.os == "Linux"
+  ignore where host.vars.agentless
 }
 
 apply Service "procs" {

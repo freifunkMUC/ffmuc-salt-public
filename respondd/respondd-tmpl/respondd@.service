@@ -1,6 +1,8 @@
 [Unit]
 Description=respondd (respondd status for servers)
 After=syslog.target network-online.target
+# the mesh interface may not be routable yet at boot (OSError: Network is unreachable); keep retrying
+StartLimitIntervalSec=0
 
 [Service]
 Type=simple
@@ -8,6 +10,8 @@ User=root
 Group=root
 WorkingDirectory=/opt/respondd-%I
 ExecStart=/opt/respondd-%I/ext-respondd.py
+Restart=on-failure
+RestartSec=15s
 
 [Install]
 WantedBy=multi-user.target

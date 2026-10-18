@@ -22,11 +22,12 @@ dnspython:
 /etc/apparmor.d/local/usr.sbin.named:
   file.managed:
     - contents: "/etc/bind/** rw,"
-    - watch_in: apparmor-reload
 
 apparmor-reload:
   cmd.run:
     - name: apparmor_parser -r /etc/apparmor.d/usr.sbin.named
+    - onchanges:
+      - file: /etc/apparmor.d/local/usr.sbin.named
 
 
 #
@@ -348,20 +349,12 @@ record-AAAA-external-{{ node_id }}:
 {% set services = salt['pillar.get']('netbox:services') %}
 {% for service in services %}
   {% if services[service]['custom_fields']['cname'] %}
-    {% if services[service]['virtual_machine'] %}
-      {% if services[service]['custom_fields']['public'] %}
-        {% set target = services[service]['virtual_machine']['name'] | regex_search('(^\w+(\d+)?)') %}
-        {% do cnames.update({service: target[0] ~ '.ext.ffmuc.net' }) %}
-      {% else %}
-        {% do cnames.update({service: services[service]['virtual_machine']['name'] }) %}
-      {% endif %}
+    {% set parent = services[service].get('parent') or services[service].get('virtual_machine') or services[service].get('device') %}
+    {% if services[service]['custom_fields']['public'] %}
+      {% set target = parent['name'] | regex_search('(^\w+(\d+)?)') %}
+      {% do cnames.update({service: target[0] ~ '.ext.ffmuc.net' }) %}
     {% else %}
-      {% if services[service]['custom_fields']['public'] %}
-        {% set target = services[service]['device']['name'] | regex_search('(^\w+(\d+)?)') %}
-        {% do cnames.update({service: target[0] ~ '.ext.ffmuc.net' }) %}
-      {% else %}
-        {% do cnames.update({service: services[service]['device']['name'] }) %}
-      {% endif %}
+      {% do cnames.update({service: parent['name'] }) %}
     {% endif %}
   {% endif %}
 {% endfor %}

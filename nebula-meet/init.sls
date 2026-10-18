@@ -4,13 +4,24 @@
 
 {%- from "nebula-meet/map.jinja" import nebula with context %}
 {% if nebula.enabled %}
+{%- set ca_files = [] %}
+{%- for ca in nebula.pki.cas %}
+{%- do ca_files.append("nebula-meet/cert/" ~ ca) %}
+{%- endfor %}
+{%- set crt_files = [] %}
+{%- for v in nebula.pki.cert_versions %}
+{%- do crt_files.append("nebula-meet/cert/" ~ ("" if v == 1 else "v" ~ v ~ "/") ~ grains["id"] ~ ".crt") %}
+{%- endfor %}
 
 include:
   - nebula.install
 
 /etc/nebula-meet/ca.crt:
   file.managed:
-    - source: salt://nebula-meet/cert/ca.crt
+    - source: salt://nebula/files/bundle.pem.jinja
+    - template: jinja
+    - context:
+        files: {{ ca_files | tojson }}
     - makedirs: True
     - user: root
     - group: root
@@ -18,7 +29,10 @@ include:
 
 /etc/nebula-meet/{{ grains['id'] }}.crt:
   file.managed:
-    - source: salt://nebula-meet/cert/{{ grains['id'] }}.crt
+    - source: salt://nebula/files/bundle.pem.jinja
+    - template: jinja
+    - context:
+        files: {{ crt_files | tojson }}
     - makedirs: True
     - user: root
     - group: root
@@ -72,7 +86,6 @@ nebula-meet-service-file:
 nebula-meet-service:
   service.running:
     - enable: True
-    - running: True
     #- reload: True
     - name: nebula-meet
     - require:
@@ -82,6 +95,31 @@ nebula-meet-service:
     - watch:
         - file: /etc/nebula-meet/config.yml
         - cmd: systemd-reload-nebula-meet
+
+nebula-meet-restart-on-upgrade:
+  cmd.run:
+    - name: /usr/bin/nebula -test -config /etc/nebula-meet/config.yml && systemctl restart nebula-meet
+    - onchanges:
+        - pkg: nebula-pkg
+    - require:
+        - service: nebula-meet-service
+
+{#- the nebula package ships a default nebula.service without config; keep it off unless the main nebula state is used #}
+{%- from "nebula/map.jinja" import nebula as nebula_main with context %}
+{% if not nebula_main.enabled %}
+nebula-default-unit-dead:
+  service.dead:
+    - name: nebula
+    - enable: False
+    - require:
+      - pkg: nebula-pkg
+
+nebula-default-unit-masked:
+  service.masked:
+    - name: nebula
+    - require:
+      - service: nebula-default-unit-dead
+{% endif %}
 
 {% else %}
 {# remove old config to allow migration to new file destination #}

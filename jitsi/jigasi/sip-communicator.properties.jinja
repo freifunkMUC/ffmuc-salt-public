@@ -52,7 +52,7 @@ net.java.sip.communicator.impl.protocol.sip.acc1.DEFAULT_ENCRYPTION=false
 # If an authenticated (hidden) domain is used to connect to a conference,
 # PREVENT_AUTH_LOGIN will prevent the SIP participant from being seen as a
 # hidden participant in the conference
-#net.java.sip.communicator.impl.protocol.sip.acc1.PREVENT_AUTH_LOGIN=FALSE
+{% if jitsi.transcription.enabled %}net.java.sip.communicator.impl.protocol.sip.acc1.PREVENT_AUTH_LOGIN=true{% else %}#net.java.sip.communicator.impl.protocol.sip.acc1.PREVENT_AUTH_LOGIN=FALSE{% endif %}
 # Used when incoming calls are used in multidomain environment, used to detect subdomains
 # used for constructing callResource and eventually contacting jicofo
 net.java.sip.communicator.impl.protocol.sip.acc1.DOMAIN_BASE={{ jitsi.public_domain }}
@@ -108,9 +108,82 @@ net.java.sip.communicator.service.gui.ALWAYS_TRUST_MODE_ENABLED=true
 
 # Options regarding Transcription. Read the README for a detailed description
 # about each property
+{% if jitsi.transcription.enabled %}
+{%- set xmpp_prefix = "net.java.sip.communicator.impl.protocol.jabber" %}
+{%- set brewery = jitsi.transcription.brewery_room ~ "@" ~ jitsi.xmpp.brewery_domain %}
+{%- set control_user = jitsi.transcription.jigasi_username ~ "@" ~ jitsi.xmpp.auth_domain %}
 
+org.jitsi.jigasi.ENABLE_TRANSCRIPTION=true
+org.jitsi.jigasi.ENABLE_SIP=true
+org.jitsi.jigasi.transcription.customService=org.jitsi.jigasi.transcription.VoskTranscriptionService
+org.jitsi.jigasi.transcription.vosk.websocket_url={{ jitsi.transcription.get('vosk_url') or 'ws://' ~ jitsi.vosk.interface ~ ':' ~ jitsi.vosk.port }}
+org.jitsi.jigasi.transcription.ADVERTISE_URL=false
+org.jitsi.jigasi.transcription.SAVE_JSON=false
+org.jitsi.jigasi.transcription.SAVE_TXT={{ 'true' if jitsi.transcription.save_transcripts else 'false' }}
+org.jitsi.jigasi.transcription.DIRECTORY=/var/lib/jigasi/transcripts
+org.jitsi.jigasi.transcription.SEND_JSON=true
+org.jitsi.jigasi.transcription.SEND_TXT=false
+{%- if jitsi.transcription.translation.enabled %}
+
+# live translated subtitles
+org.jitsi.jigasi.transcription.ENABLE_TRANSLATION=true
+org.jitsi.jigasi.transcription.translationService=org.jitsi.jigasi.transcription.LibreTranslateTranslationService
+org.jitsi.jigasi.transcription.libreTranslate.api_url={{ jitsi.transcription.translation.api_url }}
+{%- endif %}
+
+# the transcriber joins as hidden participant, SIP calls stay anonymous (PREVENT_AUTH_LOGIN)
+org.jitsi.jigasi.xmpp.acc.USER_ID={{ jitsi.transcription.transcriber_username }}@recorder.{{ jitsi.public_domain }}
+org.jitsi.jigasi.xmpp.acc.PASS={{ jitsi.transcription.transcriber_password }}
+org.jitsi.jigasi.xmpp.acc.ANONYMOUS_AUTH=false
+org.jitsi.jigasi.xmpp.acc.ALLOW_NON_SECURE=true
+
+# brewery: one control account per shard prosody, jicofo invites the transcriber through it
+org.jitsi.jigasi.BREWERY_ENABLED=true
+org.jitsi.jigasi.ALLOWED_JID={{ brewery }}
+{%- for shard in jitsi.transcription.shards %}
+{%- set acc = xmpp_prefix ~ ".acc-xmpp-" ~ loop.index %}
+
+{{ acc }}=acc-xmpp-{{ loop.index }}
+{{ acc }}.ACCOUNT_UID=Jabber:{{ control_user }}@{{ loop.index }}
+net.java.sip.communicator.plugin.reconnectplugin.ATLEAST_ONE_SUCCESSFUL_CONNECTION.Jabber\:{{ control_user }}@{{ loop.index }}=true
+{{ acc }}.USER_ID={{ control_user }}
+{{ acc }}.IS_SERVER_OVERRIDDEN=true
+{{ acc }}.SERVER_ADDRESS={{ shard.host }}
+{{ acc }}.SERVER_PORT={{ shard.port | default(5222) }}
+{{ acc }}.ALLOW_NON_SECURE=true
+{{ acc }}.PASSWORD={{ jitsi.transcription.jigasi_password | base64_encode }}
+{{ acc }}.AUTO_GENERATE_RESOURCE=true
+{{ acc }}.RESOURCE_PRIORITY=30
+{{ acc }}.KEEP_ALIVE_METHOD=XEP-0199
+{{ acc }}.KEEP_ALIVE_INTERVAL=30
+{{ acc }}.CALLING_DISABLED=true
+{{ acc }}.JINGLE_NODES_ENABLED=false
+{{ acc }}.IS_CARBON_DISABLED=true
+{{ acc }}.DEFAULT_ENCRYPTION=true
+{{ acc }}.IS_USE_ICE=true
+{{ acc }}.IS_ACCOUNT_DISABLED=false
+{{ acc }}.IS_PREFERRED_PROTOCOL=false
+{{ acc }}.AUTO_DISCOVER_JINGLE_NODES=false
+{{ acc }}.PROTOCOL=Jabber
+{{ acc }}.IS_USE_UPNP=false
+{{ acc }}.IM_DISABLED=true
+{{ acc }}.SERVER_STORED_INFO_DISABLED=true
+{{ acc }}.IS_FILE_TRANSFER_DISABLED=true
+{{ acc }}.USE_DEFAULT_STUN_SERVER=false
+{{ acc }}.ENCRYPTION_PROTOCOL.DTLS-SRTP=0
+{{ acc }}.ENCRYPTION_PROTOCOL_STATUS.DTLS-SRTP=true
+{{ acc }}.OVERRIDE_ENCODINGS=true
+{%- for enc in ["G722/8000", "GSM/8000", "H263-1998/90000", "H264/90000", "PCMA/8000", "PCMU/8000", "SILK/12000", "SILK/16000", "SILK/24000", "SILK/8000", "VP8/90000", "iLBC/8000", "opus/48000", "speex/16000", "speex/32000", "speex/8000"] %}
+{{ acc }}.Encodings.{{ enc }}=0
+{%- endfor %}
+{{ acc }}.BREWERY={{ brewery }}
+{{ acc }}.BOSH_URL_PATTERN=https://{{ jitsi.public_domain }}/http-bind?room={roomName}
+{{ acc }}.DOMAIN_BASE={{ jitsi.public_domain }}
+{%- endfor %}
+{%- else %}
 #org.jitsi.jigasi.ENABLE_TRANSCRIPTION=false
 #org.jitsi.jigasi.ENABLE_SIP=true
+{%- endif %}
 
 # Enabled or disable the notification when max occupants limit is reached
 # org.jitsi.jigasi.NOTIFY_MAX_OCCUPANTS=false

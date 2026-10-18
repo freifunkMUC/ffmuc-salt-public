@@ -13,7 +13,6 @@ netfilter-persistent:
     - name: netfilter-persistent
   service.running:
     - enable: True
-    - restart: True
 
 ifreload:
    cmd.wait:

@@ -6,7 +6,9 @@
 grafana-repo-key:
   cmd.run:
     - name: "curl -fsSL https://apt.grafana.com/gpg.key | gpg --batch --yes --dearmor -o /usr/share/keyrings/grafana-keyring.gpg.tmp && mv /usr/share/keyrings/grafana-keyring.gpg.tmp /usr/share/keyrings/grafana-keyring.gpg"
-    - creates: /usr/share/keyrings/grafana-keyring.gpg
+    # check the fingerprint instead of 'creates': Grafana rotated the key in
+    # 2023 and an existing file would otherwise keep the old one forever
+    - unless: gpg --show-keys --with-colons /usr/share/keyrings/grafana-keyring.gpg 2>/dev/null | grep -q '^fpr:.*:B53AE77BADB630A683046005963FA27710458545:'
 
 grafana:
 # add Grafana Repo

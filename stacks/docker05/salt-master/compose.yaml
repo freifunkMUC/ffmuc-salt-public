@@ -1,0 +1,31 @@
+---
+services:
+  salt-master:
+    image: ghcr.io/cdalvaro/docker-salt-master:3008.3@sha256:75e4bea95dea9c2bd5482d51b787bb6f225bec99a8bd75584f9fb3593243ca06
+    restart: unless-stopped
+    volumes:
+      - /srv/docker/salt/formulars/:/home/salt/data/srv/salt
+      - /srv/docker/salt/pillar/:/home/salt/data/srv/pillar
+      - /srv/docker/salt/pki/master/:/home/salt/data/keys
+      - /srv/docker/salt/master.d/:/home/salt/data/config
+      - /srv/docker/salt/logs/:/home/salt/data/logs
+      - /srv/docker/salt/cache/:/var/cache/salt/master
+      - type: tmpfs
+        target: /tmp
+        tmpfs:
+          size: 100m
+          mode: 1777
+    ports:
+      - "4505:4505"
+      - "4506:4506"
+    healthcheck:
+      test:
+        - CMD
+        - /usr/local/sbin/healthcheck
+      start_period: 30s
+    environment:
+      - DEBUG=false
+      - TIMEZONE=Europe/Berlin
+      - PUID=1000
+      - PGID=1000
+      - SALT_LOG_LEVEL=info

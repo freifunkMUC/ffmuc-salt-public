@@ -1,0 +1,13 @@
+[Unit]
+Description=Komodo Periphery
+Wants=network-online.target
+After=network-online.target docker.service nebula.service
+
+[Service]
+Environment="HOME=/root"
+ExecStart=/usr/local/bin/periphery --config-path /etc/komodo/periphery.config.toml
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

@@ -43,6 +43,7 @@ wgkex-service:
         - git: /srv/wgkex/wgkex
     - watch:
         - file: /etc/wgkex.yaml
+        - file: /etc/systemd/system/wgkex.service
         - git: /srv/wgkex/wgkex
 
 {% endif %}

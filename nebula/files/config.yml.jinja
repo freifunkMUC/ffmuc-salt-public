@@ -6,6 +6,12 @@ pki:
   ca: /etc/nebula/ca.crt
   cert: /etc/nebula/{{ grains.id }}.crt
   key: /etc/nebula/{{ grains.id }}.key
+{%- if nebula.pki.initiating_version %}
+  initiating_version: {{ nebula.pki.initiating_version }}
+{%- endif %}
+{%- if nebula.pki.disconnect_invalid is not none %}
+  disconnect_invalid: {{ nebula.pki.disconnect_invalid | lower }}
+{%- endif %}
 
 static_host_map:
 {%- for lighthouse, public_addrs in nebula.lighthouses.items() %}
@@ -131,9 +137,19 @@ firewall:
   - port: 60001-60010
     proto: udp
     host: any
+{%- if salt["pillar.get"]("netbox:config_context:komodo:periphery:enabled", False) %}
+    # Komodo Periphery, reached by Komodo Core
+  - port: 8120
+    proto: tcp
+    host: docker06.in.ffmuc.net
+{%- endif %}
 {%- if "docker06.in.ffmuc.net" == grains["id"] %}
   # Allow connections for http backend of broker.ffmuc.net
   - port: 5000
+    proto: tcp
+    group: webfrontend
+  # Allow connections for meet.ffmuc.net/reserve signer (docker-containers/meet-reserve)
+  - port: 8095
     proto: tcp
     group: webfrontend
    # Allow connections for http backend of broker.ffmuc.net
@@ -174,6 +190,10 @@ firewall:
     group: webfrontend
   # Allow connections for http backend of broker.ffmuc.net
   - port: 5000
+    proto: tcp
+    group: webfrontend
+  # Allow connections for meet.ffmuc.net/reserve signer (docker-containers/meet-reserve)
+  - port: 8095
     proto: tcp
     group: webfrontend
   # Allow connections for mqtt backend of broker.ffmuc.net
@@ -241,6 +261,10 @@ firewall:
     host: any
   # Allow connections for mqtt backend of broker.ffmuc.net
   - port: 5000
+    proto: tcp
+    group: webfrontend
+  # Allow connections for meet.ffmuc.net/reserve signer (docker-containers/meet-reserve)
+  - port: 8095
     proto: tcp
     group: webfrontend
   # Allow connections for http backend of broker.ffmuc.net
@@ -351,6 +375,10 @@ firewall:
     group: webfrontend
   # Allow connections for http backend of broker.ffmuc.net
   - port: 5000
+    proto: tcp
+    group: webfrontend
+  # Allow connections for meet.ffmuc.net/reserve signer (docker-containers/meet-reserve)
+  - port: 8095
     proto: tcp
     group: webfrontend
   # Allow connections for mqtt backend of broker.ffmuc.net
