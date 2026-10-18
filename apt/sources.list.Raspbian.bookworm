@@ -1,0 +1,5 @@
+#
+# /etc/apt/sources.list (Salt managed)
+#
+
+deb [arch=armhf] http://raspbian.raspberrypi.org/raspbian bookworm main contrib non-free rpi

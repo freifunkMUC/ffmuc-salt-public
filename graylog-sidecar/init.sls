@@ -1,16 +1,18 @@
-
-{% if grains.osfullname in 'Raspbian' %}
-graylog-sidecar-pkg:
+{% if grains.os == 'Raspbian' %}
+{#- no armhf in the graylog and elastic repos: fixed .debs, same IDs as pkg.latest below for the requisites #}
+graylog-sidecar:
   pkg.installed:
     - sources:
       - graylog-sidecar: https://github.com/Graylog2/collector-sidecar/releases/download/1.5.6/graylog-sidecar_1.5.6-1_armv7.deb
+
+filebeat:
+  pkg.installed:
+    - sources:
       - filebeat: https://apt.ffmuc.net/filebeat-oss-8.19.23-ffmuc1-armhf.deb
-    # the .deb has no postinst and the service only watches pkg.latest below,
-    # so restart it here when the package changes
     - watch_in:
       - service: graylog-sidecar-service
 
-{% else %}{# if grains.osfullname in 'Raspbian' #}
+{% else %}{# if Raspbian #}
 
 graylog-repo-key:
     cmd.run:
@@ -43,13 +45,13 @@ filebeat-repo:
     - require:
       - cmd: elasticsearch-repo-key
 
-{% endif %}
-
 graylog-sidecar:
   pkg.latest
 
 filebeat:
   pkg.latest
+
+{% endif %}{# if Raspbian #}
 
 {% if not salt['file.file_exists']('/etc/systemd/system/graylog-sidecar.service') %}
 graylog-sidecar-install-service:
