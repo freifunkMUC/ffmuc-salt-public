@@ -1,11 +1,24 @@
-/* FFMUC branding on top of the upstream jitsi-meet-web css/all.css */
+/* FFMUC branding on top of the upstream jitsi-meet-web css/all.css.
+   Colours follow https://wiki.freifunk.net/Freifunk-Styles: magenta for
+   small accents only, yellow as highlight, blue only in spots. */
+:root {
+    --ff-magenta: #dc0067;
+    --ff-magenta-dark: #b30054;
+    --ff-yellow: #ffb400;
+    --ff-blue: #009ee0;
+    --ff-ink: #16181d;
+    --ff-muted: #5b6270;
+    --ff-bg: #f4f5f7;
+    --ff-line: #e4e6ea;
+}
+
 a,
 .as-link {
-    color: #dc0067;
+    color: var(--ff-magenta);
 }
 
 button {
-    background-color: #dc0067;
+    background-color: var(--ff-magenta);
 }
 
 .watermark,
@@ -17,22 +30,392 @@ button {
 .videocontainer > span.audioindicator span.audiodot-top::after,
 .videocontainer > span.audioindicator span.audiodot-middle::after,
 .videocontainer > span.audioindicator span.audiodot-bottom::after {
-    background: #dc0067;
+    background: var(--ff-magenta);
 }
 
-.welcome .welcome-page-button,
 .meetings-list .button {
-    background: #dc0067;
-}
-
-.welcome .welcome-page-button:hover {
-    background-color: #da4a8e;
-}
-
-.welcome .welcome-card--blue {
-    background: #009ee0;
+    background: var(--ff-magenta);
 }
 
 .meetings-list .delete-meeting > svg {
-    fill: #dc0067;
+    fill: var(--ff-magenta);
+}
+
+/* ---------- welcome page ---------- */
+
+.welcome {
+    background-color: var(--ff-bg);
+    justify-content: flex-start;
+}
+
+.welcome .header {
+    background-image:
+        linear-gradient(180deg, rgba(10, 12, 16, 0.25) 0%, rgba(10, 12, 16, 0.35) 55%, rgba(10, 12, 16, 0.75) 100%),
+        url(../../images/welcome-background.webp);
+    background-position: center 40%;
+    padding: 1rem 1rem 3.5rem;
+}
+
+.welcome .header .header-text-title {
+    font-size: 3rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    text-shadow: 0 2px 16px rgba(0, 0, 0, 0.35);
+}
+
+.welcome .header .header-text-title::after {
+    content: "";
+    display: block;
+    width: 56px;
+    height: 4px;
+    margin: 14px auto 0;
+    border-radius: 2px;
+    background: var(--ff-yellow);
+}
+
+.welcome .header .header-text-subtitle {
+    font-weight: 500;
+    opacity: 0.95;
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.4);
+}
+
+.welcome .header #enter_room {
+    max-width: 560px;
+}
+
+.welcome .header #enter_room .join-meeting-container {
+    padding: 6px;
+    border-radius: 14px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+}
+
+.welcome .header #enter_room .enter-room-input-container .enter-room-input {
+    font-size: 1rem;
+    border-radius: 10px;
+}
+
+.welcome .welcome-page-button {
+    background: var(--ff-magenta);
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 16px 24px;
+}
+
+.welcome .welcome-page-button:hover {
+    background-color: var(--ff-magenta-dark);
+}
+
+.welcome .welcome-page-settings {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    backdrop-filter: blur(6px);
+}
+
+.welcome .welcome-cards-container {
+    padding: 0;
+    margin-top: -2rem;
+    position: relative;
+    z-index: 3;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.welcome .welcome-tabs:has(.meetings-list-empty) {
+    display: none;
+}
+
+.welcome .welcome-card-column {
+    width: 100%;
+    max-width: 792px;
+    margin: 0 auto;
+    padding: 0 16px;
+    box-sizing: border-box;
+}
+
+
+.welcome .welcome-card-column > div {
+    margin-bottom: 20px;
+}
+
+.welcome .welcome-card,
+.welcome .welcome-card--blue,
+.welcome .welcome-card--dark {
+    background: #fff;
+    color: var(--ff-ink);
+    border: 1px solid var(--ff-line);
+    border-radius: 18px;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 24px rgba(16, 24, 40, 0.06);
+    overflow: hidden;
+}
+
+.welcome .welcome-tabs {
+    border-top: 4px solid var(--ff-blue);
+}
+
+.welcome .tab-container .tab-content {
+    height: auto;
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+.welcome .tab-container .tab-buttons,
+.welcome .tab-container .tab-buttons [role="tab"] {
+    background-color: var(--ff-bg);
+    color: var(--ff-muted);
+}
+
+.welcome .tab-container .tab-buttons [role="tab"][aria-selected="true"] {
+    background-color: #fff;
+    color: var(--ff-ink);
+    font-weight: 600;
+}
+
+.meetings-list .item {
+    border-radius: 10px;
+}
+
+/* our info card (welcomePageAdditionalCard.html) */
+.welcome .welcome-card-text {
+    padding: 32px;
+}
+
+.ffm-card h2 {
+    margin: 0 0 4px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--ff-ink);
+}
+
+.ffm-card .ffm-lead {
+    margin: 0 0 24px;
+    color: var(--ff-muted);
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.ffm-steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin: 0 0 24px;
+    padding: 0;
+    list-style: none;
+    counter-reset: ffm-step;
+}
+
+.ffm-steps li {
+    counter-increment: ffm-step;
+    padding: 18px 16px 16px;
+    border-radius: 14px;
+    background: var(--ff-bg);
+    font-size: 0.9rem;
+    line-height: 1.45;
+    color: var(--ff-ink);
+}
+
+.ffm-steps li::before {
+    content: counter(ffm-step);
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    margin-bottom: 10px;
+    border-radius: 50%;
+    background: var(--ff-yellow);
+    color: var(--ff-ink);
+    font-weight: 700;
+}
+
+.ffm-steps li b {
+    display: block;
+    margin-bottom: 2px;
+}
+
+.ffm-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 0 24px;
+    padding: 0;
+    list-style: none;
+}
+
+.ffm-chips li {
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--ff-line);
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--ff-ink);
+}
+
+.ffm-chips li::before {
+    content: "✓";
+    margin-right: 6px;
+    font-weight: 700;
+    color: var(--ff-magenta);
+}
+
+.ffm-reserve {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
+    border-radius: 14px;
+    background: #fff7e6;
+    border: 1px solid #ffe2a3;
+}
+
+.ffm-reserve p {
+    flex: 1;
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--ff-ink);
+}
+
+.ffm-reserve .ffm-tag {
+    display: inline-block;
+    margin-bottom: 6px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: var(--ff-yellow);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ffm-btn {
+    display: inline-block;
+    padding: 12px 18px;
+    border-radius: 10px;
+    background: var(--ff-magenta);
+    color: #fff !important;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color 0.2s;
+}
+
+.ffm-btn:hover {
+    background: var(--ff-magenta-dark);
+}
+
+.ffm-more {
+    display: inline-block;
+    margin-top: 20px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.ffm-more:hover {
+    text-decoration: underline;
+}
+
+/* footer (welcomePageAdditionalContent.html + upstream mobile row) */
+.welcome .welcome-page-content .welcome-footer,
+.welcome footer.welcome-footer {
+    background: var(--ff-ink);
+    margin-top: 0;
+}
+
+.welcome .welcome-page-content {
+    margin-top: auto;
+    padding-top: 40px;
+}
+
+.ffm-footer {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 32px 16px 8px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    color: #c9ccd3;
+    font-size: 0.875rem;
+    line-height: 1.6;
+}
+
+.ffm-footer .ffm-heart {
+    margin: 0 6px 0 4px;
+}
+
+.ffm-footer b {
+    color: #fff;
+}
+
+.ffm-footer a {
+    color: var(--ff-yellow);
+    text-decoration: none;
+}
+
+.ffm-footer a:hover {
+    text-decoration: underline;
+}
+
+.ffm-apps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.ffm-apps a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: 1px solid #3a3d45;
+    color: #fff;
+    font-weight: 500;
+}
+
+.ffm-apps a:hover {
+    border-color: var(--ff-yellow);
+    text-decoration: none;
+}
+
+.ffm-apps a::before {
+    content: "↓";
+    color: var(--ff-yellow);
+    font-weight: 700;
+}
+
+.welcome .welcome-footer-row-block {
+    border-bottom: 0;
+}
+
+.welcome .welcome-footer--row-1 {
+    padding: 16px 0 32px;
+}
+
+.welcome .welcome-footer-row-1-text {
+    color: #c9ccd3;
+}
+
+@media only screen and (max-width: 640px) {
+    .welcome .header .header-text-title {
+        font-size: 2.25rem;
+    }
+
+    .ffm-steps {
+        grid-template-columns: 1fr;
+    }
+
+    .ffm-reserve {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .welcome .welcome-card-text {
+        padding: 24px 20px;
+    }
 }

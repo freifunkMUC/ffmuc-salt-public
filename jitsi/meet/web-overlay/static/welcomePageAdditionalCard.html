@@ -1,72 +1,26 @@
 <template id = "welcome-page-additional-card-template">
   <style>
-  .welcome .welcome-watermark {
-    height: 0px;
-  }
-  .welcome .welcome-card-row {
-    justify-content:space-between;
-    line-height: 1.7;
-  }
-  .welcome .welcome-card-text,
-  .welcome .welcome-card-text .welcome-card-large-title,
-  .welcome .welcome-card-text .welcome-card-paragraph {
-    color: #ffffff;
-  }
-  .welcome .welcome-card-text .welcome-card-button a {
-    color: #ffffff;
-    font-weight: 600;
-    text-decoration: underline;
-  }
-  .welcome .welcome-card-text .ffmuc-reserve {
-    margin-top: 18px;
-    padding: 14px 16px;
-    border-radius: 10px;
-    background: rgba(220, 0, 103, 0.18);
-    border-left: 4px solid #dc0067;
-  }
-  .welcome .welcome-card-text .ffmuc-reserve a.ffmuc-reserve-btn {
-    display: inline-block;
-    margin-top: 8px;
-    padding: 6px 14px;
-    border-radius: 6px;
-    background: #dc0067;
-    color: #ffffff;
-    font-weight: 600;
-    text-decoration: none;
-  }
-  .welcome .welcome-card-text .ffmuc-reserve a.ffmuc-reserve-btn:hover {
-    background: #f5c400;
-    color: #16181d;
-  }
-  @media only screen and (max-width:500px) {
-    .welcome.with-content .welcome-card {
-      margin-top: 24px;
-      width: 100%;
-    }
-  }
+  .welcome .welcome-watermark { height: 0px; }
   </style>
-  <div class = "welcome-card-text">
-    <div class="welcome-card-jaas-logo">
-      <img width="32" height="51" src="./images/watermark.png" />
+  <div class="welcome-card-text ffm-card">
+    <h2>So einfach geht&rsquo;s</h2>
+    <p class="ffm-lead">Freie Videokonferenzen von Freifunk M&uuml;nchen. Ohne Anmeldung, ohne Tracking.</p>
+    <ol class="ffm-steps">
+      <li><b>Raum benennen</b>Gib oben einen eindeutigen Namen ein und starte das Meeting.</li>
+      <li><b>Absichern</b>Aktiviere bei Bedarf die Lobby oder setze ein Passwort.</li>
+      <li><b>Link teilen</b>Schick den Link an Kolleg:innen, Sch&uuml;ler:innen oder Freunde.</li>
+    </ol>
+    <ul class="ffm-chips">
+      <li>DSGVO-konform</li>
+      <li>Verschl&uuml;sselt</li>
+      <li>Ohne Anmeldung</li>
+      <li>Open Source</li>
+    </ul>
+    <div class="ffm-reserve">
+      <p><span class="ffm-tag">Neu</span><br><b>Reservierte R&auml;ume</b><br>
+        Dein eigener Raum mit Moderation, Sprecher:innen und Zuschauer:innen. Perfekt f&uuml;r Teammeetings, Vortr&auml;ge und Vereinssitzungen.</p>
+      <a class="ffm-btn" href="https://meet.ffmuc.net/reserve/">Raum reservieren</a>
     </div>
-    <h3 class="welcome-card-large-title">Schnelleinstieg in <b>Freifunk Meet</b>.</h3>
-    &nbsp;
-    <p class="welcome-card-paragraph">&#9989; Gib oben in das Feld einen eindeutigen Konferenznamen ein und starte das Meeting!</p>
-    <p class="welcome-card-paragraph">&#9989; Optional f&uuml;r mehr Sicherheit aktiviere die Lobbyfunktion oder setze ein Passwort.</p>
-    <p class="welcome-card-paragraph">&#9989; Teile den Link mit deinen Sch&uuml;ler:innen, Kolleg:innen oder Freunden!</p>
-    <div class="welcome-card-button welcome-card-button--grey">
-      <a href="https://ffmuc.net/wiki/doku.php?id=knb:meet">
-        F&uuml;r mehr Informationen hier klicken
-      </a>
-    </div>
-    <h3 class="welcome-card-large-title" style="margin-top: 15px">Vorteile von <b>Freifunk Meet</b>.</h3>
-    &nbsp;
-    <p class="welcome-card-paragraph">&#9989; DSGVO konform! - &#128274; Verschl&uuml;sselt! - &#9989; Einfach!</p>
-    <div class="ffmuc-reserve">
-      <p class="welcome-card-paragraph"><b>Neu: Reservierte R&auml;ume</b><br>
-        Dein eigener Raum mit drei Zugangsstufen: Moderation (gerne mit Co-Moderator:innen), Sprecher:innen und Zuschauer:innen, die sich bei Fragen einfach melden.
-        Perfekt f&uuml;r Teammeetings, Vortr&auml;ge und Vereinssitzungen. Wie immer bei uns: ganz ohne Anmeldung &#128154;</p>
-      <a class="ffmuc-reserve-btn" href="https://meet.ffmuc.net/reserve/">Jetzt Raum reservieren</a>
-    </div>
+    <a class="ffm-more" href="https://ffmuc.net/wiki/doku.php?id=knb:meet">Anleitung &amp; FAQ &rarr;</a>
   </div>
 </template>
