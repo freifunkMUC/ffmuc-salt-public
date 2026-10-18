@@ -15,6 +15,7 @@
     "headerTitle": "Freifunk Meet",
     "logo": {
       "logoDeepLinking": "Freifunk meet logo"
-    }
+    },
+    "headerSubtitle": "Open. Trusted. Loved."
   }
 }
