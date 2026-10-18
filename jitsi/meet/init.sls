@@ -5,14 +5,30 @@
 
 {% if jitsi.meet.enabled %}
 
+include:
+  - jitsi.base
+
+# Upstream packages from download.jitsi.org. FFMUC branding is laid on top
+# below (web-overlay, static-ffmuc, dynamic branding labels in config.js).
 jitsi-meet-web-pkgs:
   pkg.installed:
-    - sources:
-      - jitsi-meet-web: salt://jitsi/meet/jitsi-meet-web_{{ jitsi.meet.version }}_all.deb
-      - jitsi-meet-web-config: salt://jitsi/meet/jitsi-meet-web-config_{{ jitsi.meet.version }}_all.deb
+    - pkgs:
+      - jitsi-meet-web: {{ jitsi.meet.version }}
+      - jitsi-meet-web-config: {{ jitsi.meet.version }}
     - hold: True
-    - force_yes: True
     - update_holds: True
+    - require:
+      - pkgrepo: jitsi-repo
+
+# Files shipped by the package, so re-apply after every package change.
+jitsi-meet-web-overlay:
+  file.recurse:
+    - name: /usr/share/jitsi-meet
+    - source: salt://jitsi/meet/web-overlay
+    - file_mode: '0644'
+    - dir_mode: '0755'
+    - require:
+      - pkg: jitsi-meet-web-pkgs
 
 {% for domain in ["meet.ffmuc.net","klassenkonferenz.de"] %}
 /etc/jitsi/meet/{{ domain }}-config.js:

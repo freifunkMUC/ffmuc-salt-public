@@ -1,0 +1,38 @@
+/* FFMUC branding on top of the upstream jitsi-meet-web css/all.css */
+a,
+.as-link {
+    color: #dc0067;
+}
+
+button {
+    background-color: #dc0067;
+}
+
+.watermark,
+.welcome .welcome-watermark .watermark.leftwatermark {
+    width: 186px;
+    height: 74px;
+}
+
+.videocontainer > span.audioindicator span.audiodot-top::after,
+.videocontainer > span.audioindicator span.audiodot-middle::after,
+.videocontainer > span.audioindicator span.audiodot-bottom::after {
+    background: #dc0067;
+}
+
+.welcome .welcome-page-button,
+.meetings-list .button {
+    background: #dc0067;
+}
+
+.welcome .welcome-page-button:hover {
+    background-color: #da4a8e;
+}
+
+.welcome .welcome-card--blue {
+    background: #009ee0;
+}
+
+.meetings-list .delete-meeting > svg {
+    fill: #dc0067;
+}
