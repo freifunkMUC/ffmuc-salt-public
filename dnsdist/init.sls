@@ -19,12 +19,8 @@ dnsdist-repo:
     - require:
       - cmd: dnsdist-repo-key
 
-{#- repo.powerdns.com only serves the latest build: bump on each release #}
-{%- set pdns_suffix = '1pdns.' ~ (grains.os | lower) ~ (grains.osrelease if grains.os == 'Ubuntu' else grains.osmajorrelease | string) %}
-{%- set dnsdist_version = salt['config.get']('netbox:config_context:dnsdist:version', '2.0.11-' ~ pdns_suffix) %}
 dnsdist:
   pkg.installed:
-    - version: '{{ dnsdist_version }}'
     - refresh: True
     - require:
       - pkgrepo: dnsdist-repo

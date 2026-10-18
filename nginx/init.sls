@@ -26,11 +26,9 @@ nginx-repo-key:
     - require:
       - cmd: nginx-repo-key
 
-{%- set nginx_pkg_version = salt['config.get']('netbox:config_context:nginx:version', '1.30.6-1~' ~ grains.oscodename) %}
 nginx:
   pkg.installed:
     - name: nginx
-    - version: '{{ nginx_pkg_version }}'
     - require:
       - pkgrepo: /etc/apt/sources.list.d/nginx.list
   service.running:
@@ -83,6 +81,11 @@ nginx-systemd-daemon-reload:
     - watch_in:
       - cmd: nginx-configtest
 
+{% if salt["service.available"]("nginx") %}
+{% set nginx_version = salt["pkg.info_installed"]("nginx").get("nginx", {}).get("version","").split("-")[0] %}
+{% else %}
+{% set nginx_version = "1.26.2" %}{# current on 02.11.2020 #}
+{% endif %}
 
 
 /etc/nginx/nginx.conf:
