@@ -81,13 +81,12 @@ FerretDB/Postgres is only suggested for CPUs without AVX, docker06 has AVX2.
 
 ### Core on docker06
 
-- Listens on `10.8.0.15:9120` (nebula) only. The UI is meant to be published
-  through the webfrontends like the other backends: a `komodo.ffmuc.net` ACL
-  in `haproxy/haproxy.cfg` and a backend
-  `server komodo docker06.ov.ffmuc.net:9120 check` with `timeout tunnel`
-  for the websockets (`/ws/...`). Until then use an SSH tunnel to
-  `10.8.0.15:9120`. The nebula firewall already lets the `webfrontend` group
-  reach port 9120 on docker06.
+- Reachable only inside nebula as `komodo.ov.ffmuc.net`, through Traefik on
+  docker06 like `log.ov.ffmuc.net` (labels on `core`, network `proxy`,
+  certificate via DNS-01). The name comes from the NetBox service
+  `komodo.in.ffmuc.net` on docker06 (`cname: true`, `public: false`).
+  Core connects to the Periphery agents, not the other way round; GitHub
+  webhooks do not reach it, the Resource Sync runs on its schedule.
 - Login only via OIDC against Keycloak, local login is off. The first user who
   logs in becomes super admin; later users are created disabled and an admin
   enables them. Keycloak client: confidential, redirect URI
@@ -106,7 +105,7 @@ FerretDB/Postgres is only suggested for CPUs without AVX, docker06 has AVX2.
   (`sync.toml`). The `docker06-komodo` Stack lets Komodo show Core and
   MongoDB; redeploy Core from a shell rather than from its own UI.
 - Variables (bootstrap `.env` and Komodo secrets): `KOMODO_HOST`
-  (e.g. `https://komodo.ffmuc.net`), `KOMODO_DATABASE_PASSWORD`,
+  (`https://komodo.ov.ffmuc.net`), `KOMODO_DATABASE_PASSWORD`,
   `KOMODO_JWT_SECRET`, `KOMODO_WEBHOOK_SECRET`, `KOMODO_OIDC_PROVIDER`
   (`https://<keycloak>/realms/<realm>`), `KOMODO_OIDC_CLIENT_ID`,
   `KOMODO_OIDC_CLIENT_SECRET`.

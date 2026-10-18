@@ -5,6 +5,12 @@ pki:
   ca: /etc/nebula-meet/ca.crt
   cert: /etc/nebula-meet/{{ grains.id }}.crt
   key: /etc/nebula-meet/{{ grains.id }}.key
+{%- if nebula.pki.initiating_version %}
+  initiating_version: {{ nebula.pki.initiating_version }}
+{%- endif %}
+{%- if nebula.pki.disconnect_invalid is not none %}
+  disconnect_invalid: {{ nebula.pki.disconnect_invalid | lower }}
+{%- endif %}
 static_host_map:
 {%- for lighthouse, public_addrs in nebula.lighthouses.items() %}
   "{{ lighthouse }}": {{ public_addrs }}
@@ -34,12 +40,19 @@ sshd:
   authorized_users:
     - user: loop
       keys:
-      {% for key in nebula.loophole.keys %}
+      {#- nebula.loophole.keys would resolve to dict.keys() #}
+      {% for key in nebula.loophole.get('ssh_keys', nebula.loophole.get('keys', [])) %}
        - {{ key }}
       {%- endfor %}
 {%- endif %}
 
-local_range: "{{ nebula.local_range }}"
+{#- local_range was removed in nebula 1.9, preferred_ranges replaces it #}
+{%- set preferred_ranges = nebula.get('preferred_ranges', nebula.local_range) %}
+{%- if preferred_ranges is string %}{% set preferred_ranges = [preferred_ranges] %}{% endif %}
+preferred_ranges:
+{%- for range in preferred_ranges %}
+  - "{{ range }}"
+{%- endfor %}
 
 tun:
   dev: {{ nebula.interface }}
