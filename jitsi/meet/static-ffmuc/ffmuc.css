@@ -95,6 +95,11 @@ button {
     border-radius: 10px;
 }
 
+.welcome .header #enter_room .enter-room-input::placeholder {
+    color: #8a94a6;
+    opacity: 1;
+}
+
 .welcome .welcome-page-button {
     background: var(--ff-magenta);
     border-radius: 10px;
