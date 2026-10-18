@@ -4,6 +4,14 @@
 nebula:
   enabled: false
   version: 1.8.2-2
+  packages:
+    1.8.2-2:
+      amd64: 43237bbc52f3db30262e8432ff89673cf26d8a5da6fa9d3e718920877ca44696
+      armhf: 3e2501d9ba713eb0f7b142bff70e2b96debbe6969977c0ca00042ca360850729
+    1.11.1-1:
+      amd64: e60a743cbdf90fb173170ff95bac3d44bf8edf2f986033d50e87b8c5b43e48c2
+      armhf: aaa804caf0897fd47bf088e8f0e7ff9a78282aa43cfbca6c1080fef975c90494
+      arm64: 97256ffc6239abc2cb6e5a82b464026a236b7554e175acef8e74c889516e69b5
 
   am_lighthouse: false
   lighthouses:

@@ -70,6 +70,14 @@ nebula-service:
         - file: /etc/nebula/{{ grains['id'] }}.crt
         - file: /etc/nebula/{{ grains['id'] }}.key
 
+nebula-restart-on-upgrade:
+  cmd.run:
+    - name: /usr/bin/nebula -test -config /etc/nebula/config.yml && systemctl daemon-reload && systemctl restart nebula
+    - onchanges:
+        - pkg: nebula-pkg
+    - require:
+        - service: nebula-service
+
 {% else %}
 {# remove old config to allow migration to new file destination #}
 /etc/nebula/ca.crt:
