@@ -71,6 +71,11 @@ secret. Values come from the running setup on the host; never commit them.
   Komodo shows them without changing anything. Taking one over means moving
   its compose file here and switching the Stack to `repo`. The projects on
   mail01 stay with the mailserver role of GoliathLabs/ansible.
+- Komodo reads `files_on_host` compose files into its database, so projects
+  with literal secrets in their compose files are left out until their secrets
+  have moved: docker04 `cfssl`, `tuwunel-test`; docker05 `nextcloud`, `unifi`;
+  docker06 `graylog`, `mastodon`; docker07 `akvorado`, `keycloak`,
+  `vaultwarden`; mail01 `mailserver`; rw-vpn01/02 `wg-access-server`.
 - Taking over a running project: create the variables, sync, compare the
   Stack's diff, then *Deploy*. The old `/srv/docker/<project>/docker-compose.y*ml`
   stays on the host as rollback: `docker compose -p <project> -f <old file> up -d`

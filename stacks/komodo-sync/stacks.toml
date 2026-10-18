@@ -61,17 +61,6 @@ run_directory = "stacks/docker04/dokuwiki"
 file_paths = ["compose.yaml"]
 
 [[stack]]
-name = "docker04-cfssl"
-tags = ["ffmuc"]
-deploy = false
-[stack.config]
-server = "docker04"
-project_name = "cfssl"
-files_on_host = true
-run_directory = "/srv/docker/cfssl"
-file_paths = ["docker-compose.yml"]
-
-[[stack]]
 name = "docker04-conferencemapper"
 tags = ["ffmuc"]
 deploy = false
@@ -193,17 +182,6 @@ run_directory = "/srv/docker/traefik"
 file_paths = ["docker-compose.yml"]
 
 [[stack]]
-name = "docker04-tuwunel-test"
-tags = ["ffmuc"]
-deploy = false
-[stack.config]
-server = "docker04"
-project_name = "tuwunel-test"
-files_on_host = true
-run_directory = "/srv/docker/tuwunel-test"
-file_paths = ["docker-compose.yaml"]
-
-[[stack]]
 name = "docker04-wgkex"
 tags = ["ffmuc"]
 deploy = false
@@ -256,28 +234,6 @@ server = "docker06"
 project_name = "diun"
 files_on_host = true
 run_directory = "/srv/docker/diun"
-file_paths = ["docker-compose.yml"]
-
-[[stack]]
-name = "docker06-graylog"
-tags = ["ffmuc"]
-deploy = false
-[stack.config]
-server = "docker06"
-project_name = "graylog"
-files_on_host = true
-run_directory = "/srv/docker/graylog"
-file_paths = ["docker-compose.yml"]
-
-[[stack]]
-name = "docker06-mastodon"
-tags = ["ffmuc"]
-deploy = false
-[stack.config]
-server = "docker06"
-project_name = "mastodon"
-files_on_host = true
-run_directory = "/srv/docker/mastodon"
 file_paths = ["docker-compose.yml"]
 
 [[stack]]
@@ -404,17 +360,6 @@ run_directory = "/srv/docker/meet-reserve"
 file_paths = ["docker-compose.yml"]
 
 [[stack]]
-name = "docker05-nextcloud"
-tags = ["ffmuc"]
-deploy = false
-[stack.config]
-server = "docker05"
-project_name = "nextcloud"
-files_on_host = true
-run_directory = "/srv/docker/nextcloud"
-file_paths = ["docker-compose.yml"]
-
-[[stack]]
 name = "docker05-speedtest"
 tags = ["ffmuc"]
 deploy = false
@@ -434,17 +379,6 @@ server = "docker05"
 project_name = "traefik"
 files_on_host = true
 run_directory = "/srv/docker/traefik"
-file_paths = ["docker-compose.yml"]
-
-[[stack]]
-name = "docker05-unifi"
-tags = ["ffmuc"]
-deploy = false
-[stack.config]
-server = "docker05"
-project_name = "unifi"
-files_on_host = true
-run_directory = "/srv/docker/unifi"
 file_paths = ["docker-compose.yml"]
 
 [[stack]]
@@ -470,18 +404,6 @@ run_directory = "/srv/docker/zammad-docker-compose"
 file_paths = ["docker-compose.yml", "docker-compose.override.yml"]
 
 [[stack]]
-name = "docker07-akvorado"
-tags = ["ffmuc"]
-deploy = false
-[stack.config]
-server = "docker07"
-project_name = "akvorado"
-files_on_host = true
-run_directory = "/srv/docker/akvorado/docker"
-file_paths = ["docker-compose.yml", "docker-compose-ipinfo.yml", "docker-compose-local.yml"]
-ignore_services = ["geoip"]
-
-[[stack]]
 name = "docker07-bgpalerter"
 tags = ["ffmuc"]
 deploy = false
@@ -501,17 +423,6 @@ server = "docker07"
 project_name = "diun"
 files_on_host = true
 run_directory = "/srv/docker/diun"
-file_paths = ["docker-compose.yml"]
-
-[[stack]]
-name = "docker07-keycloak"
-tags = ["ffmuc"]
-deploy = false
-[stack.config]
-server = "docker07"
-project_name = "keycloak"
-files_on_host = true
-run_directory = "/srv/docker/keycloak"
 file_paths = ["docker-compose.yml"]
 
 [[stack]]
@@ -581,17 +492,6 @@ run_directory = "/srv/docker/uisp"
 file_paths = ["docker-compose.yml"]
 
 [[stack]]
-name = "docker07-vaultwarden"
-tags = ["ffmuc"]
-deploy = false
-[stack.config]
-server = "docker07"
-project_name = "vaultwarden"
-files_on_host = true
-run_directory = "/srv/docker/vaultwarden"
-file_paths = ["docker-compose.yaml"]
-
-[[stack]]
 name = "docker07-wgkex"
 tags = ["ffmuc"]
 deploy = false
@@ -603,28 +503,6 @@ run_directory = "/srv/docker/wgkex"
 file_paths = ["docker-compose.yaml"]
 
 [[stack]]
-name = "rw-vpn01-wg-access-server"
-tags = ["ffmuc"]
-deploy = false
-[stack.config]
-server = "rw-vpn01"
-project_name = "wg-access-server"
-files_on_host = true
-run_directory = "/srv/docker/wg-access-server"
-file_paths = ["docker-compose.yml"]
-
-[[stack]]
-name = "rw-vpn02-wg-access-server"
-tags = ["ffmuc"]
-deploy = false
-[stack.config]
-server = "rw-vpn02"
-project_name = "wg-access-server"
-files_on_host = true
-run_directory = "/srv/docker/wg-access-server"
-file_paths = ["docker-compose.yml"]
-
-[[stack]]
 name = "mail01-crowdsec"
 description = "Managed by the mailserver role of GoliathLabs/ansible, not deployed from Komodo"
 tags = ["ffmuc"]
@@ -634,18 +512,6 @@ server = "mail01"
 project_name = "crowdsec"
 files_on_host = true
 run_directory = "/opt/containers/crowdsec"
-file_paths = ["docker-compose.yml"]
-
-[[stack]]
-name = "mail01-mailserver"
-description = "Managed by the mailserver role of GoliathLabs/ansible, not deployed from Komodo"
-tags = ["ffmuc"]
-deploy = false
-[stack.config]
-server = "mail01"
-project_name = "mailserver"
-files_on_host = true
-run_directory = "/opt/containers/mailserver"
 file_paths = ["docker-compose.yml"]
 
 [[stack]]
