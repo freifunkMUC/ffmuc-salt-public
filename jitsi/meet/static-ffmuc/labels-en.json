@@ -3,5 +3,19 @@
     "recordAudioAndVideo": "Record locally on this device",
     "localRecordingWarning": "The recording is saved as a file on your device only. Nothing is stored on FFMUC servers. When asked, select the current tab so the right video and audio are captured.",
     "localRecordingStartWarning": "The file is only saved on your device when you stop the recording. Please stop it before leaving the meeting."
+  },
+  "incomingCall": {
+    "productLabel": "from Freifunk Meet"
+  },
+  "notify": {
+    "oldElectronClientDescription1": "You appear to be using an old version of the Freifunk Meet client which has known security vulnerabilities. Please make sure you update to our "
+  },
+  "welcomepage": {
+    "appDescription": "Free, encrypted group conferencing with audio, video, chat and screen sharing ---- For details on instructions, FAQ, contact and our usage terms click on the logo on the left. ---- Works in all current browsers or in our desktop and smartphone apps (see FAQ) ---- Be fair! Not to be used commercially. Twitter @FreifunkMUC",
+    "headerTitle": "Freifunk Meet",
+    "logo": {
+      "logoDeepLinking": "Freifunk meet logo"
+    },
+    "headerSubtitle": "Open. Trusted. Loved."
   }
 }

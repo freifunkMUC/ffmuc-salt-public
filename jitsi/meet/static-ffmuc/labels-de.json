@@ -16,5 +16,17 @@
     "linkShared": "Link mit Teilnehmenden geteilt",
     "linkNotShared": "Link nicht geteilt",
     "dropboxSignInPrompt": "Verbinden, um die Aufzeichnung zu speichern"
+  },
+  "incomingCall": {
+    "productLabel": "von Freifunk Meet"
+  },
+  "welcomepage": {
+    "appDescription": "Kostenlose, verschlüsselte Gruppenkonferenzen mit Audio, Video, Textchat und Bildschirmansicht/Präsentationen ---- Klick auf's Logo oben links, um die Anleitung, FAQ, Kontaktdetails und die Nutzungsbedingungen zu sehen. ---- Läuft in allen aktuellen Browsern oder in unseren Desktop- und Smartphone-Apps (s. Anleitung) ---- Sei fair! Nicht für kommerziellen Handel. Twitter @FreifunkMUC",
+    "headerSubtitle": "Open. Trusted. Loved.",
+    "headerTitle": "Freifunk Meet",
+    "logo": {
+      "logoDeepLinking": "Freifunk Meet Logo"
+    },
+    "title": "Freifunk München Konferenzserver"
   }
 }
