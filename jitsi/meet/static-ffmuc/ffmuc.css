@@ -278,18 +278,6 @@ button {
     color: var(--ff-ink);
 }
 
-.ffm-reserve .ffm-tag {
-    display: inline-block;
-    margin-bottom: 6px;
-    padding: 2px 8px;
-    border-radius: 6px;
-    background: var(--ff-yellow);
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
 .ffm-btn {
     display: inline-block;
     padding: 12px 18px;
