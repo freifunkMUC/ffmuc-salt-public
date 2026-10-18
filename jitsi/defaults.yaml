@@ -121,6 +121,13 @@ jitsi:
     participant_selection_strategy: ""
     topology_strategy: ""        # e.g. VisitorTopologyStrategy
 
+  # Signed viewers-only rooms minted by meet-reserve (docker-containers/meet-reserve),
+  # verified by prosody/files/mod_ffmuc_signed_rooms.lua. Needs visitors.enabled.
+  signed_rooms:
+    enabled: false
+    public_keys: {}             # key id -> base64 raw ed25519 public key
+    max_extension: 2592000      # seconds tokens may be extended past the room name expiry
+
   # Transcription through jigasi (transcriber) + vosk, see jitsi/vosk
   transcription:
     enabled: false
