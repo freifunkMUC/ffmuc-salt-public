@@ -175,7 +175,7 @@ var config = {
     // startSilent: false,
 
     // Enables support for opus-red (redundancy for Opus).
-    // enableOpusRed: false,
+    enableOpusRed: true,
 
     // Specify audio quality stereo and opusMaxAverageBitrate values in order to enable HD audio.
     // Beware, by doing so, you are disabling echo cancellation, noise suppression and AGC.
@@ -424,7 +424,8 @@ var config = {
     //    // preferred codec specified here is present. Please ensure that the JVB offers the specified codec for this
     //    // to take effect.
           // Replaces deprecated preferredCodec/disabledCodec. H264 is intentionally omitted (disabled).
-          codecPreferenceOrder: [ 'AV1', 'VP9', 'VP8' ],
+          // VP9 first: AV1 encoding overloads weaker laptops, which shows up as loss and oversending.
+          codecPreferenceOrder: [ 'VP9', 'AV1', 'VP8' ],
           // Mobile endpoints: VP8 first, cheaper to encode (battery/CPU).
           mobileCodecPreferenceOrder: [ 'VP8', 'VP9', 'AV1' ],
           screenshareCodec: 'AV1',
