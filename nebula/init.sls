@@ -56,7 +56,6 @@ generate_ssh_host_ed25519_key:
 nebula-service:
   service.running:
     - enable: True
-    - running: True
     - reload: True
     - name: nebula
     - require:

@@ -10,17 +10,18 @@ prosody-repo-key:
     - name: "curl -fsSL https://prosody.im/files/prosody-debian-packages.key | gpg --batch --yes --dearmor -o /usr/share/keyrings/prosody-keyring.gpg.tmp && mv /usr/share/keyrings/prosody-keyring.gpg.tmp /usr/share/keyrings/prosody-keyring.gpg"
     - creates: /usr/share/keyrings/prosody-keyring.gpg
 
-/etc/apt/sources.list.d/prosody.list:
-  file.absent
+prosody-repo:
+  file.managed:
+    - name: /etc/apt/sources.list.d/prosody.list
+    - contents: "deb [signed-by=/usr/share/keyrings/prosody-keyring.gpg] http://packages.prosody.im/debian {{ grains.oscodename }} main"
+    - require:
+      - cmd: prosody-repo-key
 
-#prosody-repo:
-#  pkgrepo.managed:
-#    - humanname: Prosody
-#    - name: deb [signed-by=/usr/share/keyrings/prosody-keyring.gpg] http://packages.prosody.im/debian {{ grains.oscodename }} main
-#    - file: /etc/apt/sources.list.d/prosody.sources
-#    - clean_file: True
-#    - require:
-#      - cmd: prosody-repo-key
+prosody-repo-update:
+  cmd.run:
+    - name: apt-get update -o Dir::Etc::sourcelist=sources.list.d/prosody.list -o Dir::Etc::sourceparts=- -o APT::Get::List-Cleanup=0
+    - onchanges:
+      - file: prosody-repo
 
 prosody-dependencies:
   pkg.installed:
@@ -52,22 +53,35 @@ old-prosody:
 luarocks-{{ luapkg }}:
   cmd.run:
     - name: "luarocks install {{ luapkg }}"
+    - unless: "luarocks list --porcelain {{ luapkg.split(' ')[0] }} | grep -q '{{ luapkg.split(' ')[1] }}'"
     - require:
       - pkg: prosody-dependencies
 {% endfor %}{# luapkg #}
+{#- accept full package versions (13.0.7-1~jammy2) as well as the legacy short form (13.0.2-1);
+    the codename in a full version is replaced by the minion's so one pin works across releases #}
+{%- set prosody_pin = jitsi.prosody.version | string %}
+{%- if '~' in prosody_pin %}
+{%-   set prosody_base, prosody_suffix = prosody_pin.split('~', 1) %}
+{%-   set prosody_version = prosody_base ~ '~' ~ grains.oscodename ~ (prosody_suffix | regex_replace('^[a-z]+', '')) %}
+{%- else %}
+{%-   set prosody_version = prosody_pin ~ '~' ~ grains.oscodename ~ '1' %}
+{%- endif %}
 prosody:
   pkg.installed:
     - name: prosody
-    - version: "{{ jitsi.prosody.version }}~{{ grains.oscodename }}1"
+    - version: "{{ prosody_version }}"
     - hold: True
+    - update_holds: True
     - require:
-      - pkgrepo: prosody-repo
+      - file: prosody-repo
+      - cmd: prosody-repo-update
   service.running:
     - enable: True
     #- reload: True
     - watch:
       - file: /etc/prosody/prosody.cfg.lua
       - file: /etc/prosody/conf.d/{{ jitsi.public_domain }}.cfg.lua
+      - file: /usr/local/share/ffmuc-prosody-plugins/mod_ffmuc_signed_rooms.lua
 
 {# download and extract prosody plugins of jitsi #}
 download-jitsi-meet-prosody:
@@ -102,6 +116,12 @@ remove-temporary-files:
       - file: copy-prosody-plugins
     - require_in:
       - service: prosody
+
+/usr/local/share/ffmuc-prosody-plugins/mod_ffmuc_signed_rooms.lua:
+  file.managed:
+    - source: salt://jitsi/prosody/files/mod_ffmuc_signed_rooms.lua
+    - makedirs: True
+    - mode: "0644"
 
 /etc/prosody/prosody.cfg.lua:
   file.managed:
@@ -150,6 +170,72 @@ jibri-recorder-auth:
     - creates: /var/lib/prosody/{{ jitsi.jibri.xmpp.call_login.domain.replace('.', '%2e').replace('-', '%2d') }}/accounts/{{ jitsi.jibri.xmpp.call_login.username }}.dat
 {% endif %}
 
+{%- if jitsi.transcription.enabled %}
+{%- set recorder_domain = "recorder." ~ jitsi.public_domain %}
+transcriber-auth:
+  cmd.run:
+    - name: "prosodyctl register {{ jitsi.transcription.transcriber_username }} {{ recorder_domain }} {{ jitsi.transcription.transcriber_password }}"
+    - creates: /var/lib/prosody/{{ recorder_domain.replace('.', '%2e').replace('-', '%2d') }}/accounts/{{ jitsi.transcription.transcriber_username }}.dat
+
+jigasi-auth:
+  cmd.run:
+    - name: "prosodyctl register {{ jitsi.transcription.jigasi_username }} {{ jitsi.xmpp.auth_domain }} {{ jitsi.transcription.jigasi_password }}"
+    - creates: /var/lib/prosody/{{ jitsi.xmpp.auth_domain.replace('.', '%2e').replace('-', '%2d') }}/accounts/{{ jitsi.transcription.jigasi_username }}.dat
+{% endif %}
+
+{%- if jitsi.visitors.enabled %}
+{#- visitor prosodies (vnodes), see jitsi-meet resources/extra-large-conference #}
+/etc/systemd/system/prosody-v@.service:
+  file.managed:
+    - source: salt://jitsi/prosody/files/prosody-v@.service
+
+prosody-v-daemon-reload:
+  cmd.run:
+    - name: systemctl daemon-reload
+    - onchanges:
+      - file: /etc/systemd/system/prosody-v@.service
+
+{%- set vauth = "auth." ~ jitsi.visitors.domain %}
+{%- for i in range(1, jitsi.visitors.vnodes | int + 1) %}
+
+/etc/prosody-v{{ i }}/prosody.cfg.lua:
+  file.managed:
+    - source: salt://jitsi/prosody/prosody-v.cfg.lua.jinja
+    - template: jinja
+    - makedirs: True
+    - user: root
+    - group: prosody
+    - mode: "0640"
+    - context:
+        vnode: {{ i }}
+    - require:
+      - pkg: prosody
+
+/etc/prosody-v{{ i }}/certs:
+  file.symlink:
+    - target: /etc/prosody/certs
+    - makedirs: True
+
+prosody-v@{{ i }}:
+  service.running:
+    - enable: True
+    - require:
+      - cmd: prosody-v-daemon-reload
+      - file: /etc/prosody-v{{ i }}/certs
+      - file: copy-prosody-plugins
+    - watch:
+      - file: /etc/prosody-v{{ i }}/prosody.cfg.lua
+      - file: /etc/systemd/system/prosody-v@.service
+
+jicofo-auth-v{{ i }}:
+  cmd.run:
+    - name: "prosodyctl --config /etc/prosody-v{{ i }}/prosody.cfg.lua register {{ jitsi.jicofo.username }} {{ vauth }} {{ jitsi.jicofo.password }}"
+    - creates: /var/lib/prosody-v{{ i }}/{{ vauth.replace('.', '%2e').replace('-', '%2d') }}/accounts/{{ jitsi.jicofo.username }}.dat
+    - require:
+      - service: prosody-v@{{ i }}
+{% endfor %}{# vnode #}
+{% endif %}{# visitors enabled #}
+
 {% for domain in [ jitsi.public_domain , jitsi.xmpp.auth_domain ] %}
 prosody-{{ domain }}-cert:
   cmd.run:
@@ -172,13 +258,10 @@ update-certificates:
   cmd.run:
     - name: "/usr/sbin/update-ca-certificates --fresh"
 
+{# community modules which are neither in prosody core nor in jitsi-meet-prosody #}
 {% for component in [
-  "mod_auth_token",
-  "mod_client_proxy",
   "mod_reload_components",
   "mod_reload_modules" ,
-  "mod_roster_command",
-  "mod_smacks",
  ] %}
 /usr/lib/prosody/modules/{{ component }}.lua:
   file.managed:
@@ -189,20 +272,21 @@ update-certificates:
 
 {% endfor %}{# for component #}
 
-/usr/lib/prosody/modules/token_auth_utils.lib.lua:
-  file.managed:
-    - source: https://hg.prosody.im/prosody-modules/raw-file/tip/mod_auth_token/token_auth_utils.lib.lua
-    - skip_verify: True
-    - watch_in:
-      - service: prosody
-
-{% for component in [
+{#- These used to be fetched from jitsi-meet master / prosody-modules tip into the core module dir.
+    jitsi-meet-prosody (plugin_paths) ships matching versions; stale copies would otherwise be picked up
+    for modules upstream removed. mod_smacks is a prosody core module again and comes with the package. #}
+stale-prosody-modules:
+  file.absent:
+    - names:
+{%- for component in [
   "ext_events.lib",
+  "mod_auth_token",
   "mod_av_moderation",
   "mod_av_moderation_component",
-  "mod_end_conference",
+  "mod_client_proxy",
   "mod_conference_duration",
   "mod_conference_duration_component",
+  "mod_end_conference",
   "mod_jitsi_session",
   "mod_muc_breakout_rooms",
   "mod_muc_domain_mapper",
@@ -210,17 +294,15 @@ update-certificates:
   "mod_muc_meeting_id",
   "mod_room_metadata",
   "mod_room_metadata_component",
+  "mod_roster_command",
   "mod_speakerstats",
   "mod_speakerstats_component",
+  "token_auth_utils.lib",
   "util.lib",
 ] %}
-/usr/lib/prosody/modules/{{ component }}.lua:
-#/usr/share/jitsi-meet/prosody-plugins/{{ component }}.lua:
-  file.managed:
-    - source: https://raw.githubusercontent.com/jitsi/jitsi-meet/master/resources/prosody-plugins/{{ component }}.lua
-    - skip_verify: True
+      - /usr/lib/prosody/modules/{{ component }}.lua
+{%- endfor %}
     - watch_in:
       - service: prosody
-{% endfor %}{# for component #}
 
 {% endif %}{# if jitsi.prosody.enabled #}

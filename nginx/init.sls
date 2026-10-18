@@ -44,6 +44,30 @@ nginx-configtest:
   cmd.run:
     - name: /usr/sbin/nginx -t
 
+{# On the webfrontends /etc/resolv.conf points at the anycast resolvers, which are answered by the local dnsdist.
+   At boot nginx started before dnsdist, could not resolve its proxy_pass upstreams (e.g. docker04.ov.ffmuc.net)
+   and failed for good (Restart=no), so haproxy's "servers" backend answered 503 until nginx was started by hand. #}
+nginx-systemd-ordering:
+  file.managed:
+    - name: /etc/systemd/system/nginx.service.d/ffmuc-ordering.conf
+    - makedirs: True
+    - contents: |
+        # Managed by Salt (nginx/init.sls)
+        [Unit]
+        After=dnsdist.service pdns-recursor.service nebula.service
+        StartLimitIntervalSec=300
+        StartLimitBurst=30
+
+        [Service]
+        Restart=on-failure
+        RestartSec=5s
+
+nginx-systemd-daemon-reload:
+  cmd.run:
+    - name: systemctl daemon-reload
+    - onchanges:
+      - file: nginx-systemd-ordering
+
 # Disable default configuration
 /etc/nginx/sites-enabled/default:
   file.absent:

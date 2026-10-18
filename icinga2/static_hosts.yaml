@@ -1,0 +1,26 @@
+---
+# Hosts without an Icinga agent that are no (working) Salt minions, checked from
+# the master: hostalive, ping4 and ssh (Salt managed data).
+# A host listed here is skipped as soon as a minion of the same name has the
+# NetBox tag icinga2_client or icinga2_agentless, so moving it to an agent later
+# needs no change here.
+member01.vms.ffmuc.net:
+  address: 46.226.127.196
+  location: MUC01
+  notes: Incus host for members, VM on vm-host01
+member02.vms.ffmuc.net:
+  address: 141.98.138.194
+  location: VIE01
+  notes: Incus host for members, VM on vm-host05
+ft01.in.ffmuc.net:
+  address: 5.1.66.10
+  location: VIE01
+  notes: Freifunk transit, no Salt minion
+guardian-muc01.in.ffmuc.net:
+  address: 10.8.0.35
+  location: MUC01
+  notes: Salt minion not responding (October 2026)
+guardian-vie01.in.ffmuc.net:
+  address: 10.8.0.3
+  location: VIE01
+  notes: Salt minion not responding (October 2026)

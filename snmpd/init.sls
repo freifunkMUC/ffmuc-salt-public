@@ -12,7 +12,6 @@ snmpd:
     - name: snmpd
   service.running:
     - enable: true
-    - restart: true
 
 
 /etc/default/snmpd:

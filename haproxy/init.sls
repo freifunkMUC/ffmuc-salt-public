@@ -25,7 +25,29 @@ update-repo:
 haproxy:
   pkg.installed:
     - name: haproxy-awslc
-    - version: 3.4.3-0+ha34+ubuntu24.04u1
+    - version: 3.4.7-0+ha34+ubuntu24.04u1
+
+{# haproxy runs chrooted and logs to /dev/log; haproxy.service bind-mounts the journal socket to
+   /var/lib/haproxy/dev/log (BindReadOnlyPaths). The package's rsyslog snippet additionally creates its own
+   socket at that path ($AddUnixListenSocket): every rsyslog restart (e.g. an unattended upgrade) recreates
+   it, which silently detaches the bind mount, so haproxy's logs no longer reach the journal. #}
+haproxy-rsyslog-conf:
+  file.managed:
+    - name: /etc/rsyslog.d/49-haproxy.conf
+    - contents: |
+        # Managed by Salt - haproxy logs via the journal; no socket in the chroot (see haproxy/init.sls)
+        :programname, startswith, "haproxy" {
+          /var/log/haproxy.log
+          stop
+        }
+
+haproxy-rsyslog:
+  service.running:
+    - name: rsyslog
+    - watch:
+      - file: haproxy-rsyslog-conf
+    - require_in:
+      - pkg: haproxy
 
 haproxy-keyring-dir:
   file.directory:
@@ -88,9 +110,13 @@ haproxy-configtest:
     - require:
       - pkg: haproxy
 
+{#- Take the Lua/SPOE files from the tag of the collector version running
+    next to haproxy (not main), so they only change with a deliberate bump. #}
+{%- from "packetyeeter/defaults.jinja" import default_version %}
+{%- set packetyeeter_ref = 'v' ~ salt['config.get']('netbox:config_context:packetyeeter:collector:version', default_version) %}
 /etc/haproxy/lua/ja4.lua:
   file.managed:
-    - source: https://raw.githubusercontent.com/awlx/packetyeeter/main/examples/ja4.lua
+    - source: https://raw.githubusercontent.com/awlx/packetyeeter/{{ packetyeeter_ref }}/examples/ja4.lua
     - skip_verify: True
     - mode: "0644"
     - require:
@@ -98,7 +124,7 @@ haproxy-configtest:
 
 /etc/haproxy/lua/ja4h.lua:
   file.managed:
-    - source: https://raw.githubusercontent.com/awlx/packetyeeter/main/examples/ja4h.lua
+    - source: https://raw.githubusercontent.com/awlx/packetyeeter/{{ packetyeeter_ref }}/examples/ja4h.lua
     - skip_verify: True
     - mode: "0644"
     - require:
@@ -115,7 +141,7 @@ haproxy-configtest:
 packetyeeter-spoe-conf:
   file.managed:
     - name: /etc/haproxy/spoe/packetyeeter.conf
-    - source: https://raw.githubusercontent.com/awlx/packetyeeter/main/examples/packetyeeter.spoe.conf
+    - source: https://raw.githubusercontent.com/awlx/packetyeeter/{{ packetyeeter_ref }}/examples/packetyeeter.spoe.conf
     - skip_verify: True
     - mode: "0644"
     - require:

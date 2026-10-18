@@ -9,8 +9,10 @@ jicofo:
   pkg.installed:
     - version: {{ jitsi.jicofo.version }}
     - hold: True
+    - update_holds: True
     - require:
       - pkgrepo: jitsi-repo
+      - cmd: jitsi-java17
   service.running:
     - enable: True
     #- reload: True

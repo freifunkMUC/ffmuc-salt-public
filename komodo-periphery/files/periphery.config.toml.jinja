@@ -1,0 +1,14 @@
+{%- from "komodo-periphery/map.jinja" import komodo with context %}
+{%- set periphery = komodo.periphery %}
+# Managed by Salt (komodo-periphery)
+root_directory = "/etc/komodo"
+disable_terminals = {{ periphery.disable_terminals | lower }}
+disable_container_terminals = {{ periphery.disable_container_terminals | lower }}
+
+core_public_keys = "{{ core_public_key }}"
+
+server_enabled = true
+bind_ip = "{{ bind_ip }}"
+port = {{ periphery.port }}
+allowed_ips = {{ periphery.allowed_ips | tojson }}
+ssl_enabled = true

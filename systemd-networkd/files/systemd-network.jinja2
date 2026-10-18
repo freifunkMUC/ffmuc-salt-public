@@ -55,6 +55,10 @@ Destination={{ link_local }}/128
 
 {%- if 'dummy-' in interface or 'vx-' in interface %}
 BatmanAdvanced={{ interface | regex_replace('dummy-', 'bat-') |  regex_replace('vx-', 'bat-')   }}
+
+[Link]
+# batman-adv ports stay "configuring" in networkd, do not block network-online.target
+RequiredForOnline=no
 {%- endif %}
 
 {%- if 'bat-' in interface %}
