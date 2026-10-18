@@ -87,7 +87,12 @@ apply Service "load" {
 
   check_command = "load"
 
-   assign where host.vars.os == "Linux"
+  if (host.name != NodeName) {
+      command_endpoint = host.name
+  }
+
+  assign where host.vars.os == "Linux"
+  ignore where host.vars.agentless
 }
 
 apply Service "procs" {
