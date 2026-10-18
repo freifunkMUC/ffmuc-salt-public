@@ -45,8 +45,18 @@ services:
       - KOMODO_OIDC_PROVIDER=${KOMODO_OIDC_PROVIDER}
       - KOMODO_OIDC_CLIENT_ID=${KOMODO_OIDC_CLIENT_ID}
       - KOMODO_OIDC_CLIENT_SECRET=${KOMODO_OIDC_CLIENT_SECRET}
-    ports:
-      - "10.8.0.15:9120:9120"
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=proxy
+      - traefik.http.middlewares.komodo-https-redirect.redirectscheme.scheme=https
+      - traefik.http.routers.komodo.entrypoints=http
+      - traefik.http.routers.komodo.rule=Host(`komodo.ov.ffmuc.net`)
+      - traefik.http.routers.komodo.middlewares=komodo-https-redirect
+      - traefik.http.routers.komodo-secure.entrypoints=https
+      - traefik.http.routers.komodo-secure.rule=Host(`komodo.ov.ffmuc.net`)
+      - traefik.http.routers.komodo-secure.tls=true
+      - traefik.http.routers.komodo-secure.tls.certresolver=http
+      - traefik.http.services.komodo.loadbalancer.server.port=9120
     volumes:
       - /srv/docker/komodo/keys:/config/keys
       - /srv/docker/komodo/backups:/backups
@@ -58,8 +68,11 @@ services:
       start_period: 30s
     networks:
       - komodo
+      - proxy
 
 networks:
+  proxy:
+    external: true
   komodo:
     ipam:
       config:
