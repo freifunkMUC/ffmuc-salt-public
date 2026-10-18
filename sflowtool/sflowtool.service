@@ -1,0 +1,17 @@
+[Unit]
+Description=sflowtool: forward sFlow to the collector over Nebula
+Wants=network-online.target
+After=network-online.target nebula.service
+
+[Service]
+EnvironmentFile=/etc/default/sflowtool
+ExecStart=/usr/local/bin/sflowtool $SFLOWTOOL_ARGS
+Restart=always
+RestartSec=5
+DynamicUser=yes
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+
+[Install]
+WantedBy=multi-user.target
