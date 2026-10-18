@@ -155,9 +155,11 @@ local function verify_token(token)
 end
 
 module:hook_global("pre-jitsi-authentication-fetch-key", function(session)
-    if session.host ~= module.host or type(session.auth_token) ~= "string" then return; end
+    if session.host ~= module.host or type(session.auth_token) ~= "string" or session.auth_token == "" then return; end
     local claims, role = verify_token(session.auth_token);
-    if claims == false then return; end
+    -- Never fall through to the token util: with app_secret = "" it would accept
+    -- HS256 tokens signed with an empty key and their forged context.user.id.
+    if claims == false then role = "foreign token"; end
     if not claims then
         measure_rejected_tokens(1);
         module:log("info", "rejecting signed-room token: %s", role);

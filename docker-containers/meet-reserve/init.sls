@@ -15,6 +15,7 @@
     - mode: "0600"
     - contents: |
         RESERVE_PRIVATE_KEY={{ cfg["private_key"] }}
+        RESERVE_POW_KEY={{ cfg["pow_key"] }}
         RESERVE_KEY_ID={{ cfg.get("key_id", 1) }}
         RESERVE_POW_DIFFICULTY={{ cfg.get("pow_difficulty", 18) }}
         RESERVE_DURATIONS={{ cfg.get("durations", "24h,72h,168h") }}
