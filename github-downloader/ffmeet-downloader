@@ -6,16 +6,16 @@ echo "Latest tag is $TAG"
 
 FIRMWARE_DIR=/srv/www/apt.ffmuc.net/ffmeet/latest
 TEMP_DIR=/tmp/ffmeet/$TAG
-if [ ! -f $FIRMWARE_DIR/$TAG ];
+if [ ! -f "$FIRMWARE_DIR/$TAG" ];
 then
         echo "Downloading firmware with tag $TAG"
-        mkdir -p $TEMP_DIR 
-        cd $TEMP_DIR
-        touch $FIRMWARE_DIR/$TAG
+        mkdir -p "$TEMP_DIR"
+        cd "$TEMP_DIR" || exit 1
+        touch "$FIRMWARE_DIR/$TAG"
         for i in $URLS;
         do
-                wget -q $i
+                wget -q "$i"
         done
-        mv $TEMP_DIR/* $FIRMWARE_DIR/
-        rm -r $TEMP_DIR
+        mv "$TEMP_DIR"/* "$FIRMWARE_DIR"/
+        rm -r "$TEMP_DIR"
 fi
