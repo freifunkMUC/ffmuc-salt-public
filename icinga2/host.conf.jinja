@@ -6,6 +6,8 @@
 {%- set location = salt['mine.get'](node_id,'minion_location', tgt_type='glob')[node_id] %}
 {%- set overlay_address = salt['mine.get'](node_id,'minion_overlay_address', tgt_type='glob')[node_id] %}
 {%- set minion_external_address6 = salt['mine.get'](node_id,'minion_external_ip6', tgt_type='glob')[node_id] %}
+{%- import_yaml 'icinga2/known_down.yaml' as known_down %}
+{%- set down_ok = (known_down or {}).get(node_id, {}) %}
 
 {%- if 'icinga2_server' not in tags %}
 object Endpoint "{{ node_id }}" {
@@ -44,6 +46,13 @@ object Host "{{ node_id }}" {
 	]
 
 	vars.location = "{{ location }}"
+
+	{%- if down_ok.get('bgp') %}
+	vars.bgp_sessions_down_ok = {{ down_ok.bgp | tojson }}
+	{%- endif %}
+	{%- if down_ok.get('wireguard') %}
+	vars.wireguard_down_ok = {{ down_ok.wireguard | tojson }}
+	{%- endif %}
 
 	{%- if 'metrics.in.ffmuc.net' == node_id %}
 	vars.disk_wfree = "15"
