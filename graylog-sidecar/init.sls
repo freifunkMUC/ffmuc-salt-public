@@ -65,6 +65,7 @@ graylog-sidecar-config:
     - source: salt://graylog-sidecar/sidecar.yml
     - template: jinja
     - mode: "0600"  # contains the server API token
+    - show_changes: False
     - require:
       - pkg: graylog-sidecar
 
