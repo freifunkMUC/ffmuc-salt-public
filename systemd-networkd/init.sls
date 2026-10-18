@@ -10,7 +10,8 @@
     - rev: v{{ batman_version }}
     - target: /usr/src/batman-adv-{{ batman_version }}
     - force_reset: True
-    - require_in: /usr/src/batman-adv-{{ batman_version }}/dkms.conf
+    - require_in:
+      - file: /usr/src/batman-adv-{{ batman_version }}/dkms.conf
 
 /usr/src/batman-adv-{{ batman_version }}/dkms.conf:
   file.managed:
@@ -26,29 +27,6 @@
         CLEAN="'make' clean"
 
         AUTOINSTALL="yes"
-    - require_in: systemd-packages
-
-# for gateways we need v249+ (not in Ubuntu 20.04 repos) to to configure Batman-Adv and FDB entries
-{% if grains.os == 'Ubuntu' and grains.osmajorrelease < 24 %}
-{% set systemd_nightly_buildid = "21960774" %}
-{% set systemd_version = "249.287.g84817bfdb3+20.04.20210808175006" %}
-systemd-packages:
-  pkg.installed:
-    - sources:
-{% for package in [
-  "libnss-systemd",
-  "libpam-systemd",
-  "libsystemd0",
-  "libudev1",
-  "systemd-sysv",
-  "systemd",
-  "udev"
-] %}
-    #- {{ package }}: https://code.launchpad.net/~ubuntu-support-team/+archive/ubuntu/systemd/+build/{{ systemd_nightly_buildid }}/+files/{{ package }}_{{ systemd_version }}_{{ grains.osarch }}.deb
-      - {{ package }}: https://apt.ffmuc.net/systemd-packages/{{ package }}_{{ systemd_version }}_{{ grains.osarch }}.deb
-{% endfor %}{# packages #}
-{% endif %}
-
 
 /etc/systemd/system/batadv-throughput.service:
   file.managed:
@@ -104,18 +82,18 @@ disable_netplan_generator:
 systemd-networkd:
     service.running:
         - enable: True
-        - running: True
 
 generate_initrd:
     cmd.wait:
         - name: update-initramfs -k all -u
         - watch: []
 
+# cmd.wait, not cmd.run: the watch_in triggers are rendered conditionally and
+# a cmd.run without any requisite would reload on every highstate
 systemd-networkd-reload:
-  cmd.run:
+  cmd.wait:  # noqa: 213
     - name: networkctl reload
     - runas: root
-    - onchanges: []
     - require:
       - service: systemd-networkd
 

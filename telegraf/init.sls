@@ -27,7 +27,6 @@ telegraf:
         - pkgrepo: influx-db-repo
   service.running:
     - enable: True
-    - running: True
 
 systemd-reload-telegraf:
   cmd.run:
@@ -235,6 +234,72 @@ remove_asterisk_monitoring:
 {% endif %}
     - watch_in:
           service: telegraf
+
+/etc/telegraf/telegraf.d/in-wgkex-broker.conf:
+{#- the broker runs from a hand-managed docker compose project #}
+{%- if salt['file.file_exists']('/srv/docker/wgkex/config/broker/wgkex.yaml') %}
+  file.managed:
+    - source: salt://telegraf/files/in_wgkex-broker.conf
+{% else %}
+  file.absent:
+{% endif %}
+    - watch_in:
+          service: telegraf
+
+/etc/telegraf/telegraf.d/in-meet-reserve.conf:
+{%- if salt["pillar.get"]("netbox:config_context:meet_reserve:enabled", False) %}
+  file.managed:
+    - source: salt://telegraf/files/in_meet-reserve.conf
+    - template: jinja
+    - context:
+        port: {{ salt["pillar.get"]("netbox:config_context:meet_reserve:metrics_port", 9195) }}
+{% else %}
+  file.absent:
+{% endif %}
+    - watch_in:
+          service: telegraf
+
+/etc/telegraf/telegraf.d/in-wgkex-worker.conf:
+{%- if 'nextgen-gateway' in role %}
+  file.managed:
+    - source: salt://telegraf/files/in_wgkex-worker.conf
+{% else %}
+  file.absent:
+{% endif %}
+    - watch_in:
+          service: telegraf
+
+{% if grains.virtual == 'physical' %}
+smartmontools:
+  pkg.installed:
+    - pkgs:
+      - smartmontools
+      - nvme-cli
+
+/etc/sudoers.d/telegraf_smart:
+  file.managed:
+    - mode: "0440"
+    - contents: |
+        telegraf    ALL=(root) NOPASSWD:/usr/sbin/smartctl, /usr/sbin/nvme
+    - check_cmd: /usr/sbin/visudo -c -f
+
+/etc/telegraf/telegraf.d/in-smart.conf:
+  file.managed:
+    - source: salt://telegraf/files/in_smart.conf
+    - require:
+      - pkg: smartmontools
+      - file: /etc/sudoers.d/telegraf_smart
+    - watch_in:
+          service: telegraf
+{% else %}
+remove_smart_monitoring:
+  file.absent:
+    - names:
+      - /etc/sudoers.d/telegraf_smart
+      - /etc/telegraf/telegraf.d/in-smart.conf
+    - watch_in:
+          service: telegraf
+{% endif %}
 
 /etc/telegraf/telegraf.d/out-influxdb.conf:
   file.managed:

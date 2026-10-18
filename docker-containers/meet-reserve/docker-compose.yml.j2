@@ -1,0 +1,18 @@
+# Managed by Salt (docker-containers/meet-reserve)
+services:
+  meet-reserve:
+    build: ./src
+    image: ffmuc/meet-reserve:local
+    restart: always
+    env_file: .env
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    ports:
+      - "{{ port }}:8095"
+      - "127.0.0.1:{{ metrics_port }}:9195"
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"

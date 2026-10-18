@@ -1,0 +1,7 @@
+{
+  "recording": {
+    "recordAudioAndVideo": "Record locally on this device",
+    "localRecordingWarning": "The recording is saved as a file on your device only. Nothing is stored on FFMUC servers. When asked, select the current tab so the right video and audio are captured.",
+    "localRecordingStartWarning": "The file is only saved on your device when you stop the recording. Please stop it before leaving the meeting."
+  }
+}

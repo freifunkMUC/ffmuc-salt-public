@@ -12,6 +12,25 @@ domain_prefixes:
   - {{ site }}_{% endfor %}
 # [worker] The external hostname of this worker
 externalName: {{ grains['id'] | regex_replace('in\.ffmuc\.net','ext.ffmuc.net') }}
+# [broker, worker] Load balancing of peers across the workers (wgkex >= 9f53ff0, #294). Active rebalancing must
+# also be enabled in the broker config (/srv/docker/wgkex/config/broker/wgkex.yaml on the docker hosts).
+# Overloaded workers then evict up to max_evictions_ratio of their peers per interval (most recently added first,
+# never the same peer again within eviction_cooldown); those nodes re-key and land on an underloaded worker.
+load_balancing:
+  rebalancing:
+    enabled: true
+    interval: 60
+    max_evictions_ratio: 0.01
+    eviction_cooldown: 3600
+# [worker] Drain mode for planned maintenance (wgkex >= 7606d8f, #298): while this file exists (or after
+# `systemctl kill -s USR1 wgkex`, undone with USR2) the worker reports status 2, brokers stop assigning new
+# peers to it and ask it to evict its peers at drain_rate per interval. /run is cleared on reboot.
+drain:
+  file: /run/wgkex/drain
+# [worker] Prometheus metrics (queue depth, peer operations, netlink latency), scraped by telegraf
+metrics:
+  worker_port: 9101
+  worker_host: 127.0.0.1
 # [broker, worker] MQTT connection informations
 mqtt:
   broker_url: broker.ov.ffmuc.net
@@ -20,6 +39,7 @@ mqtt:
   tls: False
   broker_port: 1883
   keepalive: 20
+log_level: INFO
 logging_config:
   formatters:
     standard:

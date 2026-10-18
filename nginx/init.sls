@@ -49,6 +49,30 @@ nginx-configtest:
   cmd.run:
     - name: /usr/sbin/nginx -t
 
+{# On the webfrontends /etc/resolv.conf points at the anycast resolvers, which are answered by the local dnsdist.
+   At boot nginx started before dnsdist, could not resolve its proxy_pass upstreams (e.g. docker04.ov.ffmuc.net)
+   and failed for good (Restart=no), so haproxy's "servers" backend answered 503 until nginx was started by hand. #}
+nginx-systemd-ordering:
+  file.managed:
+    - name: /etc/systemd/system/nginx.service.d/ffmuc-ordering.conf
+    - makedirs: True
+    - contents: |
+        # Managed by Salt (nginx/init.sls)
+        [Unit]
+        After=dnsdist.service pdns-recursor.service nebula.service
+        StartLimitIntervalSec=300
+        StartLimitBurst=30
+
+        [Service]
+        Restart=on-failure
+        RestartSec=5s
+
+nginx-systemd-daemon-reload:
+  cmd.run:
+    - name: systemctl daemon-reload
+    - onchanges:
+      - file: nginx-systemd-ordering
+
 # Disable default configuration
 /etc/nginx/sites-enabled/default:
   file.absent:
@@ -146,6 +170,24 @@ nginx-configtest:
     - source: salt://nginx/files/recorder.ffmuc.net
     - clean: True
 {% endif %}{# if domain == "recorder.ffmuc.net" #}
+
+{% if domain == "apt.ffmuc.net" %}
+{% for old in ["nebula", "systemd-packages", "filebeat-oss-8.0.0-SNAPSHOT-armhf.deb", "ifupdown2_1.2.8-1_all.deb",
+               "jitsi-videobridge2_2.1-394-g36698039-1_all.deb", "yanic_1.2.1-1_amd64.deb", "yanic_1.5.2-2_amd64.deb",
+               "yanic_1.8.3-2_amd64.deb"] %}
+/srv/www/apt.ffmuc.net/{{ old }}:
+  file.absent
+{% endfor %}
+{% for n in range(17, 29) %}
+/srv/www/apt.ffmuc.net/yanic-0.0.2-{{ n }}.deb:
+  file.absent
+{% endfor %}
+
+/var/cache/nginx-apt:
+  file.absent:
+    - require:
+      - file: /etc/nginx/sites-enabled/apt.ffmuc.net.conf
+{% endif %}{# if domain == "apt.ffmuc.net" #}
 
 {% endfor %}{# domain #}
 
