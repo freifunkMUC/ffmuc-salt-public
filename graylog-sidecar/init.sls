@@ -9,8 +9,6 @@ filebeat:
   pkg.installed:
     - sources:
       - filebeat: https://apt.ffmuc.net/filebeat-oss-8.19.23-ffmuc1-armhf.deb
-    - watch_in:
-      - service: graylog-sidecar-service
 
 {% else %}{# if Raspbian #}
 
@@ -83,4 +81,5 @@ graylog-sidecar-service:
       - file: graylog-sidecar-config
     - watch:
       - pkg: graylog-sidecar
+      - pkg: filebeat
       - file: graylog-sidecar-config
