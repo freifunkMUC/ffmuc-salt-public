@@ -81,7 +81,14 @@ nebula-meet-service:
     - watch:
         - file: /etc/nebula-meet/config.yml
         - cmd: systemd-reload-nebula-meet
+
+nebula-meet-restart-on-upgrade:
+  cmd.run:
+    - name: /usr/bin/nebula -test -config /etc/nebula-meet/config.yml && systemctl restart nebula-meet
+    - onchanges:
         - pkg: nebula-pkg
+    - require:
+        - service: nebula-meet-service
 
 {#- the nebula package ships a default nebula.service without config; keep it off unless the main nebula state is used #}
 {%- from "nebula/map.jinja" import nebula as nebula_main with context %}
