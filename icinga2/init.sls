@@ -18,8 +18,19 @@ include:
 
 {%- if grains.os == 'Raspbian' %}
 # packages.icinga.com/raspbian has no bookworm and debian has no armhf: use Raspbian's icinga2
+# (2.13, agent older than the master is supported); the pin also replaces leftovers of the
+# icinga-bullseye packages, which are not installable on bookworm
 /etc/apt/sources.list.d/icinga2.list:
   file.absent:
+    - require_in:
+      - pkg: icinga2-pkg
+
+/etc/apt/preferences.d/icinga2:
+  file.managed:
+    - contents: |
+        Package: icinga2*
+        Pin: origin raspbian.raspberrypi.org
+        Pin-Priority: 1001
     - require_in:
       - pkg: icinga2-pkg
 {%- else %}
