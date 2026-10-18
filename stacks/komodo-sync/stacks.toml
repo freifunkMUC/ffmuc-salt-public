@@ -61,6 +61,171 @@ run_directory = "stacks/docker04/dokuwiki"
 file_paths = ["compose.yaml"]
 
 [[stack]]
+name = "docker04-cfssl"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker04"
+project_name = "cfssl"
+files_on_host = true
+run_directory = "/srv/docker/cfssl"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker04-conferencemapper"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker04"
+project_name = "conferencemapper"
+files_on_host = true
+run_directory = "/srv/docker/conferencemapper"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker04-diun"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker04"
+project_name = "diun"
+files_on_host = true
+run_directory = "/srv/docker/diun"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker04-excalidraw-backend"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker04"
+project_name = "excalidraw-backend"
+files_on_host = true
+run_directory = "/srv/docker/excalidraw-backend"
+file_paths = ["docker-compose.yaml"]
+
+[[stack]]
+name = "docker04-matomo"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker04"
+project_name = "matomo"
+files_on_host = true
+run_directory = "/srv/docker/matomo"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker04-meet-reserve"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker04"
+project_name = "meet-reserve"
+files_on_host = true
+run_directory = "/srv/docker/meet-reserve"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker04-netbox"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker04"
+project_name = "netbox"
+files_on_host = true
+run_directory = "/srv/docker/netbox"
+file_paths = ["docker-compose.yml", "docker-compose.override.yml"]
+
+[[stack]]
+name = "docker04-netbox-parker"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker04"
+project_name = "netbox-parker"
+files_on_host = true
+run_directory = "/srv/docker/netbox-parker"
+file_paths = ["docker-compose.yml", "docker-compose.override.yml"]
+
+[[stack]]
+name = "docker04-openldap"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker04"
+project_name = "openldap"
+files_on_host = true
+run_directory = "/srv/docker/openldap"
+file_paths = ["docker-compose.yaml"]
+
+[[stack]]
+name = "docker04-owncast"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker04"
+project_name = "owncast"
+files_on_host = true
+run_directory = "/srv/docker/owncast"
+file_paths = ["docker-compose.yaml"]
+
+[[stack]]
+name = "docker04-packetyeeter-analyzer"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker04"
+project_name = "packetyeeter-analyzer"
+files_on_host = true
+run_directory = "/srv/docker/packetyeeter-analyzer"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker04-traefik"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker04"
+project_name = "traefik"
+files_on_host = true
+run_directory = "/srv/docker/traefik"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker04-tuwunel-test"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker04"
+project_name = "tuwunel-test"
+files_on_host = true
+run_directory = "/srv/docker/tuwunel-test"
+file_paths = ["docker-compose.yaml"]
+
+[[stack]]
+name = "docker04-wgkex"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker04"
+project_name = "wgkex"
+files_on_host = true
+run_directory = "/srv/docker/wgkex"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker04-whitebophir"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker04"
+project_name = "whitebophir"
+files_on_host = true
+run_directory = "/srv/docker/whitebophir"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
 name = "docker06-komodo"
 description = "Komodo Core itself, deploy only from a shell (see stacks/README.md)"
 tags = ["ffmuc"]
@@ -81,6 +246,105 @@ KOMODO_OIDC_PROVIDER = [[KOMODO_OIDC_PROVIDER]]
 KOMODO_OIDC_CLIENT_ID = [[KOMODO_OIDC_CLIENT_ID]]
 KOMODO_OIDC_CLIENT_SECRET = [[KOMODO_OIDC_CLIENT_SECRET]]
 """
+
+[[stack]]
+name = "docker06-diun"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker06"
+project_name = "diun"
+files_on_host = true
+run_directory = "/srv/docker/diun"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker06-graylog"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker06"
+project_name = "graylog"
+files_on_host = true
+run_directory = "/srv/docker/graylog"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker06-mastodon"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker06"
+project_name = "mastodon"
+files_on_host = true
+run_directory = "/srv/docker/mastodon"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker06-mastodon-paywall"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker06"
+project_name = "mastodon-paywall"
+files_on_host = true
+run_directory = "/srv/docker/mastodon-paywall"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker06-meet-reserve"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker06"
+project_name = "meet-reserve"
+files_on_host = true
+run_directory = "/srv/docker/meet-reserve"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker06-omada"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker06"
+project_name = "omada"
+files_on_host = true
+run_directory = "/srv/docker/omada"
+file_paths = ["docker-compose.yaml"]
+
+[[stack]]
+name = "docker06-packetyeeter-analyzer"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker06"
+project_name = "packetyeeter-analyzer"
+files_on_host = true
+run_directory = "/srv/docker/packetyeeter-analyzer"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker06-traefik"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker06"
+project_name = "traefik"
+files_on_host = true
+run_directory = "/srv/docker/traefik"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker06-wgkex"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker06"
+project_name = "wgkex"
+files_on_host = true
+run_directory = "/srv/docker/wgkex"
+file_paths = ["docker-compose.yaml"]
 
 [[stack]]
 name = "docker05-salt"
