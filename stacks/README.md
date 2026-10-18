@@ -81,13 +81,12 @@ FerretDB/Postgres is only suggested for CPUs without AVX, docker06 has AVX2.
 
 ### Core on docker06
 
-- Listens on `10.8.0.15:9120` (nebula) only. The UI is meant to be published
-  through the webfrontends like the other backends: a `komodo.ffmuc.net` ACL
-  in `haproxy/haproxy.cfg` and a backend
-  `server komodo docker06.ov.ffmuc.net:9120 check` with `timeout tunnel`
-  for the websockets (`/ws/...`). Until then use an SSH tunnel to
-  `10.8.0.15:9120`. The nebula firewall already lets the `webfrontend` group
-  reach port 9120 on docker06.
+- Listens on `10.8.0.15:9120` (nebula) only and is published as
+  `komodo.ffmuc.net` through the webfrontends (`komodo_backend` in
+  `haproxy/haproxy.cfg`, `timeout tunnel` for the websockets). haproxy denies
+  `/ws/periphery`: Core connects to the Periphery agents, not the other way
+  round. The nebula firewall lets the `webfrontend` group reach port 9120 on
+  docker06.
 - Login only via OIDC against Keycloak, local login is off. The first user who
   logs in becomes super admin; later users are created disabled and an admin
   enables them. Keycloak client: confidential, redirect URI
