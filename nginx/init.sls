@@ -171,6 +171,24 @@ nginx-systemd-daemon-reload:
     - clean: True
 {% endif %}{# if domain == "recorder.ffmuc.net" #}
 
+{% if domain == "apt.ffmuc.net" %}
+{% for old in ["nebula", "systemd-packages", "filebeat-oss-8.0.0-SNAPSHOT-armhf.deb", "ifupdown2_1.2.8-1_all.deb",
+               "jitsi-videobridge2_2.1-394-g36698039-1_all.deb", "yanic_1.2.1-1_amd64.deb", "yanic_1.5.2-2_amd64.deb",
+               "yanic_1.8.3-2_amd64.deb"] %}
+/srv/www/apt.ffmuc.net/{{ old }}:
+  file.absent
+{% endfor %}
+{% for n in range(17, 29) %}
+/srv/www/apt.ffmuc.net/yanic-0.0.2-{{ n }}.deb:
+  file.absent
+{% endfor %}
+
+/var/cache/nginx-apt:
+  file.absent:
+    - require:
+      - file: /etc/nginx/sites-enabled/apt.ffmuc.net.conf
+{% endif %}{# if domain == "apt.ffmuc.net" #}
+
 {% endfor %}{# domain #}
 
 {% for stream in salt['pillar.get']('netbox:config_context:webserver:streams') %}

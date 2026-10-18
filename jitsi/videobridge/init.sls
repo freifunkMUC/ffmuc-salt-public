@@ -19,15 +19,6 @@ jitsi-videobridge2:
   service.running:
     - enable: True
 
-#jvb-ffmuc-version:
-#  pkg.installed:
-#    - require:
-#      - pkg: jitsi-videobridge2 # for dependencies
-#    - required_in:
-#      - service: jitsi-videobridge2 # only start if this version got installed
-#    #- sources:
-#    #  - jitsi-videobridge2: https://apt.ffmuc.net/unstable/jitsi-videobridge2_2.1-411-g9754898e-1_all.deb
-
 systemd-reload-jvb:
   cmd.run:
     - name: systemctl --system daemon-reload
