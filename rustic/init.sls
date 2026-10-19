@@ -50,7 +50,7 @@ backup-script:
 /usr/local/sbin/ffmuc-rustic-dumps.sh:
 {%- if salt['config.get']('netbox:config_context:backup:dump_commands', {}) %}
   file.managed:
-    - source: salt://rustic/files/ffmuc-rustic-dumps.sh.j2
+    - source: salt://rustic/files/ffmuc-rustic-dumps.sh.jinja
     - template: jinja
     - mode: "0700"
 {%- else %}
