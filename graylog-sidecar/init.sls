@@ -15,7 +15,8 @@ filebeat:
 graylog-repo-key:
     cmd.run:
       - name: "wget -O - -o /dev/null https://packages.graylog2.org/repo/debian/keyring.gpg | gpg --batch --yes --dearmor -o /usr/share/keyrings/graylog-keyring.gpg.tmp && mv /usr/share/keyrings/graylog-keyring.gpg.tmp /usr/share/keyrings/graylog-keyring.gpg"
-      - creates: /usr/share/keyrings/graylog-keyring.gpg
+      {#- refetch while the keyring lacks the uid of 11/2025: the old one is bound by SHA1 only, which sqv on trixie rejects #}
+      - unless: gpg --show-keys --with-colons /usr/share/keyrings/graylog-keyring.gpg 2>/dev/null | grep -q '^uid:.*Graylog, Inc\.'
 
 graylog-repo:
     pkgrepo.managed:
@@ -29,7 +30,8 @@ graylog-repo:
 elasticsearch-repo-key:
   cmd.run:
     - name: "wget -O - -o /dev/null https://artifacts.elastic.co/GPG-KEY-elasticsearch | gpg --batch --yes --dearmor -o /usr/share/keyrings/elasticsearch-keyring.gpg.tmp && mv /usr/share/keyrings/elasticsearch-keyring.gpg.tmp /usr/share/keyrings/elasticsearch-keyring.gpg"
-    - creates: /usr/share/keyrings/elasticsearch-keyring.gpg
+    {#- refetch while the uid self-signature predates 2023-09-05 (SHA1 only, rejected by sqv on trixie) #}
+    - unless: gpg --show-keys --with-colons /usr/share/keyrings/elasticsearch-keyring.gpg 2>/dev/null | awk -F: '$1 == "uid" && $6 >= 1693907673' | grep -q .
 
 /etc/apt/sources.list.d/elastic-7.x.list:
   file.absent
