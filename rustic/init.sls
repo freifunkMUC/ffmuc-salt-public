@@ -45,11 +45,25 @@ backup-script:
   file.absent:
     - name: /usr/local/sbin/rustic-backup.sh
 
+{#- backup.dump_commands: {name: command} writes each command's output to /var/lib/ffmuc-dumps/<name> before the
+    backup (a local file instead of stdin_commands: rustic reads stdin on one core, which was too slow for Mastodon) #}
+/usr/local/sbin/ffmuc-rustic-dumps.sh:
+{%- if salt['config.get']('netbox:config_context:backup:dump_commands', {}) %}
+  file.managed:
+    - source: salt://rustic/files/ffmuc-rustic-dumps.sh.j2
+    - template: jinja
+    - mode: "0700"
+{%- else %}
+  file.absent
+{%- endif %}
+
 /etc/systemd/system/ffmuc-rustic-backup.service:
   file.managed:
-    - source: salt://rustic/files/ffmuc-rustic-backup.service
+    - source: salt://rustic/files/ffmuc-rustic-backup.service.j2
+    - template: jinja
     - require:
       - file: backup-config
+      - file: /usr/local/sbin/ffmuc-rustic-dumps.sh
 
 /etc/systemd/system/ffmuc-rustic-backup.timer:
   file.managed:
