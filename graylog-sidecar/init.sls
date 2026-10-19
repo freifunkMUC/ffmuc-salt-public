@@ -13,9 +13,13 @@ filebeat:
 {% else %}{# if Raspbian #}
 
 graylog-repo-key:
-    cmd.run:
-      - name: "wget -O - -o /dev/null https://packages.graylog2.org/repo/debian/keyring.gpg | gpg --batch --yes --dearmor -o /usr/share/keyrings/graylog-keyring.gpg.tmp && mv /usr/share/keyrings/graylog-keyring.gpg.tmp /usr/share/keyrings/graylog-keyring.gpg"
-      - creates: /usr/share/keyrings/graylog-keyring.gpg
+  file.managed:
+    - name: /usr/share/keyrings/graylog-keyring.gpg
+    - source: https://packages.graylog2.org/repo/debian/keyring.gpg
+    {#- the keyring with the uid of 11/2025: the old one is bound by SHA1 only, which sqv on trixie rejects;
+        a new key from Graylog means a new hash here #}
+    - source_hash: sha256=44b60fb7610344ba3174295d9dccad888b14bf95d00d892420001ea11874f591
+    - mode: "0644"
 
 graylog-repo:
     pkgrepo.managed:
@@ -24,7 +28,7 @@ graylog-repo:
     - file: /etc/apt/sources.list.d/graylog-sidecar.list
     - clean_file: True
     - require:
-      - cmd: graylog-repo-key
+      - file: graylog-repo-key
 
 elasticsearch-repo-key:
   cmd.run:
