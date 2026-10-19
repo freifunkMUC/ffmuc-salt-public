@@ -5,5 +5,8 @@ Description=FFMuc rustic Backup
 Type=oneshot
 Nice=19
 IOSchedulingClass=idle
+{%- if salt['config.get']('netbox:config_context:backup:dump_commands', {}) %}
+ExecStartPre=/usr/local/sbin/ffmuc-rustic-dumps.sh
+{%- endif %}
 ExecStart=/usr/local/bin/rustic backup
 ExecStart=/usr/local/bin/rustic forget
