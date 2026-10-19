@@ -32,6 +32,25 @@ docker-pkgs:
     - require:
       - pkgrepo: docker-repo
 
+{#- Containers that publish a port on the Nebula address (e.g. meet-reserve on docker04) fail at boot when dockerd
+   starts before nebula0 exists, and Docker does not retry the bind. nebula.service is Type=notify, so After= waits
+   until the tunnel is up; Wants= is ignored on hosts without nebula. #}
+docker-systemd-ordering:
+  file.managed:
+    - name: /etc/systemd/system/docker.service.d/ffmuc-nebula.conf
+    - makedirs: True
+    - contents: |
+        # Managed by Salt (docker/init.sls)
+        [Unit]
+        Wants=nebula.service
+        After=nebula.service
+
+docker-systemd-daemon-reload:
+  module.run:
+    - service.systemctl_reload: []
+    - onchanges:
+      - file: docker-systemd-ordering
+
 {# limit log-file-size #}
 /etc/docker/daemon.json:
   file.managed:
