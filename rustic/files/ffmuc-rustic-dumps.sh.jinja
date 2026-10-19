@@ -1,0 +1,12 @@
+#!/bin/bash
+# Managed by Salt (rustic): dumps from NetBox backup.dump_commands into /var/lib/ffmuc-dumps, run before each backup
+set -euo pipefail
+umask 077
+D=/var/lib/ffmuc-dumps
+mkdir -p "$D"
+{%- for name, command in salt['config.get']('netbox:config_context:backup:dump_commands', {}).items() %}
+
+# {{ name }}
+{{ command }} > "$D/{{ name }}.tmp"
+mv "$D/{{ name }}.tmp" "$D/{{ name }}"
+{%- endfor %}
