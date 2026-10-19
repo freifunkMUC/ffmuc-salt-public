@@ -68,6 +68,17 @@ stats.in.ffmuc.net:
     - watch_in:
       - service: jitsi-videobridge2
 
+# BandwidthAllocator logs every allocation for receivers with low bandwidth at INFO;
+# a large meeting with poor connections produced ~70k lines/min and stress 1.0.
+jvb-logging-bandwidthallocator:
+  file.append:
+    - name: /etc/jitsi/videobridge/logging.properties
+    - text: org.jitsi.videobridge.cc.allocation.BandwidthAllocator.level=WARNING
+    - require:
+      - pkg: jitsi-videobridge2 # only start if this version got installed
+    - watch_in:
+      - service: jitsi-videobridge2
+
 /etc/systemd/system/jitsi-videobridge2.service.d/override.conf:
   file.managed:
     - source: salt://jitsi/videobridge/systemd-override.conf
