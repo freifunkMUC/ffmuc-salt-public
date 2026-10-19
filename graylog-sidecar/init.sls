@@ -31,9 +31,18 @@ graylog-repo:
       - file: graylog-repo-key
 
 elasticsearch-repo-key:
-  cmd.run:
-    - name: "wget -O - -o /dev/null https://artifacts.elastic.co/GPG-KEY-elasticsearch | gpg --batch --yes --dearmor -o /usr/share/keyrings/elasticsearch-keyring.gpg.tmp && mv /usr/share/keyrings/elasticsearch-keyring.gpg.tmp /usr/share/keyrings/elasticsearch-keyring.gpg"
-    - creates: /usr/share/keyrings/elasticsearch-keyring.gpg
+  file.managed:
+    - name: /usr/share/keyrings/elasticsearch-keyring.asc
+    - source: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    {#- armored, apt reads .asc in signed-by; the uid self-signature of 2023-09-05 (the older one is SHA1 only,
+        rejected by sqv on trixie) #}
+    - source_hash: sha256=db52809c5f6b27f9c2bed45cb43e398c659275f3d35305653c6750a0db90f5eb
+    - mode: "0644"
+
+/usr/share/keyrings/elasticsearch-keyring.gpg:
+  file.absent:
+    - require:
+      - pkgrepo: filebeat-repo
 
 /etc/apt/sources.list.d/elastic-7.x.list:
   file.absent
@@ -44,11 +53,11 @@ elasticsearch-repo-key:
 filebeat-repo:
   pkgrepo.managed:
     - humanname: Elastic-Repo
-    - name: deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/elasticsearch-keyring.gpg] https://artifacts.elastic.co/packages/oss-9.x/apt stable main
+    - name: deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/elasticsearch-keyring.asc] https://artifacts.elastic.co/packages/oss-9.x/apt stable main
     - file: /etc/apt/sources.list.d/elastic-9.x.list
     - clean_file: True
     - require:
-      - cmd: elasticsearch-repo-key
+      - file: elasticsearch-repo-key
 
 graylog-sidecar:
   pkg.latest
