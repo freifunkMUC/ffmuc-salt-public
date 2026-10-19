@@ -59,7 +59,7 @@
   .tabs { display: inline-flex; gap: .25rem; padding: .25rem; margin-bottom: 1.4rem; border-radius: 99px; background: rgba(0,0,0,.28); border: 1px solid var(--line); }
   .tabs button { border: 0; border-radius: 99px; padding: .4rem 1rem; font: inherit; font-size: .88rem; font-weight: 600; color: var(--muted); background: transparent; cursor: pointer; transition: all .2s; }
   .tabs button[aria-selected="true"] { color: #fff; background: linear-gradient(135deg, var(--accent), var(--accent2)); }
-  #extendBox { display: none; margin-bottom: 1rem; }
+  #extendBox { margin-bottom: 1rem; }
   #extendBox input { width: 100%; background: rgba(0,0,0,.3); color: #cfd6e6; border: 1px solid var(--line); border-radius: 12px; padding: .8rem .9rem; font: .85rem ui-monospace, SFMono-Regular, Menlo, monospace; outline: none; transition: border-color .2s; }
   #extendBox input:focus { border-color: var(--accent); }
   #extendBox small { display: block; color: var(--muted); margin-top: .45rem; font-size: .84rem; }
@@ -116,6 +116,14 @@
   #toast.show { opacity: 1; transform: translate(-50%, 0); }
   @media (max-width: 520px) { .card { padding: 1.4rem; } .field { flex-wrap: wrap; } .field input { flex-basis: 100%; } }
   @media (prefers-reduced-motion: reduce) { .blob, .bar i { animation: none; } }
+  .note { display: none; gap: .6rem; padding: .8rem 1rem; border-radius: 12px; font-size: .9rem; margin-bottom: 1.2rem; }
+  .note.info { background: rgba(120,170,255,.08); border: 1px solid rgba(120,170,255,.25); color: #c6dcff; }
+  .note.bad { background: rgba(255,80,80,.1); border: 1px solid rgba(255,80,80,.25); color: #ffb3b3; }
+  .row { display: flex; gap: .5rem; flex-wrap: wrap; }
+  .row .icon-btn { padding: .55rem .9rem; }
+  .icon-btn.danger { border-color: rgba(255,80,80,.35); color: #ffb3b3; }
+  .icon-btn.danger:hover { background: rgba(255,80,80,.12); }
+  .icon-btn:disabled { opacity: .5; cursor: default; }
 </style>
 </head>
 <body>
@@ -137,13 +145,14 @@
         <button role="tab" id="tabNew" aria-selected="true" data-i18n="tabNew"></button>
         <button role="tab" id="tabExt" aria-selected="false" data-i18n="tabManage"></button>
       </div>
+      <div class="note bad" id="goneNote"></div>
       <div id="newPane">
         <h1 data-i18n="title"></h1>
         <p class="lead" data-i18n="intro"></p>
         <ul class="features">
           <li><span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15l-3.5 2 1-4-3-2.7 4-.3L12 6l1.5 4 4 .3-3 2.7 1 4z"/></svg></span>
             <div><b data-i18n="f1t"></b><span data-i18n="f1d"></span></div></li>
-          <li><span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 11V8a5 5 0 0 1 10 0"/><path d="M12 14v3"/><rect x="4" y="11" width="16" height="10" rx="2"/></svg></span>
+          <li><span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg></span>
             <div><b data-i18n="f2t"></b><span data-i18n="f2d"></span></div></li>
           <li><span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
             <div><b data-i18n="f3t"></b><span data-i18n="f3d"></span></div></li>
@@ -157,7 +166,7 @@
       <div id="extPane" style="display:none">
         <h1 data-i18n="openTitle"></h1>
         <p class="lead" data-i18n="openIntro"></p>
-        <div id="extendBox" style="display:block">
+        <div id="extendBox">
           <input id="extIn" type="url" autocomplete="off" spellcheck="false">
           <small data-i18n="openHint"></small>
         </div>
@@ -171,30 +180,46 @@
         <span class="check" id="doneIcon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
         <div><h2 id="doneT"></h2><p id="doneD"></p></div>
       </div>
+      <div class="note info" id="migratedNote" data-i18n="migratedNote"></div>
+      <div class="note bad" id="statusNote"></div>
       <div class="warn" id="warn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex:none;margin-top:2px"><path d="M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg><span data-i18n="warn"></span></div>
-      <div class="expired" id="expiredNote" data-i18n="expiredNote"></div>
 
-      <div class="link manage"><header><span class="badge" data-i18n="manageL"></span></header><small data-i18n="manageD"></small>
-        <div class="field"><input id="manage" readonly><button class="icon-btn" data-copy="manage" data-i18n="copy"></button></div></div>
-      <div class="link host"><header><span class="badge" data-i18n="hostL"></span></header><small data-i18n="hostD"></small>
-        <div class="field"><input id="host" readonly><button class="icon-btn" data-copy="host" data-i18n="copy"></button><a class="icon-btn primary" id="open" target="_blank" rel="noopener noreferrer" data-i18n="open"></a></div></div>
-      <div class="link speaker"><header><span class="badge" data-i18n="speakerL"></span></header><small data-i18n="speakerD"></small>
-        <div class="field"><input id="speaker" readonly><button class="icon-btn" data-copy="speaker" data-i18n="copy"></button></div></div>
-      <div class="link guest"><header><span class="badge" data-i18n="guestL"></span></header><small data-i18n="guestD"></small>
-        <div class="field"><input id="guest" readonly><button class="icon-btn" data-copy="guest" data-i18n="copy"></button></div></div>
+      <div id="links">
+        <div class="link manage"><header><span class="badge" data-i18n="manageL"></span></header><small data-i18n="manageLD"></small>
+          <div class="field"><input id="manage" readonly><button class="icon-btn" data-copy="manage" data-i18n="copy"></button></div></div>
+        <div class="link host"><header><span class="badge" data-i18n="hostL"></span></header><small data-i18n="hostD"></small>
+          <div class="field"><input id="host" readonly><button class="icon-btn" data-copy="host" data-i18n="copy"></button><a class="icon-btn primary" id="open" target="_blank" rel="noopener noreferrer" data-i18n="open"></a></div></div>
+        <div class="link speaker"><header><span class="badge" data-i18n="speakerL"></span></header><small data-i18n="speakerD"></small>
+          <div class="field"><input id="speaker" readonly><button class="icon-btn" data-copy="speaker" data-i18n="copy"></button></div></div>
+        <div class="link guest"><header><span class="badge" data-i18n="guestL"></span></header><small data-i18n="guestD"></small>
+          <div class="field"><input id="guest" readonly><button class="icon-btn" data-copy="guest" data-i18n="copy"></button></div></div>
 
-      <div class="meta">
-        <span><span data-i18n="expires"></span> <b id="expires"></b></span>
-        <button class="icon-btn" id="copyall" style="padding:.5rem .8rem" data-i18n="copyall"></button>
-      </div>
+        <div class="meta">
+          <span><span data-i18n="expires"></span> <b id="expires"></b></span>
+          <span class="row">
+            <button class="icon-btn" id="ics" data-i18n="ics"></button>
+            <button class="icon-btn" id="copyall" data-i18n="copyall"></button>
+          </span>
+        </div>
 
-      <div class="panel" id="extendPanel">
-        <h3 data-i18n="extTitle"></h3>
-        <p id="extInfo"></p>
-        <div class="dur" id="durExt" role="group"></div>
-        <button class="btn" id="goExt" data-i18n="extButton"></button>
-        <div class="work" id="workExt"><div class="bar"><i></i></div><div class="worklabel"><span data-i18n="working"></span><span class="rate"></span></div></div>
-        <div class="err" id="errExt"></div>
+        <div class="panel" id="extendPanel">
+          <h3 data-i18n="extTitle"></h3>
+          <p id="extInfo"></p>
+          <div class="dur" id="durExt" role="group"></div>
+          <button class="btn" id="goExt" data-i18n="extButton"></button>
+          <div class="work" id="workExt"><div class="bar"><i></i></div><div class="worklabel"><span data-i18n="working"></span><span class="rate"></span></div></div>
+          <div class="err" id="errExt"></div>
+        </div>
+
+        <div class="panel" id="dangerPanel">
+          <h3 data-i18n="dangerTitle"></h3>
+          <p data-i18n="dangerInfo"></p>
+          <div class="row">
+            <button class="icon-btn" id="goRotate" data-i18n="rotateButton"></button>
+            <button class="icon-btn danger" id="goDelete" data-i18n="deleteButton"></button>
+          </div>
+          <div class="err" id="errDanger"></div>
+        </div>
       </div>
     </section>
   </div>
@@ -204,13 +229,14 @@
 <script>
 "use strict";
 const durText = {
-  de: (h) => h % 168 === 0 ? (h / 168 === 1 ? "1 Woche" : h / 168 + " Wochen") : h % 24 === 0 ? (h / 24 === 1 ? "1 Tag" : h / 24 + " Tage") : h + " Std.",
-  en: (h) => h % 168 === 0 ? (h / 168 === 1 ? "1 week" : h / 168 + " weeks") : h % 24 === 0 ? (h / 24 === 1 ? "1 day" : h / 24 + " days") : h + " h",
-  fr: (h) => h % 168 === 0 ? (h / 168 === 1 ? "1 semaine" : h / 168 + " semaines") : h % 24 === 0 ? (h / 24 === 1 ? "1 jour" : h / 24 + " jours") : h + " h",
-  es: (h) => h % 168 === 0 ? (h / 168 === 1 ? "1 semana" : h / 168 + " semanas") : h % 24 === 0 ? (h / 24 === 1 ? "1 día" : h / 24 + " días") : h + " h",
+  de: (h) => h === 8760 ? "1 Jahr" : h % 720 === 0 ? (h / 720 === 1 ? "1 Monat" : h / 720 + " Monate") : h % 24 === 0 ? (h / 24 === 1 ? "1 Tag" : h / 24 + " Tage") : h + " Std.",
+  en: (h) => h === 8760 ? "1 year" : h % 720 === 0 ? (h / 720 === 1 ? "1 month" : h / 720 + " months") : h % 24 === 0 ? (h / 24 === 1 ? "1 day" : h / 24 + " days") : h + " h",
+  fr: (h) => h === 8760 ? "1 an" : h % 720 === 0 ? h / 720 + " mois" : h % 24 === 0 ? (h / 24 === 1 ? "1 jour" : h / 24 + " jours") : h + " h",
+  es: (h) => h === 8760 ? "1 año" : h % 720 === 0 ? (h / 720 === 1 ? "1 mes" : h / 720 + " meses") : h % 24 === 0 ? (h / 24 === 1 ? "1 día" : h / 24 + " días") : h + " h",
   uk: (h) => {
     const pl = (n, one, few, many) => n % 10 === 1 && n % 100 !== 11 ? one : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? few : many;
-    if (h % 168 === 0) { const n = h / 168; return n + " " + pl(n, "тиждень", "тижні", "тижнів"); }
+    if (h === 8760) return "1 рік";
+    if (h % 720 === 0) { const n = h / 720; return n + " " + pl(n, "місяць", "місяці", "місяців"); }
     if (h % 24 === 0) { const n = h / 24; return n + " " + pl(n, "день", "дні", "днів"); }
     return h + " год";
   },
@@ -220,31 +246,50 @@ const T = {
     loading: "Lade Raum …",
     tabNew: "Neuer Raum", tabManage: "Raum verwalten",
     title: "Dein reservierter Raum, in Sekunden.",
-    intro: "Ein eigener Raum, der dir gehört. Drei Zugangsstufen: Moderation (auch für Co-Moderatoren), Sprecher und Zuschauer. Perfekt für Teammeetings, Vorträge, Streams und Versammlungen. Ohne Konto, ohne Anmeldung.",
+    intro: "Ein eigener Raum mit festen Links. Drei Zugangsstufen: Moderation, Sprecher und Zuschauer. Ideal für Teammeetings, Vorträge, Streams und regelmäßige Treffen wie Stammtische oder User Groups. Ohne Konto, ohne Anmeldung.",
     f1t: "Drei Zugangsstufen", f1d: "Teile den Moderationslink mit Co-Moderatoren und den Sprecherlink mit deinem Team. Zuschauer melden sich per Handzeichen, du holst sie aufs Podium.",
-    f2t: "Kein Raumname-Raten", f2d: "Der Name ist zufällig und kryptografisch signiert.",
-    f3t: "Läuft von selbst ab", f3d: "Nach einem Tag, drei Tagen oder einer Woche, verlängerbar. Wir speichern nichts.",
+    f2t: "Kurze Links, die bleiben", f2d: "Verlängere so oft du willst, jeweils bis zu ein Jahr im Voraus. Die Links ändern sich dabei nicht, ideal für monatliche Treffen.",
+    f3t: "Endet von selbst", f3d: "Ohne Verlängerung läuft der Raum einfach ab. Du kannst ihn auch jederzeit löschen.",
     durL: "Laufzeit", button: "Raum reservieren",
     working: "Kurzer Rechencheck gegen Spam …",
     failed: "Das hat nicht geklappt: ",
     openTitle: "Raum verwalten",
-    openIntro: "Füge deinen Verwaltungs- oder Moderationslink ein, um alle Links wieder anzuzeigen oder den Raum zu verlängern.",
-    openHint: "Der Zuschauerlink reicht dafür nicht.",
+    openIntro: "Füge deinen Verwaltungs- oder Moderationslink ein, um alle Links anzuzeigen, den Raum zu verlängern oder zu löschen. Links aus der alten Version funktionieren auch.",
+    openHint: "Sprecher- und Zuschauerlinks reichen dafür nicht.",
     openButton: "Raum öffnen", openEmpty: "bitte einen Link einfügen",
     createdT: "Dein Raum ist bereit", createdD: "Ein Link zum Verwalten, drei für die Rollen.",
-    extendedT: "Raum verlängert", extendedD: "Der Zuschauerlink bleibt gleich. Verwaltungs-, Moderations- und Sprecherlink sind neu: Die alten gelten nur bis zum bisherigen Ablauf, teile also die neuen.",
+    extendedT: "Raum verlängert", extendedD: "Alle Links bleiben gleich.",
+    rotatedT: "Neue Links erstellt", rotatedD: "Die alten Verwaltungs-, Moderations- und Sprecherlinks gelten nicht mehr. Der Zuschauerlink bleibt gleich.",
     manageT: "Dein Raum", manageD: "Alle Links auf einen Blick.",
-    warn: "Speichere den Verwaltungslink. Wir speichern nichts und können ihn nicht wiederherstellen.",
-    expiredNote: "Dieser Raum ist abgelaufen. Verlängere ihn, um ihn wieder zu nutzen.",
-    manageL: "Verwalten", manageD: "Lesezeichen setzen! Bringt dich hierher zurück, zeigt alle Links und lässt dich verlängern.",
-    hostL: "Moderation", hostD: "Nur für dich. Wer diesen Link hat, moderiert den Raum.",
+    deletedT: "Raum gelöscht", deletedD: "Keiner der Links funktioniert mehr.",
+    warn: "Speichere den Verwaltungslink oder lade die Kalendererinnerung herunter. Wir speichern nur den Raumnamen, das Ablaufdatum und Prüfsummen deiner Links und können sie nicht wiederherstellen.",
+    migratedNote: "Dieser Raum stammt aus der alten Version und hat jetzt kurze Links. Nutze ab jetzt die Links unten. Die alten Links funktionieren weiter, bis sie ablaufen.",
+    expiredNote: "Dieser Raum ist abgelaufen und kann nicht mehr verlängert werden. Erstell einfach einen neuen.",
+    deletedNote: "Dieser Raum wurde gelöscht. Wer noch drin ist, wird innerhalb von zwei Minuten getrennt.",
+    manageL: "Verwalten", manageLD: "Lesezeichen setzen! Bringt dich hierher zurück, zum Verlängern, für neue Links oder zum Löschen.",
+    hostL: "Moderation", hostD: "Für dich und Co-Moderatoren. Wer diesen Link hat, moderiert den Raum.",
     speakerL: "Sprecher", speakerD: "Für Leute, die direkt mitreden sollen, ohne Moderationsrechte.",
-    guestL: "Zuschauer", guestD: "Zum Teilen mit allen anderen. Bleibt beim Verlängern gleich.",
+    guestL: "Zuschauer", guestD: "Zum Teilen mit allen anderen.",
     copy: "Kopieren", open: "Öffnen", copied: "In die Zwischenablage kopiert",
-    copyall: "Alle Links kopieren", expires: "Gültig bis",
+    copyall: "Alle Links kopieren", expires: "Gültig bis", ics: "Erinnerung (.ics)",
+    icsTitle: "FFMUC Meet: Raum verlängern",
+    icsDesc: (e, url) => `Dein reservierter Raum läuft am ${e} ab. Zum Verlängern öffnen: ${url}`,
     extTitle: "Verlängern", extButton: "Raum verlängern",
-    extInfo: (d) => `Du kannst den Raum bis zum ${d} beliebig oft verlängern, jeweils um die gewählte Dauer ab dem aktuellen Ablauf. Danach brauchst du einen neuen Raum.`,
-    extNo: "Dieser Raum kann nicht weiter verlängert werden.",
+    extInfo: (d) => `Die gewählte Dauer wird an das aktuelle Ablaufdatum angehängt, höchstens bis ${d}. Alle Links bleiben gleich. Verlängern geht, solange der Raum nicht abgelaufen ist.`,
+    extNo: (d) => `Der Raum ist schon so weit im Voraus reserviert wie möglich (bis ${d}). Später kannst du wieder verlängern.`,
+    dangerTitle: "Links ersetzen oder Raum löschen",
+    dangerInfo: "Ist ein Moderations- oder Sprecherlink in falsche Hände geraten? Neue Links machen die alten sofort ungültig, der Zuschauerlink bleibt. Löschen beendet den Raum endgültig.",
+    rotateButton: "Neue Links erstellen", deleteButton: "Raum löschen",
+    rotateConfirm: "Die alten Verwaltungs-, Moderations- und Sprecherlinks funktionieren danach nicht mehr. Fortfahren?",
+    deleteConfirm: "Raum endgültig löschen? Das kann nicht rückgängig gemacht werden.",
+    gone: {
+      invalid: "Dieser Link ist ungültig. Prüfe, ob er vollständig kopiert wurde.",
+      replaced: "Dieser Link wurde durch neue Links ersetzt. Frag die Moderation nach dem aktuellen Link.",
+      deleted: "Dieser Raum wurde gelöscht.",
+      expired: "Dieser Raum ist abgelaufen.",
+      unknown: "Diesen Link kennen wir nicht. Zum Verwalten brauchst du den Verwaltungs- oder Moderationslink.",
+    },
+    tooMany: "zu viele Anfragen, bitte später nochmal",
     another: "Neuen Raum erstellen", imprint: "Impressum", privacy: "Datenschutz",
     allText: (r, e) => `Verwalten: ${r.manage_url}\n\nModeration: ${r.host_url}\n\nSprecher: ${r.speaker_url}\n\nZuschauer: ${r.guest_url}\n\nGültig bis ${e}`,
   },
@@ -252,31 +297,50 @@ const T = {
     loading: "Loading room …",
     tabNew: "New room", tabManage: "Manage room",
     title: "Your reserved room, in seconds.",
-    intro: "A room that's yours. Three access levels: host (share it with co-hosts), speaker and viewer. Perfect for team meetings, talks, streams and assemblies. No account, no sign-up.",
+    intro: "A room of your own with links that stay. Three access levels: host, speaker and viewer. Perfect for team meetings, talks, streams and regular meetups like user groups. No account, no sign-up.",
     f1t: "Three access levels", f1d: "Share the host link with co-hosts and the speaker link with your team. Viewers raise their hand, you bring them on stage.",
-    f2t: "No guessable names", f2d: "The room name is random and cryptographically signed.",
-    f3t: "Expires on its own", f3d: "After a day, three days or a week, and you can extend it. We store nothing.",
+    f2t: "Short links that stay", f2d: "Extend as often as you like, up to a year ahead each time. The links never change, ideal for monthly meetups.",
+    f3t: "Ends on its own", f3d: "If you don't extend it, the room simply expires. You can also delete it at any time.",
     durL: "Duration", button: "Reserve room",
     working: "Quick anti-spam check …",
     failed: "That didn't work: ",
     openTitle: "Manage a room",
-    openIntro: "Paste your manage or host link to see all links again or extend the room.",
-    openHint: "The viewer link isn't enough for this.",
+    openIntro: "Paste your manage or host link to see all links, extend the room or delete it. Links from the old version work too.",
+    openHint: "Speaker and viewer links aren't enough for this.",
     openButton: "Open room", openEmpty: "please paste a link",
     createdT: "Your room is ready", createdD: "One link to manage, three for the roles.",
-    extendedT: "Room extended", extendedD: "The viewer link stays the same. Manage, host and speaker links are new: the old ones only work until the previous expiry, so share the new ones.",
+    extendedT: "Room extended", extendedD: "All links stay the same.",
+    rotatedT: "New links created", rotatedD: "The old manage, host and speaker links no longer work. The viewer link stays the same.",
     manageT: "Your room", manageD: "All links at a glance.",
-    warn: "Save the manage link. We store nothing and can't recover it.",
-    expiredNote: "This room has expired. Extend it to use it again.",
-    manageL: "Manage", manageD: "Bookmark this! It brings you back here, shows all links and lets you extend.",
-    hostL: "Host", hostD: "Only for you. Whoever has this link moderates the room.",
+    deletedT: "Room deleted", deletedD: "None of the links work any more.",
+    warn: "Save the manage link or download the calendar reminder. We only store the room name, the end date and checksums of your links, so we can't recover them.",
+    migratedNote: "This room was made with the old version and now has short links. Use the links below from now on. The old links keep working until they expire.",
+    expiredNote: "This room has expired and can't be extended any more. Just create a new one.",
+    deletedNote: "This room was deleted. Anyone still inside is disconnected within two minutes.",
+    manageL: "Manage", manageLD: "Bookmark this! It brings you back here to extend, get new links or delete the room.",
+    hostL: "Host", hostD: "For you and co-hosts. Whoever has this link moderates the room.",
     speakerL: "Speaker", speakerD: "For people who should talk directly, without moderator rights.",
-    guestL: "Viewer", guestD: "Share this with everyone else. Stays the same when you extend.",
+    guestL: "Viewer", guestD: "Share this with everyone else.",
     copy: "Copy", open: "Open", copied: "Copied to clipboard",
-    copyall: "Copy all links", expires: "Valid until",
+    copyall: "Copy all links", expires: "Valid until", ics: "Reminder (.ics)",
+    icsTitle: "FFMUC Meet: extend room",
+    icsDesc: (e, url) => `Your reserved room expires on ${e}. Open this to extend it: ${url}`,
     extTitle: "Extend", extButton: "Extend room",
-    extInfo: (d) => `You can extend this room as often as you like until ${d}, each time by the chosen duration from the current expiry. After that you'll need a new room.`,
-    extNo: "This room can't be extended any further.",
+    extInfo: (d) => `The chosen duration is added to the current end date, up to ${d} at most. All links stay the same. You can extend as long as the room hasn't expired.`,
+    extNo: (d) => `This room is already reserved as far ahead as possible (until ${d}). You can extend it again later.`,
+    dangerTitle: "Replace links or delete room",
+    dangerInfo: "Did a host or speaker link end up in the wrong hands? New links make the old ones stop working right away, the viewer link stays. Deleting ends the room for good.",
+    rotateButton: "Create new links", deleteButton: "Delete room",
+    rotateConfirm: "The old manage, host and speaker links will stop working. Continue?",
+    deleteConfirm: "Delete this room for good? This can't be undone.",
+    gone: {
+      invalid: "This link is invalid. Check that it was copied completely.",
+      replaced: "This link was replaced by new links. Ask the host for the current one.",
+      deleted: "This room was deleted.",
+      expired: "This room has expired.",
+      unknown: "We don't know this link. To manage a room you need its manage or host link.",
+    },
+    tooMany: "too many requests, try again later",
     another: "Create a new room", imprint: "Imprint", privacy: "Privacy",
     allText: (r, e) => `Manage: ${r.manage_url}\n\nHost: ${r.host_url}\n\nSpeaker: ${r.speaker_url}\n\nViewer: ${r.guest_url}\n\nValid until ${e}`,
   },
@@ -284,31 +348,50 @@ const T = {
     loading: "Chargement de la salle …",
     tabNew: "Nouvelle salle", tabManage: "Gérer la salle",
     title: "Ta salle réservée, en quelques secondes.",
-    intro: "Une salle rien qu'à toi. Trois niveaux d'accès : modération (à partager avec tes co-animateurs), intervenant et spectateur. Parfait pour réunions d'équipe, conférences, streams et assemblées. Sans compte, sans inscription.",
+    intro: "Une salle rien qu'à toi, avec des liens qui restent. Trois niveaux d'accès : modération, intervenant et spectateur. Parfait pour réunions d'équipe, conférences, streams et rencontres régulières comme les groupes d'utilisateurs. Sans compte, sans inscription.",
     f1t: "Trois niveaux d'accès", f1d: "Partage le lien de modération avec tes co-animateurs et le lien intervenant avec ton équipe. Les spectateurs lèvent la main, tu les fais monter sur scène.",
-    f2t: "Nom impossible à deviner", f2d: "Le nom de la salle est aléatoire et signé cryptographiquement.",
-    f3t: "Expire toute seule", f3d: "Après un jour, trois jours ou une semaine, prolongeable. Nous ne stockons rien.",
+    f2t: "Des liens courts qui restent", f2d: "Prolonge aussi souvent que tu veux, jusqu'à un an à l'avance à chaque fois. Les liens ne changent jamais, idéal pour des rencontres mensuelles.",
+    f3t: "Se termine toute seule", f3d: "Sans prolongation, la salle expire simplement. Tu peux aussi la supprimer à tout moment.",
     durL: "Durée", button: "Réserver la salle",
     working: "Petite vérification anti-spam …",
     failed: "Ça n'a pas marché : ",
     openTitle: "Gérer une salle",
-    openIntro: "Colle ton lien de gestion ou de modération pour revoir tous les liens ou prolonger la salle.",
-    openHint: "Le lien spectateur ne suffit pas.",
+    openIntro: "Colle ton lien de gestion ou de modération pour voir tous les liens, prolonger la salle ou la supprimer. Les liens de l'ancienne version fonctionnent aussi.",
+    openHint: "Les liens intervenant et spectateur ne suffisent pas.",
     openButton: "Ouvrir la salle", openEmpty: "merci de coller un lien",
     createdT: "Ta salle est prête", createdD: "Un lien pour gérer, trois pour les rôles.",
-    extendedT: "Salle prolongée", extendedD: "Le lien spectateur reste le même. Les liens de gestion, de modération et d'intervenant sont nouveaux : les anciens ne fonctionnent que jusqu'à l'ancienne expiration, partage donc les nouveaux.",
+    extendedT: "Salle prolongée", extendedD: "Tous les liens restent les mêmes.",
+    rotatedT: "Nouveaux liens créés", rotatedD: "Les anciens liens de gestion, de modération et d'intervenant ne fonctionnent plus. Le lien spectateur reste le même.",
     manageT: "Ta salle", manageD: "Tous les liens en un coup d'œil.",
-    warn: "Garde le lien de gestion. Nous ne stockons rien et ne pouvons pas le récupérer.",
-    expiredNote: "Cette salle a expiré. Prolonge-la pour la réutiliser.",
-    manageL: "Gérer", manageD: "Ajoute-le aux favoris ! Il te ramène ici, affiche tous les liens et permet de prolonger.",
-    hostL: "Modération", hostD: "Rien que pour toi. Quiconque a ce lien modère la salle.",
+    deletedT: "Salle supprimée", deletedD: "Plus aucun lien ne fonctionne.",
+    warn: "Garde le lien de gestion ou télécharge le rappel pour ton agenda. Nous ne stockons que le nom de la salle, la date de fin et des empreintes de tes liens, nous ne pouvons donc pas les récupérer.",
+    migratedNote: "Cette salle vient de l'ancienne version et a maintenant des liens courts. Utilise désormais les liens ci-dessous. Les anciens liens fonctionnent jusqu'à leur expiration.",
+    expiredNote: "Cette salle a expiré et ne peut plus être prolongée. Crée simplement une nouvelle salle.",
+    deletedNote: "Cette salle a été supprimée. Les personnes encore présentes sont déconnectées sous deux minutes.",
+    manageL: "Gérer", manageLD: "Ajoute-le aux favoris ! Il te ramène ici pour prolonger, obtenir de nouveaux liens ou supprimer la salle.",
+    hostL: "Modération", hostD: "Pour toi et tes co-animateurs. Quiconque a ce lien modère la salle.",
     speakerL: "Intervenant", speakerD: "Pour les personnes qui doivent parler directement, sans droits de modération.",
-    guestL: "Spectateur", guestD: "À partager avec tout le monde. Reste identique en cas de prolongation.",
+    guestL: "Spectateur", guestD: "À partager avec tout le monde.",
     copy: "Copier", open: "Ouvrir", copied: "Copié dans le presse-papiers",
-    copyall: "Copier tous les liens", expires: "Valable jusqu'au",
+    copyall: "Copier tous les liens", expires: "Valable jusqu'au", ics: "Rappel (.ics)",
+    icsTitle: "FFMUC Meet : prolonger la salle",
+    icsDesc: (e, url) => `Ta salle réservée expire le ${e}. Ouvre ce lien pour la prolonger : ${url}`,
     extTitle: "Prolonger", extButton: "Prolonger la salle",
-    extInfo: (d) => `Tu peux prolonger la salle autant de fois que tu veux jusqu'au ${d}, à chaque fois de la durée choisie à partir de l'expiration actuelle. Ensuite, il te faudra une nouvelle salle.`,
-    extNo: "Cette salle ne peut plus être prolongée.",
+    extInfo: (d) => `La durée choisie s'ajoute à la date de fin actuelle, au plus jusqu'au ${d}. Tous les liens restent les mêmes. Tu peux prolonger tant que la salle n'a pas expiré.`,
+    extNo: (d) => `Cette salle est déjà réservée aussi loin que possible (jusqu'au ${d}). Tu pourras la prolonger plus tard.`,
+    dangerTitle: "Remplacer les liens ou supprimer la salle",
+    dangerInfo: "Un lien de modération ou d'intervenant est tombé entre de mauvaises mains ? De nouveaux liens rendent les anciens invalides immédiatement, le lien spectateur reste. La suppression met fin à la salle définitivement.",
+    rotateButton: "Créer de nouveaux liens", deleteButton: "Supprimer la salle",
+    rotateConfirm: "Les anciens liens de gestion, de modération et d'intervenant ne fonctionneront plus. Continuer ?",
+    deleteConfirm: "Supprimer définitivement cette salle ? C'est irréversible.",
+    gone: {
+      invalid: "Ce lien n'est pas valide. Vérifie qu'il a été copié en entier.",
+      replaced: "Ce lien a été remplacé par de nouveaux liens. Demande le lien actuel à la modération.",
+      deleted: "Cette salle a été supprimée.",
+      expired: "Cette salle a expiré.",
+      unknown: "Nous ne connaissons pas ce lien. Pour gérer une salle, il te faut son lien de gestion ou de modération.",
+    },
+    tooMany: "trop de requêtes, réessaie plus tard",
     another: "Créer une nouvelle salle", imprint: "Mentions légales", privacy: "Confidentialité",
     allText: (r, e) => `Gérer : ${r.manage_url}\n\nModération : ${r.host_url}\n\nIntervenant : ${r.speaker_url}\n\nSpectateur : ${r.guest_url}\n\nValable jusqu'au ${e}`,
   },
@@ -316,31 +399,50 @@ const T = {
     loading: "Cargando sala …",
     tabNew: "Nueva sala", tabManage: "Gestionar sala",
     title: "Tu sala reservada, en segundos.",
-    intro: "Una sala solo tuya. Tres niveles de acceso: moderación (compártelo con quienes co-moderan), ponente y espectador. Perfecta para reuniones de equipo, charlas, streams y asambleas. Sin cuenta, sin registro.",
+    intro: "Una sala solo tuya, con enlaces que no cambian. Tres niveles de acceso: moderación, ponente y espectador. Perfecta para reuniones de equipo, charlas, streams y encuentros regulares como grupos de usuarios. Sin cuenta, sin registro.",
     f1t: "Tres niveles de acceso", f1d: "Comparte el enlace de moderación con quienes co-moderan y el de ponente con tu equipo. Los espectadores levantan la mano y tú los subes al escenario.",
-    f2t: "Nombres imposibles de adivinar", f2d: "El nombre de la sala es aleatorio y está firmado criptográficamente.",
-    f3t: "Caduca sola", f3d: "Tras un día, tres días o una semana, y se puede ampliar. No guardamos nada.",
+    f2t: "Enlaces cortos que no cambian", f2d: "Amplía tantas veces como quieras, cada vez hasta un año por adelantado. Los enlaces nunca cambian, ideal para encuentros mensuales.",
+    f3t: "Termina sola", f3d: "Si no la amplías, la sala simplemente caduca. También puedes borrarla cuando quieras.",
     durL: "Duración", button: "Reservar sala",
     working: "Breve comprobación anti-spam …",
     failed: "No ha funcionado: ",
     openTitle: "Gestionar una sala",
-    openIntro: "Pega tu enlace de gestión o de moderación para ver de nuevo todos los enlaces o ampliar la sala.",
-    openHint: "El enlace de espectador no basta.",
+    openIntro: "Pega tu enlace de gestión o de moderación para ver todos los enlaces, ampliar la sala o borrarla. Los enlaces de la versión anterior también funcionan.",
+    openHint: "Los enlaces de ponente y de espectador no bastan.",
     openButton: "Abrir sala", openEmpty: "pega un enlace, por favor",
     createdT: "Tu sala está lista", createdD: "Un enlace para gestionar, tres para los roles.",
-    extendedT: "Sala ampliada", extendedD: "El enlace de espectador no cambia. Los enlaces de gestión, moderación y ponente son nuevos: los anteriores solo funcionan hasta el vencimiento anterior, así que comparte los nuevos.",
+    extendedT: "Sala ampliada", extendedD: "Todos los enlaces siguen igual.",
+    rotatedT: "Enlaces nuevos creados", rotatedD: "Los enlaces anteriores de gestión, moderación y ponente ya no funcionan. El enlace de espectador no cambia.",
     manageT: "Tu sala", manageD: "Todos los enlaces de un vistazo.",
-    warn: "Guarda el enlace de gestión. No guardamos nada y no podemos recuperarlo.",
-    expiredNote: "Esta sala ha caducado. Amplíala para volver a usarla.",
-    manageL: "Gestionar", manageD: "¡Guárdalo en favoritos! Te trae de vuelta aquí, muestra todos los enlaces y permite ampliar.",
-    hostL: "Moderación", hostD: "Solo para ti. Quien tenga este enlace modera la sala.",
+    deletedT: "Sala borrada", deletedD: "Ninguno de los enlaces funciona ya.",
+    warn: "Guarda el enlace de gestión o descarga el recordatorio para tu calendario. Solo guardamos el nombre de la sala, la fecha de fin y sumas de comprobación de tus enlaces, así que no podemos recuperarlos.",
+    migratedNote: "Esta sala se creó con la versión anterior y ahora tiene enlaces cortos. Usa a partir de ahora los enlaces de abajo. Los enlaces anteriores siguen funcionando hasta que caduquen.",
+    expiredNote: "Esta sala ha caducado y ya no se puede ampliar. Crea una nueva sin más.",
+    deletedNote: "Esta sala se ha borrado. Quien siga dentro se desconecta en menos de dos minutos.",
+    manageL: "Gestionar", manageLD: "¡Guárdalo en favoritos! Te trae de vuelta aquí para ampliar, obtener enlaces nuevos o borrar la sala.",
+    hostL: "Moderación", hostD: "Para ti y quienes co-moderan. Quien tenga este enlace modera la sala.",
     speakerL: "Ponente", speakerD: "Para quien deba hablar directamente, sin permisos de moderación.",
-    guestL: "Espectador", guestD: "Compártelo con todos los demás. No cambia al ampliar.",
+    guestL: "Espectador", guestD: "Compártelo con todos los demás.",
     copy: "Copiar", open: "Abrir", copied: "Copiado al portapapeles",
-    copyall: "Copiar todos los enlaces", expires: "Válida hasta",
+    copyall: "Copiar todos los enlaces", expires: "Válida hasta", ics: "Recordatorio (.ics)",
+    icsTitle: "FFMUC Meet: ampliar la sala",
+    icsDesc: (e, url) => `Tu sala reservada caduca el ${e}. Abre este enlace para ampliarla: ${url}`,
     extTitle: "Ampliar", extButton: "Ampliar sala",
-    extInfo: (d) => `Puedes ampliar la sala tantas veces como quieras hasta el ${d}, cada vez por la duración elegida desde el vencimiento actual. Después necesitarás una sala nueva.`,
-    extNo: "Esta sala ya no se puede ampliar más.",
+    extInfo: (d) => `La duración elegida se suma a la fecha de fin actual, como máximo hasta el ${d}. Todos los enlaces siguen igual. Puedes ampliar mientras la sala no haya caducado.`,
+    extNo: (d) => `Esta sala ya está reservada con la máxima antelación posible (hasta el ${d}). Podrás ampliarla más adelante.`,
+    dangerTitle: "Sustituir enlaces o borrar la sala",
+    dangerInfo: "¿Un enlace de moderación o de ponente ha caído en malas manos? Los enlaces nuevos invalidan los anteriores al instante; el de espectador no cambia. Borrar termina la sala para siempre.",
+    rotateButton: "Crear enlaces nuevos", deleteButton: "Borrar sala",
+    rotateConfirm: "Los enlaces anteriores de gestión, moderación y ponente dejarán de funcionar. ¿Continuar?",
+    deleteConfirm: "¿Borrar esta sala para siempre? No se puede deshacer.",
+    gone: {
+      invalid: "Este enlace no es válido. Comprueba que se haya copiado completo.",
+      replaced: "Este enlace se ha sustituido por enlaces nuevos. Pide el actual a quien modera.",
+      deleted: "Esta sala se ha borrado.",
+      expired: "Esta sala ha caducado.",
+      unknown: "No conocemos este enlace. Para gestionar una sala necesitas su enlace de gestión o de moderación.",
+    },
+    tooMany: "demasiadas solicitudes, inténtalo más tarde",
     another: "Crear una sala nueva", imprint: "Aviso legal", privacy: "Privacidad",
     allText: (r, e) => `Gestionar: ${r.manage_url}\n\nModeración: ${r.host_url}\n\nPonente: ${r.speaker_url}\n\nEspectador: ${r.guest_url}\n\nVálida hasta ${e}`,
   },
@@ -348,31 +450,50 @@ const T = {
     loading: "Завантаження кімнати …",
     tabNew: "Нова кімната", tabManage: "Керувати кімнатою",
     title: "Твоя зарезервована кімната за лічені секунди.",
-    intro: "Кімната, яка належить тобі. Три рівні доступу: модерація (можна поділитися зі співмодераторами), спікер і глядач. Ідеально для командних нарад, доповідей, трансляцій і зборів. Без облікового запису, без реєстрації.",
+    intro: "Власна кімната з постійними посиланнями. Три рівні доступу: модерація, спікер і глядач. Ідеально для командних нарад, доповідей, трансляцій і регулярних зустрічей, як-от груп користувачів. Без облікового запису, без реєстрації.",
     f1t: "Три рівні доступу", f1d: "Поділися посиланням модератора зі співмодераторами, а посиланням спікера зі своєю командою. Глядачі піднімають руку, а ти запрошуєш їх на сцену.",
-    f2t: "Назву неможливо вгадати", f2d: "Назва кімнати випадкова й криптографічно підписана.",
-    f3t: "Зникає сама", f3d: "Через день, три дні або тиждень, можна продовжити. Ми нічого не зберігаємо.",
+    f2t: "Короткі постійні посилання", f2d: "Продовжуй скільки завгодно разів, щоразу до року наперед. Посилання не змінюються, ідеально для щомісячних зустрічей.",
+    f3t: "Завершується сама", f3d: "Якщо не продовжити, кімната просто завершиться. Також її можна будь-коли видалити.",
     durL: "Тривалість", button: "Зарезервувати кімнату",
     working: "Коротка перевірка від спаму …",
     failed: "Не вдалося: ",
     openTitle: "Керувати кімнатою",
-    openIntro: "Встав посилання для керування або модерації, щоб знову побачити всі посилання чи продовжити кімнату.",
-    openHint: "Посилання для глядачів для цього не підходить.",
+    openIntro: "Встав посилання для керування або модерації, щоб побачити всі посилання, продовжити або видалити кімнату. Посилання зі старої версії теж працюють.",
+    openHint: "Посилань для спікерів і глядачів для цього недостатньо.",
     openButton: "Відкрити кімнату", openEmpty: "встав, будь ласка, посилання",
     createdT: "Твоя кімната готова", createdD: "Одне посилання для керування, три для ролей.",
-    extendedT: "Кімнату продовжено", extendedD: "Посилання для глядачів не змінюється. Посилання для керування, модерації та спікерів нові: старі діють лише до попереднього завершення, тож поширюйте нові.",
+    extendedT: "Кімнату продовжено", extendedD: "Усі посилання залишаються незмінними.",
+    rotatedT: "Нові посилання створено", rotatedD: "Старі посилання для керування, модерації та спікерів більше не діють. Посилання для глядачів не змінюється.",
     manageT: "Твоя кімната", manageD: "Усі посилання на одному екрані.",
-    warn: "Збережи посилання для керування. Ми нічого не зберігаємо і не зможемо його відновити.",
-    expiredNote: "Термін дії кімнати минув. Продовж її, щоб знову користуватися.",
-    manageL: "Керування", manageD: "Додай у закладки! Повертає сюди, показує всі посилання й дозволяє продовжити.",
-    hostL: "Модерація", hostD: "Лише для тебе. Хто має це посилання, модерує кімнату.",
+    deletedT: "Кімнату видалено", deletedD: "Жодне з посилань більше не працює.",
+    warn: "Збережи посилання для керування або завантаж нагадування в календар. Ми зберігаємо лише назву кімнати, дату завершення та контрольні суми твоїх посилань, тож не зможемо їх відновити.",
+    migratedNote: "Цю кімнату створено в старій версії, тепер у неї короткі посилання. Відтепер користуйся посиланнями нижче. Старі посилання працюють, доки не завершиться їхній термін.",
+    expiredNote: "Термін дії кімнати минув, продовжити її вже не можна. Просто створи нову.",
+    deletedNote: "Цю кімнату видалено. Усіх, хто ще в ній, буде від'єднано протягом двох хвилин.",
+    manageL: "Керування", manageLD: "Додай у закладки! Повертає сюди, щоб продовжити, отримати нові посилання або видалити кімнату.",
+    hostL: "Модерація", hostD: "Для тебе та співмодераторів. Хто має це посилання, модерує кімнату.",
     speakerL: "Спікер", speakerD: "Для тих, хто має говорити напряму, без прав модератора.",
-    guestL: "Глядач", guestD: "Поділися з усіма іншими. Не змінюється під час продовження.",
+    guestL: "Глядач", guestD: "Поділися з усіма іншими.",
     copy: "Копіювати", open: "Відкрити", copied: "Скопійовано в буфер обміну",
-    copyall: "Копіювати всі посилання", expires: "Дійсна до",
+    copyall: "Копіювати всі посилання", expires: "Дійсна до", ics: "Нагадування (.ics)",
+    icsTitle: "FFMUC Meet: продовжити кімнату",
+    icsDesc: (e, url) => `Термін дії твоєї кімнати завершується ${e}. Відкрий, щоб продовжити: ${url}`,
     extTitle: "Продовжити", extButton: "Продовжити кімнату",
-    extInfo: (d) => `Кімнату можна продовжувати скільки завгодно разів до ${d}, щоразу на вибраний термін від поточного завершення. Після цього знадобиться нова кімната.`,
-    extNo: "Цю кімнату більше не можна продовжити.",
+    extInfo: (d) => `Вибраний термін додається до поточної дати завершення, але не далі ніж до ${d}. Усі посилання залишаються незмінними. Продовжувати можна, доки термін кімнати не минув.`,
+    extNo: (d) => `Кімнату вже зарезервовано наперед на максимальний строк (до ${d}). Пізніше її можна буде продовжити знову.`,
+    dangerTitle: "Замінити посилання або видалити кімнату",
+    dangerInfo: "Посилання модератора чи спікера потрапило не в ті руки? Нові посилання одразу роблять старі недійсними, посилання для глядачів не змінюється. Видалення назавжди завершує кімнату.",
+    rotateButton: "Створити нові посилання", deleteButton: "Видалити кімнату",
+    rotateConfirm: "Старі посилання для керування, модерації та спікерів перестануть працювати. Продовжити?",
+    deleteConfirm: "Видалити цю кімнату назавжди? Це не можна скасувати.",
+    gone: {
+      invalid: "Це посилання недійсне. Перевір, чи його скопійовано повністю.",
+      replaced: "Це посилання замінено новими. Попроси в модератора актуальне.",
+      deleted: "Цю кімнату видалено.",
+      expired: "Термін дії цієї кімнати минув.",
+      unknown: "Ми не знаємо цього посилання. Для керування потрібне посилання для керування або модерації.",
+    },
+    tooMany: "забагато запитів, спробуй пізніше",
     another: "Створити нову кімнату", imprint: "Імпресум", privacy: "Конфіденційність",
     allText: (r, e) => `Керування: ${r.manage_url}\n\nМодерація: ${r.host_url}\n\nСпікер: ${r.speaker_url}\n\nГлядач: ${r.guest_url}\n\nДійсна до ${e}`,
   },
@@ -399,14 +520,15 @@ Object.entries(LANGS).forEach(([k, label]) => {
   b.onclick = () => { try { localStorage.setItem("ffmuc-reserve-lang", k); } catch (e) {} location.reload(); };
   $("langs").append(b);
 });
-$("extIn").placeholder = "https://meet.ffmuc.net/reserve/#m=…";
+$("extIn").placeholder = location.origin + "/reserve/#k=…";
 
 function $(id) { return document.getElementById(id); }
 const base = location.pathname.replace(/\/+$/, "");
 const fmt = (iso) => new Date(iso).toLocaleString(lang, { dateStyle: "medium", timeStyle: "short" });
 const show = (id, on, disp = "block") => { $(id).style.display = on ? disp : "none"; };
-let result = null, challenge = null, durations = [24, 72, 168], defaultHours = 72;
+let result = null, key = "", challenge = null, durations = [72, 168, 720, 2160, 8760], defaultHours = 72, maxAheadH = 8760;
 const picked = { durNew: 0, durExt: 0 };
+const busy = (on) => ["goNew", "goOpen", "goExt", "goRotate", "goDelete"].forEach(id => $(id).disabled = on);
 
 function toast(msg) {
   const el = $("toast"); el.textContent = msg; el.classList.add("show");
@@ -428,6 +550,7 @@ async function fetchChallenge() {
   const c = await (await fetch(base + "/api/challenge", { cache: "no-store" })).json();
   if (c.durations) durations = c.durations;
   if (c.default) defaultHours = c.default;
+  if (c.max_ahead_h) maxAheadH = c.max_ahead_h;
   renderDurations("durNew"); renderDurations("durExt");
   return c;
 }
@@ -477,8 +600,23 @@ function solve(challenge, difficulty, onProgress) {
   });
 }
 
-// Solves the proof of work and POSTs to /api/reserve. extend = host token or "".
-async function reserve(workId, hours, extend) {
+// Server errors that have a translated explanation.
+const known = {
+  "room was deleted": "deleted", "room expired": "expired",
+  "this link was replaced by new links": "replaced", "unknown room or not a host link": "unknown",
+  "no host link found": "unknown",
+};
+async function api(path, body) {
+  const r = await fetch(base + "/api/" + path, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+  });
+  const j = await r.json().catch(() => ({ error: "HTTP " + r.status }));
+  if (!r.ok) throw new Error(r.status === 429 ? t.tooMany : t.gone[known[j.error]] || j.error || "HTTP " + r.status);
+  return j;
+}
+
+// Solves the proof of work, then POSTs body plus challenge and nonce.
+async function withWork(workId, path, body) {
   const work = $(workId), bar = work.querySelector("i"), rate = work.querySelector(".rate");
   bar.style.width = "0"; rate.textContent = ""; work.style.display = "block";
   try {
@@ -489,45 +627,86 @@ async function reserve(workId, hours, extend) {
       const s = (performance.now() - t0) / 1000;
       if (s > .2) rate.textContent = Math.round(h / s / 1000) + "k H/s";
     });
-    const r = await fetch(base + "/api/reserve", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ challenge: c.challenge, nonce, hours, extend }),
-    });
-    const j = await r.json().catch(() => ({ error: "HTTP " + r.status }));
-    if (!r.ok) throw new Error(r.status === 429 ? (lang === "de" ? "zu viele Anfragen, bitte später nochmal" : "too many requests, try again later") : (j.error || "HTTP " + r.status));
-    return j;
+    return await api(path, { ...body, challenge: c.challenge, nonce });
   } finally {
     work.style.display = "none";
     prefetch();
   }
 }
 
-async function loadLinks(link) {
-  const r = await fetch(base + "/api/links", {
-    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ host: link }),
-  });
-  const j = await r.json().catch(() => ({ error: "HTTP " + r.status }));
-  if (!r.ok) throw new Error(j.error || "HTTP " + r.status);
-  return j;
-}
-
 function showRoom(j, kind) {
   result = j;
-  const now = Date.now(), expired = new Date(j.expires) <= now, canExtend = new Date(j.extendable_until) > now;
+  key = j.manage_url.split("#k=")[1] || "";
+  if (j.durations) durations = j.durations;
+  if (j.max_ahead_h) maxAheadH = j.max_ahead_h;
+  const active = j.status === "active";
+  if (j.status === "deleted") kind = "deleted";
   $("doneT").textContent = t[kind + "T"]; $("doneD").textContent = t[kind + "D"];
-  show("doneIcon", !expired, "grid");
-  show("warn", kind !== "manage", "flex");
-  show("expiredNote", expired);
+  show("doneIcon", active, "grid");
+  show("migratedNote", !!j.migrated && active, "flex");
+  $("statusNote").textContent = j.status === "deleted" ? t.deletedNote : j.status === "expired" ? t.expiredNote : "";
+  show("statusNote", !active, "flex");
+  show("warn", active && (kind === "created" || kind === "rotated" || !!j.migrated), "flex");
+  show("links", active);
   ["manage", "host", "speaker", "guest"].forEach(k => $(k).value = j[k + "_url"]);
   $("open").href = j.host_url;
   $("expires").textContent = fmt(j.expires);
-  $("extInfo").textContent = canExtend ? t.extInfo(fmt(j.extendable_until)) : t.extNo;
-  show("durExt", canExtend, "grid"); show("goExt", canExtend); show("errExt", false);
-  history.replaceState(null, "", base + "/#m=" + j.manage_url.split("#m=")[1]);
+  const cap = new Date(Date.now() + maxAheadH * 3600e3);
+  const canExtend = new Date(j.expires).getTime() < cap.getTime() - 3600e3;
+  $("extInfo").textContent = canExtend ? t.extInfo(fmt(cap)) : t.extNo(fmt(j.expires));
+  renderDurations("durExt");
+  show("durExt", canExtend, "grid"); show("goExt", canExtend);
+  ["errExt", "errDanger"].forEach(id => show(id, false));
+  history.replaceState(null, "", active ? base + "/#k=" + key : base + "/");
   show("loading", false); show("start", false); show("result", true);
   show("newLink", true, "inline"); show("sep", true, "inline");
   $("result").style.animation = "none"; void $("result").offsetWidth; $("result").style.animation = "";
 }
+
+// Calendar reminder a week before the end (or a day, if that's already past),
+// carrying the manage link. A fixed UID lets calendars replace the old
+// reminder after an extension.
+function icsFile(r) {
+  const exp = new Date(r.expires).getTime(), now = Date.now();
+  let at = exp - 7 * 864e5;
+  if (at < now + 3600e3) at = exp - 864e5;
+  if (at < now + 3600e3) at = Math.min(now + 3600e3, exp - 900e3);
+  const stamp = (ms) => new Date(ms).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  const esc = (s) => s.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
+  const enc = new TextEncoder();
+  const fold = (line) => {
+    const out = []; let cur = "", n = 0;
+    for (const ch of line) {
+      const b = enc.encode(ch).length;
+      if (n + b > (out.length ? 74 : 75)) { out.push(cur); cur = ""; n = 0; }
+      cur += ch; n += b;
+    }
+    out.push(cur);
+    return out.join("\r\n ");
+  };
+  const desc = t.icsDesc(fmt(r.expires), r.manage_url);
+  return [
+    "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//FFMUC//meet-reserve//EN", "CALSCALE:GREGORIAN", "METHOD:PUBLISH",
+    "BEGIN:VEVENT",
+    "UID:reserve-" + r.room + "@meet.ffmuc.net",
+    "SEQUENCE:" + Math.floor(exp / 60000 - 29e6),
+    "DTSTAMP:" + stamp(now),
+    "DTSTART:" + stamp(at), "DTEND:" + stamp(at + 1800e3),
+    "SUMMARY:" + esc(t.icsTitle),
+    "DESCRIPTION:" + esc(desc),
+    "URL:" + r.manage_url,
+    "TRANSP:TRANSPARENT",
+    "BEGIN:VALARM", "ACTION:DISPLAY", "TRIGGER:PT0S", "DESCRIPTION:" + esc(t.icsTitle), "END:VALARM",
+    "END:VEVENT", "END:VCALENDAR", "",
+  ].map(fold).join("\r\n");
+}
+$("ics").onclick = () => {
+  if (!result) return;
+  const url = URL.createObjectURL(new Blob([icsFile(result)], { type: "text/calendar;charset=utf-8" }));
+  const a = document.createElement("a"); a.href = url; a.download = "ffmuc-meet-room.ics";
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+};
 
 function setTab(ext) {
   $("tabNew").setAttribute("aria-selected", !ext); $("tabExt").setAttribute("aria-selected", ext);
@@ -537,30 +716,38 @@ function setTab(ext) {
 $("tabNew").onclick = () => setTab(false);
 $("tabExt").onclick = () => setTab(true);
 
-$("goNew").onclick = async () => {
-  show("errNew", false); $("goNew").disabled = true;
-  try { showRoom(await reserve("workNew", picked.durNew, ""), "created"); }
-  catch (e) { fail("errNew", e.message); }
-  finally { $("goNew").disabled = false; }
-};
-$("goOpen").onclick = async () => {
-  show("errOpen", false);
+async function run(errId, fn) {
+  show(errId, false); busy(true);
+  try { await fn(); }
+  catch (e) { fail(errId, e.message); }
+  finally { busy(false); }
+}
+$("goNew").onclick = () => run("errNew", async () => {
+  showRoom(await withWork("workNew", "reserve", { hours: picked.durNew }), "created");
+});
+$("goOpen").onclick = () => run("errOpen", async () => {
   const v = $("extIn").value.trim();
-  if (!v) return fail("errOpen", t.openEmpty);
-  $("goOpen").disabled = true;
-  try { showRoom(await loadLinks(v), "manage"); }
-  catch (e) { fail("errOpen", e.message); }
-  finally { $("goOpen").disabled = false; }
-};
+  if (!v) throw new Error(t.openEmpty);
+  showRoom(await api("manage", { key: v }), "manage");
+});
 $("extIn").addEventListener("keydown", (e) => { if (e.key === "Enter") $("goOpen").click(); });
-$("goExt").onclick = async () => {
-  show("errExt", false); $("goExt").disabled = true;
-  try { showRoom(await reserve("workExt", picked.durExt, result.host_url), "extended"); }
-  catch (e) { fail("errExt", e.message); }
-  finally { $("goExt").disabled = false; }
+$("goExt").onclick = () => run("errExt", async () => {
+  showRoom(await withWork("workExt", "extend", { key, hours: picked.durExt }), "extended");
+});
+$("goRotate").onclick = () => {
+  if (!confirm(t.rotateConfirm)) return;
+  run("errDanger", async () => showRoom(await api("rotate", { key }), "rotated"));
+};
+$("goDelete").onclick = () => {
+  if (!confirm(t.deleteConfirm)) return;
+  run("errDanger", async () => {
+    await api("delete", { key });
+    showRoom({ ...result, status: "deleted" }, "deleted");
+  });
 };
 $("newLink").onclick = (e) => {
   e.preventDefault(); history.replaceState(null, "", base + "/");
+  result = null; key = "";
   show("result", false); show("start", true); show("newLink", false); show("sep", false); setTab(false);
 };
 
@@ -574,12 +761,18 @@ $("copyall").onclick = () => result && copy(t.allText(result, fmt(result.expires
 
 renderDurations("durNew"); renderDurations("durExt");
 prefetch();
-if (location.hash.startsWith("#m=")) {
+const hash = location.hash;
+if (hash.startsWith("#k=") || hash.startsWith("#m=")) {
   show("start", false); show("loading", true);
-  loadLinks(location.hash).then(j => showRoom(j, "manage")).catch(e => {
+  api("manage", { key: hash }).then(j => showRoom(j, "manage")).catch(e => {
     show("loading", false); show("start", true); setTab(true);
     $("extIn").value = location.href; fail("errOpen", e.message);
   });
+} else if (hash.startsWith("#gone=")) {
+  const why = hash.slice(6);
+  $("goneNote").textContent = t.gone[Object.hasOwn(t.gone, why) ? why : "invalid"];
+  show("goneNote", true, "flex");
+  history.replaceState(null, "", base + "/");
 }
 </script>
 </body>

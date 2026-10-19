@@ -132,7 +132,10 @@ jitsi:
   signed_rooms:
     enabled: false
     public_keys: {}             # key id -> base64 raw ed25519 public key
-    max_extension: 2592000      # seconds tokens may be extended past the room name expiry
+    max_extension: 2592000      # v1 rooms: seconds tokens may be extended past the room name expiry
+    lookup_url: ""              # room state API, default https://<public_domain>/reserve/api/room/
+    lookup_ttl: 60              # seconds a room state is cached (also the delay until rotated links stop working for new joins)
+    lookup_grace: 600           # seconds a cached state is still used while meet-reserve is unreachable, then short rooms are refused
 
   # Transcription through jigasi (transcriber) + vosk, see jitsi/vosk
   transcription:

@@ -78,6 +78,10 @@ VirtualHost "{{ jitsi.xmpp.xmpp_domain }}"
     ffmuc_signed_rooms_max_extension = {{ jitsi.signed_rooms.max_extension }}
     ffmuc_signed_rooms_auto_promote_unsigned = {{ "true" if jitsi.visitors.auto_allow_promotion else "false" }}
     ffmuc_signed_rooms_focus_jid = "focus@{{ jitsi.xmpp.auth_domain }}"
+    ffmuc_signed_rooms_focus_component = "focus.{{ jitsi.public_domain }}"
+    ffmuc_signed_rooms_lookup_url = "{{ jitsi.signed_rooms.lookup_url | default('https://' ~ jitsi.public_domain ~ '/reserve/api/room/', true) }}"
+    ffmuc_signed_rooms_lookup_ttl = {{ jitsi.signed_rooms.lookup_ttl }}
+    ffmuc_signed_rooms_lookup_grace = {{ jitsi.signed_rooms.lookup_grace }}
     {%- endif %}
     {%- if jitsi.transcription.enabled %}
     muc_lobby_whitelist = { "recorder.{{ jitsi.public_domain }}" }
