@@ -57,6 +57,10 @@ grafana:
   file.managed:
     - source: salt://grafana/ldap.toml.tmpl
     - template: jinja
+    - user: root
+    - group: grafana
+    - mode: '0640'
+    - show_changes: False
     - require:
       - pkg: grafana
 

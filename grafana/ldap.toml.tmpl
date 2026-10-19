@@ -21,10 +21,10 @@ ssl_skip_verify = true
 # root_ca_cert = /path/to/certificate.crt
 
 # Search user bind dn
-bind_dn = "cn=binduser,dc=ffmuc,dc=net"
+bind_dn = "{{ salt['pillar.get']('grafana:ldap:bind_dn', 'cn=binduser,dc=ffmuc,dc=net') }}"
 # Search user bind password
 # If the password contains # or ; you have to wrap it with trippel quotes. Ex """#password;"""
-bind_password = "{{ salt['config.get']('netbox:services:ldap.in.ffmuc.net:custom_fields:api_token') }}"
+bind_password = """{{ salt['pillar.get']('grafana:ldap:bind_password', salt['config.get']('netbox:services:ldap.in.ffmuc.net:custom_fields:api_token')) }}"""
 
 # User search filter, for example "(cn=%s)" or "(sAMAccountName=%s)" or "(uid=%s)"
 search_filter = "(cn=%s)"
