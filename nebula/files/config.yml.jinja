@@ -137,6 +137,15 @@ firewall:
   - port: 60001-60010
     proto: udp
     host: any
+{%- set meet_reserve = salt["pillar.get"]("netbox:config_context:meet_reserve", {}) %}
+{%- if meet_reserve.get("enabled", False) %}
+    # meet-reserve room sync between the signers
+  {%- for signer in meet_reserve.get("signers", []) if signer != grains["id"] %}
+  - port: 8096
+    proto: tcp
+    host: {{ signer }}
+  {%- endfor %}
+{%- endif %}
 {%- if salt["pillar.get"]("netbox:config_context:komodo:periphery:enabled", False) %}
     # Komodo Periphery, reached by Komodo Core
   - port: 8120

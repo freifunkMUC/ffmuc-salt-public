@@ -1,21 +1,43 @@
--- FFMUC signed viewers-only rooms.
+-- FFMUC reserved viewers-only rooms.
 --
--- Rooms named "r-<base32(payload || ed25519 sig)>" are minted by meet-reserve.
--- Prosody only holds the public keys: it refuses unsigned or expired "r-" rooms,
--- accepts meet-reserve EdDSA tokens (host/speaker) and turns the room into a
--- visitors room where only the host and speakers join the main room.
+-- meet-reserve hands out "r-" rooms and EdDSA tokens (host/speaker). Prosody
+-- verifies the tokens with the public keys and turns the room into a visitors
+-- room where only the host and speakers join the main room.
+--
+-- Two room formats:
+--  * short "r-" + 14 chars: a record replicated between the meet-reserve
+--    signers decides whether the room is active, and which tokens count
+--    (only those with the room's current rotation "gen"). Prosody asks
+--    <lookup_url><room> and caches the answer for lookup_ttl. While
+--    meet-reserve is unreachable the last answer is used for up to
+--    lookup_grace, after that the room is refused.
+--  * v1 "r-<base32(payload || ed25519 sig)>": the signed name carries the
+--    expiry. Once migrated, the record overrides it; unmigrated rooms and
+--    lookup failures fall back to the signature.
+--
+-- The lookup happens when a client asks jicofo for a conference (like
+-- mod_reservations), only in that client's session, so jicofo never waits.
+-- Rooms deleted by their host are closed within a sweep interval.
 --
 -- Load on the main VirtualHost (authentication = "token", allow_empty_token = true).
 --
 --   ffmuc_signed_rooms_public_keys = { ["1"] = "<base64 raw ed25519 public key>" }
 --   ffmuc_signed_rooms_max_extension = 30 * 86400
 --   ffmuc_signed_rooms_auto_promote_unsigned = true
+--   ffmuc_signed_rooms_lookup_url = "https://meet.example/reserve/api/room/"
+--   ffmuc_signed_rooms_lookup_ttl = 60
+--   ffmuc_signed_rooms_lookup_grace = 600
 
+local async = require "util.async";
+local cache = require "util.cache";
 local crypto = require "util.crypto";
+local http = require "net.http";
+local timer = require "util.timer";
 local base64 = require "util.encodings".base64;
 local json = require "util.json";
 local jid_bare = require "util.jid".bare;
 local jid_node = require "util.jid".node;
+local jid_split = require "util.jid".split;
 local st = require "util.stanza";
 
 local util = module:require "util";
@@ -27,6 +49,10 @@ local AUDIENCE = "jitsi";
 local ROOM_PREFIX = "r-";
 local ROOM_CONTEXT = "ffmuc-room-v1\0";
 local PAYLOAD_LEN, SIG_LEN = 15, 64;
+local SHORT_ALPHABET = "bcdfghjkmnpqrstvwxz23456789";
+local SHORT_LEN = 14;
+local LEGACY_LEN = 127; -- base32 of 15 + 64 bytes, unpadded
+local FOCUS_NS = "http://jitsi.org/protocol/focus";
 local SPKI_PREFIX = "\48\42\48\5\6\3\43\101\112\3\33\0";
 
 local muc_domain = module:get_option_string("ffmuc_signed_rooms_muc",
@@ -35,11 +61,24 @@ local focus_jid = module:get_option_string("ffmuc_signed_rooms_focus_jid", "focu
 local max_extension = module:get_option_number("ffmuc_signed_rooms_max_extension", 30 * 86400);
 local auto_promote_unsigned = module:get_option_boolean("ffmuc_signed_rooms_auto_promote_unsigned", true);
 local clock_skew = module:get_option_number("ffmuc_signed_rooms_clock_skew", 60);
+local focus_host = module:get_option_string("ffmuc_signed_rooms_focus_component", "focus." .. module.host);
+local lookup_url = module:get_option_string("ffmuc_signed_rooms_lookup_url");
+local lookup_ttl = module:get_option_number("ffmuc_signed_rooms_lookup_ttl", 60);
+local lookup_grace = math.max(lookup_ttl, module:get_option_number("ffmuc_signed_rooms_lookup_grace", 600));
+local lookup_timeout = module:get_option_number("ffmuc_signed_rooms_lookup_timeout", 3);
+local sweep_interval = module:get_option_number("ffmuc_signed_rooms_sweep_interval", 60);
 
 local measure_rooms = module:measure("rooms_created", "counter");
 local measure_rejected_rooms = module:measure("rooms_rejected", "counter");
 local measure_tokens = module:measure("tokens_accepted", "counter");
 local measure_rejected_tokens = module:measure("tokens_rejected", "counter");
+local measure_lookups = module:measure("lookups", "counter");
+local measure_lookup_failures = module:measure("lookup_failures", "counter");
+local measure_closed = module:measure("rooms_closed", "counter");
+
+if not lookup_url then
+    module:log("warn", "ffmuc_signed_rooms_lookup_url not set, short reserved rooms will be refused");
+end
 
 local keys, key_count = {}, 0;
 for kid, b64 in pairs(module:get_option("ffmuc_signed_rooms_public_keys", {})) do
@@ -95,6 +134,14 @@ local function is_signed_name(name)
     return type(name) == "string" and name:sub(1, #ROOM_PREFIX) == ROOM_PREFIX;
 end
 
+local function is_short_name(name)
+    if not is_signed_name(name) or #name ~= #ROOM_PREFIX + SHORT_LEN then return false; end
+    for i = #ROOM_PREFIX + 1, #name do
+        if not SHORT_ALPHABET:find(name:sub(i, i), 1, true) then return false; end
+    end
+    return true;
+end
+
 -- Returns the name expiry (unix seconds) if the room name carries a valid signature.
 local function parse_room(name)
     if not is_signed_name(name) then return nil, "not signed"; end
@@ -110,11 +157,106 @@ local function parse_room(name)
     return ((b1 * 256 + b2) * 256 + b3) * 256 + b4;
 end
 
-local function room_usable(name)
+-- room -> { status = "active"|"deleted"|"expired"|"legacy"|"unknown", expires, gen, at }
+-- gen is the rotation generation as a hex string, "0" for never rotated rooms
+-- and in v1 tokens, which carry no gen claim.
+local states = cache.new(4096);
+
+-- v1 rooms meet-reserve has a record for (migrated or deleted) -> end of their
+-- v1 window. Kept outside the cache: once a room has a record, the signature
+-- alone must never authorise it again, even when lookups fail. Only validly
+-- signed v1 names get here, so the table stays small; the sweep prunes it.
+local migrated = {};
+
+-- whether meet-reserve has a record for the room (statuses legacy and unknown mean no)
+local function has_record(state)
+    return state.status ~= "legacy" and state.status ~= "unknown";
+end
+
+local function fetch_state(name, callback)
+    local done = false;
+    local function finish(state)
+        if done then return; end
+        done = true;
+        if state then
+            state.at = os.time();
+            states:set(name, state);
+            if has_record(state) and #name == #ROOM_PREFIX + LEGACY_LEN then
+                local exp = parse_room(name);
+                if exp then migrated[name] = exp + max_extension; end
+            end
+        else
+            measure_lookup_failures(1);
+        end
+        callback(state);
+    end
+    measure_lookups(1);
+    local req = http.request(lookup_url .. name, { method = "GET", headers = { Accept = "application/json" } },
+        function(body, code)
+            local data = code == 200 and json.decode(body or "");
+            if type(data) == "table" and type(data.status) == "string" then
+                finish({
+                    status = data.status,
+                    expires = tonumber(data.expires),
+                    gen = type(data.gen) == "string" and data.gen or "0",
+                });
+            else
+                module:log("warn", "room lookup for %s failed: %s", name, tostring(code));
+                finish(nil);
+            end
+        end);
+    timer.add_task(lookup_timeout, function()
+        if done then return; end
+        module:log("warn", "room lookup for %s timed out", name);
+        if req and http.destroy_request then http.destroy_request(req); end
+        finish(nil);
+    end);
+end
+
+-- Cached state of a room. With may_wait it refreshes a stale entry, which
+-- needs an async context and holds only the current session. On lookup
+-- failure the last known state is used, but only for lookup_grace.
+local function room_state(name, may_wait)
+    local cached = states:get(name);
+    local age = cached and os.time() - cached.at;
+    if cached and age < lookup_ttl then return cached; end
+    if cached and age >= lookup_grace then cached = nil; end
+    if not lookup_url or not may_wait or not async.ready() then return cached; end
+    local wait, done = async.waiter();
+    local fresh;
+    fetch_state(name, function(state) fresh = state; done(); end);
+    wait();
+    return fresh or cached;
+end
+
+local function claim_gen(claims)
+    local g = claims.gen;
+    if g == nil then return "0"; end
+    return tostring(g);
+end
+
+-- Whether a room may exist. Returns ok, reason, state.
+local function room_usable(name, may_wait)
+    if is_short_name(name) then
+        local state = room_state(name, may_wait);
+        if not state then return false, "lookup failed"; end
+        if state.status ~= "active" then return false, state.status, state; end
+        if state.expires and state.expires < os.time() then return false, "expired", state; end
+        return true, nil, state;
+    end
+    if #name ~= #ROOM_PREFIX + LEGACY_LEN then return false, "malformed"; end
     local exp, err = parse_room(name);
     if not exp then return false, err; end
+    local state = room_state(name, may_wait);
+    -- once migrated, the record decides alone, the signature no longer counts
+    if state and has_record(state) then
+        if state.status ~= "active" then return false, state.status, state; end
+        if state.expires and state.expires < os.time() then return false, "expired", state; end
+        return true, nil, state;
+    end
+    if not state and migrated[name] then return false, "lookup failed"; end
     if exp + max_extension < os.time() then return false, "expired"; end
-    return true;
+    return true, nil, state;
 end
 
 -- Returns claims + role for a valid meet-reserve token, nil + reason for a
@@ -141,8 +283,13 @@ local function verify_token(token)
     if claims.sub ~= module.host then return nil, "wrong domain"; end
 
     local room = claims.room;
-    local ok, why = room_usable(room);
+    if type(room) ~= "string" then return nil, "no room"; end
+    local ok, why, state = room_usable(room, true);
     if not ok then return nil, "room " .. tostring(why); end
+    -- after a rotation only tokens of the new generation count
+    if state and state.status == "active" and claim_gen(claims) ~= (state.gen or "0") then
+        return nil, "token was replaced";
+    end
 
     local user = type(claims.context) == "table" and claims.context.user;
     local id = type(user) == "table" and user.id;
@@ -171,15 +318,26 @@ module:hook_global("pre-jitsi-authentication-fetch-key", function(session)
     session.jitsi_meet_domain = claims.sub;
     session.jitsi_meet_auth_issuer = claims.iss;
     session.jitsi_meet_context_user = claims.context.user;
-    session.ffmuc_signed = { room = claims.room, role = role, exp = claims.exp };
+    session.ffmuc_signed = { room = claims.room, role = role, exp = claims.exp, gen = claim_gen(claims) };
     -- the token util only knows HS256 here; with allow_empty_token it now lets
     -- the session through, room binding comes from the "<role>:<room>" user id
     session.auth_token = nil;
 end, 10);
 
+-- Whether a signed session still counts: the room is usable and was not
+-- rotated since the session authenticated. Without may_wait only the cache is
+-- used, and a missing or too old entry counts as no.
+local function session_valid(s, may_wait)
+    if s.exp + clock_skew < os.time() then return false, "expired"; end
+    local ok, why, state = room_usable(s.room, may_wait);
+    if not ok then return false, why; end
+    if state and state.status == "active" and state.gen ~= s.gen then return false, "replaced"; end
+    return true;
+end
+
 local function is_host_of(session, room)
     local s = session and session.ffmuc_signed;
-    return s and s.role == "host" and s.room == jid_node(room.jid) and s.exp + clock_skew >= os.time() or false;
+    return s and s.role == "host" and s.room == jid_node(room.jid) and session_valid(s, false) or false;
 end
 
 process_host_module(muc_domain, function(host_module, host)
@@ -188,7 +346,9 @@ process_host_module(muc_domain, function(host_module, host)
     host_module:hook("muc-room-pre-create", function(event)
         local name = jid_node(event.room.jid);
         if not is_signed_name(name) then return; end
-        local ok, why = room_usable(name);
+        -- no waiting here: this usually runs in jicofo's session, the
+        -- conference request hook below has filled the cache
+        local ok, why = room_usable(name, false);
         if ok then return; end
         measure_rejected_rooms(1);
         module:log("info", "refusing signed room %s: %s", name, why);
@@ -212,6 +372,21 @@ process_host_module(muc_domain, function(host_module, host)
             room.jitsiMetadata.visitors.autoPromote = true;
         end
     end, -10);
+
+    -- Recheck host and speaker sessions on every join, in the joining
+    -- client's session: a rotation or deletion since login refuses them.
+    host_module:hook("muc-occupant-pre-join", function(event)
+        local s = event.origin and event.origin.ffmuc_signed;
+        if not s or s.room ~= jid_node(event.room.jid) then return; end
+        local ok, why = session_valid(s, true);
+        if ok then return; end
+        module:log("info", "refusing %s session in %s: %s", s.role, s.room, tostring(why));
+        local text = why == "replaced" and "This link was replaced by new links."
+            or why == "lookup failed" and "Room check failed, please try again in a minute."
+            or "This room does not exist or has expired.";
+        event.origin.send(st.error_reply(event.stanza, "cancel", "not-allowed", text));
+        return true;
+    end, 100);
 
     host_module:hook("muc-occupant-joined", function(event)
         local room, occupant = event.room, event.occupant;
@@ -238,4 +413,55 @@ process_host_module(muc_domain, function(host_module, host)
         event.allowed = false;
         event.error = { type = "cancel", condition = "not-allowed" };
     end);
+
+    -- Close rooms their host deleted (or that were revoked for abuse).
+    if lookup_url then
+        module:add_timer(sweep_interval, function()
+            local now = os.time();
+            for name, until_ in pairs(migrated) do
+                if until_ < now then migrated[name] = nil; end
+            end
+            local muc = prosody.hosts[host] and prosody.hosts[host].modules.muc;
+            if not muc then return sweep_interval; end
+            for room in muc.each_room(true) do
+                local name = jid_node(room.jid);
+                if room._data.ffmuc_signed and not room._data.destroyed then
+                    fetch_state(name, function(state)
+                        if state and state.status == "deleted" and not room._data.destroyed then
+                            module:log("info", "closing deleted room %s", name);
+                            measure_closed(1);
+                            room:destroy(nil, "This room was deleted by its host.");
+                        end
+                    end);
+                end
+            end
+            return sweep_interval;
+        end);
+    end
 end);
+
+-- A client asks jicofo for a conference before anyone joins the room: check
+-- the room here, in the client's session, so jicofo never waits on a lookup.
+module:hook("pre-iq/host", function(event)
+    local stanza, origin = event.stanza, event.origin;
+    if stanza.attr.type ~= "set" or stanza.attr.to ~= focus_host or origin.type ~= "c2s" then return; end
+    local conference = stanza:get_child("conference", FOCUS_NS);
+    local node, host = jid_split(conference and conference.attr.room);
+    if host ~= muc_domain or not is_signed_name(node) then return; end
+    local ok, why = room_usable(node, true);
+    local s = origin.ffmuc_signed;
+    if ok and s and s.room == node then ok, why = session_valid(s, false); end
+    if ok then return; end
+    measure_rejected_rooms(1);
+    module:log("info", "refusing conference for reserved room %s: %s", node, tostring(why));
+    local text = why == "deleted" and "This room was deleted by its host."
+        or why == "replaced" and "This link was replaced by new links."
+        or why == "lookup failed" and "Room check failed, please try again in a minute."
+        or "This room does not exist or has expired.";
+    origin.send(st.iq({ type = "error", to = stanza.attr.from, from = stanza.attr.to, id = stanza.attr.id })
+        :tag("error", { type = "cancel" })
+            :tag("service-unavailable", { xmlns = "urn:ietf:params:xml:ns:xmpp-stanzas" }):up()
+            :tag("text", { xmlns = "urn:ietf:params:xml:ns:xmpp-stanzas" }):text(text):up()
+            :tag("reservation-error", { xmlns = FOCUS_NS, ["error-code"] = why == "lookup failed" and "503" or "403" }));
+    return true;
+end, 10);

@@ -8,9 +8,14 @@ services:
     read_only: true
     cap_drop: [ALL]
     security_opt: ["no-new-privileges:true"]
+    volumes:
+      - ./data:/data
     ports:
       - "{{ port }}:8095"
       - "127.0.0.1:{{ metrics_port }}:9195"
+{%- if sync_ip %}
+      - "{{ sync_ip }}:8096:8096"
+{%- endif %}
     logging:
       driver: json-file
       options:
