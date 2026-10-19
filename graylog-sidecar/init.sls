@@ -8,7 +8,7 @@ graylog-sidecar:
 filebeat:
   pkg.installed:
     - sources:
-      - filebeat: https://apt.ffmuc.net/filebeat-oss-8.19.23-ffmuc1-armhf.deb
+      - filebeat: https://apt.ffmuc.net/filebeat-oss-9.5.5-ffmuc1-armhf.deb
 
 {% else %}{# if Raspbian #}
 
