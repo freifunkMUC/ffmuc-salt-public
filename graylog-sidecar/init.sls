@@ -16,7 +16,7 @@ graylog-repo-key:
     cmd.run:
       - name: "wget -O - -o /dev/null https://packages.graylog2.org/repo/debian/keyring.gpg | gpg --batch --yes --dearmor -o /usr/share/keyrings/graylog-keyring.gpg.tmp && mv /usr/share/keyrings/graylog-keyring.gpg.tmp /usr/share/keyrings/graylog-keyring.gpg"
       {#- refetch while the keyring lacks the uid of 11/2025: the old one is bound by SHA1 only, which sqv on trixie rejects #}
-      - unless: gpg --show-keys --with-colons /usr/share/keyrings/graylog-keyring.gpg 2>/dev/null | grep -q '^uid:.*Graylog, Inc\\.'
+      - unless: gpg --show-keys --with-colons /usr/share/keyrings/graylog-keyring.gpg 2>/dev/null | grep -q '^uid:.*Graylog, Inc\.'
 
 graylog-repo:
     pkgrepo.managed:
