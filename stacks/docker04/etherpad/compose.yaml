@@ -15,7 +15,7 @@ services:
       DB_HOST: mariadb
       DB_PORT: "3306"
       DB_NAME: etherpad
-      DB_USER: root
+      DB_USER: etherpad
       DB_PASS: ${DB_PASS:?}
       DB_CHARSET: utf8mb4
       TRUST_PROXY: "true"
@@ -36,7 +36,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?}
       MYSQL_DATABASE: etherpad
-      MYSQL_USER: root
+      MYSQL_USER: etherpad
       MYSQL_PASSWORD: ${DB_PASS:?}
       MARIADB_AUTO_UPGRADE: "1"
     volumes:
