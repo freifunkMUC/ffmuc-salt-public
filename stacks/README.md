@@ -80,6 +80,8 @@ pillar komodo:periphery:secrets:<NAME>       master: /srv/docker/salt/pillar/kom
 | `docker04/dokuwiki` | none; `/srv/docker/dokuwiki/ldap.conf` stays on the host |
 | `docker05/salt-master` | none |
 | `docker06/komodo` | none in Komodo; Core's own secrets stay in its bootstrap `.env` |
+| `docker07/tuwunel` | `TUWUNEL_OIDC_CLIENT_SECRET` (Keycloak client `matrix` in realm `ffmuc`) |
+| `docker07/element-web` | none; `config.json` is public anyway |
 
 ### Taking a project over
 
