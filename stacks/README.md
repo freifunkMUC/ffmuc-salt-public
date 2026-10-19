@@ -62,6 +62,9 @@ pillar komodo:periphery:secrets:<NAME>       master: /srv/docker/salt/pillar/kom
   restarts it on change. Running containers are not affected.
 - No Core variable with the same name: Core interpolates `[[...]]` first, its
   value would win.
+- Only real secrets: Periphery replaces every occurrence of a secret's value
+  in the deploy logs with its name, so a short or common value (`1`, `mysql`,
+  `etherpad`) garbles them. Plain settings stay literal in the compose file.
 - Values: printable ASCII without `$`, without leading quotes and without
   ` #`. Komodo writes `.env` as plain `VAR=value`, compose interpolates `$`, and
   Komodo masks a secret in its logs and in the stored `docker compose config`
@@ -72,7 +75,7 @@ pillar komodo:periphery:secrets:<NAME>       master: /srv/docker/salt/pillar/kom
 
 | Stack | Secrets |
 |---|---|
-| `docker04/etherpad` | `ETHERPAD_<KEY>` for the 19 keys of `/srv/docker/etherpad/.env` (the Stack maps `KEY = [[ETHERPAD_KEY]]`) |
+| `docker04/etherpad` | `ETHERPAD_ADMIN_PASSWORD`, `ETHERPAD_DB_PASS`, `ETHERPAD_MYSQL_ROOT_PASSWORD` from `/srv/docker/etherpad/.env`; the other keys there are plain settings (now literal in `compose.yaml`) or unused |
 | `docker04/hedgedoc` | `HEDGEDOC_DB_PASS` (also the MariaDB user password), `HEDGEDOC_CMD_OAUTH2_CLIENT_SECRET`, `HEDGEDOC_CMD_SESSION_SECRET`, from `/srv/docker/hedgedoc/docker-compose.yaml` |
 | `docker04/dokuwiki` | none; `/srv/docker/dokuwiki/ldap.conf` stays on the host |
 | `docker05/salt-master` | none |
