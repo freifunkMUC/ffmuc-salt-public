@@ -61,6 +61,149 @@ run_directory = "stacks/docker04/dokuwiki"
 file_paths = ["compose.yaml"]
 
 [[stack]]
+name = "docker04-conferencemapper"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker04"
+project_name = "conferencemapper"
+files_on_host = true
+run_directory = "/srv/docker/conferencemapper"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker04-diun"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker04"
+project_name = "diun"
+files_on_host = true
+run_directory = "/srv/docker/diun"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker04-excalidraw-backend"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker04"
+project_name = "excalidraw-backend"
+files_on_host = true
+run_directory = "/srv/docker/excalidraw-backend"
+file_paths = ["docker-compose.yaml"]
+
+[[stack]]
+name = "docker04-matomo"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker04"
+project_name = "matomo"
+files_on_host = true
+run_directory = "/srv/docker/matomo"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker04-meet-reserve"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker04"
+project_name = "meet-reserve"
+files_on_host = true
+run_directory = "/srv/docker/meet-reserve"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker04-netbox"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker04"
+project_name = "netbox"
+files_on_host = true
+run_directory = "/srv/docker/netbox"
+file_paths = ["docker-compose.yml", "docker-compose.override.yml"]
+
+[[stack]]
+name = "docker04-netbox-parker"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker04"
+project_name = "netbox-parker"
+files_on_host = true
+run_directory = "/srv/docker/netbox-parker"
+file_paths = ["docker-compose.yml", "docker-compose.override.yml"]
+
+[[stack]]
+name = "docker04-openldap"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker04"
+project_name = "openldap"
+files_on_host = true
+run_directory = "/srv/docker/openldap"
+file_paths = ["docker-compose.yaml"]
+
+[[stack]]
+name = "docker04-owncast"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker04"
+project_name = "owncast"
+files_on_host = true
+run_directory = "/srv/docker/owncast"
+file_paths = ["docker-compose.yaml"]
+
+[[stack]]
+name = "docker04-packetyeeter-analyzer"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker04"
+project_name = "packetyeeter-analyzer"
+files_on_host = true
+run_directory = "/srv/docker/packetyeeter-analyzer"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker04-traefik"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker04"
+project_name = "traefik"
+files_on_host = true
+run_directory = "/srv/docker/traefik"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker04-wgkex"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker04"
+project_name = "wgkex"
+files_on_host = true
+run_directory = "/srv/docker/wgkex"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker04-whitebophir"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker04"
+project_name = "whitebophir"
+files_on_host = true
+run_directory = "/srv/docker/whitebophir"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
 name = "docker06-komodo"
 description = "Komodo Core itself, deploy only from a shell (see stacks/README.md)"
 tags = ["ffmuc"]
@@ -81,3 +224,316 @@ KOMODO_OIDC_PROVIDER = [[KOMODO_OIDC_PROVIDER]]
 KOMODO_OIDC_CLIENT_ID = [[KOMODO_OIDC_CLIENT_ID]]
 KOMODO_OIDC_CLIENT_SECRET = [[KOMODO_OIDC_CLIENT_SECRET]]
 """
+
+[[stack]]
+name = "docker06-diun"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker06"
+project_name = "diun"
+files_on_host = true
+run_directory = "/srv/docker/diun"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker06-mastodon-paywall"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker06"
+project_name = "mastodon-paywall"
+files_on_host = true
+run_directory = "/srv/docker/mastodon-paywall"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker06-meet-reserve"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker06"
+project_name = "meet-reserve"
+files_on_host = true
+run_directory = "/srv/docker/meet-reserve"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker06-omada"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker06"
+project_name = "omada"
+files_on_host = true
+run_directory = "/srv/docker/omada"
+file_paths = ["docker-compose.yaml"]
+
+[[stack]]
+name = "docker06-packetyeeter-analyzer"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker06"
+project_name = "packetyeeter-analyzer"
+files_on_host = true
+run_directory = "/srv/docker/packetyeeter-analyzer"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker06-traefik"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker06"
+project_name = "traefik"
+files_on_host = true
+run_directory = "/srv/docker/traefik"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker06-wgkex"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker06"
+project_name = "wgkex"
+files_on_host = true
+run_directory = "/srv/docker/wgkex"
+file_paths = ["docker-compose.yaml"]
+
+[[stack]]
+name = "docker05-salt"
+description = "The Salt master itself, deploy only from a shell (see stacks/README.md)"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker05"
+project_name = "salt"
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker05/salt-master"
+file_paths = ["compose.yaml"]
+
+[[stack]]
+name = "docker05-cryptpad"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker05"
+project_name = "cryptpad"
+files_on_host = true
+run_directory = "/srv/docker/cryptpad"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker05-diun"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker05"
+project_name = "diun"
+files_on_host = true
+run_directory = "/srv/docker/diun"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker05-mattermost-docker"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker05"
+project_name = "mattermost-docker"
+files_on_host = true
+run_directory = "/srv/docker/mattermost-docker"
+file_paths = ["docker-compose.yml", "docker-compose.without-nginx.yml"]
+
+[[stack]]
+name = "docker05-meet-reserve"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker05"
+project_name = "meet-reserve"
+files_on_host = true
+run_directory = "/srv/docker/meet-reserve"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker05-speedtest"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker05"
+project_name = "speedtest"
+files_on_host = true
+run_directory = "/srv/docker/speedtest"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker05-traefik"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker05"
+project_name = "traefik"
+files_on_host = true
+run_directory = "/srv/docker/traefik"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker05-wgkex"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker05"
+project_name = "wgkex"
+files_on_host = true
+run_directory = "/srv/docker/wgkex"
+file_paths = ["docker-compose.yaml"]
+
+[[stack]]
+name = "docker05-zammad-docker-compose"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker05"
+project_name = "zammad-docker-compose"
+files_on_host = true
+run_directory = "/srv/docker/zammad-docker-compose"
+file_paths = ["docker-compose.yml", "docker-compose.override.yml"]
+
+[[stack]]
+name = "docker07-bgpalerter"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker07"
+project_name = "bgpalerter"
+files_on_host = true
+run_directory = "/srv/docker/bgpalerter"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker07-diun"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker07"
+project_name = "diun"
+files_on_host = true
+run_directory = "/srv/docker/diun"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker07-libretranslate"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker07"
+project_name = "libretranslate"
+files_on_host = true
+run_directory = "/srv/docker/libretranslate"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker07-meet-reserve"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker07"
+project_name = "meet-reserve"
+files_on_host = true
+run_directory = "/srv/docker/meet-reserve"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker07-peeringmanager"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker07"
+project_name = "peeringmanager"
+files_on_host = true
+run_directory = "/srv/docker/peeringmanager"
+file_paths = ["docker-compose.yml", "docker-compose.override.yml"]
+
+[[stack]]
+name = "docker07-speedtest"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker07"
+project_name = "speedtest"
+files_on_host = true
+run_directory = "/srv/docker/speedtest"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker07-traefik"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker07"
+project_name = "traefik"
+files_on_host = true
+run_directory = "/srv/docker/traefik"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker07-uisp"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker07"
+project_name = "uisp"
+files_on_host = true
+run_directory = "/srv/docker/uisp"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker07-wgkex"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker07"
+project_name = "wgkex"
+files_on_host = true
+run_directory = "/srv/docker/wgkex"
+file_paths = ["docker-compose.yaml"]
+
+[[stack]]
+name = "mail01-crowdsec"
+description = "Managed by the mailserver role of GoliathLabs/ansible, not deployed from Komodo"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "mail01"
+project_name = "crowdsec"
+files_on_host = true
+run_directory = "/opt/containers/crowdsec"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "mail01-maintenance"
+description = "Managed by the mailserver role of GoliathLabs/ansible, not deployed from Komodo"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "mail01"
+project_name = "maintenance"
+files_on_host = true
+run_directory = "/opt/containers/maintenance"
+file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "mail01-traefik"
+description = "Managed by the mailserver role of GoliathLabs/ansible, not deployed from Komodo"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "mail01"
+project_name = "traefik"
+files_on_host = true
+run_directory = "/opt/containers/traefik"
+file_paths = ["docker-compose.yml"]

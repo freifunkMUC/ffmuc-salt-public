@@ -66,6 +66,16 @@ secret. Values come from the running setup on the host; never commit them.
   so the Komodo configuration is code as well. Changes in the UI that are not
   in the TOML show up as pending sync diffs. The sync never deletes
   (`delete = false`) and does not deploy (`deploy = false` on every Stack).
+- Projects that are not in this repository yet are listed with
+  `files_on_host = true` and their existing directory as `run_directory`, so
+  Komodo shows them without changing anything. Taking one over means moving
+  its compose file here and switching the Stack to `repo`. The projects on
+  mail01 stay with the mailserver role of GoliathLabs/ansible.
+- Komodo reads `files_on_host` compose files into its database, so projects
+  with literal secrets in their compose files are left out until their secrets
+  have moved: docker04 `cfssl`, `tuwunel-test`; docker05 `nextcloud`, `unifi`;
+  docker06 `graylog`, `mastodon`; docker07 `akvorado`, `keycloak`,
+  `vaultwarden`; mail01 `mailserver`; rw-vpn01/02 `wg-access-server`.
 - Taking over a running project: create the variables, sync, compare the
   Stack's diff, then *Deploy*. The old `/srv/docker/<project>/docker-compose.y*ml`
   stays on the host as rollback: `docker compose -p <project> -f <old file> up -d`
@@ -143,14 +153,15 @@ FerretDB/Postgres is only suggested for CPUs without AVX, docker06 has AVX2.
    `state.apply komodo-periphery` and `nebula` on both.
 3. Run the sync; the servers `docker04` and `docker06` should become healthy.
 4. Take over the docker04 stacks one by one (see Deployment).
-5. Further hosts: set `enabled = true` in `servers.toml`, enable the config
-   context.
+5. Further hosts (docker05, docker07, rw-vpn01, rw-vpn02, mail01): set
+   `enabled = true` in `servers.toml`, enable the config context,
+   `state.apply komodo-periphery,nebula` on the host, run the sync.
 
 ## Salt master
 
-`docker05/salt-master` is the Salt master itself, so it is kept here as
-reference and is not deployed by Komodo for now (a broken deploy would take
-away the tool used to repair the hosts).
+`docker05/salt-master` is the Salt master itself (Stack `docker05-salt`,
+project `salt`), so Komodo only shows it and never deploys it, like Core
+itself (a broken deploy would take away the tool used to repair the hosts).
 
 - The master's cache is a host volume: `/srv/docker/salt/cache` (`./cache` on
   the host) is mounted to `/var/cache/salt/master`.
