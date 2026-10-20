@@ -70,6 +70,26 @@ systemd-reload-telegraf:
     - contents: |
         telegraf    ALL=(ALL:ALL) NOPASSWD:/usr/local/bin/get_asterisk_calls.sh
 
+/usr/local/bin/get_asterisk_registrations.sh:
+  file.managed:
+    - contents: |
+        #!/bin/bash
+        # Influx line protocol, one line per PJSIP registration (SIP trunk of the dial-in number).
+        # No output when Asterisk does not answer; the Grafana rule treats missing data as an alarm.
+        asterisk -rx 'pjsip show registrations' | awk '/\/sip:/ {
+          split($1, name, "/")
+          printf "asterisk_registration,registration=%s registered=%di,status=\"%s\"\n", name[1], ($3 == "Registered"), $3
+        }'
+    - mode: "0750"
+    - user: root
+
+/etc/sudoers.d/telegraf_asterisk_registrations:
+  file.managed:
+    - contents: |
+        telegraf    ALL=(ALL:ALL) NOPASSWD:/usr/local/bin/get_asterisk_registrations.sh
+    - mode: "0440"
+    - user: root
+
 /etc/telegraf/telegraf.d/in-asterisk.conf:
   file.managed:
     - source: salt://telegraf/files/in_asterisk.conf
@@ -80,7 +100,9 @@ remove_asterisk_monitoring:
   file.absent:
     - names:
       - /usr/local/bin/get_asterisk_calls.sh
+      - /usr/local/bin/get_asterisk_registrations.sh
       - /etc/sudoers.d/telegraf_asterisk
+      - /etc/sudoers.d/telegraf_asterisk_registrations
       - /etc/telegraf/telegraf.d/in-asterisk.conf
 {% endif %}
 
