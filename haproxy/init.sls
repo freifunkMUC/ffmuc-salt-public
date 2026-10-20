@@ -183,6 +183,11 @@ packetyeeter-spoe-tune-timeout-processing:
   file.managed:
     - source: salt://haproxy/haproxy.cfg
     - template: jinja
+    # Holds the QUIC cluster-secret: not world-readable, and no diff in the job output.
+    - user: root
+    - group: haproxy
+    - mode: "0640"
+    - show_changes: False
     - require:
       - pkg: haproxy
 
