@@ -175,7 +175,9 @@ systemd-networkd-reload:
       interface: {{ iface }}
       desc: "{{ interfaces[iface]['description'] }}"
       kind: "wireguard"
-    - mode: "0644"
+    - user: root
+    - group: systemd-network
+    - mode: "0640"
     - watch_in:
       - cmd: systemd-networkd-reload
 {% set id = 30 %}
