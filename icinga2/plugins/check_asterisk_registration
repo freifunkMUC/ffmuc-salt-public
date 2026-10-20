@@ -1,0 +1,71 @@
+#!/usr/bin/python3
+#
+# Icinga plugin: CRITICAL when an Asterisk PJSIP registration (the SIP trunk of
+# the Jitsi dial-in number) is not "Registered".
+#
+# Reads `asterisk -rx 'pjsip show registrations'` via sudo (see icinga2.sudoers).
+# CRITICAL as well when Asterisk does not answer or lists no registration at
+# all: without a registration no inbound call reaches Jigasi.
+# The "down for N minutes" part is done by Icinga (retry_interval and
+# max_check_attempts in the service), not here.
+#
+
+import argparse
+import subprocess
+import sys
+
+OK, WARNING, CRITICAL, UNKNOWN = 0, 1, 2, 3
+STATUS = {OK: "OK", WARNING: "WARNING", CRITICAL: "CRITICAL", UNKNOWN: "UNKNOWN"}
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Check Asterisk PJSIP registrations")
+    parser.add_argument("--asterisk", default="/usr/sbin/asterisk", help="path to asterisk")
+    return parser.parse_args()
+
+
+def read_registrations(asterisk):
+    cmd = ["/usr/bin/sudo", "-n", asterisk, "-rx", "pjsip show registrations"]
+    try:
+        proc = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=20, check=False
+        )
+    except (OSError, subprocess.SubprocessError) as err:
+        return None, f"asterisk CLI failed: {err}"
+    if proc.returncode != 0 or "Objects found" not in proc.stdout:
+        msg = (proc.stderr or proc.stdout).strip().splitlines()
+        return None, f"asterisk CLI failed: {msg[-1] if msg else proc.returncode}"
+    return proc.stdout, None
+
+
+def parse_registrations(output):
+    """Lines look like: <name>/<server uri>  <auth>  <Status>  (exp. 30s)"""
+    regs = []
+    for line in output.splitlines():
+        fields = line.split()
+        if len(fields) >= 3 and "/sip:" in fields[0]:
+            regs.append((fields[0].split("/", 1)[0], fields[2]))
+    return regs
+
+
+def main():
+    args = parse_args()
+    output, error = read_registrations(args.asterisk)
+    if error:
+        print(f"CRITICAL - {error}")
+        return CRITICAL
+    regs = parse_registrations(output)
+    if not regs:
+        print("CRITICAL - no PJSIP registration configured, dial-in cannot work")
+        return CRITICAL
+    bad = [f"{name} {state}" for name, state in regs if state != "Registered"]
+    perf = f"| registered={len(regs) - len(bad)};;;0;{len(regs)}"
+    if bad:
+        print(f"CRITICAL - SIP trunk not registered: {', '.join(bad)} {perf}")
+        return CRITICAL
+    print(f"OK - {len(regs)} of {len(regs)} SIP registrations Registered {perf}")
+    return OK
+
+
+if __name__ == "__main__":
+    sys.exit(main())
