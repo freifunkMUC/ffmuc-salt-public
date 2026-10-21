@@ -82,6 +82,7 @@ jitsi:
   prosody:
     enabled: false
     version: 1nightly136-1~buster
+    auth_backend: internal_hashed  # service accounts on the auth and recorder domains
 
   jitsi_meet_prosody:
     version: 1.0.9008-1

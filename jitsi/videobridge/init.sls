@@ -45,6 +45,7 @@ stats.in.ffmuc.net:
   file.managed:
     - source: salt://jitsi/videobridge/jvb.conf.jinja
     - template: jinja
+    - show_changes: False
     - require:
       - pkg: jitsi-videobridge2 # only start if this version got installed
     - watch_in:
