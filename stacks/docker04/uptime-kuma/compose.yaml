@@ -1,0 +1,28 @@
+services:
+  uptime-kuma:
+    image: louislam/uptime-kuma:2.5.5-rootless@sha256:c4e17ce033deb811aff8a61a5f8f736f35b1bd937458ddeec46c59ca190f0e03
+    restart: unless-stopped
+    init: true
+    # rootless image runs as uid 1000; /srv/docker/uptime-kuma/data must be owned by 1000:1000
+    user: "1000:1000"
+    environment:
+      TZ: Europe/Berlin
+    volumes:
+      - /srv/docker/uptime-kuma/data:/app/data
+    ports:
+      - "10.8.0.31:3001:3001"
+    healthcheck:
+      test: ["CMD", "node", "extra/healthcheck.js"]
+      interval: 60s
+      timeout: 30s
+      retries: 3
+      start_period: 180s
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
+    cpus: 1
