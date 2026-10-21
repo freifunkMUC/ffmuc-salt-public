@@ -1,0 +1,24 @@
+#!/bin/bash
+# Age of the dumps in /var/lib/ffmuc-dumps written by the rustic state (names in .names). Runs via sudo.
+# Usage: check_ffmuc_dumps [warning hours] [critical hours]
+D=/var/lib/ffmuc-dumps
+W=${1:-26}
+C=${2:-50}
+[ -f "$D/.names" ] || { echo "OK - no dumps configured"; exit 0; }
+now=$(date +%s)
+st=0
+out=()
+while read -r n; do
+  [ -n "$n" ] || continue
+  if [ ! -s "$D/$n" ]; then
+    st=2; out+=("$n missing or empty"); continue
+  fi
+  age=$(( (now - $(stat -c %Y "$D/$n")) / 3600 ))
+  if [ "$age" -ge "$C" ]; then st=2
+  elif [ "$age" -ge "$W" ] && [ "$st" -lt 1 ]; then st=1
+  fi
+  out+=("$n ${age}h")
+done < "$D/.names"
+label=(OK WARNING CRITICAL)
+echo "${label[$st]} - ${out[*]:-no dumps configured}"
+exit $st
