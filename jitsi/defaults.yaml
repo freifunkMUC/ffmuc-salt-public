@@ -35,7 +35,6 @@ jitsi:
     opts: ""
     username: "focus"
     password: "THIS_IS_SUPER_SECRET_JICOFO"
-    secret: "THIS_IS_A_LEGACY_SECRET"
     bridge_selection_strategy: SplitBridgeSelectionStrategy
 
   videobridge:
