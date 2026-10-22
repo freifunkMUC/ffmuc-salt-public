@@ -17,6 +17,7 @@ base:
     - screen
     - sudo
     - sysctl
+    - systemd-networkd.foreign-routes
     - telegraf
     - timezone
     - tmux
