@@ -115,6 +115,10 @@ firewall:
   - port: 443
     proto: udp
     host: any
+    # haproxy peers: meet room stick table (haproxy/haproxy.cfg, peers meet)
+  - port: 10001
+    proto: tcp
+    group: webfrontend
 {%- endif %}
     # HTTPS
   - port: 443
