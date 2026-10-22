@@ -181,6 +181,30 @@ remove_asterisk_monitoring:
     - watch_in:
           service: telegraf
 
+# reads the world-readable runtime API socket /run/haproxy/api.sock (level user)
+/usr/local/bin/haproxy_peers_stats:
+{% if behind_haproxy %}
+  file.managed:
+    - source: salt://telegraf/files/haproxy_peers_stats.py
+    - mode: "0755"
+{% else %}
+  file.absent:
+{% endif %}
+    - watch_in:
+          service: telegraf
+
+/etc/telegraf/telegraf.d/in-haproxy_peers.conf:
+{% if behind_haproxy %}
+  file.managed:
+    - source: salt://telegraf/files/in_haproxy_peers.conf
+    - require:
+      - file: /usr/local/bin/haproxy_peers_stats
+{% else %}
+  file.absent:
+{% endif %}
+    - watch_in:
+          service: telegraf
+
 /etc/telegraf/telegraf.d/in-powerdns_recursor.conf:
 {% if salt["service.available"]("pdns-recursor") %}
   file.managed:

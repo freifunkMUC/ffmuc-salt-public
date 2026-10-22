@@ -12,10 +12,12 @@ base:
     - mosh
     - motd
     - nebula
+    - needrestart
     - resolv
     - screen
     - sudo
     - sysctl
+    - systemd-networkd.foreign-routes
     - telegraf
     - timezone
     - tmux
