@@ -12,6 +12,7 @@ base:
     - mosh
     - motd
     - nebula
+    - needrestart
     - resolv
     - screen
     - sudo
