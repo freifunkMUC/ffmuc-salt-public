@@ -23,6 +23,7 @@ yanic:
       - file: /etc/systemd/system/yanic.service
     - watch:
       - file: /etc/yanic.conf
+      - file: /etc/systemd/system/yanic.service
       - pkg: yanic
 
 # copy systemd yanic.service
