@@ -61,6 +61,7 @@ execute_chromedriver_update:
   file.managed:
     - source: salt://jitsi/jibri/jibri.conf.jinja
     - template: jinja
+    - show_changes: False
 
 {% else %}
 google-chrome-stable:

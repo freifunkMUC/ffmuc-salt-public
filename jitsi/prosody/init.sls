@@ -133,6 +133,7 @@ remove-temporary-files:
     - source: salt://jitsi/prosody/domain.cfg.lua.jinja
     - makedirs: True
     - template: jinja
+    - show_changes: False  # held the jicofo component secret; its removal would land in the job cache
 
 /etc/systemd/system/prosody.service.d/override.conf:
   file.managed:

@@ -30,6 +30,7 @@ network_settings = {
 }
 
 modules_enabled = {
+      "admin_shell"; -- prosodyctl adduser/passwd go through the admin socket since 13.0
       "saslauth";
       "tls";
       "disco";
