@@ -386,6 +386,13 @@ firewall:
   - port: 11001
     proto: tcp
     group: webfrontend
+  # Allow connections to tuwunel (matrix.ffmuc.net) and Element Web (element.ffmuc.net)
+  - port: 8008
+    proto: tcp
+    group: webfrontend
+  - port: 8088
+    proto: tcp
+    group: webfrontend
   # Allow connections for http backend of broker.ffmuc.net
   - port: 5000
     proto: tcp
