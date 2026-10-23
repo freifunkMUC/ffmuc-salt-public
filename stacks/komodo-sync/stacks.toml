@@ -10,25 +10,9 @@ branch = "main"
 run_directory = "stacks/docker04/etherpad"
 file_paths = ["compose.yaml"]
 environment = """
-MYSQL_HOST = [[ETHERPAD_MYSQL_HOST]]
-MYSQL_ROOT_PASSWORD = [[ETHERPAD_MYSQL_ROOT_PASSWORD]]
-MYSQL_USER = [[ETHERPAD_MYSQL_USER]]
-MYSQL_PASSWORD = [[ETHERPAD_MYSQL_PASSWORD]]
-TITLE = [[ETHERPAD_TITLE]]
-DEFAULT_PAD_TEXT = [[ETHERPAD_DEFAULT_PAD_TEXT]]
-HOST_PORT = [[ETHERPAD_HOST_PORT]]
 ADMIN_PASSWORD = [[ETHERPAD_ADMIN_PASSWORD]]
-ADMIN_USER = [[ETHERPAD_ADMIN_USER]]
-DB_TYPE = [[ETHERPAD_DB_TYPE]]
-DB_HOST = [[ETHERPAD_DB_HOST]]
-DB_PORT = [[ETHERPAD_DB_PORT]]
-DB_USER = [[ETHERPAD_DB_USER]]
 DB_PASS = [[ETHERPAD_DB_PASS]]
-DB_NAME = [[ETHERPAD_DB_NAME]]
-DB_CHARSET = [[ETHERPAD_DB_CHARSET]]
-NODE_ENV = [[ETHERPAD_NODE_ENV]]
-IMPORT_EXPORT_RATE_LIMIT_WINDOW = [[ETHERPAD_IMPORT_EXPORT_RATE_LIMIT_WINDOW]]
-IMPORT_EXPORT_MAX_REQ_PER_IP = [[ETHERPAD_IMPORT_EXPORT_MAX_REQ_PER_IP]]
+MYSQL_ROOT_PASSWORD = [[ETHERPAD_MYSQL_ROOT_PASSWORD]]
 """
 
 [[stack]]
@@ -43,9 +27,9 @@ branch = "main"
 run_directory = "stacks/docker04/hedgedoc"
 file_paths = ["compose.yaml"]
 environment = """
-HEDGEDOC_DB_PASSWORD = [[HEDGEDOC_DB_PASSWORD]]
-HEDGEDOC_OAUTH2_CLIENT_SECRET = [[HEDGEDOC_OAUTH2_CLIENT_SECRET]]
-HEDGEDOC_SESSION_SECRET = [[HEDGEDOC_SESSION_SECRET]]
+HEDGEDOC_DB_PASSWORD = [[HEDGEDOC_DB_PASS]]
+HEDGEDOC_OAUTH2_CLIENT_SECRET = [[HEDGEDOC_CMD_OAUTH2_CLIENT_SECRET]]
+HEDGEDOC_SESSION_SECRET = [[HEDGEDOC_CMD_SESSION_SECRET]]
 """
 
 [[stack]]
@@ -215,15 +199,6 @@ repo = "freifunkMUC/ffmuc-salt-public"
 branch = "main"
 run_directory = "stacks/docker06/komodo"
 file_paths = ["compose.yaml"]
-environment = """
-KOMODO_HOST = [[KOMODO_HOST]]
-KOMODO_DATABASE_PASSWORD = [[KOMODO_DATABASE_PASSWORD]]
-KOMODO_JWT_SECRET = [[KOMODO_JWT_SECRET]]
-KOMODO_WEBHOOK_SECRET = [[KOMODO_WEBHOOK_SECRET]]
-KOMODO_OIDC_PROVIDER = [[KOMODO_OIDC_PROVIDER]]
-KOMODO_OIDC_CLIENT_ID = [[KOMODO_OIDC_CLIENT_ID]]
-KOMODO_OIDC_CLIENT_SECRET = [[KOMODO_OIDC_CLIENT_SECRET]]
-"""
 
 [[stack]]
 name = "docker06-diun"
@@ -537,3 +512,30 @@ project_name = "traefik"
 files_on_host = true
 run_directory = "/opt/containers/traefik"
 file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker07-tuwunel"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker07"
+project_name = "tuwunel"
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker07/tuwunel"
+file_paths = ["compose.yaml"]
+environment = """
+OIDC_CLIENT_SECRET = [[TUWUNEL_OIDC_CLIENT_SECRET]]
+"""
+
+[[stack]]
+name = "docker07-element-web"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker07"
+project_name = "element-web"
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker07/element-web"
+file_paths = ["compose.yaml"]

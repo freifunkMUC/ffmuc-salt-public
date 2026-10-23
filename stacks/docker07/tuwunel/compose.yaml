@@ -1,0 +1,51 @@
+services:
+  homeserver:
+    image: ghcr.io/matrix-construct/tuwunel:v1.9.4@sha256:0e86c6164d6c9f5b60291938eb61ad8395021c37fe58d47a963ea7edddbedaec
+    restart: unless-stopped
+    user: "10600:10600"
+    # a database migration after an upgrade must not be killed half way
+    stop_grace_period: 30m
+    environment:
+      TUWUNEL_SERVER_NAME: matrix.ffmuc.net
+      TUWUNEL_ADDRESS: 0.0.0.0
+      TUWUNEL_PORT: "8008"
+      TUWUNEL_DATABASE_PATH: /var/lib/tuwunel/db
+      TUWUNEL_DATABASE_BACKUP_PATH: /var/lib/tuwunel/backups
+      TUWUNEL_DATABASE_BACKUPS_TO_KEEP: "3"
+      TUWUNEL_ADMIN_SIGNAL_EXECUTE: '["server backup-database"]'
+      TUWUNEL_STORAGE_PROVIDER__MEDIA__LOCAL__BASE_PATH: /var/lib/tuwunel/media
+      TUWUNEL_MAX_REQUEST_SIZE: "52428800"
+      TUWUNEL_ALLOW_REGISTRATION: "false"
+      TUWUNEL_ALLOW_FEDERATION: "true"
+      TUWUNEL_TRUSTED_SERVERS: '["matrix.org", "tchncs.de"]'
+      TUWUNEL_ALLOW_ENCRYPTION: "true"
+      TUWUNEL_NEW_USER_DISPLAYNAME_SUFFIX: ""
+      TUWUNEL_LOGIN_WITH_PASSWORD: "true"
+      TUWUNEL_WELL_KNOWN__CLIENT: https://matrix.ffmuc.net
+      TUWUNEL_WELL_KNOWN__SERVER: matrix.ffmuc.net:443
+      TUWUNEL_IDENTITY_PROVIDER__0__BRAND: keycloak
+      TUWUNEL_IDENTITY_PROVIDER__0__NAME: FFMUC
+      TUWUNEL_IDENTITY_PROVIDER__0__CLIENT_ID: matrix
+      TUWUNEL_IDENTITY_PROVIDER__0__CLIENT_SECRET: ${OIDC_CLIENT_SECRET:?}
+      TUWUNEL_IDENTITY_PROVIDER__0__ISSUER_URL: https://keycloak.ffmuc.net/realms/ffmuc
+      TUWUNEL_IDENTITY_PROVIDER__0__CALLBACK_URL: https://matrix.ffmuc.net/_matrix/client/unstable/login/sso/callback/matrix
+      TUWUNEL_IDENTITY_PROVIDER__0__TRUSTED: "true"
+      TUWUNEL_IDENTITY_PROVIDER__0__USERID_CLAIMS: '["preferred_username"]'
+      TUWUNEL_IDENTITY_PROVIDER__0__REGISTRATION: "false"
+      TUWUNEL_IDENTITY_PROVIDER__0__UNIQUE_ID_FALLBACKS: "false"
+    volumes:
+      - /srv/docker/tuwunel/db/rocksdb:/var/lib/tuwunel/db
+      - /srv/docker/tuwunel/media:/var/lib/tuwunel/media
+      - /srv/docker/tuwunel/backups:/var/lib/tuwunel/backups
+    ports:
+      - "10.8.0.16:8008:8008"
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 4096
+    mem_limit: 6g
+    cpus: 4

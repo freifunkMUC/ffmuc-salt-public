@@ -1,0 +1,24 @@
+services:
+  element-web:
+    image: vectorim/element-web:v1.12.32@sha256:f8700633d4336258af7a05b53865a4f479e0d628cf2d9ca83d28b5939314d4ce
+    restart: unless-stopped
+    environment:
+      ELEMENT_WEB_PORT: "8080"
+    volumes:
+      # config.json from this directory of the checkout, not from /srv
+      - ./config.json:/app/config.json:ro
+    ports:
+      - "10.8.0.16:8088:8080"
+    read_only: true
+    # the image runs as nginx (101) and renders its nginx config at start
+    tmpfs:
+      - /tmp:uid=101,gid=101
+      - /etc/nginx/conf.d:uid=101,gid=101
+      - /var/cache/nginx:uid=101,gid=101
+      - /var/run:uid=101,gid=101
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 128m
+    cpus: 1
