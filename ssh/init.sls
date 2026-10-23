@@ -119,3 +119,13 @@ ssh-{{ user }}:
 
 /root/.ssh/authorized_keys2:
   file.absent
+
+# Template account from the VM image, locked wherever it exists
+lock-template-user-ffmuc:
+  user.present:
+    - name: ffmuc
+    - password_lock: True
+    # expired, so sshd refuses SSH keys too (password_lock alone does not)
+    - expire: 1
+    - createhome: False
+    - onlyif: getent passwd ffmuc
