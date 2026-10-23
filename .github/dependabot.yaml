@@ -9,3 +9,8 @@ updates:
     directory: /
     schedule:
       interval: "monthly"
+  - package-ecosystem: "docker-compose"
+    directories:
+      - "/stacks/**"
+    schedule:
+      interval: "weekly"
