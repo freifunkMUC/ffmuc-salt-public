@@ -134,7 +134,3 @@ database = "{{ influxdb.database }}"
 username = "{{ influxdb.username }}"
 password = "{{ influxdb.password }}"
 insecure_skip_verify = {{ influxdb.insecure_skip_verify | default(false) | lower }}
-
-[[database.connection.logging]]
-enable   = false
-path     = "/var/log/yanic.log"
