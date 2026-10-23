@@ -209,6 +209,10 @@ firewall:
   - port: 8095
     proto: tcp
     group: webfrontend
+  # Allow connections for status.ffmuc.net (stacks/docker04/uptime-kuma)
+  - port: 3001
+    proto: tcp
+    group: webfrontend
   # Allow connections for mqtt backend of broker.ffmuc.net
   - port: 1883
     proto: tcp
