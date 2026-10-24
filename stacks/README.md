@@ -32,6 +32,12 @@ project by its project name, so keep it unchanged.
   so a relative `./data` would point into that checkout instead of the existing
   data.
 - No `version:` key.
+- Security fixes that upstream has not shipped yet go into a `Dockerfile`
+  next to `compose.yaml` that patches the pinned upstream image, with
+  `build: .`, `image: local/<name>:<tag>` and `pull_policy: build` on the
+  service (Komodo builds it on deploy; Dependabot does not track it). Pin
+  every `FROM` by digest and say in the Dockerfile when it can go. Currently:
+  hedgedoc, whitebophir and bgpalerter for node2shell (CVE-2026-111497).
 - No secrets in this repository: no passwords, tokens, client secrets, cookie
   or session secrets, keys. Not in compose files, not in config files, not in
   comments.
@@ -53,7 +59,10 @@ secret. Values come from the running setup on the host; never commit them.
 | `docker04/etherpad` | from `/srv/docker/etherpad/.env`: `ETHERPAD_MYSQL_HOST`, `ETHERPAD_MYSQL_ROOT_PASSWORD`, `ETHERPAD_MYSQL_USER`, `ETHERPAD_MYSQL_PASSWORD`, `ETHERPAD_TITLE`, `ETHERPAD_DEFAULT_PAD_TEXT`, `ETHERPAD_HOST_PORT`, `ETHERPAD_ADMIN_PASSWORD`, `ETHERPAD_ADMIN_USER`, `ETHERPAD_DB_TYPE`, `ETHERPAD_DB_HOST`, `ETHERPAD_DB_PORT`, `ETHERPAD_DB_USER`, `ETHERPAD_DB_PASS`, `ETHERPAD_DB_NAME`, `ETHERPAD_DB_CHARSET`, `ETHERPAD_NODE_ENV`, `ETHERPAD_IMPORT_EXPORT_RATE_LIMIT_WINDOW`, `ETHERPAD_IMPORT_EXPORT_MAX_REQ_PER_IP` (each mapped to the `.env` name without the prefix) |
 | `docker04/hedgedoc` | `HEDGEDOC_DB_PASSWORD` (also the MariaDB user password), `HEDGEDOC_OAUTH2_CLIENT_SECRET`, `HEDGEDOC_SESSION_SECRET` |
 | `docker04/dokuwiki` | none; `/srv/docker/dokuwiki/ldap.conf` stays on the host |
+| `docker04/whitebophir` | none |
+| `docker05/cryptpad` | none; `/srv/docker/cryptpad/data/config.js` and `infra.js` stay on the host |
 | `docker05/salt-master` | none |
+| `docker07/bgpalerter` | none; `/srv/docker/bgpalerter/volume/config.yml` stays on the host |
 
 ## Deployment
 

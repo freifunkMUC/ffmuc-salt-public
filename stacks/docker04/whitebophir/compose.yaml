@@ -1,0 +1,12 @@
+---
+services:
+  whiteboard:
+    # node2shell (CVE-2026-111497): upstream still ships a vulnerable Node, see Dockerfile
+    build: .
+    image: local/wbo:v1.22.1-node22.23.4
+    pull_policy: build
+    restart: unless-stopped
+    ports:
+      - "5001:80"
+    volumes:
+      - /srv/docker/whitebophir/boards:/opt/app/server-data:z

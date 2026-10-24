@@ -199,9 +199,10 @@ deploy = false
 [stack.config]
 server = "docker04"
 project_name = "whitebophir"
-files_on_host = true
-run_directory = "/srv/docker/whitebophir"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker04/whitebophir"
+file_paths = ["compose.yaml"]
 
 [[stack]]
 name = "docker06-komodo"
@@ -322,9 +323,10 @@ deploy = false
 [stack.config]
 server = "docker05"
 project_name = "cryptpad"
-files_on_host = true
-run_directory = "/srv/docker/cryptpad"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker05/cryptpad"
+file_paths = ["compose.yaml"]
 
 [[stack]]
 name = "docker05-diun"
@@ -410,9 +412,10 @@ deploy = false
 [stack.config]
 server = "docker07"
 project_name = "bgpalerter"
-files_on_host = true
-run_directory = "/srv/docker/bgpalerter"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker07/bgpalerter"
+file_paths = ["compose.yaml"]
 
 [[stack]]
 name = "docker07-diun"

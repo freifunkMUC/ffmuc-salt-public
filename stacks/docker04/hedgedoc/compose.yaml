@@ -1,7 +1,10 @@
 ---
 services:
   hedgedoc:
-    image: lscr.io/linuxserver/hedgedoc:1.12.0-ls207@sha256:104452bf9b2fb48ee14230377f265adde765e5d4a9542b1514ac399a560d24b0
+    # node2shell (CVE-2026-111497): upstream still ships a vulnerable Node, see Dockerfile
+    build: .
+    image: local/hedgedoc:1.12.0-ls208-node26.12.1
+    pull_policy: build
     restart: unless-stopped
     depends_on:
       - db
