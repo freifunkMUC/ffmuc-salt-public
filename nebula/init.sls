@@ -53,10 +53,21 @@ generate_ssh_host_ed25519_key:
     - require:
         - file: /etc/nebula/{{ grains['id'] }}.crt
 
+# restarting (not reloading) keeps a package upgrade from running the new binary
+# only after a second restart racing the first one
+nebula-config-test:
+  cmd.run:
+    - name: /usr/bin/nebula -test -config /etc/nebula/config.yml
+    - onchanges:
+        - file: /etc/nebula/config.yml
+        - file: /etc/nebula/ca.crt
+        - file: /etc/nebula/{{ grains['id'] }}.crt
+        - file: /etc/nebula/{{ grains['id'] }}.key
+        - pkg: nebula-pkg
+
 nebula-service:
   service.running:
     - enable: True
-    - reload: True
     - name: nebula
     - require:
         - file: /etc/nebula/config.yml
@@ -64,21 +75,13 @@ nebula-service:
         - file: /etc/nebula/{{ grains['id'] }}.crt
         - file: /etc/nebula/{{ grains['id'] }}.key
         - pkg: nebula-pkg
+        - cmd: nebula-config-test
     - watch:
         - file: /etc/nebula/config.yml
         - file: /etc/nebula/ca.crt
         - file: /etc/nebula/{{ grains['id'] }}.crt
         - file: /etc/nebula/{{ grains['id'] }}.key
-
-# the package does not restart the service on upgrade and a reload keeps the
-# old binary running, so restart explicitly when the package changed
-nebula-restart-on-upgrade:
-  cmd.run:
-    - name: /usr/bin/nebula -test -config /etc/nebula/config.yml && systemctl daemon-reload && systemctl restart nebula
-    - onchanges:
         - pkg: nebula-pkg
-    - require:
-        - service: nebula-service
 
 {% else %}
 {# remove old config to allow migration to new file destination #}
