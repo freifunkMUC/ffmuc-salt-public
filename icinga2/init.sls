@@ -72,6 +72,15 @@ icinga2-service:
       - file: icinga2-hostkey
       - file: /etc/icinga2/repository.d
 
+# a reload did not reach the daemon the package had started (ft02/ft03, 19.10.2026): restart once after install or upgrade
+icinga2-restart-after-pkg:
+  service.running:
+    - name: icinga2
+    - watch:
+      - pkg: icinga2-pkg
+    - require:
+      - service: icinga2-service
+
 # Install plugins (official + our own)
 monitoring-plugin-pkgs:
   pkg.installed:
@@ -147,6 +156,8 @@ icinga-user:
     - mode: "0700"
     - user: nagios
     - group: nagios
+    - require:
+      - pkg: icinga2-pkg
 
 # Install host cert + key readable for icinga
 icinga2-hostcert:
@@ -178,6 +189,9 @@ icinga2-ca:
     - force: True
     - require:
       - pkg: icinga2-pkg
+      - file: /var/lib/icinga2/certs
+    - watch_in:
+      - service: icinga2-service
 
 # reload icinga2 when the host cert behind the symlink gets renewed
 icinga2-hostcert-fingerprint:
@@ -198,7 +212,7 @@ icinga2-hostcert-fingerprint:
     - require:
       - pkg: icinga2
     - watch_in:
-      - service: icinga2
+      - service: icinga2-service
 
 /etc/icinga2/features-enabled/{{ feature }}.conf:
   file.symlink:
@@ -408,7 +422,7 @@ Cleanup /etc/icinga2/zones.d/master/ffmuc-conf.d/hosts/generated/:
 /etc/icinga2/check-commands.conf:
   file.absent:
     - watch_in:
-      - service: icinga2
+      - service: icinga2-service
 {% endif %}
 
 
