@@ -12,8 +12,13 @@ User=vosk
 Environment=VOSK_SERVER_INTERFACE={{ jitsi.vosk.interface }}
 Environment=VOSK_SERVER_PORT={{ jitsi.vosk.port }}
 Environment=VOSK_MODEL_PATH={{ model_path }}
+Environment=MALLOC_ARENA_MAX={{ jitsi.vosk.malloc_arena_max }}
 ExecStart={{ vosk_home }}/venv/bin/python3 {{ vosk_home }}/asr_server.py
-Restart=on-failure
+# Above memory_high the kernel reclaims; at memory_max only this service is killed
+# and comes back (jigasi reconnects, a few seconds of transcript are lost).
+MemoryHigh={{ jitsi.vosk.memory_high }}
+MemoryMax={{ jitsi.vosk.memory_max }}
+Restart=always
 RestartSec=5
 # recognition is CPU heavy, keep jigasi/asterisk audio processing ahead of it
 Nice=10

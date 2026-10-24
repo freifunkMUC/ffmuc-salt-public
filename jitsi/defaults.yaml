@@ -172,6 +172,13 @@ jitsi:
     model_base_url: https://alphacephei.com/vosk/models
     server_script_url: https://raw.githubusercontent.com/alphacep/vosk-server/9f1ae2d6355f6fb9d4b31bef721f533da31cd67a/websocket/asr_server.py
     server_script_hash: sha256=e43640b3db99b95f50fb7b0e1f8679a8cdd5c08a69e0a89ce96bfd37f38d62af
+    # asr_server.py runs a thread pool of cpu_count() threads with one recognizer per
+    # connection; with glibc's per-thread arenas RSS grew from 0.2 to 1.9 GB in 13 h
+    # on call01 (20.10.2026, small model, ~300 MB expected). Fewer arenas, and a cap
+    # so that only vosk-server restarts instead of the host running out of memory.
+    malloc_arena_max: 2
+    memory_high: 1G
+    memory_max: 1536M
     pip_packages:
       - vosk==0.3.45
       - websockets==12.0    # asr_server.py uses the legacy (websocket, path) handler signature
