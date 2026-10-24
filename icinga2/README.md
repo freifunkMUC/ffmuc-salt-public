@@ -13,6 +13,7 @@ directory is cleaned, so a host that drops out disappears from Icinga):
 | Minions with the NetBox tag `icinga2_client` (Salt mine `minion_tags`) | `host.conf.jinja` | Agent: everything in `services/`, run on the host (`command_endpoint`) |
 | Minions with the NetBox tag `icinga2_agentless` | `host_agentless.conf.jinja` | From the master: hostalive, ping4, ssh |
 | `static_hosts.yaml` (no minion, or the minion does not answer) | `host_agentless.conf.jinja` | From the master: hostalive, ping4, ssh |
+| `static_hosts.yaml` with `role: turn` (turn1, turn2) | `services/turn.conf` | From the master: 3478/tcp, TLS on 443 with certificate expiry |
 
 - The agent needs the `icinga2` state, which `top.sls` only assigns to `*.in.ffmuc.net`, a host certificate from the
   state `certs`, and a route to the master's overlay address `icinga-vie01.ov.ffmuc.net` (nebula `nebula-nodes`).
