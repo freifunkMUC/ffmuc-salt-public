@@ -144,10 +144,14 @@ remove-temporary-files:
         [Service]
         LimitNOFILE=65000:65000
 
+{#- adduser under internal_plain writes the account and then fails on enable (that provider has none) with exit 1;
+    the account file decides (internal_plain ignores the disabled flag it leaves) #}
 jicofo-auth:
   cmd.run:
-    - name: "prosodyctl register {{ jitsi.jicofo.username }} {{ jitsi.xmpp.auth_domain }} {{ jitsi.jicofo.password }}"
-    - creates: /var/lib/prosody/{{ jitsi.xmpp.auth_domain.replace('.', '%2e').replace('-', '%2d') }}/accounts/{{ jitsi.jicofo.username }}.dat
+    - name: "prosodyctl adduser {{ jitsi.jicofo.username }}@{{ jitsi.xmpp.auth_domain }} || test -e /var/lib/prosody/{{ jitsi.xmpp.auth_domain.replace('.', '%2e').replace('-', '%2d') }}/accounts/{{ jitsi.jicofo.username | replace('-', '%2d') | replace('_', '%5f') }}.dat"
+    - stdin: {{ (jitsi.jicofo.password ~ "\n" ~ jitsi.jicofo.password ~ "\n") | tojson }}
+    - output_loglevel: quiet
+    - creates: /var/lib/prosody/{{ jitsi.xmpp.auth_domain.replace('.', '%2e').replace('-', '%2d') }}/accounts/{{ jitsi.jicofo.username | replace('-', '%2d') | replace('_', '%5f') }}.dat
 
 jicofo-mod_roster:
   cmd.run:
@@ -155,32 +159,42 @@ jicofo-mod_roster:
 
 jvb-auth:
   cmd.run:
-    - name: "prosodyctl register {{ jitsi.videobridge.username }} {{ jitsi.xmpp.auth_domain }} {{ jitsi.videobridge.password }}"
-    - creates: /var/lib/prosody/{{ jitsi.xmpp.auth_domain.replace('.', '%2e').replace('-', '%2d') }}/accounts/{{ jitsi.videobridge.username }}.dat
+    - name: "prosodyctl adduser {{ jitsi.videobridge.username }}@{{ jitsi.xmpp.auth_domain }} || test -e /var/lib/prosody/{{ jitsi.xmpp.auth_domain.replace('.', '%2e').replace('-', '%2d') }}/accounts/{{ jitsi.videobridge.username | replace('-', '%2d') | replace('_', '%5f') }}.dat"
+    - stdin: {{ (jitsi.videobridge.password ~ "\n" ~ jitsi.videobridge.password ~ "\n") | tojson }}
+    - output_loglevel: quiet
+    - creates: /var/lib/prosody/{{ jitsi.xmpp.auth_domain.replace('.', '%2e').replace('-', '%2d') }}/accounts/{{ jitsi.videobridge.username | replace('-', '%2d') | replace('_', '%5f') }}.dat
 
 {%- if jitsi.jibri_enabled %}
 jibri-control-auth:
   cmd.run:
-    - name: "prosodyctl register {{ jitsi.jibri.xmpp.control_login.username }} {{ jitsi.jibri.xmpp.control_login.domain }} {{ jitsi.jibri.xmpp.control_login.password }}"
-    - creates: /var/lib/prosody/{{ jitsi.jibri.xmpp.control_login.domain.replace('.', '%2e').replace('-', '%2d') }}/accounts/{{ jitsi.jibri.xmpp.control_login.username }}.dat
+    - name: "prosodyctl adduser {{ jitsi.jibri.xmpp.control_login.username }}@{{ jitsi.jibri.xmpp.control_login.domain }} || test -e /var/lib/prosody/{{ jitsi.jibri.xmpp.control_login.domain.replace('.', '%2e').replace('-', '%2d') }}/accounts/{{ jitsi.jibri.xmpp.control_login.username | replace('-', '%2d') | replace('_', '%5f') }}.dat"
+    - stdin: {{ (jitsi.jibri.xmpp.control_login.password ~ "\n" ~ jitsi.jibri.xmpp.control_login.password ~ "\n") | tojson }}
+    - output_loglevel: quiet
+    - creates: /var/lib/prosody/{{ jitsi.jibri.xmpp.control_login.domain.replace('.', '%2e').replace('-', '%2d') }}/accounts/{{ jitsi.jibri.xmpp.control_login.username | replace('-', '%2d') | replace('_', '%5f') }}.dat
 
 jibri-recorder-auth:
   cmd.run:
-    - name: "prosodyctl register {{ jitsi.jibri.xmpp.call_login.username }} {{ jitsi.jibri.xmpp.call_login.domain }} {{ jitsi.jibri.xmpp.call_login.password }}"
-    - creates: /var/lib/prosody/{{ jitsi.jibri.xmpp.call_login.domain.replace('.', '%2e').replace('-', '%2d') }}/accounts/{{ jitsi.jibri.xmpp.call_login.username }}.dat
+    - name: "prosodyctl adduser {{ jitsi.jibri.xmpp.call_login.username }}@{{ jitsi.jibri.xmpp.call_login.domain }} || test -e /var/lib/prosody/{{ jitsi.jibri.xmpp.call_login.domain.replace('.', '%2e').replace('-', '%2d') }}/accounts/{{ jitsi.jibri.xmpp.call_login.username | replace('-', '%2d') | replace('_', '%5f') }}.dat"
+    - stdin: {{ (jitsi.jibri.xmpp.call_login.password ~ "\n" ~ jitsi.jibri.xmpp.call_login.password ~ "\n") | tojson }}
+    - output_loglevel: quiet
+    - creates: /var/lib/prosody/{{ jitsi.jibri.xmpp.call_login.domain.replace('.', '%2e').replace('-', '%2d') }}/accounts/{{ jitsi.jibri.xmpp.call_login.username | replace('-', '%2d') | replace('_', '%5f') }}.dat
 {% endif %}
 
 {%- if jitsi.transcription.enabled %}
 {%- set recorder_domain = "recorder." ~ jitsi.public_domain %}
 transcriber-auth:
   cmd.run:
-    - name: "prosodyctl register {{ jitsi.transcription.transcriber_username }} {{ recorder_domain }} {{ jitsi.transcription.transcriber_password }}"
-    - creates: /var/lib/prosody/{{ recorder_domain.replace('.', '%2e').replace('-', '%2d') }}/accounts/{{ jitsi.transcription.transcriber_username }}.dat
+    - name: "prosodyctl adduser {{ jitsi.transcription.transcriber_username }}@{{ recorder_domain }} || test -e /var/lib/prosody/{{ recorder_domain.replace('.', '%2e').replace('-', '%2d') }}/accounts/{{ jitsi.transcription.transcriber_username | replace('-', '%2d') | replace('_', '%5f') }}.dat"
+    - stdin: {{ (jitsi.transcription.transcriber_password ~ "\n" ~ jitsi.transcription.transcriber_password ~ "\n") | tojson }}
+    - output_loglevel: quiet
+    - creates: /var/lib/prosody/{{ recorder_domain.replace('.', '%2e').replace('-', '%2d') }}/accounts/{{ jitsi.transcription.transcriber_username | replace('-', '%2d') | replace('_', '%5f') }}.dat
 
 jigasi-auth:
   cmd.run:
-    - name: "prosodyctl register {{ jitsi.transcription.jigasi_username }} {{ jitsi.xmpp.auth_domain }} {{ jitsi.transcription.jigasi_password }}"
-    - creates: /var/lib/prosody/{{ jitsi.xmpp.auth_domain.replace('.', '%2e').replace('-', '%2d') }}/accounts/{{ jitsi.transcription.jigasi_username }}.dat
+    - name: "prosodyctl adduser {{ jitsi.transcription.jigasi_username }}@{{ jitsi.xmpp.auth_domain }} || test -e /var/lib/prosody/{{ jitsi.xmpp.auth_domain.replace('.', '%2e').replace('-', '%2d') }}/accounts/{{ jitsi.transcription.jigasi_username | replace('-', '%2d') | replace('_', '%5f') }}.dat"
+    - stdin: {{ (jitsi.transcription.jigasi_password ~ "\n" ~ jitsi.transcription.jigasi_password ~ "\n") | tojson }}
+    - output_loglevel: quiet
+    - creates: /var/lib/prosody/{{ jitsi.xmpp.auth_domain.replace('.', '%2e').replace('-', '%2d') }}/accounts/{{ jitsi.transcription.jigasi_username | replace('-', '%2d') | replace('_', '%5f') }}.dat
 {% endif %}
 
 {%- if jitsi.visitors.enabled %}
@@ -229,8 +243,10 @@ prosody-v@{{ i }}:
 
 jicofo-auth-v{{ i }}:
   cmd.run:
-    - name: "prosodyctl --config /etc/prosody-v{{ i }}/prosody.cfg.lua register {{ jitsi.jicofo.username }} {{ vauth }} {{ jitsi.jicofo.password }}"
-    - creates: /var/lib/prosody-v{{ i }}/{{ vauth.replace('.', '%2e').replace('-', '%2d') }}/accounts/{{ jitsi.jicofo.username }}.dat
+    - name: "prosodyctl --config /etc/prosody-v{{ i }}/prosody.cfg.lua adduser {{ jitsi.jicofo.username }}@{{ vauth }}"
+    - stdin: {{ (jitsi.jicofo.password ~ "\n" ~ jitsi.jicofo.password ~ "\n") | tojson }}
+    - output_loglevel: quiet
+    - creates: /var/lib/prosody-v{{ i }}/{{ vauth.replace('.', '%2e').replace('-', '%2d') }}/accounts/{{ jitsi.jicofo.username | replace('-', '%2d') | replace('_', '%5f') }}.dat
     - require:
       - service: prosody-v@{{ i }}
 {% endfor %}{# vnode #}
