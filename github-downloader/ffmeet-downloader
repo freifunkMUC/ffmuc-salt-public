@@ -1,21 +1,58 @@
 #!/bin/bash
-URLS=$(curl -s https://api.github.com/repos/freifunkMUC/jitsi-meet-electron/releases/latest | jq .assets[].browser_download_url | tr -d \")
-TAG=$(curl -s https://api.github.com/repos/freifunkMUC/jitsi-meet-electron/releases/latest | jq .tag_name | tr -d \")
+#
+# Installs the assets of the latest freifunkMUC/jitsi-meet-electron release into
+# /srv/www/apt.ffmuc.net/ffmeet/latest. Every asset is checked against the sha256
+# digest GitHub publishes before anything is replaced. The replaced files stay
+# as hardlinks in ffmeet/previous-<oldtag>. The tag marker is written last, so an
+# aborted run is retried on the next call.
+#
+# Rollback: cd /srv/www/apt.ffmuc.net/ffmeet && mv latest latest.bad && mv previous-<oldtag> latest
 
-echo "Latest tag is $TAG"
+set -eEu
+set -o pipefail
+umask 022
 
-FIRMWARE_DIR=/srv/www/apt.ffmuc.net/ffmeet/latest
-TEMP_DIR=/tmp/ffmeet/$TAG
-if [ ! -f "$FIRMWARE_DIR/$TAG" ];
-then
-        echo "Downloading firmware with tag $TAG"
-        mkdir -p "$TEMP_DIR"
-        cd "$TEMP_DIR" || exit 1
-        touch "$FIRMWARE_DIR/$TAG"
-        for i in $URLS;
-        do
-                wget -q "$i"
-        done
-        mv "$TEMP_DIR"/* "$FIRMWARE_DIR"/
-        rm -r "$TEMP_DIR"
-fi
+REPO=freifunkMUC/jitsi-meet-electron
+BASE=${FFMEET_DIR:-/srv/www/apt.ffmuc.net/ffmeet}
+DEST=${BASE}/latest
+
+die() { printf '%s\n' "$@" >&2; exit 1; }
+
+install -d "${DEST}"
+exec 9>"${BASE}/.lock"
+flock -n 9 || die "Another ffmeet-downloader is running."
+
+RELEASE=$(curl -fsS --retry 3 "https://api.github.com/repos/${REPO}/releases/latest")
+TAG=$(jq -er .tag_name <<<"${RELEASE}")
+[[ ${TAG} =~ ^v[0-9][0-9A-Za-z.+-]*$ ]] || die "Unexpected tag ${TAG}."
+ASSETS=$(jq -er '.assets[] | "\(.name) \(.digest // "") \(.browser_download_url)"' <<<"${RELEASE}")
+OLD=$(find "${DEST}" -maxdepth 1 -type f -name 'v[0-9]*' -empty -printf '%f\n' | sort -V | tail -n 1)
+
+echo "Latest tag is ${TAG}, installed ${OLD:-nothing}"
+[[ ${TAG} != "${OLD}" ]] || exit 0
+
+STAGING=${BASE}/.staging-${TAG}
+trap 'rm -rf "${STAGING}"' EXIT
+rm -rf "${STAGING}"
+install -d "${STAGING}"
+
+while read -r name digest url; do
+    [[ ${name} != */* && ${name} != .* ]] || die "Unexpected asset name ${name}."
+    [[ ${digest} == sha256:* ]] || die "No sha256 digest for ${name}, nothing changed."
+    curl -fsSL --retry 3 -o "${STAGING}/${name}" "${url}"
+    echo "${digest#sha256:}  ${STAGING}/${name}" | sha256sum -c --quiet \
+        || die "sha256 mismatch for ${name}, nothing changed."
+done <<<"${ASSETS}"
+chmod 0644 "${STAGING}"/*
+echo "Downloaded and checked $(find "${STAGING}" -type f | wc -l) files"
+
+PREVIOUS=${BASE}/previous-${OLD:-unknown}
+rm -rf "${PREVIOUS}"
+cp -al "${DEST}" "${PREVIOUS}"
+find "${BASE}" -mindepth 1 -maxdepth 1 -type d -name 'previous-*' ! -path "${PREVIOUS}" -exec rm -rf {} +
+
+# Same file names as before, so links and the app's latest*.yml keep working.
+mv -f "${STAGING}"/* "${DEST}"/
+[[ -z ${OLD} ]] || rm -f "${DEST:?}/${OLD}"
+touch "${DEST}/${TAG}"
+echo "Installed ${TAG}, previous files in ${PREVIOUS}"
