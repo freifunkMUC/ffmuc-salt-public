@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
-import json
 import argparse
+import json
+import logging
 import sys
 
 from lib.respondd_client import ResponddClient
@@ -22,6 +23,13 @@ parser.add_argument(
 args = parser.parse_args()
 options = vars(args)
 
+logging.basicConfig(
+    format="%(levelname)s %(name)s: %(message)s",
+    level=logging.DEBUG if options["verbose"] else logging.INFO,
+    stream=sys.stderr,
+)
+log = logging.getLogger(__name__)
+
 config = {
     "bridge": "br-client",
     "batman": "bat0",
@@ -36,7 +44,7 @@ try:
     with open("config.json", "r") as fh:
         config = lib.helper.merge(config, json.load(fh))
 except IOError:
-    print("no config.json, use defaults")
+    log.warning("no config.json, using defaults")
 
 if options["test"]:
     from lib.nodeinfo import Nodeinfo
@@ -46,7 +54,7 @@ if options["test"]:
     print(json.dumps(Nodeinfo(config).getStruct(), sort_keys=True, indent=4))
     print(json.dumps(Statistics(config).getStruct(), sort_keys=True, indent=4))
     print(json.dumps(Neighbours(config).getStruct(), sort_keys=True, indent=4))
-    sys.exit(1)
+    sys.exit(0)
 
 config["verbose"] = options["verbose"]
 config["dry_run"] = options["dry_run"]
