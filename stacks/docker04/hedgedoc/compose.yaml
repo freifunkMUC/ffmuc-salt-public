@@ -39,7 +39,7 @@ services:
     ports:
       - "0.0.0.0:8085:3000"
   db:
-    image: mariadb:11.8.9-noble@sha256:2d2f4095530294735a857cfe22bb101e19b0849b416911c796ec4aa81b164a62
+    image: mariadb:11.8.9-noble@sha256:f16d7a344413e519dff518f27bdb221388f84b0d274c97c4fb5f2cb0dc1b34fa
     restart: always
     environment:
       - MARIADB_RANDOM_ROOT_PASSWORD=yes
