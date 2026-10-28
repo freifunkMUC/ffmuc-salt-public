@@ -25,8 +25,8 @@ services:
       - "traefik.http.services.owncast.loadbalancer.server.port=8080"
       - "traefik.docker.network=proxy"
     networks:
-     - default
-     - proxy
+      - default
+      - proxy
 networks:
   proxy:
-   external: true
+    external: true
