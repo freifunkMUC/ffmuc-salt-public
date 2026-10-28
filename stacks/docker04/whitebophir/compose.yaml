@@ -1,10 +1,7 @@
 ---
 services:
   whiteboard:
-    # node2shell (CVE-2026-111497): upstream still ships a vulnerable Node, see Dockerfile
-    build: .
-    image: local/wbo:v2.18.25-node24.22.1
-    pull_policy: build
+    image: lovasoa/wbo:v2.18.26@sha256:2fbfa2fcef242868def9e09ef80638b6654301398edb36c54d0fe80cae5886c7
     restart: unless-stopped
     environment:
       # nginx on the webfrontends proxies /draw/ and passes X-Forwarded-For

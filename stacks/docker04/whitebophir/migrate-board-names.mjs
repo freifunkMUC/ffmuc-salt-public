@@ -6,7 +6,7 @@
 //   docker run --rm --user 1000:1000 --entrypoint node \
 //     -v /srv/docker/whitebophir/boards:/opt/app/server-data \
 //     -v "$PWD/migrate-board-names.mjs:/tmp/m.mjs:ro" \
-//     local/wbo:v2.18.25-node24.22.1 /tmp/m.mjs [--apply]
+//     lovasoa/wbo:v2.18.26 /tmp/m.mjs [--apply]
 import { copyFile, readdir, stat, utimes } from "node:fs/promises";
 import path from "node:path";
 import { canonicalizeBoardName } from "/opt/app/client-data/js/board_name.js";
