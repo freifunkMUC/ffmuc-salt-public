@@ -1,0 +1,21 @@
+---
+# ADMIN_TOKEN and SSO_CLIENT_SECRET come from Komodo.
+services:
+  vaultwarden:
+    image: vaultwarden/server:1.37.4@sha256:efb3cde962015fcc036b2ea625242248611943b27212ebf4392841fb30fad055
+    container_name: vaultwarden
+    restart: always
+    environment:
+      DOMAIN: "https://vault.ffmuc.net"  # required when using a reverse proxy; your domain; vaultwarden needs to know it's https to work properly with attachments
+      SIGNUPS_ALLOWED: false # Deactivate this with "false" after you have created your account so that no strangers can register
+      ADMIN_TOKEN: ${ADMIN_TOKEN}
+      SSO_ENABLED: true
+      SSO_ONLY: false
+      SSO_AUTHORITY: "https://keycloak.ffmuc.net/realms/master"
+      SSO_CLIENT_ID: "vault"
+      SSO_CLIENT_SECRET: ${SSO_CLIENT_SECRET}
+
+    volumes:
+      - /srv/docker/vaultwarden/data:/data # the path before the : can be changed
+    ports:
+      - 11001:80 # you can replace the 11001 with your preferred port

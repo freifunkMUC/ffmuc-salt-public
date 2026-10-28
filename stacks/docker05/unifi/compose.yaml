@@ -1,0 +1,46 @@
+---
+services:
+  unifi-network-application:
+    image: ghcr.io/linuxserver/unifi-network-application:10.6.109-ls152@sha256:8389f585c6443af7051b4696a09e4bb5408636da7f99c5a0e5a883595c1d434c
+    depends_on:
+      - unifi-db
+    container_name: unifi-network-application
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Berlin
+      - MONGO_USER=unifi
+      - MONGO_PASS=${MONGO_PASS}
+      - MONGO_HOST=unifi-db
+      - MONGO_PORT=27017
+      - MONGO_DBNAME=unifi
+      - MEM_LIMIT=3072 #optional
+      - MEM_STARTUP=1024 #optional
+      - MONGO_TLS= #optional
+      - MONGO_AUTHSOURCE= #optional
+    volumes:
+      - /srv/docker/unifi/data:/config
+    ports:
+      - 8443:8443
+      - 3478:3478/udp
+      - 10001:10001/udp
+      - 8080:8080
+      - 8083:8081
+      - 1900:1900/udp #optional
+      - 8843:8843 #optional
+      - 8880:8880 #optional
+      - 6789:6789 #optional
+    restart: unless-stopped
+
+  unifi-db:
+    image: mongo:8.0.34-noble@sha256:3c64937121b9437095921c4bb2569911084c05f7b88e4a263d62a8959d2b2399
+    restart: unless-stopped
+    # command: --wiredTigerCacheSizeGB 2.5 # Container memory limit - 0.5G
+    volumes:
+      - /srv/docker/unifi/database:/data/db
+      # init-mongo.js has the database password, so it stays on the host
+      - /srv/docker/unifi/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    deploy:
+      resources:
+        limits:
+          memory: 3g

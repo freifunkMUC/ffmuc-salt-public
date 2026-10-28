@@ -1,0 +1,56 @@
+---
+services:
+  db:
+    image: mariadb:11.8.9-noble@sha256:c4124d1afa875e47f2892edf26b482fa54f796e2f342d3717a04ca091a22a9bd
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW --innodb_read_only_compressed=OFF
+    restart: unless-stopped
+    volumes:
+      - /srv/docker/nextcloud/database:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_INITDB_SKIP_TZINFO=1
+      - MARIADB_AUTO_UPGRADE=1
+    networks:
+      - default
+
+  redis:
+    image: redis:7.4.12-alpine@sha256:338fbfc036dc5517ac0b04d6de21521085935336e565f223406180e9d84166e2
+    networks:
+      - default
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+
+  app:
+    image: nextcloud:32.0.15-fpm@sha256:dc15b6b73948a2f2cfc1eb4d1f25174840fa41545fc4be01c305a6a7446f7339
+    restart: unless-stopped
+    depends_on:
+      - db
+      - redis
+    environment:
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_HOST=db
+    volumes:
+      - /srv/docker/nextcloud/data:/var/www/html
+      - ./config/zz-docker.conf:/usr/local/etc/php-fpm.d/zz-docker.conf
+      - ./config/ldap.conf:/etc/ldap/ldap.conf
+    networks:
+      - default
+
+  web:
+    image: nginx:1.30.6-alpine@sha256:47928bf67eb62a1863cb08d9ecb52d3e704304ba614eaee17884204677702951
+    ports:
+      - 8089:80
+    depends_on:
+      - app
+    volumes:
+      - /srv/docker/nextcloud/nginx.conf:/etc/nginx/nginx.conf:ro
+    volumes_from:
+      - app
+    restart: unless-stopped
+    networks:
+      - default

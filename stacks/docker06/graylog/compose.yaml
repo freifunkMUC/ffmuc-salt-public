@@ -1,0 +1,152 @@
+---
+# For DataNode setup, graylog starts with a preflight UI, this is a change from just using OpenSearch/Elasticsearch.
+# Please take a look at the README at the top of this repo or the regular docs for more info.
+
+services:
+  # MongoDB: https://hub.docker.com/_/mongo/
+  mongodb:
+    image: mongo:7.0.45@sha256:c53852c00c23ca9f23fc39690350ffa9a80e3642fe8f96879726d8da0abe80a7
+    restart: unless-stopped
+    networks:
+      - graylog
+    volumes:
+      - "/srv/docker/graylog/mongo-data:/data/db"
+      - "/srv/docker/graylog/mongodb_config:/data/configdb"
+
+  # For DataNode setup, graylog starts with a preflight UI, this is a change from just using OpenSearch/Elasticsearch.
+  # Please take a look at the README at the top of this repo or the regular docs for more info.
+  # Graylog Data Node: https://hub.docker.com/r/graylog/graylog-datanode
+  datanode:
+    image: graylog/graylog-datanode:7.2.1@sha256:e1486024c7db955c8c216147c3ef22f4163355b4cedd3a48d2ee99e3d88a70d5
+    hostname: "datanode"
+    environment:
+      GRAYLOG_DATANODE_NODE_ID_FILE: "/var/lib/graylog-datanode/node-id"
+      # GRAYLOG_DATANODE_PASSWORD_SECRET and GRAYLOG_PASSWORD_SECRET MUST be the same value
+      GRAYLOG_DATANODE_PASSWORD_SECRET: "${GRAYLOG_PASSWORD_SECRET:?Please configure GRAYLOG_PASSWORD_SECRET in the .env file}"
+      GRAYLOG_DATANODE_MONGODB_URI: "mongodb://mongodb:27017/graylog"
+      GRAYLOG_DATANODE_JAVA_OPTS: "-Xms4g -Xmx4g"
+    ulimits:
+      memlock:
+        hard: -1
+        soft: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    deploy:
+      resources:
+        limits:
+          memory: 8g
+    mem_limit: 8g # must be consistent with deploy.resources.limits.memory
+    memswap_limit: 8g # if set to same value as mem_limit, swap is disabled
+    networks:
+      graylog:
+      opensearch:
+        aliases:
+          - opensearch.graylog
+    volumes:
+      - "/srv/docker/graylog/graylog-datanode:/var/lib/graylog-datanode"
+    restart: unless-stopped
+
+  opensearch:
+    image: public.ecr.aws/opensearchproject/opensearch:2.19.7@sha256:3bfa1ec74d56928c2e018033d45c460ce2c0ea65a5cedd577de3102326c31b89
+    volumes:
+      - /srv/docker/graylog/opensearch-data:/usr/share/opensearch/data:z
+    environment:
+      - http.host=0.0.0.0
+      - transport.host=localhost
+      - network.host=0.0.0.0
+      - "OPENSEARCH_JAVA_OPTS=-Dlog4j2.formatMsgNoLookups=true -Xms16g -Xmx16g"
+      - bootstrap_memory_lock=true
+      - "OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_INITIAL_ADMIN_PASSWORD}"
+      - discovery.type=single-node
+      - DISABLE_INSTALL_DEMO_CONFIG=true
+      - DISABLE_PERFORMANCE_ANALYZER_AGENT_CLI=true
+      - action.auto_create_index=false
+      - plugins.security.ssl.http.enabled=false
+      - plugins.security.disabled=true
+    networks:
+      graylog:
+      opensearch:
+        aliases:
+          - opensearch.graylog
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    deploy:
+      resources:
+        limits:
+          memory: 24g
+    mem_limit: 24g # must be consistent with deploy.resources.limits.memory
+    memswap_limit: 24g # if set to same value as mem_limit, swap is disabled
+    restart: unless-stopped
+
+    # Graylog: https://hub.docker.com/r/graylog/graylog/
+  graylog:
+    hostname: "server"
+    image: graylog/graylog:7.2.1@sha256:ed3f6008881f16315d16b0c8d3c6abe689ebe647e14fb5f3ba8bc034fa424776
+    depends_on:
+      mongodb:
+        condition: "service_started"
+      datanode:
+        condition: "service_started"
+    entrypoint: "/usr/bin/tini --  /docker-entrypoint.sh"
+    environment:
+      GRAYLOG_NODE_ID_FILE: "/usr/share/graylog/data/data/node-id"
+      # GRAYLOG_DATANODE_PASSWORD_SECRET and GRAYLOG_PASSWORD_SECRET MUST be the same value
+      GRAYLOG_PASSWORD_SECRET: "${GRAYLOG_PASSWORD_SECRET:?Please configure GRAYLOG_PASSWORD_SECRET in the .env file}"
+      GRAYLOG_ROOT_PASSWORD_SHA2: "${GRAYLOG_ROOT_PASSWORD_SHA2:?Please configure GRAYLOG_ROOT_PASSWORD_SHA2 in the .env file}"
+      GRAYLOG_HTTP_BIND_ADDRESS: "0.0.0.0:9000"
+      GRAYLOG_HTTP_EXTERNAL_URI: "https://log.ov.ffmuc.net/"
+      GRAYLOG_MESSAGE_JOURNAL_MAX_SIZE: "12gb"
+      GRAYLOG_TIMEZONE: "Europe/Berlin"
+      GRAYLOG_MONGODB_URI: "mongodb://mongodb:27017/graylog"
+      GRAYLOG_ELASTICSEARCH_HOSTS: http://opensearch:9200
+    ports:
+      # Graylog web interface and REST API
+      - 9000:9000
+      # Syslog TCP
+      - 514:514
+      # Syslog UDP
+      - 514:514/udp
+      # GELF TCP
+      - 12201:12201
+      # GELF UDP
+      - 12201:12201/udp
+      # Filebeat
+      - 5044:5044
+    volumes:
+      - /srv/docker/graylog/data:/usr/share/graylog/data/data:z
+      - /srv/docker/graylog/GeoLite2-City.mmdb:/etc/graylog/server/GeoLite2-City.mmdb:z
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.log.entrypoints=http"
+      - "traefik.http.routers.log.rule=Host(`log.ov.ffmuc.net`)"
+      - "traefik.http.middlewares.log-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.log.middlewares=log-https-redirect"
+      - "traefik.http.routers.log-secure.entrypoints=https"
+      - "traefik.http.routers.log-secure.rule=Host(`log.ov.ffmuc.net`)"
+      - "traefik.http.routers.log-secure.tls=true"
+      - "traefik.http.routers.log-secure.tls.certresolver=http"
+      - "traefik.http.routers.log-secure.service=log"
+      - "traefik.http.services.log.loadbalancer.server.port=9000"
+      - "traefik.docker.network=proxy"
+    deploy:
+      resources:
+        limits:
+          memory: 6g
+    mem_limit: 6g # must be consistent with deploy.resources.limits.memory
+    memswap_limit: 6g # if set to same value as mem_limit, swap is disabled
+    networks:
+      - graylog
+      - proxy
+networks:
+  graylog:
+    driver: bridge
+  proxy:
+    external: true
+  opensearch:
+    name: opensearch
+    driver: bridge
+    attachable: true

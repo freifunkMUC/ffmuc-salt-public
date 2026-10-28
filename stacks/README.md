@@ -38,7 +38,8 @@ project by its project name, so keep it unchanged.
   `build: .`, `image: local/<name>:<tag>` and `pull_policy: build` on the
   service (Komodo builds it on deploy; Dependabot does not track it). Pin
   every `FROM` by digest and say in the Dockerfile when it can go. Currently:
-  hedgedoc and bgpalerter for node2shell (CVE-2026-111497).
+  hedgedoc, bgpalerter and mastodon (streaming) for node2shell
+  (CVE-2026-111497).
 - No secrets in this repository: no passwords, tokens, client secrets, cookie
   or session secrets, keys. Not in compose files, not in config files, not in
   comments.
@@ -85,8 +86,16 @@ hash), put the reference in single quotes: `NAME = '[[NAME]]'`.
 | `docker05/mattermost-docker` | `MATTERMOST_POSTGRES_PASSWORD` (`POSTGRES_PASSWORD` from `/srv/docker/mattermost-docker/.env`). The other `.env` values are now in the compose files |
 | `docker06/mastodon-paywall` | `MASTODON_PAYWALL_API_TOKEN`, `MASTODON_PAYWALL_PAYPAL_CLIENT_ID`, `MASTODON_PAYWALL_PAYPAL_CLIENT_SECRET`, `MASTODON_PAYWALL_PAYPAL_WEBHOOK_ID` (from `/srv/docker/mastodon-paywall/.env`) |
 | `docker06/omada` | none. `data/`, `work/` and `logs/` stay on the host |
-| `docker07/peeringmanager` | `PEERINGMANAGER_SECRET_KEY`, `PEERINGMANAGER_DB_PASSWORD`, `PEERINGMANAGER_REDIS_PASSWORD`, `PEERINGMANAGER_REDIS_CACHE_PASSWORD`, `PEERINGMANAGER_PEERINGDB_PASSWORD`, `PEERINGMANAGER_PEERINGDB_API_KEY` (from `/srv/docker/peeringmanager/env/*.env`). The non-secret values are in `env/`. `configuration/` and the nginx configuration stay on the host |
+| `docker07/peeringmanager` | `PEERINGMANAGER_SECRET_KEY`, `PEERINGMANAGER_DB_PASSWORD`, `PEERINGMANAGER_REDIS_PASSWORD`, `PEERINGMANAGER_REDIS_CACHE_PASSWORD`, `PEERINGMANAGER_PEERINGDB_PASSWORD`, `PEERINGMANAGER_PEERINGDB_API_KEY` (from `/srv/docker/peeringmanager/env/*.env`). The non-secret values are in `env/`. `configuration/` stays on the host |
 | `docker07/uisp` | none. `data/` stays on the host |
+| `docker04/cfssl` | `CFSSL_POSTGRES_PASSWORD` (`POSTGRES_PASSWORD` from `/srv/docker/cfssl/docker-compose.yml`). `config/` stays on the host (`db_config.json` has the database password) |
+| `docker05/nextcloud` | `NEXTCLOUD_MYSQL_ROOT_PASSWORD`, `NEXTCLOUD_MYSQL_PASSWORD`, `NEXTCLOUD_REDIS_PASSWORD` (from `/srv/docker/nextcloud/docker-compose.yml`). `config/` is now in git. `nginx.conf` stays on the host (it lists internal networks) |
+| `docker05/unifi` | `UNIFI_MONGO_PASS` (`MONGO_PASS` from `/srv/docker/unifi/docker-compose.yml`). `init-mongo.js` stays on the host (it has the database password) |
+| `docker06/graylog` | `GRAYLOG_PASSWORD_SECRET`, `GRAYLOG_ROOT_PASSWORD_SHA2` (from `/srv/docker/graylog/.env`), `GRAYLOG_OPENSEARCH_INITIAL_ADMIN_PASSWORD` (from `/srv/docker/graylog/docker-compose.yml`). `GeoLite2-City.mmdb` stays on the host |
+| `docker06/mastodon` | `MASTODON_DB_PASS` (also `POSTGRES_PASSWORD`), `MASTODON_SECRET_KEY_BASE`, `MASTODON_OTP_SECRET`, `MASTODON_VAPID_PRIVATE_KEY`, `MASTODON_SMTP_PASSWORD`, `MASTODON_ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY`, `MASTODON_ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT`, `MASTODON_ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY` (from `/srv/docker/mastodon/.env.production`), `MASTODON_TRUSTED_PROXY_IP` (not secret, it lists internal addresses). The other values that are not secret are in `env/mastodon.env` |
+| `docker07/akvorado` | none. `config/` stays on the host (`outlet.yaml` has the SNMP community) |
+| `docker07/keycloak` | `KEYCLOAK_DB_PASSWORD` (`POSTGRES_PASSWORD` and `KC_DB_PASSWORD`), `KEYCLOAK_ADMIN_PASSWORD` (from `/srv/docker/keycloak/docker-compose.yml` and `keycloak.env`). The values that are not secret are in `env/keycloak.env` |
+| `docker07/vaultwarden` | `VAULTWARDEN_ADMIN_TOKEN` (from `/srv/docker/vaultwarden/.env`, an argon2 hash with `$`, so it is single-quoted in `stacks.toml`), `VAULTWARDEN_SSO_CLIENT_SECRET` (from `/srv/docker/vaultwarden/docker-compose.yaml`) |
 
 ## Deployment
 
@@ -111,11 +120,12 @@ hash), put the reference in single quotes: `NAME = '[[NAME]]'`.
   layout: `compose.yaml` is the upstream file, `compose.override.yaml` has
   the local changes, and `env/*.env` has the values that are not secret. To
   update, compare `compose.yaml` and `env/` with the new upstream release.
+  `docker07/akvorado` keeps the upstream `docker/` directory unchanged
+  (only the files in use, without the geoip build files) and has all local
+  changes in `ffmuc/docker-compose-ffmuc.yml`, the last file in `file_paths`.
 - Komodo reads `files_on_host` compose files into its database, so projects
   with literal secrets in their compose files are left out until their secrets
-  have moved: docker04 `cfssl`, `tuwunel-test`; docker05 `nextcloud`, `unifi`;
-  docker06 `graylog`, `mastodon`; docker07 `akvorado`, `keycloak`,
-  `vaultwarden`; mail01 `mailserver`; rw-vpn01/02 `wg-access-server`.
+  have moved: docker04 `tuwunel-test`; mail01 `mailserver`; rw-vpn01/02 `wg-access-server`.
 - Taking over a running project: create the variables, sync, compare the
   Stack's diff, then *Deploy*. The old `/srv/docker/<project>/docker-compose.y*ml`
   stays on the host as rollback: `docker compose -p <project> -f <old file> up -d`
