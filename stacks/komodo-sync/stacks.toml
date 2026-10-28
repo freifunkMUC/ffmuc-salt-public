@@ -395,6 +395,23 @@ EMQX_NODE__COOKIE = [[WGKEX_EMQX_NODE_COOKIE]]
 """
 
 [[stack]]
+name = "docker06-graylog"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker06"
+project_name = "graylog"
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker06/graylog"
+file_paths = ["compose.yaml"]
+environment = """
+GRAYLOG_PASSWORD_SECRET = [[GRAYLOG_PASSWORD_SECRET]]
+GRAYLOG_ROOT_PASSWORD_SHA2 = [[GRAYLOG_ROOT_PASSWORD_SHA2]]
+OPENSEARCH_INITIAL_ADMIN_PASSWORD = '[[GRAYLOG_OPENSEARCH_INITIAL_ADMIN_PASSWORD]]'
+"""
+
+[[stack]]
 name = "docker05-salt"
 description = "The Salt master itself, deploy only from a shell (see stacks/README.md)"
 tags = ["ffmuc"]

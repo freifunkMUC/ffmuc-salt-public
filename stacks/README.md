@@ -90,6 +90,7 @@ hash), put the reference in single quotes: `NAME = '[[NAME]]'`.
 | `docker04/cfssl` | `CFSSL_POSTGRES_PASSWORD` (`POSTGRES_PASSWORD` from `/srv/docker/cfssl/docker-compose.yml`). `config/` stays on the host (`db_config.json` has the database password) |
 | `docker05/nextcloud` | `NEXTCLOUD_MYSQL_ROOT_PASSWORD`, `NEXTCLOUD_MYSQL_PASSWORD`, `NEXTCLOUD_REDIS_PASSWORD` (from `/srv/docker/nextcloud/docker-compose.yml`). `config/` is now in git. `nginx.conf` stays on the host (it lists internal networks) |
 | `docker05/unifi` | `UNIFI_MONGO_PASS` (`MONGO_PASS` from `/srv/docker/unifi/docker-compose.yml`). `init-mongo.js` stays on the host (it has the database password) |
+| `docker06/graylog` | `GRAYLOG_PASSWORD_SECRET`, `GRAYLOG_ROOT_PASSWORD_SHA2` (from `/srv/docker/graylog/.env`), `GRAYLOG_OPENSEARCH_INITIAL_ADMIN_PASSWORD` (from `/srv/docker/graylog/docker-compose.yml`). `GeoLite2-City.mmdb` stays on the host |
 
 ## Deployment
 
@@ -117,7 +118,7 @@ hash), put the reference in single quotes: `NAME = '[[NAME]]'`.
 - Komodo reads `files_on_host` compose files into its database, so projects
   with literal secrets in their compose files are left out until their secrets
   have moved: docker04 `tuwunel-test`;
-  docker06 `graylog`, `mastodon`; docker07 `akvorado`, `keycloak`,
+  docker06 `mastodon`; docker07 `akvorado`, `keycloak`,
   `vaultwarden`; mail01 `mailserver`; rw-vpn01/02 `wg-access-server`.
 - Taking over a running project: create the variables, sync, compare the
   Stack's diff, then *Deploy*. The old `/srv/docker/<project>/docker-compose.y*ml`
