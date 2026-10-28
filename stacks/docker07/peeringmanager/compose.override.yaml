@@ -18,6 +18,25 @@ services:
     image: *pm-image
     restart: always
     environment: *pm-secrets
+    networks:
+      - default
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.peeringmanager.entrypoints=http"
+      - "traefik.http.routers.peeringmanager.rule=Host(`peeringmanager.ov.ffmuc.net`)"
+      - "traefik.http.middlewares.peeringmanager-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.peeringmanager-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
+      - "traefik.http.middlewares.peeringmanager-headers.headers.customrequestheaders.X-Forwarded-For=https"
+      - "traefik.http.middlewares.peeringmanager-headers.headers.customrequestheaders.X-Forwarded-Port=443"
+      - "traefik.http.routers.peeringmanager.middlewares=peeringmanager-headers"
+      - "traefik.http.routers.peeringmanager-secure.entrypoints=https"
+      - "traefik.http.routers.peeringmanager-secure.rule=Host(`peeringmanager.ov.ffmuc.net`)"
+      - "traefik.http.routers.peeringmanager-secure.tls=true"
+      - "traefik.http.routers.peeringmanager-secure.tls.certresolver=http"
+      - "traefik.http.routers.peeringmanager-secure.service=peeringmanager"
+      - "traefik.http.services.peeringmanager.loadbalancer.server.port=8080"
+      - "traefik.docker.network=proxy"
   rqworker:
     image: *pm-image
     restart: always
@@ -50,34 +69,6 @@ services:
     restart: always
     environment:
       REDIS_PASSWORD: ${REDIS_CACHE_PASSWORD}
-
-  nginx:
-    image: docker.io/nginx:1.30.6-alpine3.24@sha256:970364228b1e4f932abc22d321932816782cca8a20b85a77552a7cfe9acfb3b5
-    restart: always
-    command: nginx -c /etc/peering-manager/nginx/nginx.conf
-    depends_on:
-      - peering-manager
-    volumes:
-      - /srv/docker/peeringmanager-nginx:/etc/peering-manager/nginx:ro
-    networks:
-      - default
-      - proxy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.peeringmanager.entrypoints=http"
-      - "traefik.http.routers.peeringmanager.rule=Host(`peeringmanager.ov.ffmuc.net`)"
-      - "traefik.http.middlewares.peeringmanager-https-redirect.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.peeringmanager-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
-      - "traefik.http.middlewares.peeringmanager-headers.headers.customrequestheaders.X-Forwarded-For=https"
-      - "traefik.http.middlewares.peeringmanager-headers.headers.customrequestheaders.X-Forwarded-Port=443"
-      - "traefik.http.routers.peeringmanager.middlewares=peeringmanager-headers"
-      - "traefik.http.routers.peeringmanager-secure.entrypoints=https"
-      - "traefik.http.routers.peeringmanager-secure.rule=Host(`peeringmanager.ov.ffmuc.net`)"
-      - "traefik.http.routers.peeringmanager-secure.tls=true"
-      - "traefik.http.routers.peeringmanager-secure.tls.certresolver=http"
-      - "traefik.http.routers.peeringmanager-secure.service=peeringmanager"
-      - "traefik.http.services.peeringmanager.loadbalancer.server.port=8080"
-      - "traefik.docker.network=proxy"
 
 networks:
   proxy:

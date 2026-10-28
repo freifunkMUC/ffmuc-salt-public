@@ -86,7 +86,7 @@ hash), put the reference in single quotes: `NAME = '[[NAME]]'`.
 | `docker05/mattermost-docker` | `MATTERMOST_POSTGRES_PASSWORD` (`POSTGRES_PASSWORD` from `/srv/docker/mattermost-docker/.env`). The other `.env` values are now in the compose files |
 | `docker06/mastodon-paywall` | `MASTODON_PAYWALL_API_TOKEN`, `MASTODON_PAYWALL_PAYPAL_CLIENT_ID`, `MASTODON_PAYWALL_PAYPAL_CLIENT_SECRET`, `MASTODON_PAYWALL_PAYPAL_WEBHOOK_ID` (from `/srv/docker/mastodon-paywall/.env`) |
 | `docker06/omada` | none. `data/`, `work/` and `logs/` stay on the host |
-| `docker07/peeringmanager` | `PEERINGMANAGER_SECRET_KEY`, `PEERINGMANAGER_DB_PASSWORD`, `PEERINGMANAGER_REDIS_PASSWORD`, `PEERINGMANAGER_REDIS_CACHE_PASSWORD`, `PEERINGMANAGER_PEERINGDB_PASSWORD`, `PEERINGMANAGER_PEERINGDB_API_KEY` (from `/srv/docker/peeringmanager/env/*.env`). The non-secret values are in `env/`. `configuration/` and the nginx configuration stay on the host |
+| `docker07/peeringmanager` | `PEERINGMANAGER_SECRET_KEY`, `PEERINGMANAGER_DB_PASSWORD`, `PEERINGMANAGER_REDIS_PASSWORD`, `PEERINGMANAGER_REDIS_CACHE_PASSWORD`, `PEERINGMANAGER_PEERINGDB_PASSWORD`, `PEERINGMANAGER_PEERINGDB_API_KEY` (from `/srv/docker/peeringmanager/env/*.env`). The non-secret values are in `env/`. `configuration/` stays on the host |
 | `docker07/uisp` | none. `data/` stays on the host |
 | `docker04/cfssl` | `CFSSL_POSTGRES_PASSWORD` (`POSTGRES_PASSWORD` from `/srv/docker/cfssl/docker-compose.yml`). `config/` stays on the host (`db_config.json` has the database password) |
 | `docker05/nextcloud` | `NEXTCLOUD_MYSQL_ROOT_PASSWORD`, `NEXTCLOUD_MYSQL_PASSWORD`, `NEXTCLOUD_REDIS_PASSWORD` (from `/srv/docker/nextcloud/docker-compose.yml`). `config/` is now in git. `nginx.conf` stays on the host (it lists internal networks) |
