@@ -55,6 +55,10 @@ Stack's environment.
 Create the variables in Komodo under *Settings / Variables* and mark them as
 secret. Values come from the running setup on the host; never commit them.
 
+Komodo writes the environment to `.env` as it is, and compose expands `$` in
+unquoted `.env` values. For a value with `$` (for example an apr1 or bcrypt
+hash), put the reference in single quotes: `NAME = '[[NAME]]'`.
+
 | Stack | Variables |
 |---|---|
 | `docker04/etherpad` | from `/srv/docker/etherpad/.env`: `ETHERPAD_MYSQL_HOST`, `ETHERPAD_MYSQL_ROOT_PASSWORD`, `ETHERPAD_MYSQL_USER`, `ETHERPAD_MYSQL_PASSWORD`, `ETHERPAD_TITLE`, `ETHERPAD_DEFAULT_PAD_TEXT`, `ETHERPAD_HOST_PORT`, `ETHERPAD_ADMIN_PASSWORD`, `ETHERPAD_ADMIN_USER`, `ETHERPAD_DB_TYPE`, `ETHERPAD_DB_HOST`, `ETHERPAD_DB_PORT`, `ETHERPAD_DB_USER`, `ETHERPAD_DB_PASS`, `ETHERPAD_DB_NAME`, `ETHERPAD_DB_CHARSET`, `ETHERPAD_NODE_ENV`, `ETHERPAD_IMPORT_EXPORT_RATE_LIMIT_WINDOW`, `ETHERPAD_IMPORT_EXPORT_MAX_REQ_PER_IP` (each mapped to the `.env` name without the prefix) |
@@ -69,6 +73,14 @@ secret. Values come from the running setup on the host; never commit them.
 | `docker05/cryptpad` | none; `/srv/docker/cryptpad/data/config.js` and `infra.js` stay on the host |
 | `docker05/salt-master` | none |
 | `docker07/bgpalerter` | none; `/srv/docker/bgpalerter/volume/config.yml` stays on the host |
+| `docker0{4,5,6,7}/traefik` | `TRAEFIK_DASHBOARD_USERS` (docker05, docker06, docker07), `TRAEFIK_DASHBOARD_USERS_DOCKER04` (docker04): `user:hash` of the dashboard basic auth, without the `$$` escapes. `traefik.yml`, `acme.json` and `update-dns.sh` (Salt state `certs`) stay on the host |
+| `docker0{4,5,6,7}/wgkex` | `WGKEX_EMQX_NODE_COOKIE` (`EMQX_NODE__COOKIE`, same on all hosts). `config/broker/wgkex.yaml` stays on the host (the Salt state `telegraf` reads it too) |
+| `docker04/conferencemapper` | none |
+| `docker04/excalidraw-backend` | none |
+| `docker04/matomo` | `MATOMO_DB_ROOT_PASSWORD`, `MATOMO_DB_PASSWORD` (from `/srv/docker/matomo/db.env`). `nginx.conf` stays on the host |
+| `docker04/netbox` | `NETBOX_DB_PASSWORD`, `NETBOX_REDIS_PASSWORD` (redis and redis-cache), `NETBOX_SECRET_KEY`, `NETBOX_SUPERUSER_API_TOKEN`, `NETBOX_SUPERUSER_PASSWORD`, `NETBOX_AUTH_LDAP_BIND_PASSWORD`, `NETBOX_API_TOKEN_PEPPER_1` (from `/srv/docker/netbox/env/*.env`). The non-secret values are in `env/`. `configuration/` stays on the host |
+| `docker04/netbox-parker` | `NETBOX_PARKER_DB_PASSWORD`, `NETBOX_PARKER_REDIS_PASSWORD`, `NETBOX_PARKER_REDIS_CACHE_PASSWORD`, `NETBOX_PARKER_SECRET_KEY`, `NETBOX_PARKER_API_TOKEN_PEPPER_1` (from `/srv/docker/netbox-parker/env/*.env`). The non-secret values are in `env/`. `configuration/` stays on the host |
+| `docker04/openldap` | `OPENLDAP_LAM_PASSWORD` (`LAM_PASSWORD` from `/srv/docker/openldap/.env`). `ldif/`, `slapd-data/` and `certs/` stay on the host |
 
 ## Deployment
 

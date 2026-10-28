@@ -67,9 +67,10 @@ deploy = false
 [stack.config]
 server = "docker04"
 project_name = "conferencemapper"
-files_on_host = true
-run_directory = "/srv/docker/conferencemapper"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker04/conferencemapper"
+file_paths = ["compose.yaml"]
 
 [[stack]]
 name = "docker04-diun"
@@ -93,9 +94,10 @@ deploy = false
 [stack.config]
 server = "docker04"
 project_name = "excalidraw-backend"
-files_on_host = true
-run_directory = "/srv/docker/excalidraw-backend"
-file_paths = ["docker-compose.yaml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker04/excalidraw-backend"
+file_paths = ["compose.yaml"]
 
 [[stack]]
 name = "docker04-matomo"
@@ -104,9 +106,14 @@ deploy = false
 [stack.config]
 server = "docker04"
 project_name = "matomo"
-files_on_host = true
-run_directory = "/srv/docker/matomo"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker04/matomo"
+file_paths = ["compose.yaml"]
+environment = """
+MARIADB_ROOT_PASSWORD = [[MATOMO_DB_ROOT_PASSWORD]]
+MARIADB_PASSWORD = [[MATOMO_DB_PASSWORD]]
+"""
 
 [[stack]]
 name = "docker04-meet-reserve"
@@ -132,9 +139,19 @@ deploy = false
 [stack.config]
 server = "docker04"
 project_name = "netbox"
-files_on_host = true
-run_directory = "/srv/docker/netbox"
-file_paths = ["docker-compose.yml", "docker-compose.override.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker04/netbox"
+file_paths = ["compose.yaml", "compose.override.yaml"]
+environment = """
+DB_PASSWORD = [[NETBOX_DB_PASSWORD]]
+REDIS_PASSWORD = [[NETBOX_REDIS_PASSWORD]]
+SECRET_KEY = '[[NETBOX_SECRET_KEY]]'
+SUPERUSER_API_TOKEN = [[NETBOX_SUPERUSER_API_TOKEN]]
+SUPERUSER_PASSWORD = [[NETBOX_SUPERUSER_PASSWORD]]
+AUTH_LDAP_BIND_PASSWORD = [[NETBOX_AUTH_LDAP_BIND_PASSWORD]]
+API_TOKEN_PEPPER_1 = [[NETBOX_API_TOKEN_PEPPER_1]]
+"""
 
 [[stack]]
 name = "docker04-netbox-parker"
@@ -143,9 +160,17 @@ deploy = false
 [stack.config]
 server = "docker04"
 project_name = "netbox-parker"
-files_on_host = true
-run_directory = "/srv/docker/netbox-parker"
-file_paths = ["docker-compose.yml", "docker-compose.override.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker04/netbox-parker"
+file_paths = ["compose.yaml", "compose.override.yaml"]
+environment = """
+DB_PASSWORD = [[NETBOX_PARKER_DB_PASSWORD]]
+REDIS_PASSWORD = [[NETBOX_PARKER_REDIS_PASSWORD]]
+REDIS_CACHE_PASSWORD = [[NETBOX_PARKER_REDIS_CACHE_PASSWORD]]
+SECRET_KEY = '[[NETBOX_PARKER_SECRET_KEY]]'
+API_TOKEN_PEPPER_1 = [[NETBOX_PARKER_API_TOKEN_PEPPER_1]]
+"""
 
 [[stack]]
 name = "docker04-openldap"
@@ -154,9 +179,13 @@ deploy = false
 [stack.config]
 server = "docker04"
 project_name = "openldap"
-files_on_host = true
-run_directory = "/srv/docker/openldap"
-file_paths = ["docker-compose.yaml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker04/openldap"
+file_paths = ["compose.yaml"]
+environment = """
+LAM_PASSWORD = [[OPENLDAP_LAM_PASSWORD]]
+"""
 
 [[stack]]
 name = "docker04-owncast"
@@ -188,9 +217,13 @@ deploy = false
 [stack.config]
 server = "docker04"
 project_name = "traefik"
-files_on_host = true
-run_directory = "/srv/docker/traefik"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker04/traefik"
+file_paths = ["compose.yaml"]
+environment = """
+TRAEFIK_DASHBOARD_USERS = '[[TRAEFIK_DASHBOARD_USERS_DOCKER04]]'
+"""
 
 [[stack]]
 name = "docker04-wgkex"
@@ -199,9 +232,13 @@ deploy = false
 [stack.config]
 server = "docker04"
 project_name = "wgkex"
-files_on_host = true
-run_directory = "/srv/docker/wgkex"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker04/wgkex"
+file_paths = ["compose.yaml"]
+environment = """
+EMQX_NODE__COOKIE = [[WGKEX_EMQX_NODE_COOKIE]]
+"""
 
 [[stack]]
 name = "docker04-whitebophir"
@@ -310,9 +347,13 @@ deploy = false
 [stack.config]
 server = "docker06"
 project_name = "traefik"
-files_on_host = true
-run_directory = "/srv/docker/traefik"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker06/traefik"
+file_paths = ["compose.yaml"]
+environment = """
+TRAEFIK_DASHBOARD_USERS = '[[TRAEFIK_DASHBOARD_USERS]]'
+"""
 
 [[stack]]
 name = "docker06-wgkex"
@@ -321,9 +362,13 @@ deploy = false
 [stack.config]
 server = "docker06"
 project_name = "wgkex"
-files_on_host = true
-run_directory = "/srv/docker/wgkex"
-file_paths = ["docker-compose.yaml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker06/wgkex"
+file_paths = ["compose.yaml"]
+environment = """
+EMQX_NODE__COOKIE = [[WGKEX_EMQX_NODE_COOKIE]]
+"""
 
 [[stack]]
 name = "docker05-salt"
@@ -412,9 +457,13 @@ deploy = false
 [stack.config]
 server = "docker05"
 project_name = "traefik"
-files_on_host = true
-run_directory = "/srv/docker/traefik"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker05/traefik"
+file_paths = ["compose.yaml"]
+environment = """
+TRAEFIK_DASHBOARD_USERS = '[[TRAEFIK_DASHBOARD_USERS]]'
+"""
 
 [[stack]]
 name = "docker05-wgkex"
@@ -423,9 +472,13 @@ deploy = false
 [stack.config]
 server = "docker05"
 project_name = "wgkex"
-files_on_host = true
-run_directory = "/srv/docker/wgkex"
-file_paths = ["docker-compose.yaml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker05/wgkex"
+file_paths = ["compose.yaml"]
+environment = """
+EMQX_NODE__COOKIE = [[WGKEX_EMQX_NODE_COOKIE]]
+"""
 
 [[stack]]
 name = "docker05-zammad-docker-compose"
@@ -437,6 +490,7 @@ project_name = "zammad-docker-compose"
 files_on_host = true
 run_directory = "/srv/docker/zammad-docker-compose"
 file_paths = ["docker-compose.yml", "docker-compose.override.yml"]
+ignore_services = ["zammad-init"]
 
 [[stack]]
 name = "docker07-bgpalerter"
@@ -504,6 +558,7 @@ project_name = "peeringmanager"
 files_on_host = true
 run_directory = "/srv/docker/peeringmanager"
 file_paths = ["docker-compose.yml", "docker-compose.override.yml"]
+ignore_services = ["housekeeping", "peeringdb-sync"]
 
 [[stack]]
 name = "docker07-speedtest"
@@ -524,9 +579,13 @@ deploy = false
 [stack.config]
 server = "docker07"
 project_name = "traefik"
-files_on_host = true
-run_directory = "/srv/docker/traefik"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker07/traefik"
+file_paths = ["compose.yaml"]
+environment = """
+TRAEFIK_DASHBOARD_USERS = '[[TRAEFIK_DASHBOARD_USERS]]'
+"""
 
 [[stack]]
 name = "docker07-uisp"
@@ -546,9 +605,13 @@ deploy = false
 [stack.config]
 server = "docker07"
 project_name = "wgkex"
-files_on_host = true
-run_directory = "/srv/docker/wgkex"
-file_paths = ["docker-compose.yaml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker07/wgkex"
+file_paths = ["compose.yaml"]
+environment = """
+EMQX_NODE__COOKIE = [[WGKEX_EMQX_NODE_COOKIE]]
+"""
 
 [[stack]]
 name = "mail01-crowdsec"
