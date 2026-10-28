@@ -1,0 +1,54 @@
+---
+x-netbox-secrets: &netbox-secrets
+  DB_PASSWORD: ${DB_PASSWORD}
+  REDIS_PASSWORD: ${REDIS_PASSWORD}
+  REDIS_CACHE_PASSWORD: ${REDIS_PASSWORD}
+  SECRET_KEY: ${SECRET_KEY}
+  SUPERUSER_API_TOKEN: ${SUPERUSER_API_TOKEN}
+  SUPERUSER_PASSWORD: ${SUPERUSER_PASSWORD}
+  AUTH_LDAP_BIND_PASSWORD: ${AUTH_LDAP_BIND_PASSWORD}
+  API_TOKEN_PEPPER_1: ${API_TOKEN_PEPPER_1}
+
+services:
+  netbox:
+    ports:
+      - 8087:8080
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nb.entrypoints=http"
+      - "traefik.http.routers.nb.rule=Host(`nb.ov.ffmuc.net`)"
+      - "traefik.http.middlewares.nb-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.nb.middlewares=nb-https-redirect"
+      - "traefik.http.routers.nb-secure.entrypoints=https"
+      - "traefik.http.routers.nb-secure.rule=Host(`nb.ov.ffmuc.net`)"
+      - "traefik.http.routers.nb-secure.tls=true"
+      - "traefik.http.routers.nb-secure.tls.certresolver=http"
+      - "traefik.http.routers.nb-secure.service=nb"
+      - "traefik.http.services.nb.loadbalancer.server.port=8080"
+      - "traefik.docker.network=proxy"
+    restart: unless-stopped
+    networks:
+      - default
+      - proxy
+    environment: *netbox-secrets
+  netbox-worker:
+    environment: *netbox-secrets
+  postgres:
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+  redis:
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+  redis-cache:
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+volumes:
+  netbox-postgres-data:
+    driver: local
+    driver_opts:
+      device: /srv/docker/postgres-netbox
+      type: bind
+      o: bind
+networks:
+  proxy:
+    external: true

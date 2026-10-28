@@ -139,9 +139,19 @@ deploy = false
 [stack.config]
 server = "docker04"
 project_name = "netbox"
-files_on_host = true
-run_directory = "/srv/docker/netbox"
-file_paths = ["docker-compose.yml", "docker-compose.override.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker04/netbox"
+file_paths = ["compose.yaml", "compose.override.yaml"]
+environment = """
+DB_PASSWORD = [[NETBOX_DB_PASSWORD]]
+REDIS_PASSWORD = [[NETBOX_REDIS_PASSWORD]]
+SECRET_KEY = '[[NETBOX_SECRET_KEY]]'
+SUPERUSER_API_TOKEN = [[NETBOX_SUPERUSER_API_TOKEN]]
+SUPERUSER_PASSWORD = [[NETBOX_SUPERUSER_PASSWORD]]
+AUTH_LDAP_BIND_PASSWORD = [[NETBOX_AUTH_LDAP_BIND_PASSWORD]]
+API_TOKEN_PEPPER_1 = [[NETBOX_API_TOKEN_PEPPER_1]]
+"""
 
 [[stack]]
 name = "docker04-netbox-parker"

@@ -78,6 +78,7 @@ hash), put the reference in single quotes: `NAME = '[[NAME]]'`.
 | `docker04/conferencemapper` | none |
 | `docker04/excalidraw-backend` | none |
 | `docker04/matomo` | `MATOMO_DB_ROOT_PASSWORD`, `MATOMO_DB_PASSWORD` (from `/srv/docker/matomo/db.env`). `nginx.conf` stays on the host |
+| `docker04/netbox` | `NETBOX_DB_PASSWORD`, `NETBOX_REDIS_PASSWORD` (redis and redis-cache), `NETBOX_SECRET_KEY`, `NETBOX_SUPERUSER_API_TOKEN`, `NETBOX_SUPERUSER_PASSWORD`, `NETBOX_AUTH_LDAP_BIND_PASSWORD`, `NETBOX_API_TOKEN_PEPPER_1` (from `/srv/docker/netbox/env/*.env`). The non-secret values are in `env/`. `configuration/` stays on the host |
 
 ## Deployment
 
