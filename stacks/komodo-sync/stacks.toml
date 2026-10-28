@@ -412,6 +412,29 @@ OPENSEARCH_INITIAL_ADMIN_PASSWORD = '[[GRAYLOG_OPENSEARCH_INITIAL_ADMIN_PASSWORD
 """
 
 [[stack]]
+name = "docker06-mastodon"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker06"
+project_name = "mastodon"
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker06/mastodon"
+file_paths = ["compose.yaml"]
+environment = """
+DB_PASS = [[MASTODON_DB_PASS]]
+SECRET_KEY_BASE = [[MASTODON_SECRET_KEY_BASE]]
+OTP_SECRET = [[MASTODON_OTP_SECRET]]
+VAPID_PRIVATE_KEY = [[MASTODON_VAPID_PRIVATE_KEY]]
+SMTP_PASSWORD = [[MASTODON_SMTP_PASSWORD]]
+ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY = [[MASTODON_ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY]]
+ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT = [[MASTODON_ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT]]
+ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY = [[MASTODON_ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY]]
+TRUSTED_PROXY_IP = [[MASTODON_TRUSTED_PROXY_IP]]
+"""
+
+[[stack]]
 name = "docker05-salt"
 description = "The Salt master itself, deploy only from a shell (see stacks/README.md)"
 tags = ["ffmuc"]

@@ -38,7 +38,8 @@ project by its project name, so keep it unchanged.
   `build: .`, `image: local/<name>:<tag>` and `pull_policy: build` on the
   service (Komodo builds it on deploy; Dependabot does not track it). Pin
   every `FROM` by digest and say in the Dockerfile when it can go. Currently:
-  hedgedoc and bgpalerter for node2shell (CVE-2026-111497).
+  hedgedoc, bgpalerter and mastodon (streaming) for node2shell
+  (CVE-2026-111497).
 - No secrets in this repository: no passwords, tokens, client secrets, cookie
   or session secrets, keys. Not in compose files, not in config files, not in
   comments.
@@ -91,6 +92,7 @@ hash), put the reference in single quotes: `NAME = '[[NAME]]'`.
 | `docker05/nextcloud` | `NEXTCLOUD_MYSQL_ROOT_PASSWORD`, `NEXTCLOUD_MYSQL_PASSWORD`, `NEXTCLOUD_REDIS_PASSWORD` (from `/srv/docker/nextcloud/docker-compose.yml`). `config/` is now in git. `nginx.conf` stays on the host (it lists internal networks) |
 | `docker05/unifi` | `UNIFI_MONGO_PASS` (`MONGO_PASS` from `/srv/docker/unifi/docker-compose.yml`). `init-mongo.js` stays on the host (it has the database password) |
 | `docker06/graylog` | `GRAYLOG_PASSWORD_SECRET`, `GRAYLOG_ROOT_PASSWORD_SHA2` (from `/srv/docker/graylog/.env`), `GRAYLOG_OPENSEARCH_INITIAL_ADMIN_PASSWORD` (from `/srv/docker/graylog/docker-compose.yml`). `GeoLite2-City.mmdb` stays on the host |
+| `docker06/mastodon` | `MASTODON_DB_PASS` (also `POSTGRES_PASSWORD`), `MASTODON_SECRET_KEY_BASE`, `MASTODON_OTP_SECRET`, `MASTODON_VAPID_PRIVATE_KEY`, `MASTODON_SMTP_PASSWORD`, `MASTODON_ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY`, `MASTODON_ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT`, `MASTODON_ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY` (from `/srv/docker/mastodon/.env.production`), `MASTODON_TRUSTED_PROXY_IP` (not secret, it lists internal addresses). The other values that are not secret are in `env/mastodon.env` |
 
 ## Deployment
 
@@ -118,7 +120,7 @@ hash), put the reference in single quotes: `NAME = '[[NAME]]'`.
 - Komodo reads `files_on_host` compose files into its database, so projects
   with literal secrets in their compose files are left out until their secrets
   have moved: docker04 `tuwunel-test`;
-  docker06 `mastodon`; docker07 `akvorado`, `keycloak`,
+  docker07 `akvorado`, `keycloak`,
   `vaultwarden`; mail01 `mailserver`; rw-vpn01/02 `wg-access-server`.
 - Taking over a running project: create the variables, sync, compare the
   Stack's diff, then *Deploy*. The old `/srv/docker/<project>/docker-compose.y*ml`
