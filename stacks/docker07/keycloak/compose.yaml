@@ -16,7 +16,7 @@ services:
       POSTGRES_USER: keycloak
       POSTGRES_PASSWORD: ${DB_PASSWORD}
   keycloak:
-    image: quay.io/keycloak/keycloak:26.7.2@sha256:831330513f55695572286e521f94fcd3c7e285250ed5b848090265a33192f669
+    image: quay.io/keycloak/keycloak:26.8.1@sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b
     restart: unless-stopped
     entrypoint: ["/opt/keycloak/bin/kc.sh", "start", "--proxy-headers", "xforwarded"]
     env_file:

@@ -1,7 +1,7 @@
 services:
   netbox: &netbox
     # FFMUC: exact version, pinned by digest
-    image: docker.io/netboxcommunity/netbox:v4.7.3-5.1.1@sha256:1d6e0b5fbd48da9868376900561ee55992e04446ce7861dab5e9a42ae01f3fcb
+    image: docker.io/netboxcommunity/netbox:v4.7.4-5.1.1@sha256:c75a7dcfe61dadd4e009c9b5d9118a33bec991f4359c0db18ac7f287b5980246
     depends_on:
       - postgres
       - redis
@@ -52,7 +52,7 @@ services:
   # redis
   redis:
     # FFMUC: stay on the running Valkey major for now (clean rollback); upstream: 9.1
-    image: docker.io/valkey/valkey:8.0.11-alpine@sha256:fd348c9b6999ef15719a1d6b43b810ee1bf2068ded2d7ab6f6dd15943841f28b
+    image: docker.io/valkey/valkey:8.1.11-alpine@sha256:2602ace2be6569bc2bbb06f873776516ab9089821525be34f4305c67eb9db02a
     command:
       - sh
       - -c # this is to evaluate the $REDIS_PASSWORD from the env
@@ -69,7 +69,7 @@ services:
       - netbox-redis-data:/data
   redis-cache:
     # FFMUC: stay on the running Valkey major for now (clean rollback); upstream: 9.1
-    image: docker.io/valkey/valkey:8.0.11-alpine@sha256:fd348c9b6999ef15719a1d6b43b810ee1bf2068ded2d7ab6f6dd15943841f28b
+    image: docker.io/valkey/valkey:8.1.11-alpine@sha256:2602ace2be6569bc2bbb06f873776516ab9089821525be34f4305c67eb9db02a
     command:
       - sh
       - -c # this is to evaluate the $REDIS_PASSWORD from the env

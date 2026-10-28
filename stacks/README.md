@@ -90,6 +90,7 @@ hash), put the reference in single quotes: `NAME = '[[NAME]]'`.
 | `docker07/uisp` | none. `data/` stays on the host |
 | `docker04/cfssl` | `CFSSL_POSTGRES_PASSWORD` (`POSTGRES_PASSWORD` from `/srv/docker/cfssl/docker-compose.yml`). `config/` stays on the host (`db_config.json` has the database password) |
 | `docker05/nextcloud` | `NEXTCLOUD_MYSQL_ROOT_PASSWORD`, `NEXTCLOUD_MYSQL_PASSWORD`, `NEXTCLOUD_REDIS_PASSWORD` (from `/srv/docker/nextcloud/docker-compose.yml`). `config/` is now in git. `nginx.conf` stays on the host (it lists internal networks) |
+| `docker05/zammad` | `ZAMMAD_POSTGRES_PASS` (`POSTGRES_PASS` from `/srv/docker/zammad-docker-compose/.env`). The other `.env` values are in the Stack environment in `stacks.toml`. `ELASTICSEARCH_PASS` is not a secret, Elasticsearch runs without security |
 | `docker05/unifi` | `UNIFI_MONGO_PASS` (`MONGO_PASS` from `/srv/docker/unifi/docker-compose.yml`). `init-mongo.js` stays on the host (it has the database password) |
 | `docker06/graylog` | `GRAYLOG_PASSWORD_SECRET`, `GRAYLOG_ROOT_PASSWORD_SHA2` (from `/srv/docker/graylog/.env`), `GRAYLOG_OPENSEARCH_INITIAL_ADMIN_PASSWORD` (from `/srv/docker/graylog/docker-compose.yml`). `GeoLite2-City.mmdb` stays on the host |
 | `docker06/mastodon` | `MASTODON_DB_PASS` (also `POSTGRES_PASSWORD`), `MASTODON_SECRET_KEY_BASE`, `MASTODON_OTP_SECRET`, `MASTODON_VAPID_PRIVATE_KEY`, `MASTODON_SMTP_PASSWORD`, `MASTODON_ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY`, `MASTODON_ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT`, `MASTODON_ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY` (from `/srv/docker/mastodon/.env.production`), `MASTODON_TRUSTED_PROXY_IP` (not secret, it lists internal addresses). The other values that are not secret are in `env/mastodon.env` |
@@ -111,15 +112,18 @@ hash), put the reference in single quotes: `NAME = '[[NAME]]'`.
 - Projects that are not in this repository are listed with
   `files_on_host = true` and their existing directory as `run_directory`, so
   Komodo shows them without changing anything. Taking one over means moving
-  its compose file here and switching the Stack to `repo`. Two kinds stay on
-  the host: the projects on mail01 (mailserver role of GoliathLabs/ansible)
-  and docker05 `zammad-docker-compose` (its upgrade script writes the compose
-  files).
+  its compose file here and switching the Stack to `repo`. The projects on
+  mail01 stay on the host (mailserver role of GoliathLabs/ansible).
 - Projects that come from an upstream compose repository (`docker04/netbox`,
   `docker04/netbox-parker`, `docker07/peeringmanager`) keep the upstream file
   layout: `compose.yaml` is the upstream file, `compose.override.yaml` has
   the local changes, and `env/*.env` has the values that are not secret. To
   update, compare `compose.yaml` and `env/` with the new upstream release.
+  `docker05/zammad` (zammad/zammad-docker-compose) has the same layout, but
+  without `env/`: the image pins are in `compose.override.yaml`, the values
+  that `compose.yaml` reads from `.env` are in the Komodo Stack environment.
+  Its directory name is not the project name: the project stays
+  `zammad-docker-compose`, so Komodo adopts the running containers.
   `docker07/akvorado` keeps the upstream `docker/` directory unchanged
   (only the files in use, without the geoip build files) and has all local
   changes in `ffmuc/docker-compose-ffmuc.yml`, the last file in `file_paths`.
