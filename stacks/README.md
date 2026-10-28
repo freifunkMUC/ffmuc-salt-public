@@ -77,6 +77,7 @@ hash), put the reference in single quotes: `NAME = '[[NAME]]'`.
 | `docker0{4,5,6,7}/wgkex` | `WGKEX_EMQX_NODE_COOKIE` (`EMQX_NODE__COOKIE`, same on all hosts). `config/broker/wgkex.yaml` stays on the host (the Salt state `telegraf` reads it too) |
 | `docker04/conferencemapper` | none |
 | `docker04/excalidraw-backend` | none |
+| `docker04/matomo` | `MATOMO_DB_ROOT_PASSWORD`, `MATOMO_DB_PASSWORD` (from `/srv/docker/matomo/db.env`). `nginx.conf` stays on the host |
 
 ## Deployment
 

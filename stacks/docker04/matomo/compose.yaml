@@ -1,0 +1,57 @@
+---
+x-db-env: &db-env
+  MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+  MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+  MARIADB_DATABASE: matomo
+  MARIADB_USER: matomo
+  MATOMO_DATABASE_ADAPTER: mysql
+  MATOMO_DATABASE_TABLES_PREFIX: matomo_
+  MATOMO_DATABASE_USERNAME: matomo
+  MATOMO_DATABASE_PASSWORD: ${MARIADB_PASSWORD}
+  MATOMO_DATABASE_DBNAME: matomo
+
+services:
+  db:
+    image: mariadb:11.8.8-noble@sha256:24e76fcec8c003a0362d0dd53f4806e7e79458d7fdeaf47437760e19496f5a9c
+    command: --max-allowed-packet=64MB
+    restart: always
+    volumes:
+      - /srv/docker/matomo/database:/var/lib/mysql
+    environment:
+      <<: *db-env
+      MYSQL_ROOT_PASSWORD: ""
+      MARIADB_AUTO_UPGRADE: "true"
+
+  matomo-app:
+    image: matomo:5.14.0-fpm-alpine@sha256:bc6b35bfb74309cde36b6ea68efbcec3cb3e898b952138982101ae33f244ea99
+    restart: always
+    links:
+      - db
+    volumes:
+      - /srv/docker/matomo/matomo:/var/www/html
+    tmpfs:
+      - /var/www/html/tmp:uid=82,gid=82
+    environment:
+      <<: *db-env
+      MATOMO_DATABASE_HOST: db
+
+  matomo-cron:
+    image: matomo:5.14.0-fpm-alpine@sha256:bc6b35bfb74309cde36b6ea68efbcec3cb3e898b952138982101ae33f244ea99
+    restart: unless-stopped
+    depends_on:
+      - matomo-app
+    volumes:
+      - /srv/docker/matomo/matomo:/var/www/html:ro
+    tmpfs:
+      - /var/www/html/tmp:uid=82,gid=82
+    entrypoint: "sh -c 'while true; do php console core:archive --url=matomo.ffmuc.net; sleep 600; done'"
+
+  matomo-web:
+    image: nginx:1.30.3-alpine@sha256:0d3b80406a13a767339fbe2f41406d6c7da727ab89cf8fae399e81f780f814d1
+    restart: always
+    volumes:
+      - /srv/docker/matomo/matomo:/var/www/html:ro
+      # see https://github.com/matomo-org/matomo-nginx
+      - /srv/docker/matomo/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - 8092:80
