@@ -418,9 +418,13 @@ deploy = false
 [stack.config]
 server = "docker05"
 project_name = "mattermost-docker"
-files_on_host = true
-run_directory = "/srv/docker/mattermost-docker"
-file_paths = ["docker-compose.yml", "docker-compose.without-nginx.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker05/mattermost-docker"
+file_paths = ["compose.yaml", "compose.without-nginx.yaml"]
+environment = """
+POSTGRES_PASSWORD = [[MATTERMOST_POSTGRES_PASSWORD]]
+"""
 
 [[stack]]
 name = "docker05-meet-reserve"

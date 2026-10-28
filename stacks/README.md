@@ -82,6 +82,7 @@ hash), put the reference in single quotes: `NAME = '[[NAME]]'`.
 | `docker04/netbox-parker` | `NETBOX_PARKER_DB_PASSWORD`, `NETBOX_PARKER_REDIS_PASSWORD`, `NETBOX_PARKER_REDIS_CACHE_PASSWORD`, `NETBOX_PARKER_SECRET_KEY`, `NETBOX_PARKER_API_TOKEN_PEPPER_1` (from `/srv/docker/netbox-parker/env/*.env`). The non-secret values are in `env/`. `configuration/` stays on the host |
 | `docker04/openldap` | `OPENLDAP_LAM_PASSWORD` (`LAM_PASSWORD` from `/srv/docker/openldap/.env`). `ldif/`, `slapd-data/` and `certs/` stay on the host |
 | `docker04/owncast` | none. `data/`, `db/` and `logo.png` stay on the host |
+| `docker05/mattermost-docker` | `MATTERMOST_POSTGRES_PASSWORD` (`POSTGRES_PASSWORD` from `/srv/docker/mattermost-docker/.env`). The other `.env` values are now in the compose files |
 
 ## Deployment
 
