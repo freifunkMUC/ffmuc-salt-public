@@ -568,9 +568,18 @@ deploy = false
 [stack.config]
 server = "docker07"
 project_name = "peeringmanager"
-files_on_host = true
-run_directory = "/srv/docker/peeringmanager"
-file_paths = ["docker-compose.yml", "docker-compose.override.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker07/peeringmanager"
+file_paths = ["compose.yaml", "compose.override.yaml"]
+environment = """
+SECRET_KEY = [[PEERINGMANAGER_SECRET_KEY]]
+DB_PASSWORD = [[PEERINGMANAGER_DB_PASSWORD]]
+REDIS_PASSWORD = [[PEERINGMANAGER_REDIS_PASSWORD]]
+REDIS_CACHE_PASSWORD = [[PEERINGMANAGER_REDIS_CACHE_PASSWORD]]
+PEERINGDB_PASSWORD = [[PEERINGMANAGER_PEERINGDB_PASSWORD]]
+PEERINGDB_API_KEY = [[PEERINGMANAGER_PEERINGDB_API_KEY]]
+"""
 ignore_services = ["housekeeping", "peeringdb-sync"]
 
 [[stack]]
