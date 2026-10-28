@@ -437,6 +437,7 @@ project_name = "zammad-docker-compose"
 files_on_host = true
 run_directory = "/srv/docker/zammad-docker-compose"
 file_paths = ["docker-compose.yml", "docker-compose.override.yml"]
+ignore_services = ["zammad-init"]
 
 [[stack]]
 name = "docker07-bgpalerter"
@@ -504,6 +505,7 @@ project_name = "peeringmanager"
 files_on_host = true
 run_directory = "/srv/docker/peeringmanager"
 file_paths = ["docker-compose.yml", "docker-compose.override.yml"]
+ignore_services = ["housekeeping", "peeringdb-sync"]
 
 [[stack]]
 name = "docker07-speedtest"
