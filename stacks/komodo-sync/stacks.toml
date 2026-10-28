@@ -752,6 +752,22 @@ ADMIN_PASSWORD = [[KEYCLOAK_ADMIN_PASSWORD]]
 """
 
 [[stack]]
+name = "docker07-vaultwarden"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker07"
+project_name = "vaultwarden"
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker07/vaultwarden"
+file_paths = ["compose.yaml"]
+environment = """
+ADMIN_TOKEN = '[[VAULTWARDEN_ADMIN_TOKEN]]'
+SSO_CLIENT_SECRET = [[VAULTWARDEN_SSO_CLIENT_SECRET]]
+"""
+
+[[stack]]
 name = "mail01-crowdsec"
 description = "Managed by the mailserver role of GoliathLabs/ansible, not deployed from Komodo"
 tags = ["ffmuc"]

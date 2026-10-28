@@ -95,6 +95,7 @@ hash), put the reference in single quotes: `NAME = '[[NAME]]'`.
 | `docker06/mastodon` | `MASTODON_DB_PASS` (also `POSTGRES_PASSWORD`), `MASTODON_SECRET_KEY_BASE`, `MASTODON_OTP_SECRET`, `MASTODON_VAPID_PRIVATE_KEY`, `MASTODON_SMTP_PASSWORD`, `MASTODON_ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY`, `MASTODON_ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT`, `MASTODON_ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY` (from `/srv/docker/mastodon/.env.production`), `MASTODON_TRUSTED_PROXY_IP` (not secret, it lists internal addresses). The other values that are not secret are in `env/mastodon.env` |
 | `docker07/akvorado` | none. `config/` stays on the host (`outlet.yaml` has the SNMP community) |
 | `docker07/keycloak` | `KEYCLOAK_DB_PASSWORD` (`POSTGRES_PASSWORD` and `KC_DB_PASSWORD`), `KEYCLOAK_ADMIN_PASSWORD` (from `/srv/docker/keycloak/docker-compose.yml` and `keycloak.env`). The values that are not secret are in `env/keycloak.env` |
+| `docker07/vaultwarden` | `VAULTWARDEN_ADMIN_TOKEN` (from `/srv/docker/vaultwarden/.env`, an argon2 hash with `$`, so it is single-quoted in `stacks.toml`), `VAULTWARDEN_SSO_CLIENT_SECRET` (from `/srv/docker/vaultwarden/docker-compose.yaml`) |
 
 ## Deployment
 
@@ -124,8 +125,7 @@ hash), put the reference in single quotes: `NAME = '[[NAME]]'`.
   changes in `ffmuc/docker-compose-ffmuc.yml`, the last file in `file_paths`.
 - Komodo reads `files_on_host` compose files into its database, so projects
   with literal secrets in their compose files are left out until their secrets
-  have moved: docker04 `tuwunel-test`;
-  docker07 `vaultwarden`; mail01 `mailserver`; rw-vpn01/02 `wg-access-server`.
+  have moved: docker04 `tuwunel-test`; mail01 `mailserver`; rw-vpn01/02 `wg-access-server`.
 - Taking over a running project: create the variables, sync, compare the
   Stack's diff, then *Deploy*. The old `/srv/docker/<project>/docker-compose.y*ml`
   stays on the host as rollback: `docker compose -p <project> -f <old file> up -d`
