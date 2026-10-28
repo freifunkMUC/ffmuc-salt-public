@@ -1,0 +1,9 @@
+---
+services:
+  conferencemapper:
+    image: ghcr.io/krombel/conferencemapper:master@sha256:e2b7cf5a26524c78c4d7e6e83b40af086fefd47ff12b1a7db9a81d52e6bea399
+    restart: always
+    ports:
+      - "8001:8001"
+    volumes:
+      - /srv/docker/conferencemapper/data:/app/data

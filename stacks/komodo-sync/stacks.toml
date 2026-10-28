@@ -67,9 +67,10 @@ deploy = false
 [stack.config]
 server = "docker04"
 project_name = "conferencemapper"
-files_on_host = true
-run_directory = "/srv/docker/conferencemapper"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker04/conferencemapper"
+file_paths = ["compose.yaml"]
 
 [[stack]]
 name = "docker04-diun"
