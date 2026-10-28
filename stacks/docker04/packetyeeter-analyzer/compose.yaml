@@ -1,0 +1,48 @@
+---
+services:
+  analyzer:
+    image: ghcr.io/awlx/packetyeeter-analyzer:v0.2.0@sha256:929ffecbf9b94db427aeec7ebfe441d27606c0a6e92c9aefaccad6f0b4bc903d
+    container_name: packetyeeter-analyzer
+    restart: unless-stopped
+    command:
+      - "-listen-addr=0.0.0.0:9090"
+      - "-metrics-addr=0.0.0.0:9091"
+      - "-inspect-addr=0.0.0.0:9092"
+      - "-reputation-threshold=75.0"
+      - "-ai-confidence-threshold=0.8"
+      - "-geoip-asn=/data/geoip/GeoLite2-ASN.mmdb"
+      - "-geoip-country=/data/geoip/GeoLite2-Country.mmdb"
+      # keep dry-run until the collectors are validated, see packetyeeter/README.md
+      - "-dry-run"
+      - "-sustained-enabled"
+    ports:
+      - "9090:9090"
+      - "9091:9091"
+      - "127.0.0.1:9092:9092"
+    volumes:
+      - /srv/docker/packetyeeter-analyzer/data:/data
+      - /srv/docker/packetyeeter-analyzer/ml-data:/var/lib/packetyeeter
+      - /srv/docker/packetyeeter-analyzer/ml-data/sessions:/var/cache/packetyeeter/sessions
+      # GeoIP files are downloaded by the Salt state packetyeeter
+      - /srv/docker/packetyeeter-analyzer/geoip/GeoLite2-Country.mmdb:/data/geoip/GeoLite2-Country.mmdb:ro
+      - /srv/docker/packetyeeter-analyzer/geoip/GeoLite2-ASN.mmdb:/data/geoip/GeoLite2-ASN.mmdb:ro
+    networks:
+      - default
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.middlewares.packetyeeter-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.packetyeeter.entrypoints=http"
+      - "traefik.http.routers.packetyeeter.rule=Host(`packetyeeter01.ov.ffmuc.net`)"
+      - "traefik.http.routers.packetyeeter.middlewares=packetyeeter-https-redirect"
+      - "traefik.http.routers.packetyeeter-secure.entrypoints=https"
+      - "traefik.http.routers.packetyeeter-secure.rule=Host(`packetyeeter01.ov.ffmuc.net`)"
+      - "traefik.http.routers.packetyeeter-secure.tls=true"
+      - "traefik.http.routers.packetyeeter-secure.tls.certresolver=http"
+      - "traefik.http.routers.packetyeeter-secure.service=packetyeeter"
+      - "traefik.http.services.packetyeeter.loadbalancer.server.port=9092"
+
+networks:
+  proxy:
+    external: true
