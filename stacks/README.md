@@ -60,6 +60,7 @@ secret. Values come from the running setup on the host; never commit them.
 | `docker04/hedgedoc` | `HEDGEDOC_DB_PASSWORD` (also the MariaDB user password), `HEDGEDOC_OAUTH2_CLIENT_SECRET`, `HEDGEDOC_SESSION_SECRET` |
 | `docker04/dokuwiki` | none; `/srv/docker/dokuwiki/ldap.conf` stays on the host |
 | `docker04/whitebophir` | none |
+| `docker0{4,5,6,7}/diun` | `DIUN_SLACK_WEBHOOK_URL` (`webhookURL` from `/srv/docker/diun/diun.yml`) |
 | `docker05/cryptpad` | none; `/srv/docker/cryptpad/data/config.js` and `infra.js` stay on the host |
 | `docker05/salt-master` | none |
 | `docker07/bgpalerter` | none; `/srv/docker/bgpalerter/volume/config.yml` stays on the host |
@@ -90,6 +91,10 @@ secret. Values come from the running setup on the host; never commit them.
   stays on the host as rollback: `docker compose -p <project> -f <old file> up -d`
   in that directory restores the previous state, the data directories are the
   same.
+- Some projects came from Salt states that rendered their compose file on
+  the host. Their compose files are now static per host in this directory and
+  the Salt states are removed, so Salt and Komodo do not both manage them:
+  `diun`.
 
 ## Komodo
 

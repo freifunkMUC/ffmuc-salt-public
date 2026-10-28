@@ -78,9 +78,13 @@ deploy = false
 [stack.config]
 server = "docker04"
 project_name = "diun"
-files_on_host = true
-run_directory = "/srv/docker/diun"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker04/diun"
+file_paths = ["compose.yaml"]
+environment = """
+DIUN_SLACK_WEBHOOK_URL = [[DIUN_SLACK_WEBHOOK_URL]]
+"""
 
 [[stack]]
 name = "docker04-excalidraw-backend"
@@ -233,9 +237,13 @@ deploy = false
 [stack.config]
 server = "docker06"
 project_name = "diun"
-files_on_host = true
-run_directory = "/srv/docker/diun"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker06/diun"
+file_paths = ["compose.yaml"]
+environment = """
+DIUN_SLACK_WEBHOOK_URL = [[DIUN_SLACK_WEBHOOK_URL]]
+"""
 
 [[stack]]
 name = "docker06-mastodon-paywall"
@@ -335,9 +343,13 @@ deploy = false
 [stack.config]
 server = "docker05"
 project_name = "diun"
-files_on_host = true
-run_directory = "/srv/docker/diun"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker05/diun"
+file_paths = ["compose.yaml"]
+environment = """
+DIUN_SLACK_WEBHOOK_URL = [[DIUN_SLACK_WEBHOOK_URL]]
+"""
 
 [[stack]]
 name = "docker05-mattermost-docker"
@@ -424,9 +436,13 @@ deploy = false
 [stack.config]
 server = "docker07"
 project_name = "diun"
-files_on_host = true
-run_directory = "/srv/docker/diun"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker07/diun"
+file_paths = ["compose.yaml"]
+environment = """
+DIUN_SLACK_WEBHOOK_URL = [[DIUN_SLACK_WEBHOOK_URL]]
+"""
 
 [[stack]]
 name = "docker07-libretranslate"

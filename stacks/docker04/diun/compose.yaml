@@ -1,0 +1,23 @@
+---
+services:
+  diun:
+    image: crazymax/diun:4.33.1@sha256:8cc638b4c54e8a0c47898a51b20dae73037ad43310168b5da543a311dc668f77
+    hostname: docker04-diun
+    restart: always
+    volumes:
+      - /srv/docker/diun/data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - TZ=Europe/Berlin
+      - LOG_LEVEL=info
+      - LOG_JSON=false
+      - DIUN_WATCH_WORKERS=20
+      - DIUN_WATCH_SCHEDULE=42 3 * * *
+      - DIUN_PROVIDERS_DOCKER=true
+      - DIUN_PROVIDERS_DOCKER_WATCHSTOPPED=true
+      - DIUN_PROVIDERS_DOCKER_WATCHBYDEFAULT=true
+      - DIUN_NOTIF_SLACK_WEBHOOKURL=${DIUN_SLACK_WEBHOOK_URL}
+      - DIUN_NOTIF_SLACK_RENDERFIELDS=false
+      - >-
+        DIUN_NOTIF_SLACK_TEMPLATEBODY={{ .Meta.Hostname }}: `{{ .Entry.Image }}`
+        {{ if (eq .Entry.Status "new") }}newly added{{ else }}updated{{ end }}.
