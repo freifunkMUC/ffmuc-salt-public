@@ -207,3 +207,9 @@ itself (a broken deploy would take away the tool used to repair the hosts).
   `salt-run saltutil.sync_all` in it. The custom ext_pillar
   `_pillar/netbox.py` is loaded from the master's extmods cache; on
   2026-10-18 a recreate without the sync left every pillar without `netbox`.
+- Then check:
+  - `salt '*' test.ping` and `salt-run manage.down`: the same minions as
+    before the recreate.
+  - `salt 'docker04*' pillar.get netbox:config_context`: not empty.
+  - `salt '*' pillar.get _errors`: empty on all minions.
+- The minions need no sync. The mine data is in the cache volume and stays.
