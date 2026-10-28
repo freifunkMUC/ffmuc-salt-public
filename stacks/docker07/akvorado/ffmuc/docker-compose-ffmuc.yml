@@ -21,11 +21,11 @@ services:
   traefik:
     profiles: [disabled]
   kafka:
-    image: apache/kafka:4.3.1@sha256:77e3df9054047a88b520d0cc46e16696d3b22022e1d580aeccd2632df6532837
+    image: apache/kafka:4.3.2@sha256:852a0d49fc4e656b022e7f23785411802c9a088c78a7c5e39f33969de9c227a7
   redis:
-    image: valkey/valkey:9.0@sha256:63346cb24a61221e76bdf41acce99b3968a9fa83d8122144deab45394b27b4f2
+    image: valkey/valkey:9.1@sha256:3add1a336a920ea54770a001ab6feb3da5fceea96a40373a3a2cd469b815f0b7
   clickhouse:
-    image: clickhouse/clickhouse-server:26.8@sha256:8b28eb09479c36c4533eec7a6268917d04ba3a6fd90e3f4205f70e761b6d7779  # one-line switch: CH_IMAGE=... in the upgrade script (default 26.8; 25.8 digest is in its header)
+    image: clickhouse/clickhouse-server:26.8@sha256:d426d2f612e1e189c90f9a3f8dcd85a03c6851273833817a296bb327e63aa7a7  # one-line switch: CH_IMAGE=... in the upgrade script (default 26.8; 25.8 digest is in its header)
     labels:
       - traefik.enable=false
   kafka-ui:
