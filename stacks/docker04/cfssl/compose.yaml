@@ -1,0 +1,53 @@
+---
+services:
+  postgresql:
+    image: postgres:17.11@sha256:b8faeff7712663c2773a190181e1246e37e364b887611c04658c28b44e2408fe
+    environment:
+      POSTGRES_USER: "cfssl"
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DATABASE: "cfssl"
+    volumes:
+      - /srv/docker/cfssl/volumes/postgresql/data:/var/lib/postgresql/data
+    restart: always
+    networks:
+      - default
+
+  cfssl:
+    image: cfssl/cfssl:v1.6.5@sha256:c9018c2ddf0b1f8dbef166057cc751d1becd5c3b0b7014cb9fe06972f725106f
+    depends_on:
+      - postgresql
+    environment:
+      VIRTUAL_HOST: ca.ov.ffmuc.net
+      CERT_NAME: shared
+      CFSSL_USE_DB: "yes"
+      CFSSL_CA_CERTIFICATE: "/data/ca.pem"
+      CFSSL_CA_PRIVATE_KEY: "/data/ca-key.pem"
+    volumes:
+      # db_config.json has the database password, so config/ stays on the host
+      - /srv/docker/cfssl/config:/config
+      - /srv/docker/cfssl/volumes/cfssl/data:/data
+    entrypoint: ["cfssl", "serve"]
+    command: ["-address", "0.0.0.0", "-ca", "/data/ca.pem", "-ca-key", "/data/ca-key.pem", "-port", "8080", "-config", "/config/ca_root_config.json", "-db-config", "/config/db_config.json"]
+    restart: on-failure
+    ports:
+      - 8080:8080
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.cfssl.entrypoints=http"
+      - "traefik.http.routers.cfssl.rule=Host(`ca.ov.ffmuc.net`)"
+      - "traefik.http.middlewares.cfssl-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.cfssl.middlewares=cfssl-https-redirect"
+      - "traefik.http.routers.cfssl-secure.entrypoints=https"
+      - "traefik.http.routers.cfssl-secure.rule=Host(`ca.ov.ffmuc.net`)"
+      - "traefik.http.routers.cfssl-secure.tls=true"
+      - "traefik.http.routers.cfssl-secure.tls.certresolver=http"
+      - "traefik.http.routers.cfssl-secure.service=cfssl"
+      - "traefik.http.services.cfssl.loadbalancer.server.port=8080"
+      - "traefik.docker.network=proxy"
+    networks:
+      - default
+      - proxy
+
+networks:
+  proxy:
+    external: true

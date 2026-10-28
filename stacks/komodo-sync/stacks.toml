@@ -254,6 +254,21 @@ run_directory = "stacks/docker04/whitebophir"
 file_paths = ["compose.yaml"]
 
 [[stack]]
+name = "docker04-cfssl"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker04"
+project_name = "cfssl"
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker04/cfssl"
+file_paths = ["compose.yaml"]
+environment = """
+POSTGRES_PASSWORD = [[CFSSL_POSTGRES_PASSWORD]]
+"""
+
+[[stack]]
 name = "docker06-komodo"
 description = "Komodo Core itself, deploy only from a shell (see stacks/README.md)"
 tags = ["ffmuc"]

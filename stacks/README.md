@@ -87,6 +87,7 @@ hash), put the reference in single quotes: `NAME = '[[NAME]]'`.
 | `docker06/omada` | none. `data/`, `work/` and `logs/` stay on the host |
 | `docker07/peeringmanager` | `PEERINGMANAGER_SECRET_KEY`, `PEERINGMANAGER_DB_PASSWORD`, `PEERINGMANAGER_REDIS_PASSWORD`, `PEERINGMANAGER_REDIS_CACHE_PASSWORD`, `PEERINGMANAGER_PEERINGDB_PASSWORD`, `PEERINGMANAGER_PEERINGDB_API_KEY` (from `/srv/docker/peeringmanager/env/*.env`). The non-secret values are in `env/`. `configuration/` and the nginx configuration stay on the host |
 | `docker07/uisp` | none. `data/` stays on the host |
+| `docker04/cfssl` | `CFSSL_POSTGRES_PASSWORD` (`POSTGRES_PASSWORD` from `/srv/docker/cfssl/docker-compose.yml`). `config/` stays on the host (`db_config.json` has the database password) |
 
 ## Deployment
 
@@ -113,7 +114,7 @@ hash), put the reference in single quotes: `NAME = '[[NAME]]'`.
   update, compare `compose.yaml` and `env/` with the new upstream release.
 - Komodo reads `files_on_host` compose files into its database, so projects
   with literal secrets in their compose files are left out until their secrets
-  have moved: docker04 `cfssl`, `tuwunel-test`; docker05 `nextcloud`, `unifi`;
+  have moved: docker04 `tuwunel-test`; docker05 `nextcloud`, `unifi`;
   docker06 `graylog`, `mastodon`; docker07 `akvorado`, `keycloak`,
   `vaultwarden`; mail01 `mailserver`; rw-vpn01/02 `wg-access-server`.
 - Taking over a running project: create the variables, sync, compare the
