@@ -1,0 +1,13 @@
+---
+services:
+  unms:
+    image: ghcr.io/freifunkmuc/docker-unms:3.1.65-php8.3.36@sha256:b4077d9dd737bab25a5625b2e601c274cea59614f24a2a58d60e97a31c7be1d9
+    restart: always
+    ports:
+      - 8099:80
+      - 9443:443
+      - 2055:2055/udp
+    environment:
+      - TZ=Europe/Berlin
+    volumes:
+      - /srv/docker/uisp/data:/config

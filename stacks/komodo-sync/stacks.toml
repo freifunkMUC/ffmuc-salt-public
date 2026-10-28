@@ -194,9 +194,10 @@ deploy = false
 [stack.config]
 server = "docker04"
 project_name = "owncast"
-files_on_host = true
-run_directory = "/srv/docker/owncast"
-file_paths = ["docker-compose.yaml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker04/owncast"
+file_paths = ["compose.yaml"]
 
 [[stack]]
 name = "docker04-packetyeeter-analyzer"
@@ -296,9 +297,16 @@ deploy = false
 [stack.config]
 server = "docker06"
 project_name = "mastodon-paywall"
-files_on_host = true
-run_directory = "/srv/docker/mastodon-paywall"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker06/mastodon-paywall"
+file_paths = ["compose.yaml"]
+environment = """
+API_TOKEN = [[MASTODON_PAYWALL_API_TOKEN]]
+PAYPAL_CLIENT_ID = [[MASTODON_PAYWALL_PAYPAL_CLIENT_ID]]
+PAYPAL_CLIENT_SECRET = [[MASTODON_PAYWALL_PAYPAL_CLIENT_SECRET]]
+PAYPAL_WEBHOOK_ID = [[MASTODON_PAYWALL_PAYPAL_WEBHOOK_ID]]
+"""
 
 [[stack]]
 name = "docker06-meet-reserve"
@@ -324,9 +332,10 @@ deploy = false
 [stack.config]
 server = "docker06"
 project_name = "omada"
-files_on_host = true
-run_directory = "/srv/docker/omada"
-file_paths = ["docker-compose.yaml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker06/omada"
+file_paths = ["compose.yaml"]
 
 [[stack]]
 name = "docker06-packetyeeter-analyzer"
@@ -417,9 +426,13 @@ deploy = false
 [stack.config]
 server = "docker05"
 project_name = "mattermost-docker"
-files_on_host = true
-run_directory = "/srv/docker/mattermost-docker"
-file_paths = ["docker-compose.yml", "docker-compose.without-nginx.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker05/mattermost-docker"
+file_paths = ["compose.yaml", "compose.without-nginx.yaml"]
+environment = """
+POSTGRES_PASSWORD = [[MATTERMOST_POSTGRES_PASSWORD]]
+"""
 
 [[stack]]
 name = "docker05-meet-reserve"
@@ -555,9 +568,18 @@ deploy = false
 [stack.config]
 server = "docker07"
 project_name = "peeringmanager"
-files_on_host = true
-run_directory = "/srv/docker/peeringmanager"
-file_paths = ["docker-compose.yml", "docker-compose.override.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker07/peeringmanager"
+file_paths = ["compose.yaml", "compose.override.yaml"]
+environment = """
+SECRET_KEY = [[PEERINGMANAGER_SECRET_KEY]]
+DB_PASSWORD = [[PEERINGMANAGER_DB_PASSWORD]]
+REDIS_PASSWORD = [[PEERINGMANAGER_REDIS_PASSWORD]]
+REDIS_CACHE_PASSWORD = [[PEERINGMANAGER_REDIS_CACHE_PASSWORD]]
+PEERINGDB_PASSWORD = [[PEERINGMANAGER_PEERINGDB_PASSWORD]]
+PEERINGDB_API_KEY = [[PEERINGMANAGER_PEERINGDB_API_KEY]]
+"""
 ignore_services = ["housekeeping", "peeringdb-sync"]
 
 [[stack]]
@@ -594,9 +616,10 @@ deploy = false
 [stack.config]
 server = "docker07"
 project_name = "uisp"
-files_on_host = true
-run_directory = "/srv/docker/uisp"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker07/uisp"
+file_paths = ["compose.yaml"]
 
 [[stack]]
 name = "docker07-wgkex"

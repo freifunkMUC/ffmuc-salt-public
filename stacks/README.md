@@ -81,6 +81,12 @@ hash), put the reference in single quotes: `NAME = '[[NAME]]'`.
 | `docker04/netbox` | `NETBOX_DB_PASSWORD`, `NETBOX_REDIS_PASSWORD` (redis and redis-cache), `NETBOX_SECRET_KEY`, `NETBOX_SUPERUSER_API_TOKEN`, `NETBOX_SUPERUSER_PASSWORD`, `NETBOX_AUTH_LDAP_BIND_PASSWORD`, `NETBOX_API_TOKEN_PEPPER_1` (from `/srv/docker/netbox/env/*.env`). The non-secret values are in `env/`. `configuration/` stays on the host |
 | `docker04/netbox-parker` | `NETBOX_PARKER_DB_PASSWORD`, `NETBOX_PARKER_REDIS_PASSWORD`, `NETBOX_PARKER_REDIS_CACHE_PASSWORD`, `NETBOX_PARKER_SECRET_KEY`, `NETBOX_PARKER_API_TOKEN_PEPPER_1` (from `/srv/docker/netbox-parker/env/*.env`). The non-secret values are in `env/`. `configuration/` stays on the host |
 | `docker04/openldap` | `OPENLDAP_LAM_PASSWORD` (`LAM_PASSWORD` from `/srv/docker/openldap/.env`). `ldif/`, `slapd-data/` and `certs/` stay on the host |
+| `docker04/owncast` | none. `data/`, `db/` and `logo.png` stay on the host |
+| `docker05/mattermost-docker` | `MATTERMOST_POSTGRES_PASSWORD` (`POSTGRES_PASSWORD` from `/srv/docker/mattermost-docker/.env`). The other `.env` values are now in the compose files |
+| `docker06/mastodon-paywall` | `MASTODON_PAYWALL_API_TOKEN`, `MASTODON_PAYWALL_PAYPAL_CLIENT_ID`, `MASTODON_PAYWALL_PAYPAL_CLIENT_SECRET`, `MASTODON_PAYWALL_PAYPAL_WEBHOOK_ID` (from `/srv/docker/mastodon-paywall/.env`) |
+| `docker06/omada` | none. `data/`, `work/` and `logs/` stay on the host |
+| `docker07/peeringmanager` | `PEERINGMANAGER_SECRET_KEY`, `PEERINGMANAGER_DB_PASSWORD`, `PEERINGMANAGER_REDIS_PASSWORD`, `PEERINGMANAGER_REDIS_CACHE_PASSWORD`, `PEERINGMANAGER_PEERINGDB_PASSWORD`, `PEERINGMANAGER_PEERINGDB_API_KEY` (from `/srv/docker/peeringmanager/env/*.env`). The non-secret values are in `env/`. `configuration/` and the nginx configuration stay on the host |
+| `docker07/uisp` | none. `data/` stays on the host |
 
 ## Deployment
 
@@ -93,11 +99,18 @@ hash), put the reference in single quotes: `NAME = '[[NAME]]'`.
   so the Komodo configuration is code as well. Changes in the UI that are not
   in the TOML show up as pending sync diffs. The sync never deletes
   (`delete = false`) and does not deploy (`deploy = false` on every Stack).
-- Projects that are not in this repository yet are listed with
+- Projects that are not in this repository are listed with
   `files_on_host = true` and their existing directory as `run_directory`, so
   Komodo shows them without changing anything. Taking one over means moving
-  its compose file here and switching the Stack to `repo`. The projects on
-  mail01 stay with the mailserver role of GoliathLabs/ansible.
+  its compose file here and switching the Stack to `repo`. Two kinds stay on
+  the host: the projects on mail01 (mailserver role of GoliathLabs/ansible)
+  and docker05 `zammad-docker-compose` (its upgrade script writes the compose
+  files).
+- Projects that come from an upstream compose repository (`docker04/netbox`,
+  `docker04/netbox-parker`, `docker07/peeringmanager`) keep the upstream file
+  layout: `compose.yaml` is the upstream file, `compose.override.yaml` has
+  the local changes, and `env/*.env` has the values that are not secret. To
+  update, compare `compose.yaml` and `env/` with the new upstream release.
 - Komodo reads `files_on_host` compose files into its database, so projects
   with literal secrets in their compose files are left out until their secrets
   have moved: docker04 `cfssl`, `tuwunel-test`; docker05 `nextcloud`, `unifi`;

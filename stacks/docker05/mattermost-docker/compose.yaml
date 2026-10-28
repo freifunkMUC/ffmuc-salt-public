@@ -1,0 +1,47 @@
+---
+# Based on github.com/mattermost/docker (docker-compose.yml). The values of
+# the upstream .env file are written in here. Only POSTGRES_PASSWORD comes
+# from the Komodo Stack environment.
+services:
+  postgres:
+    image: postgres:16-alpine@sha256:e013e867e712fec275706a6c51c966f0bb0c93cfa8f51000f85a15f9865a28cb
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 2G
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/run/postgresql
+    volumes:
+      # upstream (PostgreSQL 18 layout): /srv/docker/postgres-mattermost:/var/lib/postgresql
+      - /srv/docker/postgres-mattermost:/var/lib/postgresql/data
+    environment:
+      TZ: Europe/Berlin
+      POSTGRES_USER: mmuser
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: mattermost
+  mattermost:
+    depends_on:
+      - postgres
+    image: mattermost/mattermost-team-edition:11.11.1@sha256:6ad5912b45875ef2fafc41886b5a70a3ec1b6c17ec706e0492566e8a2fd8aa85
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 4G
+    read_only: false
+    tmpfs:
+      - /tmp
+    volumes:
+      - /srv/docker/mattermost/config:/mattermost/config:rw
+      - /srv/docker/mattermost/data:/mattermost/data:rw
+      - /srv/docker/mattermost/logs:/mattermost/logs:rw
+      - /srv/docker/mattermost/plugins:/mattermost/plugins:rw
+      - /srv/docker/mattermost/client-plugins:/mattermost/client/plugins:rw
+      - /srv/docker/mattermost/bleve-indexes:/mattermost/bleve-indexes:rw
+    environment:
+      TZ: Europe/Berlin
+      MM_SQLSETTINGS_DRIVERNAME: postgres
+      MM_SQLSETTINGS_DATASOURCE: postgres://mmuser:${POSTGRES_PASSWORD}@postgres:5432/mattermost?sslmode=disable&connect_timeout=10
+      MM_BLEVESETTINGS_INDEXDIR: /mattermost/bleve-indexes
+      MM_SERVICESETTINGS_SITEURL: https://chat.ffmuc.net
