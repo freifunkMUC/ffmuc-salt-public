@@ -63,6 +63,7 @@ secret. Values come from the running setup on the host; never commit them.
 | `docker04/whitebophir` | none |
 | `docker0{4,5,6,7}/diun` | `DIUN_SLACK_WEBHOOK_URL` (`webhookURL` from `/srv/docker/diun/diun.yml`) |
 | `docker07/libretranslate` | none |
+| `docker0{5,7}/speedtest` | none |
 | `docker0{4,5,6,7}/meet-reserve` | `MEET_RESERVE_PRIVATE_KEY`, `MEET_RESERVE_POW_KEY`, `MEET_RESERVE_SYNC_KEY` (`RESERVE_*` from `/srv/docker/meet-reserve/.env`, same on all hosts) |
 | `docker05/cryptpad` | none; `/srv/docker/cryptpad/data/config.js` and `infra.js` stay on the host |
 | `docker05/salt-master` | none |
@@ -97,7 +98,7 @@ secret. Values come from the running setup on the host; never commit them.
 - Some projects came from Salt states that rendered their compose file on
   the host. Their compose files are now static per host in this directory and
   the Salt states are removed, so Salt and Komodo do not both manage them:
-  `diun`, `libretranslate`, `meet-reserve`.
+  `diun`, `libretranslate`, `meet-reserve`, `speedtest`.
 - `docker07/libretranslate` keeps its models in the named volume
   `libretranslate_models`. The NetBox config context `libretranslate`
   (`enabled`, `port`) still opens the nebula-meet firewall for jigasi; keep
