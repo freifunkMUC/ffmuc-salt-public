@@ -555,10 +555,20 @@ deploy = false
 [stack.config]
 server = "docker05"
 project_name = "zammad-docker-compose"
-files_on_host = true
-run_directory = "/srv/docker/zammad-docker-compose"
-file_paths = ["docker-compose.yml", "docker-compose.override.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker05/zammad"
+file_paths = ["compose.yaml", "compose.override.yaml"]
 ignore_services = ["zammad-init"]
+environment = """
+NGINX_PORT = 8080
+NGINX_EXPOSE_PORT = 8002
+NGINX_SERVER_SCHEME = https
+POSTGRES_USER = postgres
+POSTGRES_PASS = [[ZAMMAD_POSTGRES_PASS]]
+ELASTICSEARCH_USER = elastic
+ELASTICSEARCH_PASS = zammad
+"""
 
 [[stack]]
 name = "docker05-nextcloud"

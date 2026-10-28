@@ -36,16 +36,6 @@ producing a config with no prefixes or no DNS records.
                 "/srv/docker/openldap/config",
                 "/srv/docker/openldap/certs"
             ]
-        },
-        "zammad": {
-            "container_dir": "/srv/docker/zammad-docker-compose",
-            "git": "https://github.com/zammad/zammad-docker-compose.git",
-            "mounts": [
-                "/srv/docker/zammad-backup",
-                "/srv/docker/zammad-data",
-                "/srv/docker/elasticsearch-zammad/data",
-                "/srv/docker/postgresql-zammad/data"
-            ]
         }
     },
     "roles": [

@@ -1,0 +1,45 @@
+---
+# FFMUC changes on top of zammad/zammad-docker-compose v17.5.3.
+# compose.yaml is the upstream docker-compose.yml, unchanged.
+# Images are pinned here. The other values that compose.yaml reads from
+# .env (POSTGRES_USER, NGINX_EXPOSE_PORT, ...) and the secret POSTGRES_PASS
+# come from the Komodo Stack environment.
+x-zammad-image: &zammad-image ghcr.io/zammad/zammad:7.2.2-0012@sha256:0a71ee2670285a6a487eda499eede0bd82959a6496078ac59bd67f086ae856c1
+
+x-ffmuc-app-mounts: &ffmuc-app-mounts
+  - /srv/docker/zammad-backup:/var/tmp/zammad:ro
+  - /srv/docker/zammad-storage:/opt/zammad/storage
+
+services:
+  zammad-backup:
+    image: *zammad-image
+    volumes:
+      - /srv/docker/zammad-backup:/var/tmp/zammad
+      - /srv/docker/zammad-storage:/opt/zammad/storage
+  zammad-init:
+    image: *zammad-image
+    volumes: *ffmuc-app-mounts
+  zammad-nginx:
+    image: *zammad-image
+    volumes: *ffmuc-app-mounts
+  zammad-railsserver:
+    image: *zammad-image
+    volumes: *ffmuc-app-mounts
+  zammad-scheduler:
+    image: *zammad-image
+    volumes: *ffmuc-app-mounts
+  zammad-websocket:
+    image: *zammad-image
+    volumes: *ffmuc-app-mounts
+  zammad-memcached:
+    image: memcached:1.6.45-alpine@sha256:6d687bc26426d092694743054fc674fc54d3c161fefa1ad20b54192f8580a8c1
+  zammad-redis:
+    image: redis:7.4.11-alpine@sha256:57e4255cc971b1c8d6f8a6ca283ac01bc3ecdd914273ef6bfaede87aaecd6541
+  zammad-postgresql:
+    image: postgres:15.19-alpine@sha256:a8e042598834300dfaa17a54f695b87b7f25d3490433bbbe2ef3bffbb9747f24
+    volumes:
+      - /srv/docker/postgresql-zammad/data:/var/lib/postgresql/data:z
+  zammad-elasticsearch:
+    image: elasticsearch:8.19.23@sha256:3f4d63c59ca5a05b535179dfcced47a514119e351fa81653f69902beacae90c9
+    volumes:
+      - /srv/docker/elasticsearch-zammad/data:/usr/share/elasticsearch/data
