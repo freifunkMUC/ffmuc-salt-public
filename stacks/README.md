@@ -111,6 +111,10 @@ secret. Values come from the running setup on the host; never commit them.
   update `RESERVE_PEERS` in every `meet-reserve/compose.yaml` too. A new
   signer needs `/srv/docker/meet-reserve/data` owned by `65532:65532`, mode
   `0700`.
+- `whitebophir` v2 only opens canonical board names (lower case, no trailing
+  `-`). Before the first v2 start, run
+  `docker04/whitebophir/migrate-board-names.mjs` once. It copies the v1 boards
+  with other names, see the comment in the file.
 - `packetyeeter-analyzer` mounts the GeoIP files and data directories that
   the Salt state `packetyeeter` creates. Apply that state on a new host first.
 
