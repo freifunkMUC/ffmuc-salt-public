@@ -93,7 +93,7 @@ secret. Values come from the running setup on the host; never commit them.
 
 ## Komodo
 
-Komodo v2.3.3: Core with MongoDB on docker06 (`stacks/docker06/komodo`),
+Komodo v2.3.4: Core with MongoDB on docker06 (`stacks/docker06/komodo`),
 Periphery as systemd service on every managed host (Salt state
 `komodo-periphery`). MongoDB is the backend the Komodo docs recommend;
 FerretDB/Postgres is only suggested for CPUs without AVX, docker06 has AVX2.

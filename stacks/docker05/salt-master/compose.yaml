@@ -1,7 +1,7 @@
 ---
 services:
   salt-master:
-    image: ghcr.io/cdalvaro/docker-salt-master:3008.3@sha256:75e4bea95dea9c2bd5482d51b787bb6f225bec99a8bd75584f9fb3593243ca06
+    image: ghcr.io/cdalvaro/docker-salt-master:3008.5@sha256:982a754fe15b5dbabc13a4889f8cd5d51417a3aff68cad04aa7c8562e6e4eb73
     restart: unless-stopped
     volumes:
       - /srv/docker/salt/formulars/:/home/salt/data/srv/salt
