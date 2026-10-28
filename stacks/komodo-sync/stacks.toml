@@ -521,6 +521,23 @@ file_paths = ["docker-compose.yml", "docker-compose.override.yml"]
 ignore_services = ["zammad-init"]
 
 [[stack]]
+name = "docker05-nextcloud"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker05"
+project_name = "nextcloud"
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker05/nextcloud"
+file_paths = ["compose.yaml"]
+environment = """
+MYSQL_ROOT_PASSWORD = [[NEXTCLOUD_MYSQL_ROOT_PASSWORD]]
+MYSQL_PASSWORD = [[NEXTCLOUD_MYSQL_PASSWORD]]
+REDIS_PASSWORD = [[NEXTCLOUD_REDIS_PASSWORD]]
+"""
+
+[[stack]]
 name = "docker07-bgpalerter"
 tags = ["ffmuc"]
 deploy = false
