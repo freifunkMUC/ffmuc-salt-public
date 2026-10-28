@@ -74,6 +74,7 @@ hash), put the reference in single quotes: `NAME = '[[NAME]]'`.
 | `docker05/salt-master` | none |
 | `docker07/bgpalerter` | none; `/srv/docker/bgpalerter/volume/config.yml` stays on the host |
 | `docker0{4,5,6,7}/traefik` | `TRAEFIK_DASHBOARD_USERS` (docker05, docker06, docker07), `TRAEFIK_DASHBOARD_USERS_DOCKER04` (docker04): `user:hash` of the dashboard basic auth, without the `$$` escapes. `traefik.yml`, `acme.json` and `update-dns.sh` (Salt state `certs`) stay on the host |
+| `docker0{4,5,6,7}/wgkex` | `WGKEX_EMQX_NODE_COOKIE` (`EMQX_NODE__COOKIE`, same on all hosts). `config/broker/wgkex.yaml` stays on the host (the Salt state `telegraf` reads it too) |
 
 ## Deployment
 

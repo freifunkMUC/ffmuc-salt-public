@@ -203,9 +203,13 @@ deploy = false
 [stack.config]
 server = "docker04"
 project_name = "wgkex"
-files_on_host = true
-run_directory = "/srv/docker/wgkex"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker04/wgkex"
+file_paths = ["compose.yaml"]
+environment = """
+EMQX_NODE__COOKIE = [[WGKEX_EMQX_NODE_COOKIE]]
+"""
 
 [[stack]]
 name = "docker04-whitebophir"
@@ -329,9 +333,13 @@ deploy = false
 [stack.config]
 server = "docker06"
 project_name = "wgkex"
-files_on_host = true
-run_directory = "/srv/docker/wgkex"
-file_paths = ["docker-compose.yaml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker06/wgkex"
+file_paths = ["compose.yaml"]
+environment = """
+EMQX_NODE__COOKIE = [[WGKEX_EMQX_NODE_COOKIE]]
+"""
 
 [[stack]]
 name = "docker05-salt"
@@ -435,9 +443,13 @@ deploy = false
 [stack.config]
 server = "docker05"
 project_name = "wgkex"
-files_on_host = true
-run_directory = "/srv/docker/wgkex"
-file_paths = ["docker-compose.yaml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker05/wgkex"
+file_paths = ["compose.yaml"]
+environment = """
+EMQX_NODE__COOKIE = [[WGKEX_EMQX_NODE_COOKIE]]
+"""
 
 [[stack]]
 name = "docker05-zammad-docker-compose"
@@ -564,9 +576,13 @@ deploy = false
 [stack.config]
 server = "docker07"
 project_name = "wgkex"
-files_on_host = true
-run_directory = "/srv/docker/wgkex"
-file_paths = ["docker-compose.yaml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker07/wgkex"
+file_paths = ["compose.yaml"]
+environment = """
+EMQX_NODE__COOKIE = [[WGKEX_EMQX_NODE_COOKIE]]
+"""
 
 [[stack]]
 name = "mail01-crowdsec"

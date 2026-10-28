@@ -1,0 +1,39 @@
+---
+services:
+  broker:
+    image: ghcr.io/freifunkmuc/wgkex:main@sha256:6bb5fbb0ec8715661d3afca659f5fedf913e5b69957784463f8a3aaeaca13926
+    command: broker
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      - /srv/docker/wgkex/config/broker/wgkex.yaml:/etc/wgkex.yaml
+    environment:
+      WGKEX_DOMAINS: "ffmuc_freising, ffmuc_gauting, ffmuc_muc_cty, ffmuc_muc_nord, ffmuc_muc_ost, ffmuc_muc_sued, ffmuc_muc_west, ffmuc_uml_nord, ffmuc_uml_ost, ffmuc_uml_sued, ffmuc_uml_west, ffmuc_welt, ffmuc_ffdon_test"
+      WGKEX_DOMAIN_PREFIX: ffmuc_
+      WGKEX_DEBUG: DEBUG
+      MQTT_BROKER_URL: mqtt
+      MQTT_BROKER_PORT: "1883"
+      MQTT_USERNAME: ""
+      MQTT_PASSWORD: ""
+      MQTT_KEEPALIVE: "5"
+      MQTT_TLS: "False"
+
+  mqtt_cluster:
+    image: emqx/emqx:5.8@sha256:a1e3d10fa1dcc8c94325b815a93b5b5974253a97cb36470b44e47d5d3ef9cd13
+    container_name: mqtt_cluster
+    restart: unless-stopped
+    environment:
+      - EMQX_NODE_NAME=emqx@docker07.ov.ffmuc.net
+      - EMQX_CLUSTER__DISCOVERY_STRATEGY=static
+      - EMQX_CLUSTER__STATIC__SEEDS=[emqx@docker04.ov.ffmuc.net,emqx@docker05.ov.ffmuc.net,emqx@docker06.ov.ffmuc.net,emqx@docker07.ov.ffmuc.net]
+      - EMQX_NODE__COOKIE=${EMQX_NODE__COOKIE}
+    healthcheck:
+      test: ["CMD", "/opt/emqx/bin/emqx", "ctl", "status"]
+      interval: 5s
+      timeout: 25s
+      retries: 5
+    ports:
+      - "1883:1883"
+      - "4370:4370"
+      - "5369:5369"
