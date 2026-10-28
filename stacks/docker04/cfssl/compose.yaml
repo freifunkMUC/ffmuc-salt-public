@@ -13,7 +13,7 @@ services:
       - default
 
   cfssl:
-    image: cfssl/cfssl:v1.6.5@sha256:c9018c2ddf0b1f8dbef166057cc751d1becd5c3b0b7014cb9fe06972f725106f
+    image: cfssl/cfssl:v1.7.1@sha256:a32a9048078819d3035f5dc46637346a0e7da9df297ab234994c9a80cde10b98
     depends_on:
       - postgresql
     environment:
