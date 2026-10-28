@@ -724,6 +724,18 @@ EMQX_NODE__COOKIE = [[WGKEX_EMQX_NODE_COOKIE]]
 """
 
 [[stack]]
+name = "docker07-akvorado"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker07"
+project_name = "akvorado"
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker07/akvorado"
+file_paths = ["docker/docker-compose.yml", "docker/docker-compose-ipinfo.yml", "ffmuc/docker-compose-ffmuc.yml"]
+
+[[stack]]
 name = "mail01-crowdsec"
 description = "Managed by the mailserver role of GoliathLabs/ansible, not deployed from Komodo"
 tags = ["ffmuc"]

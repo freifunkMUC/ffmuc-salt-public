@@ -1,0 +1,81 @@
+---
+# FFMUC overrides for akvorado on docker07 (v2026.10.0, 23.10.2026). docker/ is the untouched upstream tag; every
+# local deviation lives in this file, the last entry of file_paths of the Komodo Stack. Placed outside docker/ so that
+# the next upgrade can replace docker/ wholesale. Needs Docker Compose >= 2.24 (!override, !reset).
+#  - images pinned by digest here (upstream's versions.yml has `akvorado:main` and floating tags)
+#  - config/ is not in git (outlet.yaml has the SNMP community): absolute bind mount to the host directory
+#  - geoip is pulled by digest only, no local build (upstream's Dockerfile and script are not in git)
+#  - upstream's own traefik service is not used: the host Traefik (/srv/docker/traefik) serves the console
+#  - network `default` without upstream's fixed class-E subnets and br-akvorado (as before this upgrade)
+#  - only the console is on network proxy; its router labels as before (flow.ov.ffmuc.net, http + https)
+#  - every other service: traefik.enable=false (their routers use upstream's entry point `private`, which does
+#    not exist on the host Traefik; upstream's console metrics router without host rule would be public)
+#  - inlet publishes 4739/udp (IPFIX) and 6343/udp (sFlow) as before, not upstream's extra 2055/udp (NetFlow); outlet
+#    publishes 10179/tcp (BMP) as before; the upgrade script asserts exactly these three published ports
+networks:
+  default: !override {}
+  proxy:
+    external: true
+
+services:
+  traefik:
+    profiles: [disabled]
+  kafka:
+    image: apache/kafka:4.3.1@sha256:77e3df9054047a88b520d0cc46e16696d3b22022e1d580aeccd2632df6532837
+  redis:
+    image: valkey/valkey:9.0@sha256:63346cb24a61221e76bdf41acce99b3968a9fa83d8122144deab45394b27b4f2
+  clickhouse:
+    image: clickhouse/clickhouse-server:26.8@sha256:8b28eb09479c36c4533eec7a6268917d04ba3a6fd90e3f4205f70e761b6d7779  # one-line switch: CH_IMAGE=... in the upgrade script (default 26.8; 25.8 digest is in its header)
+    labels:
+      - traefik.enable=false
+  kafka-ui:
+    image: kafbat/kafka-ui:v1.5.0@sha256:7cda86a33344160309fdb65146332e4da65db81a945614f2fe32e210803f6fd1
+    labels:
+      - traefik.enable=false
+  geoip:
+    image: quay.io/akvorado/ipinfo-geoipupdate:latest@sha256:c5142d58f822a622c3ef29da7eb2080945c93bf1d12bf41ed683a051859eef9a
+    build: !reset null
+  akvorado-orchestrator:
+    image: &akvorado quay.io/akvorado/akvorado:2026.10.1@sha256:6454527fcbe27a88f5031e6ad46b9b1514c285ef7548ae18ad95d69b114fc818
+    volumes: !override
+      - /srv/docker/akvorado/config:/etc/akvorado:ro
+    labels:
+      - traefik.enable=false
+  akvorado-inlet:
+    image: *akvorado
+    ports: !override
+      - 4739:4739/udp
+      - 6343:6343/udp
+    labels:
+      - traefik.enable=false
+  akvorado-outlet:
+    image: *akvorado
+    # BMP port 10179/tcp stays published as today (explicit, the upgrade script asserts it); no BMP routing provider is
+    # configured today, so nothing listens behind it until `outlet.routing` is set.
+    ports: !override
+      - 10179:10179/tcp
+    labels:
+      - traefik.enable=false
+  # Console router labels: the one place to change when a forward-auth (Keycloak) middleware comes: define the
+  # middleware here and put it into traefik.http.routers.akvorado-console-secure.middlewares (and the http router).
+  akvorado-console:
+    image: *akvorado
+    networks:
+      - default
+      - proxy
+    labels: !override
+      - traefik.enable=true
+      - traefik.docker.network=proxy
+      - traefik.http.services.akvorado-console.loadbalancer.server.port=8080
+      - "traefik.http.routers.akvorado-console.rule=Host(`flow.ov.ffmuc.net`)"
+      - traefik.http.routers.akvorado-console.middlewares=akvorado-console-headers
+      - traefik.http.middlewares.akvorado-console-https-redirect.redirectscheme.scheme=https
+      - traefik.http.middlewares.akvorado-console-headers.headers.customrequestheaders.X-Forwarded-Proto=https
+      - traefik.http.middlewares.akvorado-console-headers.headers.customrequestheaders.X-Forwarded-For=https
+      - traefik.http.middlewares.akvorado-console-headers.headers.customrequestheaders.X-Forwarded-Port=443
+      - traefik.http.routers.akvorado-console-secure.entrypoints=https
+      - "traefik.http.routers.akvorado-console-secure.rule=Host(`flow.ov.ffmuc.net`)"
+      - traefik.http.routers.akvorado-console-secure.tls=true
+      - traefik.http.routers.akvorado-console-secure.tls.certresolver=http
+      - metrics.enable=true
+      - metrics.path=/api/v0/metrics
