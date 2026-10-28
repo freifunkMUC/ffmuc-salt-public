@@ -538,6 +538,21 @@ REDIS_PASSWORD = [[NEXTCLOUD_REDIS_PASSWORD]]
 """
 
 [[stack]]
+name = "docker05-unifi"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker05"
+project_name = "unifi"
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker05/unifi"
+file_paths = ["compose.yaml"]
+environment = """
+MONGO_PASS = [[UNIFI_MONGO_PASS]]
+"""
+
+[[stack]]
 name = "docker07-bgpalerter"
 tags = ["ffmuc"]
 deploy = false
