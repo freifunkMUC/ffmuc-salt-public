@@ -24,7 +24,7 @@ services:
   mattermost:
     depends_on:
       - postgres
-    image: mattermost/mattermost-team-edition:11.11.1@sha256:6ad5912b45875ef2fafc41886b5a70a3ec1b6c17ec706e0492566e8a2fd8aa85
+    image: mattermost/mattermost-team-edition:11.11.3@sha256:e743b074894133fe131e2274ef8b5295859084641d6657c0e24fb9b0c26c32c0
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
