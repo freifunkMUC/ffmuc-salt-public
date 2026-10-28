@@ -94,6 +94,7 @@ hash), put the reference in single quotes: `NAME = '[[NAME]]'`.
 | `docker06/graylog` | `GRAYLOG_PASSWORD_SECRET`, `GRAYLOG_ROOT_PASSWORD_SHA2` (from `/srv/docker/graylog/.env`), `GRAYLOG_OPENSEARCH_INITIAL_ADMIN_PASSWORD` (from `/srv/docker/graylog/docker-compose.yml`). `GeoLite2-City.mmdb` stays on the host |
 | `docker06/mastodon` | `MASTODON_DB_PASS` (also `POSTGRES_PASSWORD`), `MASTODON_SECRET_KEY_BASE`, `MASTODON_OTP_SECRET`, `MASTODON_VAPID_PRIVATE_KEY`, `MASTODON_SMTP_PASSWORD`, `MASTODON_ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY`, `MASTODON_ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT`, `MASTODON_ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY` (from `/srv/docker/mastodon/.env.production`), `MASTODON_TRUSTED_PROXY_IP` (not secret, it lists internal addresses). The other values that are not secret are in `env/mastodon.env` |
 | `docker07/akvorado` | none. `config/` stays on the host (`outlet.yaml` has the SNMP community) |
+| `docker07/keycloak` | `KEYCLOAK_DB_PASSWORD` (`POSTGRES_PASSWORD` and `KC_DB_PASSWORD`), `KEYCLOAK_ADMIN_PASSWORD` (from `/srv/docker/keycloak/docker-compose.yml` and `keycloak.env`). The values that are not secret are in `env/keycloak.env` |
 
 ## Deployment
 
@@ -124,7 +125,7 @@ hash), put the reference in single quotes: `NAME = '[[NAME]]'`.
 - Komodo reads `files_on_host` compose files into its database, so projects
   with literal secrets in their compose files are left out until their secrets
   have moved: docker04 `tuwunel-test`;
-  docker07 `keycloak`, `vaultwarden`; mail01 `mailserver`; rw-vpn01/02 `wg-access-server`.
+  docker07 `vaultwarden`; mail01 `mailserver`; rw-vpn01/02 `wg-access-server`.
 - Taking over a running project: create the variables, sync, compare the
   Stack's diff, then *Deploy*. The old `/srv/docker/<project>/docker-compose.y*ml`
   stays on the host as rollback: `docker compose -p <project> -f <old file> up -d`

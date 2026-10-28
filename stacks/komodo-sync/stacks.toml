@@ -736,6 +736,22 @@ run_directory = "stacks/docker07/akvorado"
 file_paths = ["docker/docker-compose.yml", "docker/docker-compose-ipinfo.yml", "ffmuc/docker-compose-ffmuc.yml"]
 
 [[stack]]
+name = "docker07-keycloak"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker07"
+project_name = "keycloak"
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker07/keycloak"
+file_paths = ["compose.yaml"]
+environment = """
+DB_PASSWORD = [[KEYCLOAK_DB_PASSWORD]]
+ADMIN_PASSWORD = [[KEYCLOAK_ADMIN_PASSWORD]]
+"""
+
+[[stack]]
 name = "mail01-crowdsec"
 description = "Managed by the mailserver role of GoliathLabs/ansible, not deployed from Komodo"
 tags = ["ffmuc"]
