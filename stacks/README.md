@@ -9,6 +9,7 @@ nebula, firewall, Komodo Periphery); the containers on them are managed here.
 ```
 stacks/<host>/<project>/compose.yaml
 stacks/<host>/<project>/<config file>   # optional, non-secret only
+stacks/build/<image>/                   # source of a local image used on several hosts
 ```
 
 `<host>` is the short host name (`docker04`), `<project>` the compose project
@@ -62,6 +63,7 @@ secret. Values come from the running setup on the host; never commit them.
 | `docker04/whitebophir` | none |
 | `docker0{4,5,6,7}/diun` | `DIUN_SLACK_WEBHOOK_URL` (`webhookURL` from `/srv/docker/diun/diun.yml`) |
 | `docker07/libretranslate` | none |
+| `docker0{4,5,6,7}/meet-reserve` | `MEET_RESERVE_PRIVATE_KEY`, `MEET_RESERVE_POW_KEY`, `MEET_RESERVE_SYNC_KEY` (`RESERVE_*` from `/srv/docker/meet-reserve/.env`, same on all hosts) |
 | `docker05/cryptpad` | none; `/srv/docker/cryptpad/data/config.js` and `infra.js` stay on the host |
 | `docker05/salt-master` | none |
 | `docker07/bgpalerter` | none; `/srv/docker/bgpalerter/volume/config.yml` stays on the host |
@@ -95,11 +97,17 @@ secret. Values come from the running setup on the host; never commit them.
 - Some projects came from Salt states that rendered their compose file on
   the host. Their compose files are now static per host in this directory and
   the Salt states are removed, so Salt and Komodo do not both manage them:
-  `diun`, `libretranslate`.
+  `diun`, `libretranslate`, `meet-reserve`.
 - `docker07/libretranslate` keeps its models in the named volume
   `libretranslate_models`. The NetBox config context `libretranslate`
   (`enabled`, `port`) still opens the nebula-meet firewall for jigasi; keep
   `port` equal to the published port in `compose.yaml`.
+- `meet-reserve` is built from `stacks/build/meet-reserve` on deploy. The
+  NetBox config context `meet_reserve` (`enabled`, `signers`, `metrics_port`)
+  still drives the nebula firewall and telegraf. When the signers change,
+  update `RESERVE_PEERS` in every `meet-reserve/compose.yaml` too. A new
+  signer needs `/srv/docker/meet-reserve/data` owned by `65532:65532`, mode
+  `0700`.
 
 ## Komodo
 

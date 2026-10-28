@@ -127,7 +127,7 @@ jitsi:
     participant_selection_strategy: ""
     topology_strategy: ""        # e.g. VisitorTopologyStrategy
 
-  # Signed viewers-only rooms minted by meet-reserve (docker-containers/meet-reserve),
+  # Signed viewers-only rooms minted by meet-reserve (stacks/docker0*/meet-reserve),
   # verified by prosody/files/mod_ffmuc_signed_rooms.lua. Needs visitors.enabled.
   signed_rooms:
     enabled: false
