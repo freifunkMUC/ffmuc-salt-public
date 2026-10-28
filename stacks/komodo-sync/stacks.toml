@@ -188,9 +188,13 @@ deploy = false
 [stack.config]
 server = "docker04"
 project_name = "traefik"
-files_on_host = true
-run_directory = "/srv/docker/traefik"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker04/traefik"
+file_paths = ["compose.yaml"]
+environment = """
+TRAEFIK_DASHBOARD_USERS = '[[TRAEFIK_DASHBOARD_USERS_DOCKER04]]'
+"""
 
 [[stack]]
 name = "docker04-wgkex"
@@ -310,9 +314,13 @@ deploy = false
 [stack.config]
 server = "docker06"
 project_name = "traefik"
-files_on_host = true
-run_directory = "/srv/docker/traefik"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker06/traefik"
+file_paths = ["compose.yaml"]
+environment = """
+TRAEFIK_DASHBOARD_USERS = '[[TRAEFIK_DASHBOARD_USERS]]'
+"""
 
 [[stack]]
 name = "docker06-wgkex"
@@ -412,9 +420,13 @@ deploy = false
 [stack.config]
 server = "docker05"
 project_name = "traefik"
-files_on_host = true
-run_directory = "/srv/docker/traefik"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker05/traefik"
+file_paths = ["compose.yaml"]
+environment = """
+TRAEFIK_DASHBOARD_USERS = '[[TRAEFIK_DASHBOARD_USERS]]'
+"""
 
 [[stack]]
 name = "docker05-wgkex"
@@ -526,9 +538,13 @@ deploy = false
 [stack.config]
 server = "docker07"
 project_name = "traefik"
-files_on_host = true
-run_directory = "/srv/docker/traefik"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker07/traefik"
+file_paths = ["compose.yaml"]
+environment = """
+TRAEFIK_DASHBOARD_USERS = '[[TRAEFIK_DASHBOARD_USERS]]'
+"""
 
 [[stack]]
 name = "docker07-uisp"
