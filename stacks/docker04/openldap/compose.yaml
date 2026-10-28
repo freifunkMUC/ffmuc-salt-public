@@ -1,0 +1,73 @@
+---
+services:
+
+  openldap:
+    # ghcr.io/freifunkmuc/openldap-docker: slapd as Debian ships it, without
+    # start scripts or environment variables. cn=config is built from
+    # ldif/slapd.ldif at every start, into a tmpfs, so that file is the whole
+    # configuration. Before 14.10.2026: startcodex/openldap, see
+    # docker-compose.yaml.pre-openldap-docker; its data stays in data/ and
+    # config/ on the host for a rollback.
+    image: ghcr.io/freifunkmuc/openldap-docker:2.6.10@sha256:8060463da7cafb654ff8a6ecb73adfa139cc0dae399516f9d486238db52b49ae
+    entrypoint:
+      - sh
+      - -ec
+      - |
+        slapadd -n0 -F /etc/ldap/slapd.d -l /config/slapd.ldif
+        exec slapd -d stats -F /etc/ldap/slapd.d -h "ldap://0.0.0.0:1389/ ldaps://0.0.0.0:1636/ ldapi://%2Frun%2Fslapd%2Fldapi"
+    user: "911:911"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs:
+      - /etc/ldap/slapd.d:uid=911,gid=911,mode=0700
+      - /run/slapd:uid=911,gid=911,mode=0755
+    volumes:
+      - /srv/docker/openldap/ldif:/config:ro
+      - /srv/docker/openldap/slapd-data:/var/lib/ldap
+      - /srv/docker/openldap/certs:/tls:ro
+    ports:
+      - 636:1636
+    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "5"
+    networks:
+      - default
+
+  ldap-account-manager:
+    image: ghcr.io/ldapaccountmanager/lam:9.7@sha256:ce7fa36fe6b2afc1a6e2423567c806c13bd4578e13c3869aa9e6557c065c7be0
+    restart: unless-stopped
+    environment:
+      - LAM_PASSWORD=${LAM_PASSWORD}
+      - LAM_LANG=en_US
+      - LDAP_SERVER=ldap://openldap:1389
+      - LDAP_DOMAIN=ffmuc.net
+      - LDAP_BASE_DN=dc=ffmuc,dc=net
+      - LDAP_USER=cn=admin,dc=ffmuc,dc=net
+    depends_on:
+      - openldap
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ldap-web.entrypoints=http"
+      - "traefik.http.routers.ldap-web.rule=Host(`ldap-web.ov.ffmuc.net`)"
+      - "traefik.http.middlewares.ldap-web-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.ldap-web.middlewares=ldap-web-https-redirect"
+      - "traefik.http.routers.ldap-web-secure.entrypoints=https"
+      - "traefik.http.routers.ldap-web-secure.rule=Host(`ldap-web.ov.ffmuc.net`)"
+      - "traefik.http.routers.ldap-web-secure.tls=true"
+      - "traefik.http.routers.ldap-web-secure.tls.certresolver=http"
+      - "traefik.http.routers.ldap-web-secure.service=ldap-web"
+      - "traefik.http.services.ldap-web.loadbalancer.server.port=80"
+      - "traefik.docker.network=proxy"
+    networks:
+      - default
+      - proxy
+    ports:
+      - 8443:8080
+
+networks:
+  proxy:
+    external: true
