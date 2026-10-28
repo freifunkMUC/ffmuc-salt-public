@@ -1,20 +1,21 @@
-# Managed by Salt (docker-containers/libretranslate)
+---
 services:
   libretranslate:
-    image: {{ image }}
+    image: libretranslate/libretranslate:v1.9.6@sha256:1de2d7056bb8ad607a412f4563d9abe324ff632b43b5be9428bcc8e213aebb32
     restart: always
     environment:
-      LT_LOAD_ONLY: "{{ languages }}"
-      LT_THREADS: "{{ threads }}"
+      LT_LOAD_ONLY: "de,en,ar,bg,el,es,fa,fr,hu,it,pl,ro,ru,sq,tr,uk"
+      LT_THREADS: "4"
       LT_CHAR_LIMIT: "2000"
       LT_DISABLE_WEB_UI: "true"
       LT_DISABLE_FILES_TRANSLATION: "true"
     ports:
-      - "{{ port }}:5000"
+      - "5010:5000"
     volumes:
-      # Argos models, downloaded once on first start
+      # Argos models, downloaded once on first start. Named volume
+      # (libretranslate_models) as before, so the models are kept.
       - models:/home/libretranslate/.local:rw
-    mem_limit: {{ mem_limit }}
+    mem_limit: 8g
     security_opt: ["no-new-privileges:true"]
     healthcheck:
       test: ["CMD-SHELL", "./venv/bin/python scripts/healthcheck.py"]

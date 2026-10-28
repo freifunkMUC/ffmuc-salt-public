@@ -61,6 +61,7 @@ secret. Values come from the running setup on the host; never commit them.
 | `docker04/dokuwiki` | none; `/srv/docker/dokuwiki/ldap.conf` stays on the host |
 | `docker04/whitebophir` | none |
 | `docker0{4,5,6,7}/diun` | `DIUN_SLACK_WEBHOOK_URL` (`webhookURL` from `/srv/docker/diun/diun.yml`) |
+| `docker07/libretranslate` | none |
 | `docker05/cryptpad` | none; `/srv/docker/cryptpad/data/config.js` and `infra.js` stay on the host |
 | `docker05/salt-master` | none |
 | `docker07/bgpalerter` | none; `/srv/docker/bgpalerter/volume/config.yml` stays on the host |
@@ -94,7 +95,11 @@ secret. Values come from the running setup on the host; never commit them.
 - Some projects came from Salt states that rendered their compose file on
   the host. Their compose files are now static per host in this directory and
   the Salt states are removed, so Salt and Komodo do not both manage them:
-  `diun`.
+  `diun`, `libretranslate`.
+- `docker07/libretranslate` keeps its models in the named volume
+  `libretranslate_models`. The NetBox config context `libretranslate`
+  (`enabled`, `port`) still opens the nebula-meet firewall for jigasi; keep
+  `port` equal to the published port in `compose.yaml`.
 
 ## Komodo
 
