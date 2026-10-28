@@ -8,6 +8,7 @@ base:
     - fail2ban
     - ff_base
     - graylog-sidecar
+    - journald
     - locales
     - logrotate
     - mosh
