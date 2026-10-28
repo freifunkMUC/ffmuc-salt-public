@@ -11,6 +11,9 @@ services:
       # from haproxy. Without this, all users share one rate limit bucket.
       - WBO_IP_SOURCE=X-Forwarded-For
       - WBO_TRUST_PROXY_HOPS=1
+      # Public path is https://ffmuc.net/draw/; nginx removes the prefix.
+      # Without it, v2 redirects to /boards/... outside of /draw/.
+      - WBO_BASE_PATH=/draw
     ports:
       - "5001:80"
     volumes:
