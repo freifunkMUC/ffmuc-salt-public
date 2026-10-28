@@ -160,9 +160,17 @@ deploy = false
 [stack.config]
 server = "docker04"
 project_name = "netbox-parker"
-files_on_host = true
-run_directory = "/srv/docker/netbox-parker"
-file_paths = ["docker-compose.yml", "docker-compose.override.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker04/netbox-parker"
+file_paths = ["compose.yaml", "compose.override.yaml"]
+environment = """
+DB_PASSWORD = [[NETBOX_PARKER_DB_PASSWORD]]
+REDIS_PASSWORD = [[NETBOX_PARKER_REDIS_PASSWORD]]
+REDIS_CACHE_PASSWORD = [[NETBOX_PARKER_REDIS_CACHE_PASSWORD]]
+SECRET_KEY = '[[NETBOX_PARKER_SECRET_KEY]]'
+API_TOKEN_PEPPER_1 = [[NETBOX_PARKER_API_TOKEN_PEPPER_1]]
+"""
 
 [[stack]]
 name = "docker04-openldap"

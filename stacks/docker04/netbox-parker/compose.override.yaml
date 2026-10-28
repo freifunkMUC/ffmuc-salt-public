@@ -1,0 +1,70 @@
+---
+x-netbox-secrets: &netbox-secrets
+  DB_PASSWORD: ${DB_PASSWORD}
+  REDIS_PASSWORD: ${REDIS_PASSWORD}
+  REDIS_CACHE_PASSWORD: ${REDIS_CACHE_PASSWORD}
+  SECRET_KEY: ${SECRET_KEY}
+  API_TOKEN_PEPPER_1: ${API_TOKEN_PEPPER_1}
+
+services:
+  netbox:
+    ports:
+      - "8088:8080"
+    # If you want the Nginx unit status page visible from the
+    # outside of the container add the following port mapping:
+    # - "8001:8081"
+    healthcheck:
+      # Time for which the health check can fail after the container is started.
+      # This depends mostly on the performance of your database. On the first start,
+      # when all tables need to be created the start_period should be higher than on
+      # subsequent starts. For the first start after major version upgrades of NetBox
+      # the start_period might also need to be set higher.
+      # Default value in our docker-compose.yml is 60s
+      start_period: 90s
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nb-parker.entrypoints=http"
+      - "traefik.http.routers.nb-parker.rule=Host(`nb-parker.ov.ffmuc.net`)"
+      - "traefik.http.middlewares.nb-parker-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.nb-parker.middlewares=nb-parker-https-redirect"
+      - "traefik.http.routers.nb-parker-secure.entrypoints=https"
+      - "traefik.http.routers.nb-parker-secure.rule=Host(`nb-parker.ov.ffmuc.net`)"
+      - "traefik.http.routers.nb-parker-secure.tls=true"
+      - "traefik.http.routers.nb-parker-secure.tls.certresolver=http"
+      - "traefik.http.routers.nb-parker-secure.service=nb-parker"
+      - "traefik.http.services.nb-parker.loadbalancer.server.port=8080"
+      - "traefik.docker.network=proxy"
+    networks:
+      - default
+      - proxy
+    environment: *netbox-secrets
+
+  netbox-worker:
+    restart: unless-stopped
+    environment: *netbox-secrets
+  postgres:
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+  redis:
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+  redis-cache:
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${REDIS_CACHE_PASSWORD}
+
+volumes:
+  netbox-postgres-data:
+    driver: local
+    driver_opts:
+      device: /srv/docker/netbox-parker/vol_postgres
+      type: bind
+      o: bind
+
+networks:
+  proxy:
+    external: true
+
