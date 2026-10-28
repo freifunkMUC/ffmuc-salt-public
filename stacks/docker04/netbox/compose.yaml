@@ -52,7 +52,7 @@ services:
   # redis
   redis:
     # FFMUC: stay on the running Valkey major for now (clean rollback); upstream: 9.1
-    image: docker.io/valkey/valkey:8.0.11-alpine@sha256:fd348c9b6999ef15719a1d6b43b810ee1bf2068ded2d7ab6f6dd15943841f28b
+    image: docker.io/valkey/valkey:8.1.11-alpine@sha256:2602ace2be6569bc2bbb06f873776516ab9089821525be34f4305c67eb9db02a
     command:
       - sh
       - -c # this is to evaluate the $REDIS_PASSWORD from the env
@@ -69,7 +69,7 @@ services:
       - netbox-redis-data:/data
   redis-cache:
     # FFMUC: stay on the running Valkey major for now (clean rollback); upstream: 9.1
-    image: docker.io/valkey/valkey:8.0.11-alpine@sha256:fd348c9b6999ef15719a1d6b43b810ee1bf2068ded2d7ab6f6dd15943841f28b
+    image: docker.io/valkey/valkey:8.1.11-alpine@sha256:2602ace2be6569bc2bbb06f873776516ab9089821525be34f4305c67eb9db02a
     command:
       - sh
       - -c # this is to evaluate the $REDIS_PASSWORD from the env
