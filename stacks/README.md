@@ -83,6 +83,7 @@ hash), put the reference in single quotes: `NAME = '[[NAME]]'`.
 | `docker04/openldap` | `OPENLDAP_LAM_PASSWORD` (`LAM_PASSWORD` from `/srv/docker/openldap/.env`). `ldif/`, `slapd-data/` and `certs/` stay on the host |
 | `docker04/owncast` | none. `data/`, `db/` and `logo.png` stay on the host |
 | `docker05/mattermost-docker` | `MATTERMOST_POSTGRES_PASSWORD` (`POSTGRES_PASSWORD` from `/srv/docker/mattermost-docker/.env`). The other `.env` values are now in the compose files |
+| `docker06/mastodon-paywall` | `MASTODON_PAYWALL_API_TOKEN`, `MASTODON_PAYWALL_PAYPAL_CLIENT_ID`, `MASTODON_PAYWALL_PAYPAL_CLIENT_SECRET`, `MASTODON_PAYWALL_PAYPAL_WEBHOOK_ID` (from `/srv/docker/mastodon-paywall/.env`) |
 
 ## Deployment
 

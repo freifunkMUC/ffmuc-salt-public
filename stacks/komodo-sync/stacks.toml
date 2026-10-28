@@ -297,9 +297,16 @@ deploy = false
 [stack.config]
 server = "docker06"
 project_name = "mastodon-paywall"
-files_on_host = true
-run_directory = "/srv/docker/mastodon-paywall"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker06/mastodon-paywall"
+file_paths = ["compose.yaml"]
+environment = """
+API_TOKEN = [[MASTODON_PAYWALL_API_TOKEN]]
+PAYPAL_CLIENT_ID = [[MASTODON_PAYWALL_PAYPAL_CLIENT_ID]]
+PAYPAL_CLIENT_SECRET = [[MASTODON_PAYWALL_PAYPAL_CLIENT_SECRET]]
+PAYPAL_WEBHOOK_ID = [[MASTODON_PAYWALL_PAYPAL_WEBHOOK_ID]]
+"""
 
 [[stack]]
 name = "docker06-meet-reserve"
