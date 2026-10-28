@@ -114,7 +114,9 @@ secret. Values come from the running setup on the host; never commit them.
 - `whitebophir` v2 only opens canonical board names (lower case, no trailing
   `-`). Before the first v2 start, run
   `docker04/whitebophir/migrate-board-names.mjs` once. It copies the v1 boards
-  with other names, see the comment in the file.
+  with other names, see the comment in the file. The nginx location `/draw/`
+  (`nginx/domains/ffmuc.net.include`) must not rewrite `/draw/tools/` to
+  `/boards/tools/`; v2 serves the tools only below `/tools/`.
 - `packetyeeter-analyzer` mounts the GeoIP files and data directories that
   the Salt state `packetyeeter` creates. Apply that state on a new host first.
 
