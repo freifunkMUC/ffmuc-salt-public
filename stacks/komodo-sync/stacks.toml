@@ -332,9 +332,10 @@ deploy = false
 [stack.config]
 server = "docker06"
 project_name = "omada"
-files_on_host = true
-run_directory = "/srv/docker/omada"
-file_paths = ["docker-compose.yaml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker06/omada"
+file_paths = ["compose.yaml"]
 
 [[stack]]
 name = "docker06-packetyeeter-analyzer"
