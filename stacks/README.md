@@ -9,6 +9,7 @@ nebula, firewall, Komodo Periphery); the containers on them are managed here.
 ```
 stacks/<host>/<project>/compose.yaml
 stacks/<host>/<project>/<config file>   # optional, non-secret only
+stacks/build/<image>/                   # source of a local image used on several hosts
 ```
 
 `<host>` is the short host name (`docker04`), `<project>` the compose project
@@ -60,6 +61,11 @@ secret. Values come from the running setup on the host; never commit them.
 | `docker04/hedgedoc` | `HEDGEDOC_DB_PASSWORD` (also the MariaDB user password), `HEDGEDOC_OAUTH2_CLIENT_SECRET`, `HEDGEDOC_SESSION_SECRET` |
 | `docker04/dokuwiki` | none; `/srv/docker/dokuwiki/ldap.conf` stays on the host |
 | `docker04/whitebophir` | none |
+| `docker0{4,5,6,7}/diun` | `DIUN_SLACK_WEBHOOK_URL` (`webhookURL` from `/srv/docker/diun/diun.yml`) |
+| `docker07/libretranslate` | none |
+| `docker0{5,7}/speedtest` | none |
+| `docker0{4,6}/packetyeeter-analyzer` | none |
+| `docker0{4,5,6,7}/meet-reserve` | `MEET_RESERVE_PRIVATE_KEY`, `MEET_RESERVE_POW_KEY`, `MEET_RESERVE_SYNC_KEY` (`RESERVE_*` from `/srv/docker/meet-reserve/.env`, same on all hosts) |
 | `docker05/cryptpad` | none; `/srv/docker/cryptpad/data/config.js` and `infra.js` stay on the host |
 | `docker05/salt-master` | none |
 | `docker07/bgpalerter` | none; `/srv/docker/bgpalerter/volume/config.yml` stays on the host |
@@ -90,10 +96,33 @@ secret. Values come from the running setup on the host; never commit them.
   stays on the host as rollback: `docker compose -p <project> -f <old file> up -d`
   in that directory restores the previous state, the data directories are the
   same.
+- Some projects came from Salt states that rendered their compose file on
+  the host. Their compose files are now static per host in this directory and
+  the Salt states are removed, so Salt and Komodo do not both manage them:
+  `diun`, `libretranslate`, `meet-reserve`, `speedtest`,
+  `packetyeeter-analyzer`.
+- `docker07/libretranslate` keeps its models in the named volume
+  `libretranslate_models`. The NetBox config context `libretranslate`
+  (`enabled`, `port`) still opens the nebula-meet firewall for jigasi; keep
+  `port` equal to the published port in `compose.yaml`.
+- `meet-reserve` is built from `stacks/build/meet-reserve` on deploy. The
+  NetBox config context `meet_reserve` (`enabled`, `signers`, `metrics_port`)
+  still drives the nebula firewall and telegraf. When the signers change,
+  update `RESERVE_PEERS` in every `meet-reserve/compose.yaml` too. A new
+  signer needs `/srv/docker/meet-reserve/data` owned by `65532:65532`, mode
+  `0700`.
+- `whitebophir` v2 only opens canonical board names (lower case, no trailing
+  `-`). Before the first v2 start, run
+  `docker04/whitebophir/migrate-board-names.mjs` once. It copies the v1 boards
+  with other names, see the comment in the file. The nginx location `/draw/`
+  (`nginx/domains/ffmuc.net.include`) must not rewrite `/draw/tools/` to
+  `/boards/tools/`; v2 serves the tools only below `/tools/`.
+- `packetyeeter-analyzer` mounts the GeoIP files and data directories that
+  the Salt state `packetyeeter` creates. Apply that state on a new host first.
 
 ## Komodo
 
-Komodo v2.3.3: Core with MongoDB on docker06 (`stacks/docker06/komodo`),
+Komodo v2.3.4: Core with MongoDB on docker06 (`stacks/docker06/komodo`),
 Periphery as systemd service on every managed host (Salt state
 `komodo-periphery`). MongoDB is the backend the Komodo docs recommend;
 FerretDB/Postgres is only suggested for CPUs without AVX, docker06 has AVX2.
@@ -178,3 +207,9 @@ itself (a broken deploy would take away the tool used to repair the hosts).
   `salt-run saltutil.sync_all` in it. The custom ext_pillar
   `_pillar/netbox.py` is loaded from the master's extmods cache; on
   2026-10-18 a recreate without the sync left every pillar without `netbox`.
+- Then check:
+  - `salt '*' test.ping` and `salt-run manage.down`: the same minions as
+    before the recreate.
+  - `salt 'docker04*' pillar.get netbox:config_context`: not empty.
+  - `salt '*' pillar.get _errors`: empty on all minions.
+- The minions need no sync. The mine data is in the cache volume and stays.

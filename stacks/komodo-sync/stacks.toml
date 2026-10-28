@@ -78,9 +78,13 @@ deploy = false
 [stack.config]
 server = "docker04"
 project_name = "diun"
-files_on_host = true
-run_directory = "/srv/docker/diun"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker04/diun"
+file_paths = ["compose.yaml"]
+environment = """
+DIUN_SLACK_WEBHOOK_URL = [[DIUN_SLACK_WEBHOOK_URL]]
+"""
 
 [[stack]]
 name = "docker04-excalidraw-backend"
@@ -111,9 +115,15 @@ deploy = false
 [stack.config]
 server = "docker04"
 project_name = "meet-reserve"
-files_on_host = true
-run_directory = "/srv/docker/meet-reserve"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker04/meet-reserve"
+file_paths = ["compose.yaml"]
+environment = """
+RESERVE_PRIVATE_KEY = [[MEET_RESERVE_PRIVATE_KEY]]
+RESERVE_POW_KEY = [[MEET_RESERVE_POW_KEY]]
+RESERVE_SYNC_KEY = [[MEET_RESERVE_SYNC_KEY]]
+"""
 
 [[stack]]
 name = "docker04-netbox"
@@ -166,9 +176,10 @@ deploy = false
 [stack.config]
 server = "docker04"
 project_name = "packetyeeter-analyzer"
-files_on_host = true
-run_directory = "/srv/docker/packetyeeter-analyzer"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker04/packetyeeter-analyzer"
+file_paths = ["compose.yaml"]
 
 [[stack]]
 name = "docker04-traefik"
@@ -233,9 +244,13 @@ deploy = false
 [stack.config]
 server = "docker06"
 project_name = "diun"
-files_on_host = true
-run_directory = "/srv/docker/diun"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker06/diun"
+file_paths = ["compose.yaml"]
+environment = """
+DIUN_SLACK_WEBHOOK_URL = [[DIUN_SLACK_WEBHOOK_URL]]
+"""
 
 [[stack]]
 name = "docker06-mastodon-paywall"
@@ -255,9 +270,15 @@ deploy = false
 [stack.config]
 server = "docker06"
 project_name = "meet-reserve"
-files_on_host = true
-run_directory = "/srv/docker/meet-reserve"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker06/meet-reserve"
+file_paths = ["compose.yaml"]
+environment = """
+RESERVE_PRIVATE_KEY = [[MEET_RESERVE_PRIVATE_KEY]]
+RESERVE_POW_KEY = [[MEET_RESERVE_POW_KEY]]
+RESERVE_SYNC_KEY = [[MEET_RESERVE_SYNC_KEY]]
+"""
 
 [[stack]]
 name = "docker06-omada"
@@ -277,9 +298,10 @@ deploy = false
 [stack.config]
 server = "docker06"
 project_name = "packetyeeter-analyzer"
-files_on_host = true
-run_directory = "/srv/docker/packetyeeter-analyzer"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker06/packetyeeter-analyzer"
+file_paths = ["compose.yaml"]
 
 [[stack]]
 name = "docker06-traefik"
@@ -335,9 +357,13 @@ deploy = false
 [stack.config]
 server = "docker05"
 project_name = "diun"
-files_on_host = true
-run_directory = "/srv/docker/diun"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker05/diun"
+file_paths = ["compose.yaml"]
+environment = """
+DIUN_SLACK_WEBHOOK_URL = [[DIUN_SLACK_WEBHOOK_URL]]
+"""
 
 [[stack]]
 name = "docker05-mattermost-docker"
@@ -357,9 +383,15 @@ deploy = false
 [stack.config]
 server = "docker05"
 project_name = "meet-reserve"
-files_on_host = true
-run_directory = "/srv/docker/meet-reserve"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker05/meet-reserve"
+file_paths = ["compose.yaml"]
+environment = """
+RESERVE_PRIVATE_KEY = [[MEET_RESERVE_PRIVATE_KEY]]
+RESERVE_POW_KEY = [[MEET_RESERVE_POW_KEY]]
+RESERVE_SYNC_KEY = [[MEET_RESERVE_SYNC_KEY]]
+"""
 
 [[stack]]
 name = "docker05-speedtest"
@@ -368,9 +400,10 @@ deploy = false
 [stack.config]
 server = "docker05"
 project_name = "speedtest"
-files_on_host = true
-run_directory = "/srv/docker/speedtest"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker05/speedtest"
+file_paths = ["compose.yaml"]
 
 [[stack]]
 name = "docker05-traefik"
@@ -424,9 +457,13 @@ deploy = false
 [stack.config]
 server = "docker07"
 project_name = "diun"
-files_on_host = true
-run_directory = "/srv/docker/diun"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker07/diun"
+file_paths = ["compose.yaml"]
+environment = """
+DIUN_SLACK_WEBHOOK_URL = [[DIUN_SLACK_WEBHOOK_URL]]
+"""
 
 [[stack]]
 name = "docker07-libretranslate"
@@ -435,9 +472,10 @@ deploy = false
 [stack.config]
 server = "docker07"
 project_name = "libretranslate"
-files_on_host = true
-run_directory = "/srv/docker/libretranslate"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker07/libretranslate"
+file_paths = ["compose.yaml"]
 
 [[stack]]
 name = "docker07-meet-reserve"
@@ -446,9 +484,15 @@ deploy = false
 [stack.config]
 server = "docker07"
 project_name = "meet-reserve"
-files_on_host = true
-run_directory = "/srv/docker/meet-reserve"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker07/meet-reserve"
+file_paths = ["compose.yaml"]
+environment = """
+RESERVE_PRIVATE_KEY = [[MEET_RESERVE_PRIVATE_KEY]]
+RESERVE_POW_KEY = [[MEET_RESERVE_POW_KEY]]
+RESERVE_SYNC_KEY = [[MEET_RESERVE_SYNC_KEY]]
+"""
 
 [[stack]]
 name = "docker07-peeringmanager"
@@ -468,9 +512,10 @@ deploy = false
 [stack.config]
 server = "docker07"
 project_name = "speedtest"
-files_on_host = true
-run_directory = "/srv/docker/speedtest"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker07/speedtest"
+file_paths = ["compose.yaml"]
 
 [[stack]]
 name = "docker07-traefik"

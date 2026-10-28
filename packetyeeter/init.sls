@@ -3,17 +3,15 @@
 
    Enablement is controlled purely by Netbox tags (netbox:tag_list), NOT config_context:
      - packetyeeter-collector -> installs/runs the collector (enforcer) on this host
-     - packetyeeter-analyzer  -> installs/runs the analyzer (decision service) on this host
+     - packetyeeter-analyzer  -> prepares the analyzer data and GeoIP files on this host
 
-   The collector and analyzer share one default release version (see
-   default_version in defaults.jinja), so tagging alone is enough for both: the collector
-   installs the matching .deb, and the analyzer pulls the matching
-   ghcr.io/awlx/packetyeeter-analyzer:v<version> image (not :latest, for
-   reproducible deploys). Override netbox:config_context:packetyeeter:collector:version
-   (or :deb_url) and/or :analyzer:version (or :image) to pin a
+   The analyzer container itself is a Komodo stack
+   (stacks/<host>/packetyeeter-analyzer); its image and flags are set there.
+   The collector installs the .deb of default_version. Override
+   netbox:config_context:packetyeeter:collector:version (or :deb_url) to pin a
    different/newer release once available.
    netbox:config_context:packetyeeter is otherwise OPTIONAL and only used to
-   override specific defaults (e.g. interface, analyzer_addr, image). #}
+   override specific collector defaults (e.g. interface, analyzer_addr). #}
 
 {% set tags = salt['config.get']('netbox:tag_list', []) %}
 {% set collector_enabled = 'packetyeeter-collector' in tags %}
@@ -23,7 +21,6 @@
 
 {% set overrides = salt['config.get']('netbox:config_context:packetyeeter', {}) %}
 {% set collector_overrides = overrides.get('collector', {}) %}
-{% set analyzer_overrides = overrides.get('analyzer', {}) %}
 {% set own_location = salt['config.get']('netbox:site:name', '') %}
 
 {# Auto-discover a same-site analyzer via the mine, so collectors don't need
@@ -80,9 +77,8 @@
 {% endfor %}
 {% set default_allowlist = own_site_prefixes | join(',') %}
 
-{# Shared default release version for both daemons - bump this when a new
-   packetyeeter version is published, so the collector .deb and the analyzer
-   Docker image stay in lockstep by default. #}
+{# Default collector release version. When you bump it, also bump the
+   analyzer image in stacks/<host>/packetyeeter-analyzer/compose.yaml. #}
 {% set default_version = '0.2.0' %}
 
 {# The collector runs natively (systemd) since it needs to load eBPF/XDP/TC
@@ -91,8 +87,7 @@
    own systemd unit, capabilities, and /etc/default/packetyeeter-collector
    template - so we no longer manage a custom binary or .service file here.
    Defaults to default_version; override collector:version (or
-   collector:deb_url) via config_context to pin a different/newer release
-   independently of the analyzer. #}
+   collector:deb_url) via config_context to pin a different/newer release. #}
 {# egress_accounting / egress_min_bytes are v0.1.9+ collector flags for the
    sustained-download detection feature. Both default OFF: -egress-accounting
    is only emitted when egress_accounting is truthy (and -egress-min-bytes
@@ -122,72 +117,11 @@
   {% do collector.update({'deb_url': 'https://github.com/awlx/packetyeeter/releases/download/v' ~ collector['version'] ~ '/packetyeeter-collector_' ~ collector['version'] ~ '_amd64.deb'}) %}
 {% endif %}
 
-{# The analyzer runs dockerized on the docker host, using the official image.
-   Defaults to default_version's matching tag (ghcr.io/awlx/packetyeeter-
-   analyzer:v<version>), NOT :latest, for reproducible deploys - CI publishes
-   an image tagged with the release tag itself for every vX.Y.Z push.
-   collector:version and analyzer:version are independent config keys (no
-   automatic linkage beyond sharing the same default_version) - set
-   analyzer:version (or analyzer:image directly) to pin/override just the
-   analyzer. #}
-{% set geoip_container_path = '/data/geoip/GeoLite2-ASN.mmdb' %}
-{# If the haproxy-managed copy isn't present on this host (e.g. a docker host
-   with no haproxy formula applied), download our own copy into a
-   docker-managed folder instead of running the analyzer without ASN
-   enrichment. Same mirror the haproxy formula already uses. #}
+{# The analyzer container is a Komodo stack (stacks/<host>/packetyeeter-analyzer).
+   This state only creates its directories and downloads the GeoIP files
+   that the stack mounts read-only. Same mirror the haproxy formula uses. #}
 {% set docker_geoip_asn = '/srv/docker/packetyeeter-analyzer/geoip/GeoLite2-ASN.mmdb' %}
-{% set haproxy_geoip_exists = salt['file.file_exists'](haproxy_geoip_asn) %}
-{% set analyzer_geoip_host_path = haproxy_geoip_asn if haproxy_geoip_exists else docker_geoip_asn %}
-
-{# GeoIP country enrichment (powers the analyzer's "Threats by Country"
-   panel, v0.1.6+). A GeoLite2-City.mmdb also contains country data, so we
-   reuse the haproxy formula's existing City DB when present (webfrontends)
-   instead of downloading a second file; docker-only hosts (no haproxy) get
-   their own GeoLite2-Country.mmdb download. Always enabled - no gate flag,
-   since it's harmless/optional on the analyzer side (gracefully degrades to
-   "unknown" if the file is ever missing). #}
-{% set haproxy_geoip_city = '/etc/haproxy/geoip/GeoLite2-City.mmdb' %}
 {% set docker_geoip_country = '/srv/docker/packetyeeter-analyzer/geoip/GeoLite2-Country.mmdb' %}
-{% set haproxy_geoip_city_exists = salt['file.file_exists'](haproxy_geoip_city) %}
-{% set analyzer_geoip_country_host_path = haproxy_geoip_city if haproxy_geoip_city_exists else docker_geoip_country %}
-{% set geoip_country_container_path = '/data/geoip/GeoLite2-Country.mmdb' %}
-{# Inspector hostname = Netbox service "packetyeeter*.in.ffmuc.net" on this VM, served as .ov (dns-auth creates both CNAMEs). #}
-{% set ns_traefik = namespace(host='') %}
-{% for svc_name, svc in salt['config.get']('netbox:services', {}).items() %}
-  {% if svc_name.startswith('packetyeeter') and (svc.get('parent') or svc.get('virtual_machine') or {}).get('name') == grains['id'] %}
-    {% set ns_traefik.host = svc_name | replace('.in.ffmuc.net', '.ov.ffmuc.net') %}
-  {% endif %}
-{% endfor %}
-{# sustained_enabled / sustained_enforce are v0.1.9+ analyzer flags for the
-   sustained-download detection feature. Both default OFF and are only
-   emitted into the compose command when truthy, so an older (<=v0.1.8)
-   analyzer image never receives an unknown flag. Enable sustained_enabled
-   for detect-only first; do NOT set sustained_enforce on the first rollout. #}
-{% set analyzer_defaults = {
-  'version': default_version,
-  'image': '',
-  'listen_port': 9090,
-  'metrics_port': 9091,
-  'inspect_port': 9092,
-  'reputation_threshold': 75.0,
-  'ai_confidence_threshold': 0.8,
-  'dry_run': True,
-  'verbose': False,
-  'sustained_enabled': True,
-  'sustained_enforce': False,
-  'geoip_enabled': True,
-  'geoip_host_path': analyzer_geoip_host_path,
-  'geoip_container_path': geoip_container_path,
-  'geoip_country_host_path': analyzer_geoip_country_host_path,
-  'geoip_country_container_path': geoip_country_container_path,
-  'traefik_host': ns_traefik.host,
-} %}
-{% set analyzer = {} %}
-{% do analyzer.update(analyzer_defaults) %}
-{% do analyzer.update(analyzer_overrides) %}
-{% if not analyzer['image'] and analyzer['version'] %}
-  {% do analyzer.update({'image': 'ghcr.io/awlx/packetyeeter-analyzer:v' ~ analyzer['version']}) %}
-{% endif %}
 
 packetyeeter-runtime-pkgs:
   pkg.installed:
@@ -295,7 +229,6 @@ packetyeeter-collector-version-missing:
     - require:
       - file: /srv/docker/packetyeeter-analyzer/ml-data
 
-{% if not haproxy_geoip_exists or not haproxy_geoip_city_exists %}
 /srv/docker/packetyeeter-analyzer/geoip:
   file.directory:
     - user: root
@@ -304,52 +237,19 @@ packetyeeter-collector-version-missing:
     - require:
       - file: /srv/docker/packetyeeter-analyzer
 
-{% if not haproxy_geoip_exists %}
 packetyeeter-analyzer-geoip-asn:
   cmd.run:
     - name: wget -qO {{ docker_geoip_asn }} https://github.com/P3TERX/GeoLite.mmdb/raw/download/GeoLite2-ASN.mmdb
     - creates: {{ docker_geoip_asn }}
     - require:
       - file: /srv/docker/packetyeeter-analyzer/geoip
-{% endif %}
 
-{% if not haproxy_geoip_city_exists %}
 packetyeeter-analyzer-geoip-country:
   cmd.run:
     - name: wget -qO {{ docker_geoip_country }} https://github.com/P3TERX/GeoLite.mmdb/raw/download/GeoLite2-Country.mmdb
     - creates: {{ docker_geoip_country }}
     - require:
       - file: /srv/docker/packetyeeter-analyzer/geoip
-{% endif %}
-{% endif %}
-
-/srv/docker/packetyeeter-analyzer/docker-compose.yml:
-  file.managed:
-    - source: salt://packetyeeter/packetyeeter-analyzer-compose.yml.j2
-    - template: jinja
-    - mode: "0644"
-    - context:
-        analyzer: {{ analyzer | json }}
-    - require:
-      - file: /srv/docker/packetyeeter-analyzer
-
-packetyeeter-analyzer-compose:
-  cmd.run:
-    - name: docker compose pull && docker compose up -d
-    - cwd: /srv/docker/packetyeeter-analyzer
-    - require:
-      - file: /srv/docker/packetyeeter-analyzer/docker-compose.yml
-      - file: /srv/docker/packetyeeter-analyzer/data
-      - file: /srv/docker/packetyeeter-analyzer/ml-data
-      - file: /srv/docker/packetyeeter-analyzer/ml-data/sessions
-{% if not haproxy_geoip_exists %}
-      - cmd: packetyeeter-analyzer-geoip-asn
-{% endif %}
-{% if not haproxy_geoip_city_exists %}
-      - cmd: packetyeeter-analyzer-geoip-country
-{% endif %}
-    - onchanges:
-      - file: /srv/docker/packetyeeter-analyzer/docker-compose.yml
 {% endif %}
 
 {% else %}

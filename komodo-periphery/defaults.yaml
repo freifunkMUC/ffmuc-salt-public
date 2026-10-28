@@ -4,10 +4,10 @@
 komodo:
   periphery:
     enabled: false
-    version: 2.3.3
+    version: 2.3.4
     sha256:
-      x86_64: 40b78f377626799afad8331246a501f077d4ebcfb6d9096894cf55b64f6dcf13
-      aarch64: 60334780d7115ddc7a35fad062f4c606a4c814ae9a7dd8710ca96a0c1a37d85c
+      x86_64: 46d50313970aea59d293bbe237648f4becea74e8abc2f30f1bb62b73456fc72e
+      aarch64: f49dc4cfab0046563cab9d7f3910e92e083f7742161a8b877bd60e2e74550feb
     interface: nebula0
     port: 8120
     allowed_ips:

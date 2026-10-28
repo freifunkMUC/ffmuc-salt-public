@@ -3,10 +3,20 @@ services:
   whiteboard:
     # node2shell (CVE-2026-111497): upstream still ships a vulnerable Node, see Dockerfile
     build: .
-    image: local/wbo:v1.22.1-node22.23.4
+    image: local/wbo:v2.18.25-node24.22.1
     pull_policy: build
     restart: unless-stopped
+    environment:
+      # nginx on the webfrontends proxies /draw/ and passes X-Forwarded-For
+      # from haproxy. Without this, all users share one rate limit bucket.
+      - WBO_IP_SOURCE=X-Forwarded-For
+      - WBO_TRUST_PROXY_HOPS=1
+      # Public path is https://ffmuc.net/draw/; nginx removes the prefix.
+      # Without it, v2 redirects to /boards/... outside of /draw/.
+      - WBO_BASE_PATH=/draw
     ports:
       - "5001:80"
     volumes:
+      # v1 boards are board-<name>.json. v2 writes board-<name>.svg next to
+      # them on first load and keeps the JSON file.
       - /srv/docker/whitebophir/boards:/opt/app/server-data:z

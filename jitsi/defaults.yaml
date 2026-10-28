@@ -127,7 +127,7 @@ jitsi:
     participant_selection_strategy: ""
     topology_strategy: ""        # e.g. VisitorTopologyStrategy
 
-  # Signed viewers-only rooms minted by meet-reserve (docker-containers/meet-reserve),
+  # Signed viewers-only rooms minted by meet-reserve (stacks/docker0*/meet-reserve),
   # verified by prosody/files/mod_ffmuc_signed_rooms.lua. Needs visitors.enabled.
   signed_rooms:
     enabled: false
@@ -155,7 +155,7 @@ jitsi:
     preferred_language: de-DE
     disable_dial_out: true              # enabling the jigasi brewery would otherwise offer SIP dial-out to moderators
     save_transcripts: false             # write transcripts to /var/lib/jigasi/transcripts on the jigasi host
-    # live translated subtitles via LibreTranslate (docker-containers/libretranslate)
+    # live translated subtitles via LibreTranslate (stacks/docker07/libretranslate)
     translation:
       enabled: false
       api_url: ""                       # e.g. http://10.111.0.118:5010/translate

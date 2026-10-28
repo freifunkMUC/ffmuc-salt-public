@@ -121,7 +121,7 @@ location /wiki/ {
 location /draw/ {
 	rewrite /draw/d/(.*)/socket.io/(.*) /socket.io/$2 break;
 	rewrite /draw/d/(.*) /boards/$1 break;
-	rewrite /draw/tools/(.*) /boards/tools/$1 break;
+	# wbo v2 serves the tools only below /tools/ (v1 served both paths)
 	proxy_pass          http://draw_upstream/;
 	proxy_ssl_server_name on;
 	proxy_set_header    Upgrade $http_upgrade;
