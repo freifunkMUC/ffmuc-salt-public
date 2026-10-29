@@ -787,3 +787,30 @@ project_name = "traefik"
 files_on_host = true
 run_directory = "/opt/containers/traefik"
 file_paths = ["docker-compose.yml"]
+
+[[stack]]
+name = "docker07-tuwunel"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker07"
+project_name = "tuwunel"
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker07/tuwunel"
+file_paths = ["compose.yaml"]
+environment = """
+OIDC_CLIENT_SECRET = [[TUWUNEL_OIDC_CLIENT_SECRET]]
+"""
+
+[[stack]]
+name = "docker07-element-web"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker07"
+project_name = "element-web"
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker07/element-web"
+file_paths = ["compose.yaml"]

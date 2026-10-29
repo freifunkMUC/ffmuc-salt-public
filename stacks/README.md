@@ -126,6 +126,8 @@ bcrypt hash), put the reference in single quotes: `NAME = '[[NAME]]'`.
 | `docker07/keycloak` | `KEYCLOAK_DB_PASSWORD` (`POSTGRES_PASSWORD` and `KC_DB_PASSWORD`), `KEYCLOAK_ADMIN_PASSWORD` (from `/srv/docker/keycloak/docker-compose.yml` and `keycloak.env`). The values that are not secret are in `env/keycloak.env` |
 | `docker07/vaultwarden` | `VAULTWARDEN_ADMIN_TOKEN` (from `/srv/docker/vaultwarden/.env`, an argon2 hash with `$`, so it is single-quoted in `stacks.toml`), `VAULTWARDEN_SSO_CLIENT_SECRET` (from `/srv/docker/vaultwarden/docker-compose.yaml`) |
 | `docker06/komodo` | none in Komodo; Core's own secrets stay in its bootstrap `.env` |
+| `docker07/tuwunel` | `TUWUNEL_OIDC_CLIENT_SECRET` (Keycloak client `matrix` in realm `ffmuc`) |
+| `docker07/element-web` | none; `config.json` is public anyway |
 
 ### Taking a project over
 
