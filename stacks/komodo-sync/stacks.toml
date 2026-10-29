@@ -253,6 +253,18 @@ POSTGRES_PASSWORD = [[CFSSL_POSTGRES_PASSWORD]]
 """
 
 [[stack]]
+name = "docker04-uptime-kuma"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker04"
+project_name = "uptime-kuma"
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker04/uptime-kuma"
+file_paths = ["compose.yaml"]
+
+[[stack]]
 name = "docker06-komodo"
 description = "Komodo Core itself, deploy only from a shell (see stacks/README.md)"
 tags = ["ffmuc"]
