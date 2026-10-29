@@ -1,0 +1,42 @@
+---
+services:
+  meet-reserve:
+    # Signer for reserved viewers-only rooms (meet.ffmuc.net/reserve).
+    # Source in stacks/build/meet-reserve; Komodo builds it on deploy.
+    build: ../../build/meet-reserve
+    image: local/meet-reserve:main
+    pull_policy: build
+    restart: always
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    environment:
+      - RESERVE_PRIVATE_KEY
+      - RESERVE_POW_KEY
+      - RESERVE_SYNC_KEY
+      # the other signers, see netbox:config_context:meet_reserve:signers
+      - RESERVE_PEERS=http://docker04.ov.ffmuc.net:8096,http://docker05.ov.ffmuc.net:8096,http://docker07.ov.ffmuc.net:8096
+      - RESERVE_KEY_ID=1
+      - RESERVE_POW_DIFFICULTY=18
+      - RESERVE_DURATIONS=72h,168h,720h,2160h,8760h
+      - RESERVE_DEFAULT_DURATION=72h
+      - RESERVE_MAX_AHEAD=8760h
+      - RESERVE_LINK_TTL=12h
+      - RESERVE_LEGACY_MAX_EXTENSION=720h
+      - RESERVE_PUBLIC_URL=https://meet.ffmuc.net
+      - RESERVE_DATA_DIR=/data
+      - RESERVE_LISTEN=:8095
+      - RESERVE_SYNC_LISTEN=:8096
+      - RESERVE_METRICS_LISTEN=:9195
+    volumes:
+      # room records; owned by uid 65532 (distroless nonroot), mode 0700
+      - /srv/docker/meet-reserve/data:/data
+    ports:
+      - "8095:8095"
+      - "127.0.0.1:9195:9195"
+      - "10.8.0.15:8096:8096"
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"

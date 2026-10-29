@@ -1,0 +1,21 @@
+---
+services:
+  mastodon-paywall:
+    image: ghcr.io/freifunkmuc/mastodon-paywall:main@sha256:985b06762fdda0e3f894225f0d4af1085a5b1f6f0b9f8b40c541e7fff4df1642
+    container_name: mastodon-paywall
+    restart: always
+    environment:
+      API_TOKEN: ${API_TOKEN}
+      PAYPAL_CLIENT_ID: ${PAYPAL_CLIENT_ID}
+      PAYPAL_CLIENT_SECRET: ${PAYPAL_CLIENT_SECRET}
+      PAYPAL_PLAN_ID: P-7AC70324RL420101MMPUURQQ
+      PAYPAL_WEBHOOK_ID: ${PAYPAL_WEBHOOK_ID}
+    ports:
+      - 3001:3000
+    volumes:
+      # Persists the default sqlite database (DATABASE_URL) across restarts.
+      # Not needed if DATABASE_URL points at an external Postgres/MySQL.
+      - mastodon-paywall-data:/app/data
+
+volumes:
+  mastodon-paywall-data:

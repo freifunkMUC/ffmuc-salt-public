@@ -20,11 +20,10 @@ ffmuc_packages:
       - sysstat
       - dnsutils
       - curl
-{% if grains.os == 'Ubuntu' and grains.osmajorrelease >= 24 %}
       - iptraf-ng
+{% if grains.os == 'Ubuntu' and grains.osmajorrelease >= 24 %}
       - plocate
 {% else %}
-      - iptraf
       - mlocate
 {% endif %}
       - speedtest-cli
@@ -64,4 +63,31 @@ bandwidth-top:
     - version: '0.0.36'
     - require:
       - pkgrepo: bandwidth-monitor-repo
+{%- endif %}
+
+{#- KVM guests on the vm-hosts: every domain has the guest agent channel, and a serial console on ttyS0 #}
+{%- if grains.get('virtual') == 'kvm' %}
+qemu-guest-agent:
+  pkg.installed: []
+  # the unit is static and started by udev for the virtio port; running is enough
+  service.running:
+    - require:
+      - pkg: qemu-guest-agent
+
+# kernel and GRUB on the serial console as well, so `virsh console` shows boot problems
+/etc/default/grub.d/90-ffmuc-serial-console.cfg:
+  file.managed:
+    - makedirs: True
+    - mode: "0644"
+    - contents: |
+        # serial console for `virsh console` on the vm-host (Salt, ff_base)
+        GRUB_CMDLINE_LINUX="${GRUB_CMDLINE_LINUX} console=tty0 console=ttyS0,115200n8"
+        GRUB_TERMINAL="console serial"
+        GRUB_SERIAL_COMMAND="serial --speed=115200"
+
+update-grub-serial-console:
+  cmd.run:
+    - name: update-grub
+    - onchanges:
+      - file: /etc/default/grub.d/90-ffmuc-serial-console.cfg
 {%- endif %}

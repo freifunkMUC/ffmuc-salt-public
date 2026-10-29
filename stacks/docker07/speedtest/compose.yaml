@@ -1,0 +1,8 @@
+---
+services:
+  speedtest:
+    image: openspeedtest/latest:v2.0.8@sha256:1127de0693c36bcf8c297c73d09891df8ec243680d027a6b6fab13fa0954ff46
+    restart: always
+    ports:
+      # haproxy speed_backend (speed.ffmuc.net)
+      - "3000:3000"

@@ -51,9 +51,10 @@ deploy = false
 [stack.config]
 server = "docker04"
 project_name = "conferencemapper"
-files_on_host = true
-run_directory = "/srv/docker/conferencemapper"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker04/conferencemapper"
+file_paths = ["compose.yaml"]
 
 [[stack]]
 name = "docker04-diun"
@@ -62,9 +63,13 @@ deploy = false
 [stack.config]
 server = "docker04"
 project_name = "diun"
-files_on_host = true
-run_directory = "/srv/docker/diun"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker04/diun"
+file_paths = ["compose.yaml"]
+environment = """
+DIUN_SLACK_WEBHOOK_URL = [[DIUN_SLACK_WEBHOOK_URL]]
+"""
 
 [[stack]]
 name = "docker04-excalidraw-backend"
@@ -73,9 +78,10 @@ deploy = false
 [stack.config]
 server = "docker04"
 project_name = "excalidraw-backend"
-files_on_host = true
-run_directory = "/srv/docker/excalidraw-backend"
-file_paths = ["docker-compose.yaml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker04/excalidraw-backend"
+file_paths = ["compose.yaml"]
 
 [[stack]]
 name = "docker04-matomo"
@@ -84,9 +90,14 @@ deploy = false
 [stack.config]
 server = "docker04"
 project_name = "matomo"
-files_on_host = true
-run_directory = "/srv/docker/matomo"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker04/matomo"
+file_paths = ["compose.yaml"]
+environment = """
+MARIADB_ROOT_PASSWORD = [[MATOMO_DB_ROOT_PASSWORD]]
+MARIADB_PASSWORD = [[MATOMO_DB_PASSWORD]]
+"""
 
 [[stack]]
 name = "docker04-meet-reserve"
@@ -95,9 +106,15 @@ deploy = false
 [stack.config]
 server = "docker04"
 project_name = "meet-reserve"
-files_on_host = true
-run_directory = "/srv/docker/meet-reserve"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker04/meet-reserve"
+file_paths = ["compose.yaml"]
+environment = """
+RESERVE_PRIVATE_KEY = [[MEET_RESERVE_PRIVATE_KEY]]
+RESERVE_POW_KEY = [[MEET_RESERVE_POW_KEY]]
+RESERVE_SYNC_KEY = [[MEET_RESERVE_SYNC_KEY]]
+"""
 
 [[stack]]
 name = "docker04-netbox"
@@ -106,9 +123,19 @@ deploy = false
 [stack.config]
 server = "docker04"
 project_name = "netbox"
-files_on_host = true
-run_directory = "/srv/docker/netbox"
-file_paths = ["docker-compose.yml", "docker-compose.override.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker04/netbox"
+file_paths = ["compose.yaml", "compose.override.yaml"]
+environment = """
+DB_PASSWORD = [[NETBOX_DB_PASSWORD]]
+REDIS_PASSWORD = [[NETBOX_REDIS_PASSWORD]]
+SECRET_KEY = '[[NETBOX_SECRET_KEY]]'
+SUPERUSER_API_TOKEN = [[NETBOX_SUPERUSER_API_TOKEN]]
+SUPERUSER_PASSWORD = [[NETBOX_SUPERUSER_PASSWORD]]
+AUTH_LDAP_BIND_PASSWORD = [[NETBOX_AUTH_LDAP_BIND_PASSWORD]]
+API_TOKEN_PEPPER_1 = [[NETBOX_API_TOKEN_PEPPER_1]]
+"""
 
 [[stack]]
 name = "docker04-netbox-parker"
@@ -117,9 +144,17 @@ deploy = false
 [stack.config]
 server = "docker04"
 project_name = "netbox-parker"
-files_on_host = true
-run_directory = "/srv/docker/netbox-parker"
-file_paths = ["docker-compose.yml", "docker-compose.override.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker04/netbox-parker"
+file_paths = ["compose.yaml", "compose.override.yaml"]
+environment = """
+DB_PASSWORD = [[NETBOX_PARKER_DB_PASSWORD]]
+REDIS_PASSWORD = [[NETBOX_PARKER_REDIS_PASSWORD]]
+REDIS_CACHE_PASSWORD = [[NETBOX_PARKER_REDIS_CACHE_PASSWORD]]
+SECRET_KEY = '[[NETBOX_PARKER_SECRET_KEY]]'
+API_TOKEN_PEPPER_1 = [[NETBOX_PARKER_API_TOKEN_PEPPER_1]]
+"""
 
 [[stack]]
 name = "docker04-openldap"
@@ -128,9 +163,13 @@ deploy = false
 [stack.config]
 server = "docker04"
 project_name = "openldap"
-files_on_host = true
-run_directory = "/srv/docker/openldap"
-file_paths = ["docker-compose.yaml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker04/openldap"
+file_paths = ["compose.yaml"]
+environment = """
+LAM_PASSWORD = [[OPENLDAP_LAM_PASSWORD]]
+"""
 
 [[stack]]
 name = "docker04-owncast"
@@ -139,9 +178,10 @@ deploy = false
 [stack.config]
 server = "docker04"
 project_name = "owncast"
-files_on_host = true
-run_directory = "/srv/docker/owncast"
-file_paths = ["docker-compose.yaml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker04/owncast"
+file_paths = ["compose.yaml"]
 
 [[stack]]
 name = "docker04-packetyeeter-analyzer"
@@ -150,9 +190,10 @@ deploy = false
 [stack.config]
 server = "docker04"
 project_name = "packetyeeter-analyzer"
-files_on_host = true
-run_directory = "/srv/docker/packetyeeter-analyzer"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker04/packetyeeter-analyzer"
+file_paths = ["compose.yaml"]
 
 [[stack]]
 name = "docker04-traefik"
@@ -161,9 +202,13 @@ deploy = false
 [stack.config]
 server = "docker04"
 project_name = "traefik"
-files_on_host = true
-run_directory = "/srv/docker/traefik"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker04/traefik"
+file_paths = ["compose.yaml"]
+environment = """
+TRAEFIK_DASHBOARD_USERS = '[[TRAEFIK_DASHBOARD_USERS_DOCKER04]]'
+"""
 
 [[stack]]
 name = "docker04-wgkex"
@@ -172,9 +217,13 @@ deploy = false
 [stack.config]
 server = "docker04"
 project_name = "wgkex"
-files_on_host = true
-run_directory = "/srv/docker/wgkex"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker04/wgkex"
+file_paths = ["compose.yaml"]
+environment = """
+EMQX_NODE__COOKIE = [[WGKEX_EMQX_NODE_COOKIE]]
+"""
 
 [[stack]]
 name = "docker04-whitebophir"
@@ -183,9 +232,25 @@ deploy = false
 [stack.config]
 server = "docker04"
 project_name = "whitebophir"
-files_on_host = true
-run_directory = "/srv/docker/whitebophir"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker04/whitebophir"
+file_paths = ["compose.yaml"]
+
+[[stack]]
+name = "docker04-cfssl"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker04"
+project_name = "cfssl"
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker04/cfssl"
+file_paths = ["compose.yaml"]
+environment = """
+POSTGRES_PASSWORD = [[CFSSL_POSTGRES_PASSWORD]]
+"""
 
 [[stack]]
 name = "docker06-komodo"
@@ -207,9 +272,13 @@ deploy = false
 [stack.config]
 server = "docker06"
 project_name = "diun"
-files_on_host = true
-run_directory = "/srv/docker/diun"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker06/diun"
+file_paths = ["compose.yaml"]
+environment = """
+DIUN_SLACK_WEBHOOK_URL = [[DIUN_SLACK_WEBHOOK_URL]]
+"""
 
 [[stack]]
 name = "docker06-mastodon-paywall"
@@ -218,9 +287,16 @@ deploy = false
 [stack.config]
 server = "docker06"
 project_name = "mastodon-paywall"
-files_on_host = true
-run_directory = "/srv/docker/mastodon-paywall"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker06/mastodon-paywall"
+file_paths = ["compose.yaml"]
+environment = """
+API_TOKEN = [[MASTODON_PAYWALL_API_TOKEN]]
+PAYPAL_CLIENT_ID = [[MASTODON_PAYWALL_PAYPAL_CLIENT_ID]]
+PAYPAL_CLIENT_SECRET = [[MASTODON_PAYWALL_PAYPAL_CLIENT_SECRET]]
+PAYPAL_WEBHOOK_ID = [[MASTODON_PAYWALL_PAYPAL_WEBHOOK_ID]]
+"""
 
 [[stack]]
 name = "docker06-meet-reserve"
@@ -229,9 +305,15 @@ deploy = false
 [stack.config]
 server = "docker06"
 project_name = "meet-reserve"
-files_on_host = true
-run_directory = "/srv/docker/meet-reserve"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker06/meet-reserve"
+file_paths = ["compose.yaml"]
+environment = """
+RESERVE_PRIVATE_KEY = [[MEET_RESERVE_PRIVATE_KEY]]
+RESERVE_POW_KEY = [[MEET_RESERVE_POW_KEY]]
+RESERVE_SYNC_KEY = [[MEET_RESERVE_SYNC_KEY]]
+"""
 
 [[stack]]
 name = "docker06-omada"
@@ -240,9 +322,10 @@ deploy = false
 [stack.config]
 server = "docker06"
 project_name = "omada"
-files_on_host = true
-run_directory = "/srv/docker/omada"
-file_paths = ["docker-compose.yaml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker06/omada"
+file_paths = ["compose.yaml"]
 
 [[stack]]
 name = "docker06-packetyeeter-analyzer"
@@ -251,9 +334,10 @@ deploy = false
 [stack.config]
 server = "docker06"
 project_name = "packetyeeter-analyzer"
-files_on_host = true
-run_directory = "/srv/docker/packetyeeter-analyzer"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker06/packetyeeter-analyzer"
+file_paths = ["compose.yaml"]
 
 [[stack]]
 name = "docker06-traefik"
@@ -262,9 +346,13 @@ deploy = false
 [stack.config]
 server = "docker06"
 project_name = "traefik"
-files_on_host = true
-run_directory = "/srv/docker/traefik"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker06/traefik"
+file_paths = ["compose.yaml"]
+environment = """
+TRAEFIK_DASHBOARD_USERS = '[[TRAEFIK_DASHBOARD_USERS]]'
+"""
 
 [[stack]]
 name = "docker06-wgkex"
@@ -273,9 +361,53 @@ deploy = false
 [stack.config]
 server = "docker06"
 project_name = "wgkex"
-files_on_host = true
-run_directory = "/srv/docker/wgkex"
-file_paths = ["docker-compose.yaml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker06/wgkex"
+file_paths = ["compose.yaml"]
+environment = """
+EMQX_NODE__COOKIE = [[WGKEX_EMQX_NODE_COOKIE]]
+"""
+
+[[stack]]
+name = "docker06-graylog"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker06"
+project_name = "graylog"
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker06/graylog"
+file_paths = ["compose.yaml"]
+environment = """
+GRAYLOG_PASSWORD_SECRET = [[GRAYLOG_PASSWORD_SECRET]]
+GRAYLOG_ROOT_PASSWORD_SHA2 = [[GRAYLOG_ROOT_PASSWORD_SHA2]]
+OPENSEARCH_INITIAL_ADMIN_PASSWORD = '[[GRAYLOG_OPENSEARCH_INITIAL_ADMIN_PASSWORD]]'
+"""
+
+[[stack]]
+name = "docker06-mastodon"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker06"
+project_name = "mastodon"
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker06/mastodon"
+file_paths = ["compose.yaml"]
+environment = """
+DB_PASS = [[MASTODON_DB_PASS]]
+SECRET_KEY_BASE = [[MASTODON_SECRET_KEY_BASE]]
+OTP_SECRET = [[MASTODON_OTP_SECRET]]
+VAPID_PRIVATE_KEY = [[MASTODON_VAPID_PRIVATE_KEY]]
+SMTP_PASSWORD = [[MASTODON_SMTP_PASSWORD]]
+ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY = [[MASTODON_ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY]]
+ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT = [[MASTODON_ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT]]
+ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY = [[MASTODON_ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY]]
+TRUSTED_PROXY_IP = [[MASTODON_TRUSTED_PROXY_IP]]
+"""
 
 [[stack]]
 name = "docker05-salt"
@@ -297,9 +429,10 @@ deploy = false
 [stack.config]
 server = "docker05"
 project_name = "cryptpad"
-files_on_host = true
-run_directory = "/srv/docker/cryptpad"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker05/cryptpad"
+file_paths = ["compose.yaml"]
 
 [[stack]]
 name = "docker05-diun"
@@ -308,9 +441,13 @@ deploy = false
 [stack.config]
 server = "docker05"
 project_name = "diun"
-files_on_host = true
-run_directory = "/srv/docker/diun"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker05/diun"
+file_paths = ["compose.yaml"]
+environment = """
+DIUN_SLACK_WEBHOOK_URL = [[DIUN_SLACK_WEBHOOK_URL]]
+"""
 
 [[stack]]
 name = "docker05-mattermost-docker"
@@ -319,9 +456,13 @@ deploy = false
 [stack.config]
 server = "docker05"
 project_name = "mattermost-docker"
-files_on_host = true
-run_directory = "/srv/docker/mattermost-docker"
-file_paths = ["docker-compose.yml", "docker-compose.without-nginx.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker05/mattermost-docker"
+file_paths = ["compose.yaml", "compose.without-nginx.yaml"]
+environment = """
+POSTGRES_PASSWORD = [[MATTERMOST_POSTGRES_PASSWORD]]
+"""
 
 [[stack]]
 name = "docker05-meet-reserve"
@@ -330,9 +471,15 @@ deploy = false
 [stack.config]
 server = "docker05"
 project_name = "meet-reserve"
-files_on_host = true
-run_directory = "/srv/docker/meet-reserve"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker05/meet-reserve"
+file_paths = ["compose.yaml"]
+environment = """
+RESERVE_PRIVATE_KEY = [[MEET_RESERVE_PRIVATE_KEY]]
+RESERVE_POW_KEY = [[MEET_RESERVE_POW_KEY]]
+RESERVE_SYNC_KEY = [[MEET_RESERVE_SYNC_KEY]]
+"""
 
 [[stack]]
 name = "docker05-speedtest"
@@ -341,9 +488,10 @@ deploy = false
 [stack.config]
 server = "docker05"
 project_name = "speedtest"
-files_on_host = true
-run_directory = "/srv/docker/speedtest"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker05/speedtest"
+file_paths = ["compose.yaml"]
 
 [[stack]]
 name = "docker05-traefik"
@@ -352,9 +500,13 @@ deploy = false
 [stack.config]
 server = "docker05"
 project_name = "traefik"
-files_on_host = true
-run_directory = "/srv/docker/traefik"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker05/traefik"
+file_paths = ["compose.yaml"]
+environment = """
+TRAEFIK_DASHBOARD_USERS = '[[TRAEFIK_DASHBOARD_USERS]]'
+"""
 
 [[stack]]
 name = "docker05-wgkex"
@@ -363,9 +515,13 @@ deploy = false
 [stack.config]
 server = "docker05"
 project_name = "wgkex"
-files_on_host = true
-run_directory = "/srv/docker/wgkex"
-file_paths = ["docker-compose.yaml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker05/wgkex"
+file_paths = ["compose.yaml"]
+environment = """
+EMQX_NODE__COOKIE = [[WGKEX_EMQX_NODE_COOKIE]]
+"""
 
 [[stack]]
 name = "docker05-zammad-docker-compose"
@@ -374,9 +530,52 @@ deploy = false
 [stack.config]
 server = "docker05"
 project_name = "zammad-docker-compose"
-files_on_host = true
-run_directory = "/srv/docker/zammad-docker-compose"
-file_paths = ["docker-compose.yml", "docker-compose.override.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker05/zammad"
+file_paths = ["compose.yaml", "compose.override.yaml"]
+ignore_services = ["zammad-init"]
+environment = """
+NGINX_PORT = 8080
+NGINX_EXPOSE_PORT = 8002
+NGINX_SERVER_SCHEME = https
+POSTGRES_USER = postgres
+POSTGRES_PASS = [[ZAMMAD_POSTGRES_PASS]]
+ELASTICSEARCH_USER = elastic
+ELASTICSEARCH_PASS = zammad
+"""
+
+[[stack]]
+name = "docker05-nextcloud"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker05"
+project_name = "nextcloud"
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker05/nextcloud"
+file_paths = ["compose.yaml"]
+environment = """
+MYSQL_ROOT_PASSWORD = [[NEXTCLOUD_MYSQL_ROOT_PASSWORD]]
+MYSQL_PASSWORD = [[NEXTCLOUD_MYSQL_PASSWORD]]
+REDIS_PASSWORD = [[NEXTCLOUD_REDIS_PASSWORD]]
+"""
+
+[[stack]]
+name = "docker05-unifi"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker05"
+project_name = "unifi"
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker05/unifi"
+file_paths = ["compose.yaml"]
+environment = """
+MONGO_PASS = [[UNIFI_MONGO_PASS]]
+"""
 
 [[stack]]
 name = "docker07-bgpalerter"
@@ -385,9 +584,10 @@ deploy = false
 [stack.config]
 server = "docker07"
 project_name = "bgpalerter"
-files_on_host = true
-run_directory = "/srv/docker/bgpalerter"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker07/bgpalerter"
+file_paths = ["compose.yaml"]
 
 [[stack]]
 name = "docker07-diun"
@@ -396,9 +596,13 @@ deploy = false
 [stack.config]
 server = "docker07"
 project_name = "diun"
-files_on_host = true
-run_directory = "/srv/docker/diun"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker07/diun"
+file_paths = ["compose.yaml"]
+environment = """
+DIUN_SLACK_WEBHOOK_URL = [[DIUN_SLACK_WEBHOOK_URL]]
+"""
 
 [[stack]]
 name = "docker07-libretranslate"
@@ -407,9 +611,10 @@ deploy = false
 [stack.config]
 server = "docker07"
 project_name = "libretranslate"
-files_on_host = true
-run_directory = "/srv/docker/libretranslate"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker07/libretranslate"
+file_paths = ["compose.yaml"]
 
 [[stack]]
 name = "docker07-meet-reserve"
@@ -418,9 +623,15 @@ deploy = false
 [stack.config]
 server = "docker07"
 project_name = "meet-reserve"
-files_on_host = true
-run_directory = "/srv/docker/meet-reserve"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker07/meet-reserve"
+file_paths = ["compose.yaml"]
+environment = """
+RESERVE_PRIVATE_KEY = [[MEET_RESERVE_PRIVATE_KEY]]
+RESERVE_POW_KEY = [[MEET_RESERVE_POW_KEY]]
+RESERVE_SYNC_KEY = [[MEET_RESERVE_SYNC_KEY]]
+"""
 
 [[stack]]
 name = "docker07-peeringmanager"
@@ -429,9 +640,19 @@ deploy = false
 [stack.config]
 server = "docker07"
 project_name = "peeringmanager"
-files_on_host = true
-run_directory = "/srv/docker/peeringmanager"
-file_paths = ["docker-compose.yml", "docker-compose.override.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker07/peeringmanager"
+file_paths = ["compose.yaml", "compose.override.yaml"]
+environment = """
+SECRET_KEY = [[PEERINGMANAGER_SECRET_KEY]]
+DB_PASSWORD = [[PEERINGMANAGER_DB_PASSWORD]]
+REDIS_PASSWORD = [[PEERINGMANAGER_REDIS_PASSWORD]]
+REDIS_CACHE_PASSWORD = [[PEERINGMANAGER_REDIS_CACHE_PASSWORD]]
+PEERINGDB_PASSWORD = [[PEERINGMANAGER_PEERINGDB_PASSWORD]]
+PEERINGDB_API_KEY = [[PEERINGMANAGER_PEERINGDB_API_KEY]]
+"""
+ignore_services = ["housekeeping", "peeringdb-sync"]
 
 [[stack]]
 name = "docker07-speedtest"
@@ -440,9 +661,10 @@ deploy = false
 [stack.config]
 server = "docker07"
 project_name = "speedtest"
-files_on_host = true
-run_directory = "/srv/docker/speedtest"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker07/speedtest"
+file_paths = ["compose.yaml"]
 
 [[stack]]
 name = "docker07-traefik"
@@ -451,9 +673,13 @@ deploy = false
 [stack.config]
 server = "docker07"
 project_name = "traefik"
-files_on_host = true
-run_directory = "/srv/docker/traefik"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker07/traefik"
+file_paths = ["compose.yaml"]
+environment = """
+TRAEFIK_DASHBOARD_USERS = '[[TRAEFIK_DASHBOARD_USERS]]'
+"""
 
 [[stack]]
 name = "docker07-uisp"
@@ -462,9 +688,10 @@ deploy = false
 [stack.config]
 server = "docker07"
 project_name = "uisp"
-files_on_host = true
-run_directory = "/srv/docker/uisp"
-file_paths = ["docker-compose.yml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker07/uisp"
+file_paths = ["compose.yaml"]
 
 [[stack]]
 name = "docker07-wgkex"
@@ -473,9 +700,57 @@ deploy = false
 [stack.config]
 server = "docker07"
 project_name = "wgkex"
-files_on_host = true
-run_directory = "/srv/docker/wgkex"
-file_paths = ["docker-compose.yaml"]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker07/wgkex"
+file_paths = ["compose.yaml"]
+environment = """
+EMQX_NODE__COOKIE = [[WGKEX_EMQX_NODE_COOKIE]]
+"""
+
+[[stack]]
+name = "docker07-akvorado"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker07"
+project_name = "akvorado"
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker07/akvorado"
+file_paths = ["docker/docker-compose.yml", "docker/docker-compose-ipinfo.yml", "ffmuc/docker-compose-ffmuc.yml"]
+
+[[stack]]
+name = "docker07-keycloak"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker07"
+project_name = "keycloak"
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker07/keycloak"
+file_paths = ["compose.yaml"]
+environment = """
+DB_PASSWORD = [[KEYCLOAK_DB_PASSWORD]]
+ADMIN_PASSWORD = [[KEYCLOAK_ADMIN_PASSWORD]]
+"""
+
+[[stack]]
+name = "docker07-vaultwarden"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker07"
+project_name = "vaultwarden"
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker07/vaultwarden"
+file_paths = ["compose.yaml"]
+environment = """
+ADMIN_TOKEN = '[[VAULTWARDEN_ADMIN_TOKEN]]'
+SSO_CLIENT_SECRET = [[VAULTWARDEN_SSO_CLIENT_SECRET]]
+"""
 
 [[stack]]
 name = "mail01-crowdsec"

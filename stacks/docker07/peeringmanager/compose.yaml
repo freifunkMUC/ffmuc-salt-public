@@ -1,0 +1,115 @@
+---
+services:
+  peering-manager:
+    &peering-manager
+    image: docker.io/peeringmanager/peering-manager:${VERSION-snapshot}
+    depends_on:
+      - postgres
+      - redis
+      - redis-cache
+    env_file: env/peering-manager.env
+    user: "unit:root"
+    healthcheck:
+      test: /opt/peering-manager/healthcheck.sh
+      start_period: 240s # Allow migrations to run, some can be expensive
+      timeout: 3s
+      interval: 15s
+    volumes:
+      - /srv/docker/peeringmanager/configuration:/etc/peering-manager/config:z,ro
+  rqworker:
+    <<: *peering-manager
+    depends_on:
+      peering-manager:
+        condition: service_healthy
+    command:
+      - /opt/peering-manager/venv/bin/python
+      - /opt/peering-manager/manage.py
+      - rqworker
+    healthcheck:
+      test: "ps -a | grep -v grep | grep -q rqworker || exit 1"
+      start_period: 20s
+      timeout: 3s
+      interval: 15s
+  # As of 1.11 the rqworker runs these two tasks itself, on a schedule managed
+  # in Admin > Scheduled Tasks. The services below serve an external scheduler
+  # instead: disable the tasks there, then start this profile.
+  housekeeping:
+    <<: *peering-manager
+    profiles:
+      - external-scheduler
+    environment:
+      COMMAND_INTERVAL: 86400
+    depends_on:
+      peering-manager:
+        condition: service_healthy
+    command:
+      - /opt/peering-manager/run-command.sh
+      - housekeeping
+    healthcheck:
+      test: "ps -a | grep -v grep | grep -q housekeeping || exit 1"
+      start_period: 20s
+      timeout: 3s
+      interval: 15s
+  peeringdb-sync:
+    <<: *peering-manager
+    profiles:
+      - external-scheduler
+    environment:
+      COMMAND_INTERVAL: 86400
+    depends_on:
+      peering-manager:
+        condition: service_healthy
+    command:
+      - /opt/peering-manager/run-command.sh
+      - peeringdb_sync
+    healthcheck:
+      test: "ps -a | grep -v grep | grep -q peeringdb_sync || exit 1"
+      start_period: 20s
+      timeout: 3s
+      interval: 15s
+
+  postgres:
+    image: docker.io/postgres:17-alpine
+    healthcheck:
+      test: pg_isready -q -t 2 -d $$POSTGRES_DB -U $$POSTGRES_USER
+      start_period: 20s
+      timeout: 30s
+      interval: 10s
+      retries: 5
+    env_file: env/postgres.env
+    volumes:
+      - peeringmanager-postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: docker.io/valkey/valkey:8.1.11-alpine@sha256:2602ace2be6569bc2bbb06f873776516ab9089821525be34f4305c67eb9db02a
+    command:
+      - sh
+      - -c # this is to evaluate the $REDIS_PASSWORD from the env
+      - valkey-server --appendonly yes --requirepass $$REDIS_PASSWORD ## $$ because of docker-compose
+    healthcheck: &redis-healthcheck
+      test: '[ $$(valkey-cli --pass "$${REDIS_PASSWORD}" ping) = ''PONG'' ]'
+      start_period: 5s
+      timeout: 3s
+      interval: 1s
+      retries: 5
+    env_file: env/redis.env
+    volumes:
+      - peeringmanager-redis-data:/data
+  redis-cache:
+    image: docker.io/valkey/valkey:8.1.11-alpine@sha256:2602ace2be6569bc2bbb06f873776516ab9089821525be34f4305c67eb9db02a
+    command:
+      - sh
+      - -c # this is to evaluate the $REDIS_PASSWORD from the env
+      - valkey-server --requirepass $$REDIS_PASSWORD ## $$ because of docker-compose
+    healthcheck: *redis-healthcheck
+    env_file: env/redis-cache.env
+    volumes:
+      - peeringmanager-redis-cache-data:/data
+
+volumes:
+  peeringmanager-postgres-data:
+    driver: local
+  peeringmanager-redis-cache-data:
+    driver: local
+  peeringmanager-redis-data:
+    driver: local

@@ -1,0 +1,6 @@
+---
+# Based on github.com/mattermost/docker (docker-compose.without-nginx.yml).
+services:
+  mattermost:
+    ports:
+      - 8000:8000

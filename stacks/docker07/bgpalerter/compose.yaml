@@ -1,0 +1,20 @@
+---
+services:
+  bgpalerter:
+    # node2shell (CVE-2026-111497): upstream still ships a vulnerable Node, see Dockerfile
+    build: .
+    image: local/bgpalerter:v2.0.1-node22.23.4
+    pull_policy: build
+    command: run serve -- --d /opt/bgpalerter/volume/
+    container_name: bgpalerter
+    restart: always
+    ports:
+      - "8011:8011"
+    volumes:
+      - /srv/docker/bgpalerter/volume:/opt/bgpalerter/volume
+    healthcheck:
+      # rest.host is "localhost" in config.yml, which Node binds to ::1 only
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://[::1]:8011/status || exit 1"]
+      interval: 60s
+      timeout: 2s
+      retries: 15

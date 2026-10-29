@@ -1,0 +1,8 @@
+---
+services:
+  excalidraw-backend:
+    image: jitsi/excalidraw-backend:2026.10.0@sha256:8cc8b24329f609bfcec68a581c2c73fd74a7dd0b8bcb9efcecaa693a9d507bb1
+    restart: always
+    ports:
+      - "0.0.0.0:8090:80"
+      - "0.0.0.0:8091:9090" # metrics

@@ -9,6 +9,7 @@ nebula, firewall, Komodo Periphery); the containers on them are managed here.
 ```
 stacks/<host>/<project>/compose.yaml
 stacks/<host>/<project>/<config file>   # optional, non-secret only
+stacks/build/<image>/                   # source of a local image used on several hosts
 ```
 
 `<host>` is the short host name (`docker04`), `<project>` the compose project
@@ -32,6 +33,13 @@ project by its project name, so keep it unchanged.
   so a relative `./data` would point into that checkout instead of the existing
   data.
 - No `version:` key.
+- Security fixes that upstream has not shipped yet go into a `Dockerfile`
+  next to `compose.yaml` that patches the pinned upstream image, with
+  `build: .`, `image: local/<name>:<tag>` and `pull_policy: build` on the
+  service (Komodo builds it on deploy; Dependabot does not track it). Pin
+  every `FROM` by digest and say in the Dockerfile when it can go. Currently:
+  hedgedoc, bgpalerter and mastodon (streaming) for node2shell
+  (CVE-2026-111497).
 - No secrets in this repository: no passwords, tokens, client secrets, cookie
   or session secrets, keys. Not in compose files, not in config files, not in
   comments. See Secrets.
@@ -73,12 +81,50 @@ pillar komodo:periphery:secrets:<NAME>       master: /srv/docker/salt/pillar/kom
   inside compose files from git. Images that want `*_FILE` get a file that
   lives on the host outside the repo (for example managed by Salt).
 
+Stacks taken over before the pillar existed still use Komodo Core variables
+(`NAME = [[NAME]]` in the Stack environment, under *Settings / Variables* in
+Core). Move them to the pillar one by one, see *Taking a project over*. Until
+then: Komodo writes the environment to `.env` as it is, and compose expands
+`$` in unquoted `.env` values. For a value with `$` (for example an apr1 or
+bcrypt hash), put the reference in single quotes: `NAME = '[[NAME]]'`.
+
 | Stack | Secrets |
 |---|---|
 | `docker04/etherpad` | `ETHERPAD_ADMIN_PASSWORD`, `ETHERPAD_DB_PASS`, `ETHERPAD_MYSQL_ROOT_PASSWORD` from `/srv/docker/etherpad/.env`; the other keys there are plain settings (now literal in `compose.yaml`) or unused |
 | `docker04/hedgedoc` | `HEDGEDOC_DB_PASS` (also the MariaDB user password), `HEDGEDOC_CMD_OAUTH2_CLIENT_SECRET`, `HEDGEDOC_CMD_SESSION_SECRET`, from `/srv/docker/hedgedoc/docker-compose.yaml` |
 | `docker04/dokuwiki` | none; `/srv/docker/dokuwiki/ldap.conf` stays on the host |
+| `docker04/whitebophir` | none |
+| `docker0{4,5,6,7}/diun` | `DIUN_SLACK_WEBHOOK_URL` (`webhookURL` from `/srv/docker/diun/diun.yml`) |
+| `docker07/libretranslate` | none |
+| `docker0{5,7}/speedtest` | none |
+| `docker0{4,6}/packetyeeter-analyzer` | none |
+| `docker0{4,5,6,7}/meet-reserve` | `MEET_RESERVE_PRIVATE_KEY`, `MEET_RESERVE_POW_KEY`, `MEET_RESERVE_SYNC_KEY` (`RESERVE_*` from `/srv/docker/meet-reserve/.env`, same on all hosts) |
+| `docker05/cryptpad` | none; `/srv/docker/cryptpad/data/config.js` and `infra.js` stay on the host |
 | `docker05/salt-master` | none |
+| `docker07/bgpalerter` | none; `/srv/docker/bgpalerter/volume/config.yml` stays on the host |
+| `docker0{4,5,6,7}/traefik` | `TRAEFIK_DASHBOARD_USERS` (docker05, docker06, docker07), `TRAEFIK_DASHBOARD_USERS_DOCKER04` (docker04): `user:hash` of the dashboard basic auth, without the `$$` escapes. `traefik.yml`, `acme.json` and `update-dns.sh` (Salt state `certs`) stay on the host |
+| `docker0{4,5,6,7}/wgkex` | `WGKEX_EMQX_NODE_COOKIE` (`EMQX_NODE__COOKIE`, same on all hosts). `config/broker/wgkex.yaml` stays on the host (the Salt state `telegraf` reads it too) |
+| `docker04/conferencemapper` | none |
+| `docker04/excalidraw-backend` | none |
+| `docker04/matomo` | `MATOMO_DB_ROOT_PASSWORD`, `MATOMO_DB_PASSWORD` (from `/srv/docker/matomo/db.env`). `nginx.conf` stays on the host |
+| `docker04/netbox` | `NETBOX_DB_PASSWORD`, `NETBOX_REDIS_PASSWORD` (redis and redis-cache), `NETBOX_SECRET_KEY`, `NETBOX_SUPERUSER_API_TOKEN`, `NETBOX_SUPERUSER_PASSWORD`, `NETBOX_AUTH_LDAP_BIND_PASSWORD`, `NETBOX_API_TOKEN_PEPPER_1` (from `/srv/docker/netbox/env/*.env`). The non-secret values are in `env/`. `configuration/` stays on the host |
+| `docker04/netbox-parker` | `NETBOX_PARKER_DB_PASSWORD`, `NETBOX_PARKER_REDIS_PASSWORD`, `NETBOX_PARKER_REDIS_CACHE_PASSWORD`, `NETBOX_PARKER_SECRET_KEY`, `NETBOX_PARKER_API_TOKEN_PEPPER_1` (from `/srv/docker/netbox-parker/env/*.env`). The non-secret values are in `env/`. `configuration/` stays on the host |
+| `docker04/openldap` | `OPENLDAP_LAM_PASSWORD` (`LAM_PASSWORD` from `/srv/docker/openldap/.env`). `ldif/`, `slapd-data/` and `certs/` stay on the host |
+| `docker04/owncast` | none. `data/`, `db/` and `logo.png` stay on the host |
+| `docker05/mattermost-docker` | `MATTERMOST_POSTGRES_PASSWORD` (`POSTGRES_PASSWORD` from `/srv/docker/mattermost-docker/.env`). The other `.env` values are now in the compose files |
+| `docker06/mastodon-paywall` | `MASTODON_PAYWALL_API_TOKEN`, `MASTODON_PAYWALL_PAYPAL_CLIENT_ID`, `MASTODON_PAYWALL_PAYPAL_CLIENT_SECRET`, `MASTODON_PAYWALL_PAYPAL_WEBHOOK_ID` (from `/srv/docker/mastodon-paywall/.env`) |
+| `docker06/omada` | none. `data/`, `work/` and `logs/` stay on the host |
+| `docker07/peeringmanager` | `PEERINGMANAGER_SECRET_KEY`, `PEERINGMANAGER_DB_PASSWORD`, `PEERINGMANAGER_REDIS_PASSWORD`, `PEERINGMANAGER_REDIS_CACHE_PASSWORD`, `PEERINGMANAGER_PEERINGDB_PASSWORD`, `PEERINGMANAGER_PEERINGDB_API_KEY` (from `/srv/docker/peeringmanager/env/*.env`). The non-secret values are in `env/`. `configuration/` stays on the host |
+| `docker07/uisp` | none. `data/` stays on the host |
+| `docker04/cfssl` | `CFSSL_POSTGRES_PASSWORD` (`POSTGRES_PASSWORD` from `/srv/docker/cfssl/docker-compose.yml`). `config/` stays on the host (`db_config.json` has the database password) |
+| `docker05/nextcloud` | `NEXTCLOUD_MYSQL_ROOT_PASSWORD`, `NEXTCLOUD_MYSQL_PASSWORD`, `NEXTCLOUD_REDIS_PASSWORD` (from `/srv/docker/nextcloud/docker-compose.yml`). `config/` is now in git. `nginx.conf` stays on the host (it lists internal networks) |
+| `docker05/zammad` | `ZAMMAD_POSTGRES_PASS` (`POSTGRES_PASS` from `/srv/docker/zammad-docker-compose/.env`). The other `.env` values are in the Stack environment in `stacks.toml`. `ELASTICSEARCH_PASS` is not a secret, Elasticsearch runs without security |
+| `docker05/unifi` | `UNIFI_MONGO_PASS` (`MONGO_PASS` from `/srv/docker/unifi/docker-compose.yml`). `init-mongo.js` stays on the host (it has the database password) |
+| `docker06/graylog` | `GRAYLOG_PASSWORD_SECRET`, `GRAYLOG_ROOT_PASSWORD_SHA2` (from `/srv/docker/graylog/.env`), `GRAYLOG_OPENSEARCH_INITIAL_ADMIN_PASSWORD` (from `/srv/docker/graylog/docker-compose.yml`). `GeoLite2-City.mmdb` stays on the host |
+| `docker06/mastodon` | `MASTODON_DB_PASS` (also `POSTGRES_PASSWORD`), `MASTODON_SECRET_KEY_BASE`, `MASTODON_OTP_SECRET`, `MASTODON_VAPID_PRIVATE_KEY`, `MASTODON_SMTP_PASSWORD`, `MASTODON_ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY`, `MASTODON_ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT`, `MASTODON_ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY` (from `/srv/docker/mastodon/.env.production`), `MASTODON_TRUSTED_PROXY_IP` (not secret, it lists internal addresses). The other values that are not secret are in `env/mastodon.env` |
+| `docker07/akvorado` | none. `config/` stays on the host (`outlet.yaml` has the SNMP community) |
+| `docker07/keycloak` | `KEYCLOAK_DB_PASSWORD` (`POSTGRES_PASSWORD` and `KC_DB_PASSWORD`), `KEYCLOAK_ADMIN_PASSWORD` (from `/srv/docker/keycloak/docker-compose.yml` and `keycloak.env`). The values that are not secret are in `env/keycloak.env` |
+| `docker07/vaultwarden` | `VAULTWARDEN_ADMIN_TOKEN` (from `/srv/docker/vaultwarden/.env`, an argon2 hash with `$`, so it is single-quoted in `stacks.toml`), `VAULTWARDEN_SSO_CLIENT_SECRET` (from `/srv/docker/vaultwarden/docker-compose.yaml`) |
 | `docker06/komodo` | none in Komodo; Core's own secrets stay in its bootstrap `.env` |
 
 ### Taking a project over
@@ -135,25 +181,59 @@ Note deviations from upstream and the reason in the PR.
   so the Komodo configuration is code as well. Changes in the UI that are not
   in the TOML show up as pending sync diffs. The sync never deletes
   (`delete = false`) and does not deploy (`deploy = false` on every Stack).
-- Projects that are not in this repository yet are listed with
+- Projects that are not in this repository are listed with
   `files_on_host = true` and their existing directory as `run_directory`, so
   Komodo shows them without changing anything. Taking one over means moving
   its compose file here and switching the Stack to `repo`. The projects on
-  mail01 stay with the mailserver role of GoliathLabs/ansible.
+  mail01 stay on the host (mailserver role of GoliathLabs/ansible).
+- Projects that come from an upstream compose repository (`docker04/netbox`,
+  `docker04/netbox-parker`, `docker07/peeringmanager`) keep the upstream file
+  layout: `compose.yaml` is the upstream file, `compose.override.yaml` has
+  the local changes, and `env/*.env` has the values that are not secret. To
+  update, compare `compose.yaml` and `env/` with the new upstream release.
+  `docker05/zammad` (zammad/zammad-docker-compose) has the same layout, but
+  without `env/`: the image pins are in `compose.override.yaml`, the values
+  that `compose.yaml` reads from `.env` are in the Komodo Stack environment.
+  Its directory name is not the project name: the project stays
+  `zammad-docker-compose`, so Komodo adopts the running containers.
+  `docker07/akvorado` keeps the upstream `docker/` directory unchanged
+  (only the files in use, without the geoip build files) and has all local
+  changes in `ffmuc/docker-compose-ffmuc.yml`, the last file in `file_paths`.
 - Komodo reads `files_on_host` compose files into its database, so projects
   with literal secrets in their compose files are left out until their secrets
-  have moved: docker04 `cfssl`, `tuwunel-test`; docker05 `nextcloud`, `unifi`;
-  docker06 `graylog`, `mastodon`; docker07 `akvorado`, `keycloak`,
-  `vaultwarden`; mail01 `mailserver`; rw-vpn01/02 `wg-access-server`.
-- Taking over a running project: see Secrets, then compare the Stack's diff
-  and *Deploy*. The old `/srv/docker/<project>/docker-compose.y*ml`
+  have moved: docker04 `tuwunel-test`; mail01 `mailserver`; rw-vpn01/02 `wg-access-server`.
+- Taking over a running project: see *Taking a project over*, then compare
+  the Stack's diff and *Deploy*. The old `/srv/docker/<project>/docker-compose.y*ml`
   stays on the host as rollback: `docker compose -p <project> -f <old file> up -d`
   in that directory restores the previous state, the data directories are the
   same.
+- Some projects came from Salt states that rendered their compose file on
+  the host. Their compose files are now static per host in this directory and
+  the Salt states are removed, so Salt and Komodo do not both manage them:
+  `diun`, `libretranslate`, `meet-reserve`, `speedtest`,
+  `packetyeeter-analyzer`.
+- `docker07/libretranslate` keeps its models in the named volume
+  `libretranslate_models`. The NetBox config context `libretranslate`
+  (`enabled`, `port`) still opens the nebula-meet firewall for jigasi; keep
+  `port` equal to the published port in `compose.yaml`.
+- `meet-reserve` is built from `stacks/build/meet-reserve` on deploy. The
+  NetBox config context `meet_reserve` (`enabled`, `signers`, `metrics_port`)
+  still drives the nebula firewall and telegraf. When the signers change,
+  update `RESERVE_PEERS` in every `meet-reserve/compose.yaml` too. A new
+  signer needs `/srv/docker/meet-reserve/data` owned by `65532:65532`, mode
+  `0700`.
+- `whitebophir` v2 only opens canonical board names (lower case, no trailing
+  `-`). Before the first v2 start, run
+  `docker04/whitebophir/migrate-board-names.mjs` once. It copies the v1 boards
+  with other names, see the comment in the file. The nginx location `/draw/`
+  (`nginx/domains/ffmuc.net.include`) must not rewrite `/draw/tools/` to
+  `/boards/tools/`; v2 serves the tools only below `/tools/`.
+- `packetyeeter-analyzer` mounts the GeoIP files and data directories that
+  the Salt state `packetyeeter` creates. Apply that state on a new host first.
 
 ## Komodo
 
-Komodo v2.3.3: Core with MongoDB on docker06 (`stacks/docker06/komodo`),
+Komodo v2.3.4: Core with MongoDB on docker06 (`stacks/docker06/komodo`),
 Periphery as systemd service on every managed host (Salt state
 `komodo-periphery`). MongoDB is the backend the Komodo docs recommend;
 FerretDB/Postgres is only suggested for CPUs without AVX, docker06 has AVX2.
@@ -237,3 +317,9 @@ itself (a broken deploy would take away the tool used to repair the hosts).
   `salt-run saltutil.sync_all` in it. The custom ext_pillar
   `_pillar/netbox.py` is loaded from the master's extmods cache; on
   2026-10-18 a recreate without the sync left every pillar without `netbox`.
+- Then check:
+  - `salt '*' test.ping` and `salt-run manage.down`: the same minions as
+    before the recreate.
+  - `salt 'docker04*' pillar.get netbox:config_context`: not empty.
+  - `salt '*' pillar.get _errors`: empty on all minions.
+- The minions need no sync. The mine data is in the cache volume and stays.

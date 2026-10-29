@@ -1,0 +1,75 @@
+---
+# FFMUC changes on top of peering-manager/docker v2.4.0.
+# compose.yaml is the upstream docker-compose.yml with an absolute
+# configuration path. Local changes live here and in env/*.env. The
+# secrets come from the Komodo Stack environment.
+# Images pinned by tag and digest.
+x-peering-manager-secrets: &pm-secrets
+  SECRET_KEY: ${SECRET_KEY}
+  DB_PASSWORD: ${DB_PASSWORD}
+  REDIS_PASSWORD: ${REDIS_PASSWORD}
+  REDIS_CACHE_PASSWORD: ${REDIS_CACHE_PASSWORD}
+  PEERINGDB_PASSWORD: ${PEERINGDB_PASSWORD}
+  PEERINGDB_API_KEY: ${PEERINGDB_API_KEY}
+x-peering-manager-image: &pm-image docker.io/peeringmanager/peering-manager:v1.11.1-2.4.0@sha256:dbb0f83ab86299be4e9020c1780abed4cf07328ab74c505bb96752119937f152
+
+services:
+  peering-manager:
+    image: *pm-image
+    restart: always
+    environment: *pm-secrets
+    networks:
+      - default
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.peeringmanager.entrypoints=http"
+      - "traefik.http.routers.peeringmanager.rule=Host(`peeringmanager.ov.ffmuc.net`)"
+      - "traefik.http.middlewares.peeringmanager-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.peeringmanager-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
+      - "traefik.http.middlewares.peeringmanager-headers.headers.customrequestheaders.X-Forwarded-For=https"
+      - "traefik.http.middlewares.peeringmanager-headers.headers.customrequestheaders.X-Forwarded-Port=443"
+      - "traefik.http.routers.peeringmanager.middlewares=peeringmanager-headers"
+      - "traefik.http.routers.peeringmanager-secure.entrypoints=https"
+      - "traefik.http.routers.peeringmanager-secure.rule=Host(`peeringmanager.ov.ffmuc.net`)"
+      - "traefik.http.routers.peeringmanager-secure.tls=true"
+      - "traefik.http.routers.peeringmanager-secure.tls.certresolver=http"
+      - "traefik.http.routers.peeringmanager-secure.service=peeringmanager"
+      - "traefik.http.services.peeringmanager.loadbalancer.server.port=8080"
+      - "traefik.docker.network=proxy"
+  rqworker:
+    image: *pm-image
+    restart: always
+    environment: *pm-secrets
+  # Only with --profile external-scheduler (1.11 runs both tasks in rqworker).
+  housekeeping:
+    image: *pm-image
+    restart: always
+    environment: *pm-secrets
+  peeringdb-sync:
+    image: *pm-image
+    restart: always
+    environment: *pm-secrets
+
+  postgres:
+    # Same major as the data directory (PG_VERSION 16), same Alpine release as
+    # the image it ran on (16.14-alpine3.24), so the collation does not change.
+    image: docker.io/postgres:16.15-alpine3.24@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - /srv/docker/peeringmanager-postgres:/var/lib/postgresql/data
+
+  redis:
+    restart: always
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+  redis-cache:
+    restart: always
+    environment:
+      REDIS_PASSWORD: ${REDIS_CACHE_PASSWORD}
+
+networks:
+  proxy:
+    external: true

@@ -2,11 +2,13 @@ base:
   # Base config for all minions
   '*':
     - bash
+    - ca-distrust
     # duplicity was replaced by rustic; drop once all hosts are cleaned up
     - duplicity.remove
     - fail2ban
     - ff_base
     - graylog-sidecar
+    - journald
     - locales
     - logrotate
     - mosh

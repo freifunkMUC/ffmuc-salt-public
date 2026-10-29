@@ -25,6 +25,11 @@ host = "{{ grains.id }}"
 exclude-if-present = [".nobackup", "CACHEDIR.TAG"] # Default: not set
 {#- mastodon-data is on external filesystem in /srv/docker. if this is true it wont be backed up #}
 one-file-system = false
+{%- if salt['config.get']('netbox:config_context:backup:dump_commands', {}) %}
+
+[backup.hooks]
+run-before = [{ command = "/usr/local/sbin/ffmuc-rustic-dumps.sh", on-failure = "warn" }]
+{%- endif %}
 
 # Note that if you call "rustic backup" without any source, all sources from this config
 # file will be processed.

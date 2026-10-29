@@ -1,0 +1,32 @@
+---
+services:
+  owncast:
+    image: gabekangas/owncast:0.3.0@sha256:efca3c284ac1d6d7d775d193e74f92f718774a4aa0d621f55dce449222ca5bff
+    #image: gabekangas/owncast:last-working
+    restart: unless-stopped
+    volumes:
+      - /srv/docker/owncast/data:/app/data # Adjust once you create your own config.yaml
+      - /srv/docker/owncast/db:/db # Remove if you don't want chat persistant
+      - /srv/docker/owncast/logo.png:/app/static/logo.png # Remove if you don't want chat persistant
+    command: /app/owncast -database=/db/chat.db
+    ports:
+      - 1935:1935
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.owncast.entrypoints=http"
+      - "traefik.http.routers.owncast.rule=Host(`tv.ov.ffmuc.net`)"
+      - "traefik.http.middlewares.owncast-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.owncast.middlewares=owncast-https-redirect"
+      - "traefik.http.routers.owncast-secure.entrypoints=https"
+      - "traefik.http.routers.owncast-secure.rule=Host(`tv.ov.ffmuc.net`)"
+      - "traefik.http.routers.owncast-secure.tls=true"
+      - "traefik.http.routers.owncast-secure.tls.certresolver=http"
+      - "traefik.http.routers.owncast-secure.service=owncast"
+      - "traefik.http.services.owncast.loadbalancer.server.port=8080"
+      - "traefik.docker.network=proxy"
+    networks:
+      - default
+      - proxy
+networks:
+  proxy:
+    external: true
