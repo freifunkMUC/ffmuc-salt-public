@@ -53,4 +53,43 @@ asterisk_german_sounds_extra:
     - skip_verify: True
     - user: asterisk
     - group: asterisk
+
+{%- set pjsip_reg = "pbx01.voip.philunet.de-reg" %}
+{%- set pjsip_reg_opts = {
+  "max_retries": "10000",
+  "retry_interval": "60",
+  "forbidden_retry_interval": "300",
+  "fatal_retry_interval": "300",
+  "auth_rejection_permanent": "no",
+} %}
+{#- pjsip.conf is not managed here and has duplicate section names, so ini.options_present would collapse them; edit only these options in the registration section. #}
+{%- for opt, val in pjsip_reg_opts.items() %}
+
+asterisk_pjsip_reg_{{ opt }}_add:
+  file.replace:
+    - name: /etc/asterisk/pjsip.conf
+    - pattern: '^(\[{{ pjsip_reg | regex_escape }}\][ \t]*\n)(?!(?:(?!^\[)[^\n]*\n)*?^[ \t]*{{ opt }}[ \t]*=)'
+    - repl: '\g<1>{{ opt }} = {{ val }}\n'
+    - ignore_if_missing: True
+    - require:
+      - pkg: asterisk
+
+asterisk_pjsip_reg_{{ opt }}:
+  file.replace:
+    - name: /etc/asterisk/pjsip.conf
+    - pattern: '^(\[{{ pjsip_reg | regex_escape }}\][ \t]*\n(?:(?!^\[)[^\n]*\n)*?[ \t]*{{ opt }}[ \t]*=[ \t]*)[^\n]*$'
+    - repl: '\g<1>{{ val }}'
+    - ignore_if_missing: True
+    - require:
+      - file: asterisk_pjsip_reg_{{ opt }}_add
+{%- endfor %}
+
+asterisk_pjsip_reg_reload:
+  cmd.run:
+    - name: asterisk -rx 'module reload res_pjsip_outbound_registration.so'
+    - onchanges:
+{%- for opt in pjsip_reg_opts %}
+      - file: asterisk_pjsip_reg_{{ opt }}_add
+      - file: asterisk_pjsip_reg_{{ opt }}
+{%- endfor %}
 {% endif %}
