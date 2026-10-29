@@ -24,3 +24,13 @@ guardian-vie01.in.ffmuc.net:
   address: 10.8.0.3
   location: VIE01
   notes: Salt minion not responding (October 2026)
+turn1.meet.ffmuc.net:
+  address: 185.150.99.11
+  role: turn
+  location: MUC01
+  notes: coturn for Jitsi, no Salt minion on purpose (managed with Ansible)
+turn2.meet.ffmuc.net:
+  address: 5.1.66.15
+  role: turn
+  location: VIE01
+  notes: coturn for Jitsi, no Salt minion on purpose (managed with Ansible)
