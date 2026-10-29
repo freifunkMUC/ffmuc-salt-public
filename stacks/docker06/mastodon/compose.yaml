@@ -65,7 +65,7 @@ services:
   web:
     # You can uncomment the following line if you want to not use the prebuilt image, for example if you have local code changes
     # build: .
-    image: ghcr.io/mastodon/mastodon:v4.7.3@sha256:0bf26ebfb7d694bddd2fcf0c5769642ac29d997eb42169c540963cf0f27ee6ca
+    image: ghcr.io/mastodon/mastodon:v4.7.4@sha256:8cbc9c9ffa595c4ced3854b63b8f173251be710f9bbf2d369926023c19666311
     restart: always
     env_file: env/mastodon.env
     command: bundle exec puma -C config/puma.rb
@@ -92,10 +92,7 @@ services:
       - /srv/docker/mastodon-data/public/system:/mastodon/public/system
 
   streaming:
-    # node2shell (CVE-2026-111497): upstream still ships a vulnerable Node, see Dockerfile
-    build: .
-    image: local/mastodon-streaming:v4.7.3-node24.22.1
-    pull_policy: build
+    image: ghcr.io/mastodon/mastodon-streaming:v4.7.4@sha256:b896be8bc93db513695c3ebac8442c09453065ab1be06dfc49fe3c16a91c825c
     restart: always
     env_file: env/mastodon.env
     environment:
@@ -118,7 +115,7 @@ services:
   sidekiq-pull:
     # You can uncomment the following line if you want to not use the prebuilt image, for example if you have local code changes
     # build: .
-    image: ghcr.io/mastodon/mastodon:v4.7.3@sha256:0bf26ebfb7d694bddd2fcf0c5769642ac29d997eb42169c540963cf0f27ee6ca
+    image: ghcr.io/mastodon/mastodon:v4.7.4@sha256:8cbc9c9ffa595c4ced3854b63b8f173251be710f9bbf2d369926023c19666311
     restart: always
     env_file: env/mastodon.env
     command: bundle exec sidekiq -q push -q pull -c 50
@@ -137,7 +134,7 @@ services:
       test: ['CMD-SHELL', "ps aux | grep '[s]idekiq\ 8' || false"]
 
   sidekiq-ingress:
-    image: ghcr.io/mastodon/mastodon:v4.7.3@sha256:0bf26ebfb7d694bddd2fcf0c5769642ac29d997eb42169c540963cf0f27ee6ca
+    image: ghcr.io/mastodon/mastodon:v4.7.4@sha256:8cbc9c9ffa595c4ced3854b63b8f173251be710f9bbf2d369926023c19666311
     restart: always
     env_file: env/mastodon.env
     environment:
@@ -156,7 +153,7 @@ services:
       test: ['CMD-SHELL', "ps aux | grep '[s]idekiq\ 8' || false"]
 
   sidekiq-scheduler:
-    image: ghcr.io/mastodon/mastodon:v4.7.3@sha256:0bf26ebfb7d694bddd2fcf0c5769642ac29d997eb42169c540963cf0f27ee6ca
+    image: ghcr.io/mastodon/mastodon:v4.7.4@sha256:8cbc9c9ffa595c4ced3854b63b8f173251be710f9bbf2d369926023c19666311
     restart: always
     env_file: env/mastodon.env
     environment:
@@ -176,7 +173,7 @@ services:
 
 
   sidekiq-default:
-    image: ghcr.io/mastodon/mastodon:v4.7.3@sha256:0bf26ebfb7d694bddd2fcf0c5769642ac29d997eb42169c540963cf0f27ee6ca
+    image: ghcr.io/mastodon/mastodon:v4.7.4@sha256:8cbc9c9ffa595c4ced3854b63b8f173251be710f9bbf2d369926023c19666311
     restart: always
     env_file: env/mastodon.env
     environment:

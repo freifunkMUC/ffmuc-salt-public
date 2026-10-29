@@ -38,7 +38,7 @@ project by its project name, so keep it unchanged.
   `build: .`, `image: local/<name>:<tag>` and `pull_policy: build` on the
   service (Komodo builds it on deploy; Dependabot does not track it). Pin
   every `FROM` by digest and say in the Dockerfile when it can go. Currently:
-  hedgedoc, bgpalerter and mastodon (streaming) for node2shell
+  hedgedoc and bgpalerter for node2shell
   (CVE-2026-111497).
 - No secrets in this repository: no passwords, tokens, client secrets, cookie
   or session secrets, keys. Not in compose files, not in config files, not in
