@@ -755,3 +755,68 @@ func TestSyncKeyRotationKeepsLinks(t *testing.T) {
 		t.Fatal("derived secrets depend on the sync key")
 	}
 }
+
+func TestErrorReasons(t *testing.T) {
+	s, mux := testServer(t)
+	out := reserve(t, s, mux, 72)
+	room := out["room"].(string)
+	host := secretOf(out["host_url"].(string))
+	speaker := secretOf(out["speaker_url"].(string))
+	expect := func(name string, code int, m map[string]any, wantCode int, reason, msg string) {
+		t.Helper()
+		if code != wantCode || m["reason"] != reason || (msg != "" && m["error"] != msg) {
+			t.Fatalf("%s: %d %v, want %d %s %q", name, code, m, wantCode, reason, msg)
+		}
+	}
+	code, m := call(t, mux, "/reserve/api/manage", map[string]any{"key": speaker})
+	expect("speaker as manage key", code, m, 404, "unknown", "unknown room or not a host link")
+	code, m = call(t, mux, "/reserve/api/manage", map[string]any{"key": "nonsense"})
+	expect("garbage key", code, m, 400, "unknown", "no host link found")
+	code, m = call(t, mux, "/reserve/api/manage", map[string]any{"key": "a.b.c"})
+	expect("bad v1 token", code, m, 400, "invalid", "invalid host link")
+	code, m = call(t, mux, "/reserve/api/manage", "not an object")
+	expect("malformed body", code, m, 400, "malformed", "malformed")
+	rec := httptest.NewRecorder()
+	mux.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/reserve/api/manage", nil))
+	json.Unmarshal(rec.Body.Bytes(), &m)
+	expect("GET on POST endpoint", rec.Code, m, 405, "malformed", "method not allowed")
+	code, m = call(t, mux, "/reserve/api/extend", map[string]any{"key": host, "challenge": "x", "nonce": "y", "hours": 5})
+	expect("bad duration", code, m, 400, "malformed", "duration not allowed")
+	code, m = call(t, mux, "/reserve/api/extend", map[string]any{"key": host, "challenge": "x", "nonce": "y", "hours": 72})
+	expect("bad challenge", code, m, 403, "pow_malformed", "malformed")
+	ch, _ := s.pow(t)
+	code, m = call(t, mux, "/reserve/api/extend", map[string]any{"key": host, "challenge": ch[:strings.LastIndex(ch, ".")+1] + strings.Repeat("0", 32), "nonce": "y", "hours": 72})
+	expect("bad mac", code, m, 403, "pow_bad_mac", "bad_mac")
+	ch, n := s.pow(t)
+	call(t, mux, "/reserve/api/extend", map[string]any{"key": host, "challenge": ch, "nonce": n, "hours": 72})
+	code, m = call(t, mux, "/reserve/api/extend", map[string]any{"key": host, "challenge": ch, "nonce": n, "hours": 72})
+	expect("replay", code, m, 403, "pow_replay", "replay")
+	old := time.Now().Add(-time.Hour)
+	code, m = call(t, mux, "/reserve/api/reserve", map[string]any{"challenge": s.newChallenge(old), "nonce": "x"})
+	expect("old challenge", code, m, 403, "pow_expired", "expired")
+
+	_, rot := call(t, mux, "/reserve/api/rotate", map[string]any{"key": host})
+	code, m = call(t, mux, "/reserve/api/manage", map[string]any{"key": host})
+	expect("rotated", code, m, 410, "replaced", "this link was replaced by new links")
+	newHost := secretOf(rot["host_url"].(string))
+	s.store.mu.Lock()
+	s.store.rooms[room].Expires = time.Now().Unix() - 1
+	s.store.mu.Unlock()
+	ch, n = s.pow(t)
+	code, m = call(t, mux, "/reserve/api/extend", map[string]any{"key": newHost, "challenge": ch, "nonce": n, "hours": 72})
+	expect("expired", code, m, 410, "expired", "room expired")
+	call(t, mux, "/reserve/api/delete", map[string]any{"key": newHost})
+	ch, n = s.pow(t)
+	code, m = call(t, mux, "/reserve/api/extend", map[string]any{"key": newHost, "challenge": ch, "nonce": n, "hours": 72})
+	expect("deleted", code, m, 410, "deleted", "room was deleted")
+
+	// the metric labels stay as before
+	mrec := httptest.NewRecorder()
+	s.handleMetrics(mrec, httptest.NewRequest(http.MethodGet, "/metrics", nil))
+	body := mrec.Body.String()
+	for _, want := range []string{`reason="bad_key"} 6`, `reason="malformed"} 4`, `reason="bad_mac"} 1`, `reason="replay"} 1`, `reason="expired"} 1`} {
+		if !strings.Contains(body, want) {
+			t.Fatalf("metrics miss %s:\n%s", want, body)
+		}
+	}
+}

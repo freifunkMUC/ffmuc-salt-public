@@ -358,12 +358,14 @@ type legacyClaims struct {
 	} `json:"context"`
 }
 
+var errNoHostLink = errors.New("no host link found")
+
 // parseLegacyHostToken checks a v1 host token (bare or inside a link). Expired
 // tokens are fine: the record or the v1 extension window decides.
 func (s *server) parseLegacyHostToken(in string) (*legacyClaims, error) {
 	parts := strings.Split(in, ".")
 	if len(parts) != 3 {
-		return nil, errors.New("no host link found")
+		return nil, errNoHostLink
 	}
 	sig, err := base64.RawURLEncoding.DecodeString(parts[2])
 	if err != nil || !ed25519.Verify(s.cfg.priv.Public().(ed25519.PublicKey), []byte(parts[0]+"."+parts[1]), sig) {
@@ -484,9 +486,25 @@ func writeJSON(w http.ResponseWriter, code int, v any) {
 	json.NewEncoder(w).Encode(v)
 }
 
+// Stable error reasons in API responses. Clients use them instead of the
+// "error" text, which is for humans and can change.
+const (
+	reasonMalformed = "malformed"
+	reasonInvalid   = "invalid"   // the key is not a link of ours
+	reasonUnknown   = "unknown"   // no room for this key, or the wrong kind of link
+	reasonReplaced  = "replaced"  // the link was replaced by new links
+	reasonDeleted   = "deleted"   // the room was deleted
+	reasonExpired   = "expired"   // the room expired
+	reasonForbidden = "forbidden" // the link does not give the requested role
+	reasonInternal  = "internal"
+	// haproxy sends too_many_requests (HTTP 429). Proof-of-work errors are
+	// "pow_" + the checkPoW result.
+	powPrefix = "pow_"
+)
+
 type apiError struct {
 	code   int
-	reason string // metrics label
+	reason string // API reason, see above
 	msg    string
 }
 
@@ -494,22 +512,31 @@ func (e *apiError) Error() string { return e.msg }
 
 func fail(code int, reason, msg string) error { return &apiError{code, reason, msg} }
 
+// metricLabel keeps the labels of ffmuc_reserve_pow_rejected_total as before.
+func metricLabel(reason string) string {
+	switch reason {
+	case reasonInvalid, reasonUnknown, reasonReplaced, reasonDeleted, reasonExpired, reasonForbidden:
+		return "bad_key"
+	}
+	return strings.TrimPrefix(reason, powPrefix)
+}
+
 func (s *server) writeErr(w http.ResponseWriter, err error) {
 	var ae *apiError
 	if !errors.As(err, &ae) {
 		log.Printf("internal error: %v", err)
-		ae = &apiError{500, "internal", "internal"}
+		ae = &apiError{500, reasonInternal, "internal"}
 	}
-	s.reject(ae.reason)
-	writeJSON(w, ae.code, map[string]string{"error": ae.msg})
+	s.reject(metricLabel(ae.reason))
+	writeJSON(w, ae.code, map[string]string{"error": ae.msg, "reason": ae.reason})
 }
 
 func decode(w http.ResponseWriter, r *http.Request, v any) error {
 	if r.Method != http.MethodPost {
-		return fail(http.StatusMethodNotAllowed, "malformed", "method not allowed")
+		return fail(http.StatusMethodNotAllowed, reasonMalformed, "method not allowed")
 	}
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, maxRequestBody)).Decode(v); err != nil {
-		return fail(400, "malformed", "malformed")
+		return fail(400, reasonMalformed, "malformed")
 	}
 	return nil
 }
@@ -584,17 +611,21 @@ func (s *server) resolve(raw string, now time.Time) (*record, string, bool, erro
 			r, e = s.store.bySecret(hashSecret(key))
 		}
 		if r == nil || e.Role != roleHost {
-			return nil, "", false, fail(404, "bad_key", "unknown room or not a host link")
+			return nil, "", false, fail(404, reasonUnknown, "unknown room or not a host link")
 		}
 		if !r.current(e) {
-			return nil, "", false, fail(410, "bad_key", "this link was replaced by new links")
+			return nil, "", false, fail(410, reasonReplaced, "this link was replaced by new links")
 		}
 		return r, key, false, nil
 	}
 
 	c, err := s.parseLegacyHostToken(key)
 	if err != nil {
-		return nil, "", false, fail(400, "bad_key", err.Error())
+		reason := reasonInvalid
+		if errors.Is(err, errNoHostLink) {
+			reason = reasonUnknown
+		}
+		return nil, "", false, fail(400, reason, err.Error())
 	}
 	host := s.legacyHostSecret(c.Room)
 	speaker := s.speakerSecret(host)
@@ -602,10 +633,10 @@ func (s *server) resolve(raw string, now time.Time) (*record, string, bool, erro
 	exp := min(c.Exp, nameExp.Add(s.cfg.legacyMaxExt).Unix())
 	if cur := s.store.get(c.Room); cur != nil {
 		if cur.Revoked != 0 {
-			return nil, "", false, fail(410, "bad_key", "room was deleted")
+			return nil, "", false, fail(410, reasonDeleted, "room was deleted")
 		}
 		if !cur.current(cur.Secrets[hashSecret(host)]) {
-			return nil, "", false, fail(410, "bad_key", "this link was replaced by new links")
+			return nil, "", false, fail(410, reasonReplaced, "this link was replaced by new links")
 		}
 		if exp <= cur.Expires {
 			return cur, host, false, nil
@@ -618,7 +649,7 @@ func (s *server) resolve(raw string, now time.Time) (*record, string, bool, erro
 		return r, host, false, err
 	}
 	if exp <= now.Unix() {
-		return nil, "", false, fail(410, "bad_key", "room expired")
+		return nil, "", false, fail(410, reasonExpired, "room expired")
 	}
 	r, err := s.store.update(c.Room, func(_ *record) (*record, error) {
 		return &record{
@@ -648,12 +679,12 @@ func (s *server) pickDuration(hours int) (time.Duration, error) {
 			return d, nil
 		}
 	}
-	return 0, fail(400, "malformed", "duration not allowed")
+	return 0, fail(400, reasonMalformed, "duration not allowed")
 }
 
 func (s *server) handleChallenge(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		s.writeErr(w, fail(http.StatusMethodNotAllowed, reasonMalformed, "method not allowed"))
 		return
 	}
 	s.challenges.Add(1)
@@ -687,7 +718,7 @@ func (s *server) handleReserve(w http.ResponseWriter, r *http.Request) {
 	}
 	now := time.Now()
 	if reason, ok := s.checkPoW(req.Challenge, req.Nonce, now); !ok {
-		s.writeErr(w, fail(403, reason, reason))
+		s.writeErr(w, fail(403, powPrefix+reason, reason))
 		return
 	}
 	host, err := newSecret()
@@ -769,23 +800,23 @@ func (s *server) handleExtend(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if rec.Revoked != 0 {
-		s.writeErr(w, fail(410, "bad_key", "room was deleted"))
+		s.writeErr(w, fail(410, reasonDeleted, "room was deleted"))
 		return
 	}
 	if rec.Expires <= now.Unix() {
-		s.writeErr(w, fail(410, "bad_key", "room expired"))
+		s.writeErr(w, fail(410, reasonExpired, "room expired"))
 		return
 	}
 	if reason, ok := s.checkPoW(req.Challenge, req.Nonce, now); !ok {
-		s.writeErr(w, fail(403, reason, reason))
+		s.writeErr(w, fail(403, powPrefix+reason, reason))
 		return
 	}
 	rec, err = s.store.update(rec.Room, func(cur *record) (*record, error) {
 		if cur == nil || cur.Revoked != 0 {
-			return nil, fail(410, "bad_key", "room was deleted")
+			return nil, fail(410, reasonDeleted, "room was deleted")
 		}
 		if cur.Expires <= now.Unix() {
-			return nil, fail(410, "bad_key", "room expired")
+			return nil, fail(410, reasonExpired, "room expired")
 		}
 		cur.Expires = max(cur.Expires, min(cur.Expires+int64(ttl.Seconds()), now.Add(s.cfg.maxAhead).Unix()))
 		return cur, nil
@@ -821,7 +852,7 @@ func (s *server) handleRotate(w http.ResponseWriter, r *http.Request) {
 	}
 	rec, err = s.store.update(rec.Room, func(cur *record) (*record, error) {
 		if cur == nil || cur.Revoked != 0 {
-			return nil, fail(410, "bad_key", "room was deleted")
+			return nil, fail(410, reasonDeleted, "room was deleted")
 		}
 		// The new gen voids all older secrets and tokens. If another signer
 		// rotates at the same time, the higher gen wins everywhere.
@@ -865,7 +896,7 @@ func (s *server) revoke(room string, now time.Time) (*record, error) {
 		if cur == nil {
 			// Unmigrated v1 room: a tombstone is enough to block it.
 			if _, err := s.parseLegacyRoom(room); err != nil {
-				return nil, fail(404, "bad_key", "unknown room")
+				return nil, fail(404, reasonUnknown, "unknown room")
 			}
 			cur = &record{Created: now.Unix(), Legacy: true}
 		}
@@ -925,7 +956,7 @@ func (s *server) handleJoin(role string) http.HandlerFunc {
 // Room names are public (viewer link), so this reveals nothing secret.
 func (s *server) handleRoom(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		s.writeErr(w, fail(http.StatusMethodNotAllowed, reasonMalformed, "method not allowed"))
 		return
 	}
 	s.lookups.Add(1)
