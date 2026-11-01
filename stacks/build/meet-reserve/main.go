@@ -104,6 +104,7 @@ type server struct {
 	redirects  atomic.Uint64
 	lookups    atomic.Uint64
 	challenges atomic.Uint64
+	apiJoins   [2]atomic.Uint64 // host, speaker
 	rejMu      sync.Mutex
 	rejected   map[string]uint64
 }
@@ -386,11 +387,11 @@ func (s *server) parseLegacyHostToken(in string) (*legacyClaims, error) {
 }
 
 // extractKey pulls the credential out of whatever the user pasted: a manage
-// link (#k=… or v1 #m=…), a short host link (/h/…), a v1 host link (?jwt=…) or
-// the bare value.
+// link (#k=… or v1 #m=…), a short host or speaker link (/h/…, /s/…), a v1 host
+// link (?jwt=…) or the bare value.
 func (s *server) extractKey(in string) string {
 	in = strings.TrimSpace(in)
-	for _, marker := range []string{"#k=", "#m=", "jwt=", s.cfg.basePath + "/h/"} {
+	for _, marker := range []string{"#k=", "#m=", "jwt=", s.cfg.basePath + "/h/", s.cfg.basePath + "/s/"} {
 		if i := strings.LastIndex(in, marker); i >= 0 {
 			in = in[i+len(marker):]
 		}
@@ -952,6 +953,94 @@ func (s *server) handleJoin(role string) http.HandlerFunc {
 	}
 }
 
+// handleAPIJoin is /api/join for the apps: like the short links, but it
+// returns the token instead of a redirect. The key is any form of a host or
+// speaker link. A host link can also join as speaker, a speaker link never as
+// host. No proof of work, like /api/manage.
+func (s *server) handleAPIJoin(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Key  string `json:"key"`
+		Role string `json:"role"`
+	}
+	if err := decode(w, r, &req); err != nil {
+		s.writeErr(w, err)
+		return
+	}
+	if req.Role != "" && req.Role != roleHost && req.Role != roleSpeaker {
+		s.writeErr(w, fail(400, reasonMalformed, "role must be host or speaker"))
+		return
+	}
+	now := time.Now()
+	rec, role, err := s.resolveJoin(req.Key, now)
+	if err != nil {
+		s.writeErr(w, err)
+		return
+	}
+	if req.Role == roleHost && role != roleHost {
+		s.writeErr(w, fail(403, reasonForbidden, "a speaker link cannot join as host"))
+		return
+	}
+	if req.Role != "" {
+		role = req.Role
+	}
+	exp := min(now.Add(s.cfg.linkTTL).Unix(), rec.Expires)
+	tok, err := s.token(rec.Room, role, rec.Gen, now, time.Unix(exp, 0))
+	if err != nil {
+		s.writeErr(w, err)
+		return
+	}
+	if role == roleHost {
+		s.apiJoins[0].Add(1)
+	} else {
+		s.apiJoins[1].Add(1)
+	}
+	writeJSON(w, 200, map[string]string{
+		"server":       s.cfg.publicURL,
+		"room":         rec.Room,
+		"role":         role,
+		"jwt":          tok,
+		"jwt_expires":  time.Unix(exp, 0).UTC().Format(time.RFC3339),
+		"room_expires": time.Unix(rec.Expires, 0).UTC().Format(time.RFC3339),
+	})
+}
+
+// resolveJoin finds the room and the role of a host or speaker key, with the
+// same checks as handleJoin. v1 host links go through resolve and migrate.
+func (s *server) resolveJoin(raw string, now time.Time) (*record, string, error) {
+	key := s.extractKey(raw)
+	var rec *record
+	role := roleHost
+	if validSecret(key) {
+		var e *secretEntry
+		rec, e = s.store.bySecret(hashSecret(key))
+		if rec == nil {
+			s.peers.pullSoon()
+			rec, e = s.store.bySecret(hashSecret(key))
+		}
+		switch {
+		case rec == nil:
+			return nil, "", fail(404, reasonUnknown, "unknown room or not a host or speaker link")
+		case rec.Revoked != 0:
+			return nil, "", fail(410, reasonDeleted, "room was deleted")
+		case !rec.current(e):
+			return nil, "", fail(410, reasonReplaced, "this link was replaced by new links")
+		}
+		role = e.Role
+	} else {
+		var err error
+		if rec, _, _, err = s.resolve(raw, now); err != nil {
+			return nil, "", err
+		}
+		if rec.Revoked != 0 {
+			return nil, "", fail(410, reasonDeleted, "room was deleted")
+		}
+	}
+	if rec.Expires <= now.Unix() {
+		return nil, "", fail(410, reasonExpired, "room expired")
+	}
+	return rec, role, nil
+}
+
 // handleRoom answers Prosody: may this room exist, and which tokens count?
 // Room names are public (viewer link), so this reveals nothing secret.
 func (s *server) handleRoom(w http.ResponseWriter, r *http.Request) {
@@ -1036,6 +1125,9 @@ func (s *server) handleMetrics(w http.ResponseWriter, r *http.Request) {
 	counter("ffmuc_reserve_link_redirects_total", "Short link redirects since start.", s.redirects.Load())
 	counter("ffmuc_reserve_room_lookups_total", "Prosody room lookups since start.", s.lookups.Load())
 	counter("ffmuc_reserve_challenges_issued_total", "Proof-of-work challenges issued.", s.challenges.Load())
+	fmt.Fprintf(w, "# HELP ffmuc_reserve_api_joins_total Tokens issued by /api/join (apps) since start.\n# TYPE ffmuc_reserve_api_joins_total counter\n")
+	fmt.Fprintf(w, "ffmuc_reserve_api_joins_total{role=%q} %d\n", roleHost, s.apiJoins[0].Load())
+	fmt.Fprintf(w, "ffmuc_reserve_api_joins_total{role=%q} %d\n", roleSpeaker, s.apiJoins[1].Load())
 	gauge("ffmuc_reserve_rooms_stored", "Room records in the replicated store.", st.total)
 	gauge("ffmuc_reserve_rooms_active", "Usable rooms in the replicated store.", st.active)
 	gauge("ffmuc_reserve_rooms_active_legacy", "Usable migrated v1 rooms.", st.legacy)
@@ -1134,6 +1226,7 @@ func main() {
 	mux.HandleFunc(bp+"/api/extend", s.handleExtend)
 	mux.HandleFunc(bp+"/api/rotate", s.handleRotate)
 	mux.HandleFunc(bp+"/api/delete", s.handleDelete)
+	mux.HandleFunc(bp+"/api/join", s.handleAPIJoin)
 	mux.HandleFunc(bp+"/api/room/", s.handleRoom)
 	mux.HandleFunc(bp+"/h/", s.handleJoin(roleHost))
 	mux.HandleFunc(bp+"/s/", s.handleJoin(roleSpeaker))
