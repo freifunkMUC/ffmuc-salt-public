@@ -601,7 +601,8 @@ function solve(challenge, difficulty, onProgress) {
   });
 }
 
-// Server errors that have a translated explanation.
+// Server errors that have a translated explanation: by "reason", or by the
+// "error" text from servers without reasons.
 const known = {
   "room was deleted": "deleted", "room expired": "expired",
   "this link was replaced by new links": "replaced", "unknown room or not a host link": "unknown",
@@ -612,8 +613,10 @@ async function api(path, body) {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
   });
   const j = await r.json().catch(() => ({ error: "HTTP " + r.status }));
-  if (!r.ok) throw new Error(r.status === 429 ? t.tooMany : t.gone[known[j.error]] || j.error || "HTTP " + r.status);
-  return j;
+  if (r.ok) return j;
+  if (r.status === 429 || j.reason === "too_many_requests") throw new Error(t.tooMany);
+  const why = Object.hasOwn(t.gone, j.reason) ? j.reason : known[j.error];
+  throw new Error(t.gone[why] || j.error || "HTTP " + r.status);
 }
 
 // Solves the proof of work, then POSTs body plus challenge and nonce.
