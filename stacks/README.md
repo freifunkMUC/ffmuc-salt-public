@@ -224,6 +224,9 @@ Note deviations from upstream and the reason in the PR.
   update `RESERVE_PEERS` in every `meet-reserve/compose.yaml` too. A new
   signer needs `/srv/docker/meet-reserve/data` owned by `65532:65532`, mode
   `0700`.
+- `meet-reserve` also serves the app link files of meet.ffmuc.net. Set
+  `RESERVE_APPLE_TEAM_ID` and `RESERVE_ANDROID_CERT_SHA256` in every
+  `meet-reserve/compose.yaml`, see `build/meet-reserve/README.md`.
 - `whitebophir` v2 only opens canonical board names (lower case, no trailing
   `-`). Before the first v2 start, run
   `docker04/whitebophir/migrate-board-names.mjs` once. It copies the v1 boards

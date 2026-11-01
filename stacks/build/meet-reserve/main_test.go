@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -48,6 +49,7 @@ func testServer(t *testing.T, peers ...string) (*server, *http.ServeMux) {
 	mux.HandleFunc("/reserve/api/extend", s.handleExtend)
 	mux.HandleFunc("/reserve/api/rotate", s.handleRotate)
 	mux.HandleFunc("/reserve/api/delete", s.handleDelete)
+	mux.HandleFunc("/reserve/api/join", s.handleAPIJoin)
 	mux.HandleFunc("/reserve/api/room/", s.handleRoom)
 	mux.HandleFunc("/reserve/h/", s.handleJoin(roleHost))
 	mux.HandleFunc("/reserve/s/", s.handleJoin(roleSpeaker))
@@ -820,3 +822,265 @@ func TestErrorReasons(t *testing.T) {
 		}
 	}
 }
+
+func apiJoin(t *testing.T, mux http.Handler, key, role string) (int, map[string]any) {
+	t.Helper()
+	body := map[string]any{"key": key}
+	if role != "" {
+		body["role"] = role
+	}
+	return call(t, mux, "/reserve/api/join", body)
+}
+
+func TestAPIJoin(t *testing.T) {
+	s, mux := testServer(t)
+	out := reserve(t, s, mux, 72)
+	room := out["room"].(string)
+	host := secretOf(out["host_url"].(string))
+	speaker := secretOf(out["speaker_url"].(string))
+	roomExp := time.Unix(s.store.get(room).Expires, 0).UTC().Format(time.RFC3339)
+
+	check := func(name string, key, role, wantRole string) {
+		t.Helper()
+		code, m := apiJoin(t, mux, key, role)
+		if code != 200 || m["server"] != "https://meet.example" || m["room"] != room || m["role"] != wantRole || m["room_expires"] != roomExp {
+			t.Fatalf("%s: %d %v", name, code, m)
+		}
+		c := claims(t, m["jwt"].(string))
+		if c["room"] != room || c["moderator"] != (wantRole == roleHost) || c["context"].(map[string]any)["user"].(map[string]any)["id"] != wantRole+":"+room {
+			t.Fatalf("%s: claims %v", name, c)
+		}
+		exp, err := time.Parse(time.RFC3339, m["jwt_expires"].(string))
+		if err != nil || exp.Unix() != int64(c["exp"].(float64)) || exp.After(time.Now().Add(12*time.Hour+time.Minute)) {
+			t.Fatalf("%s: jwt_expires %v, exp %v", name, m["jwt_expires"], c["exp"])
+		}
+	}
+	// host: every form of the host link
+	for _, k := range []string{host, out["host_url"].(string), out["manage_url"].(string), " " + out["host_url"].(string) + "?x=1 "} {
+		check("host "+k, k, "", roleHost)
+	}
+	check("host as host", host, roleHost, roleHost)
+	check("host as speaker", host, roleSpeaker, roleSpeaker)
+	check("speaker", speaker, "", roleSpeaker)
+	check("speaker link", out["speaker_url"].(string), "", roleSpeaker)
+	check("speaker as speaker", speaker, roleSpeaker, roleSpeaker)
+
+	rec := httptest.NewRecorder()
+	b, _ := json.Marshal(map[string]any{"key": speaker})
+	mux.ServeHTTP(rec, httptest.NewRequest(http.MethodPost, "/reserve/api/join", bytes.NewReader(b)))
+	if rec.Header().Get("Cache-Control") != "no-store" || rec.Header().Get("Content-Type") != "application/json" {
+		t.Fatalf("headers %v", rec.Header())
+	}
+
+	expect := func(name string, key, role string, wantCode int, reason string) {
+		t.Helper()
+		code, m := apiJoin(t, mux, key, role)
+		if code != wantCode || m["reason"] != reason || m["error"] == "" {
+			t.Fatalf("%s: %d %v, want %d %s", name, code, m, wantCode, reason)
+		}
+	}
+	expect("speaker as host", speaker, roleHost, 403, "forbidden")
+	expect("speaker link as host", out["speaker_url"].(string), roleHost, 403, "forbidden")
+	expect("bad role", host, "viewer", 400, "malformed")
+	expect("unknown secret", "AAAAAAAAAAAAAAAAAAAAAA", "", 404, "unknown")
+	expect("viewer link", out["guest_url"].(string), "", 400, "unknown")
+	expect("garbage", "a.b.c", "", 400, "invalid")
+	if code, m := call(t, mux, "/reserve/api/join", "x"); code != 400 || m["reason"] != "malformed" {
+		t.Fatalf("malformed: %d %v", code, m)
+	}
+
+	// token capped at the room expiry
+	s.store.mu.Lock()
+	s.store.rooms[room].Expires = time.Now().Unix() + 600
+	s.store.mu.Unlock()
+	_, m := apiJoin(t, mux, speaker, "")
+	if c := claims(t, m["jwt"].(string)); int64(c["exp"].(float64)) != s.store.get(room).Expires {
+		t.Fatalf("token outlives room: %v", c["exp"])
+	}
+
+	// expired
+	s.store.mu.Lock()
+	s.store.rooms[room].Expires = time.Now().Unix() - 1
+	s.store.mu.Unlock()
+	expect("expired host", host, "", 410, "expired")
+	expect("expired speaker", speaker, "", 410, "expired")
+
+	// replaced
+	out2 := reserve(t, s, mux, 72)
+	host2 := secretOf(out2["host_url"].(string))
+	speaker2 := secretOf(out2["speaker_url"].(string))
+	_, rot := call(t, mux, "/reserve/api/rotate", map[string]any{"key": host2})
+	expect("replaced host", host2, "", 410, "replaced")
+	expect("replaced speaker", speaker2, "", 410, "replaced")
+	newHost := secretOf(rot["host_url"].(string))
+	_, m = apiJoin(t, mux, newHost, "")
+	if c := claims(t, m["jwt"].(string)); c["gen"] != genClaim(s.store.get(out2["room"].(string)).Gen) {
+		t.Fatalf("gen %v", c["gen"])
+	}
+
+	// deleted
+	call(t, mux, "/reserve/api/delete", map[string]any{"key": newHost})
+	expect("deleted host", newHost, "", 410, "deleted")
+	expect("deleted speaker", secretOf(rot["speaker_url"].(string)), roleSpeaker, 410, "deleted")
+
+	mrec := httptest.NewRecorder()
+	s.handleMetrics(mrec, httptest.NewRequest(http.MethodGet, "/metrics", nil))
+	for _, want := range []string{`ffmuc_reserve_api_joins_total{role="host"} 6`, `ffmuc_reserve_api_joins_total{role="speaker"} 6`} {
+		if !strings.Contains(mrec.Body.String(), want) {
+			t.Fatalf("metrics miss %s", want)
+		}
+	}
+}
+
+func TestAPIJoinLegacy(t *testing.T) {
+	s, mux := testServer(t)
+	now := time.Now()
+	room := legacyRoom(s, now.Add(72*time.Hour))
+	tok, _ := s.token(room, roleHost, 0, now.Add(-time.Hour), now.Add(72*time.Hour))
+	spk, _ := s.token(room, roleSpeaker, 0, now.Add(-time.Hour), now.Add(72*time.Hour))
+
+	// a v1 host link migrates the room and joins
+	code, m := apiJoin(t, mux, "https://meet.example/"+room+"?jwt="+tok, "")
+	if code != 200 || m["room"] != room || m["role"] != roleHost {
+		t.Fatalf("v1 host: %d %v", code, m)
+	}
+	if r := s.store.get(room); r == nil || !r.Legacy {
+		t.Fatal("not migrated")
+	}
+	code, m = apiJoin(t, mux, "https://meet.example/reserve/#m="+tok, roleSpeaker)
+	if code != 200 || m["role"] != roleSpeaker {
+		t.Fatalf("v1 host as speaker: %d %v", code, m)
+	}
+	// the migrated links work too
+	_, mg := call(t, mux, "/reserve/api/manage", map[string]any{"key": tok})
+	if code, m := apiJoin(t, mux, mg["speaker_url"].(string), ""); code != 200 || m["role"] != roleSpeaker {
+		t.Fatalf("migrated speaker: %d %v", code, m)
+	}
+	// v1 speaker links are not host links
+	if code, m := apiJoin(t, mux, spk, ""); code != 400 || m["reason"] != "invalid" {
+		t.Fatalf("v1 speaker: %d %v", code, m)
+	}
+	// expired v1 rooms are not imported
+	dead := legacyRoom(s, now.Add(-800*time.Hour))
+	deadTok, _ := s.token(dead, roleHost, 0, now.Add(-900*time.Hour), now.Add(-800*time.Hour))
+	if code, m := apiJoin(t, mux, deadTok, ""); code != 410 || m["reason"] != "expired" {
+		t.Fatalf("dead v1: %d %v", code, m)
+	}
+	// deleted after migration
+	call(t, mux, "/reserve/api/delete", map[string]any{"key": tok})
+	if code, m := apiJoin(t, mux, tok, ""); code != 410 || m["reason"] != "deleted" {
+		t.Fatalf("deleted v1: %d %v", code, m)
+	}
+}
+
+func TestAPIJoinPullOnMiss(t *testing.T) {
+	ss, muxes := mesh(t, 2)
+	for _, s := range ss {
+		s.store.onLocal = nil
+	}
+	out := reserve(t, ss[0], muxes[0], 72)
+	ss[1].peers.lastPull.Store(0)
+	if code, m := apiJoin(t, muxes[1], out["speaker_url"].(string), ""); code != 200 || m["room"] != out["room"] {
+		t.Fatalf("pull on miss: %d %v", code, m)
+	}
+}
+
+func TestParseAppLinks(t *testing.T) {
+	fp := strings.Repeat("ab", 32)
+	team, certs, err := parseAppLinks(" abcde12345 ", fp+", "+strings.ToUpper(strings.Repeat("0f:", 31))+"0F")
+	if err != nil || team != "ABCDE12345" || len(certs) != 2 || certs[0] != strings.Repeat("AB:", 31)+"AB" || certs[1] != strings.Repeat("0F:", 31)+"0F" {
+		t.Fatalf("%q %v %v", team, certs, err)
+	}
+	if team, certs, err := parseAppLinks("", ""); err != nil || team != "" || certs != nil {
+		t.Fatalf("empty: %q %v %v", team, certs, err)
+	}
+	for _, bad := range [][2]string{{"ABCDE1234", ""}, {"ABCDE1234!", ""}, {"", "abcd"}, {"", strings.Repeat("zz", 32)}} {
+		if _, _, err := parseAppLinks(bad[0], bad[1]); err == nil {
+			t.Fatalf("accepted %q", bad)
+		}
+	}
+}
+
+func TestAppLinks(t *testing.T) {
+	get := func(mux http.Handler, path string) *httptest.ResponseRecorder {
+		rec := httptest.NewRecorder()
+		mux.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path, nil))
+		return rec
+	}
+	// not configured: 404
+	s, _ := testServer(t)
+	mux := http.NewServeMux()
+	s.appLinkRoutes(mux)
+	for _, p := range []string{"/.well-known/apple-app-site-association", "/.well-known/assetlinks.json"} {
+		if rec := get(mux, p); rec.Code != 404 {
+			t.Fatalf("%s without config: %d", p, rec.Code)
+		}
+	}
+
+	s.cfg.appleTeamID = "ABCDE12345"
+	s.cfg.androidCerts = []string{strings.Repeat("AB:", 31) + "AB"}
+	mux = http.NewServeMux()
+	s.appLinkRoutes(mux)
+	rec := get(mux, "/.well-known/apple-app-site-association")
+	if rec.Code != 200 || rec.Header().Get("Content-Type") != "application/json" {
+		t.Fatalf("aasa: %d %v", rec.Code, rec.Header())
+	}
+	var aasa struct {
+		Applinks struct {
+			Details []struct {
+				AppIDs     []string         `json:"appIDs"`
+				Components []map[string]any `json:"components"`
+			} `json:"details"`
+		} `json:"applinks"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &aasa); err != nil || len(aasa.Applinks.Details) != 1 || aasa.Applinks.Details[0].AppIDs[0] != "ABCDE12345.net.ffmuc.meet" {
+		t.Fatalf("aasa: %v %s", err, rec.Body)
+	}
+	// Apple's matching: the first component that matches wins
+	comps := aasa.Applinks.Details[0].Components
+	match := func(pattern, s string) bool {
+		re := "^" + strings.NewReplacer("*", ".*", "?", ".", ".", `\.`).Replace(pattern) + "$"
+		return regexpMatch(re, s)
+	}
+	opens := func(path, frag string) bool {
+		for _, c := range comps {
+			if !match(c["/"].(string), path) {
+				continue
+			}
+			if f, ok := c["#"].(string); ok && !match(f, frag) {
+				continue
+			}
+			return c["exclude"] != true
+		}
+		return false
+	}
+	for _, u := range [][2]string{{"/reserve/h/abc", ""}, {"/reserve/s/abc", ""}, {"/reserve/", "k=abc"}, {"/reserve/", "m=x.y.z"}, {"/r-bcdfghjkmnpqrs", ""}, {"/MyRoom", ""}} {
+		if !opens(u[0], u[1]) {
+			t.Fatalf("%v does not open the app", u)
+		}
+	}
+	for _, u := range [][2]string{{"/", ""}, {"/reserve", ""}, {"/reserve/", ""}, {"/reserve/api/join", ""}, {"/reserve/logo.png", ""}, {"/static/x.html", ""},
+		{"/config.js", ""}, {"/libs/app.bundle.min.js", ""}, {"/http-bind", ""}, {"/xmpp-websocket", ""}, {"/colibri-ws/jvb1/x", ""}, {"/about/health", ""},
+		{"/conferenceMapper", ""}, {"/pad/p/x", ""}, {"/.well-known/assetlinks.json", ""}} {
+		if opens(u[0], u[1]) {
+			t.Fatalf("%v opens the app", u)
+		}
+	}
+
+	rec = get(mux, "/.well-known/assetlinks.json")
+	var al []struct {
+		Relation []string `json:"relation"`
+		Target   struct {
+			Namespace   string   `json:"namespace"`
+			PackageName string   `json:"package_name"`
+			Certs       []string `json:"sha256_cert_fingerprints"`
+		} `json:"target"`
+	}
+	if rec.Code != 200 || rec.Header().Get("Content-Type") != "application/json" || json.Unmarshal(rec.Body.Bytes(), &al) != nil || len(al) != 1 ||
+		al[0].Relation[0] != "delegate_permission/common.handle_all_urls" || al[0].Target.Namespace != "android_app" ||
+		al[0].Target.PackageName != "net.ffmuc.meet" || al[0].Target.Certs[0] != s.cfg.androidCerts[0] {
+		t.Fatalf("assetlinks: %d %s", rec.Code, rec.Body)
+	}
+}
+
+func regexpMatch(re, s string) bool { return regexp.MustCompile(re).MatchString(s) }

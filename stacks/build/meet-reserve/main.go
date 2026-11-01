@@ -62,6 +62,7 @@ const (
 	roleHost       = "host"
 	roleSpeaker    = "speaker"
 	maxRequestBody = 4096
+	appID          = "net.ffmuc.meet" // iOS bundle ID and Android package of the apps
 )
 
 var b32 = base32.StdEncoding.WithPadding(base32.NoPadding)
@@ -86,6 +87,8 @@ type config struct {
 	linkTTL       time.Duration // lifetime of tokens behind the short links
 	legacyMaxExt  time.Duration // v1: how far past the name's expiry tokens could be extended
 	difficulty    int
+	appleTeamID   string   // empty: no apple-app-site-association
+	androidCerts  []string // SHA-256 fingerprints of the app signing certs; empty: no assetlinks.json
 }
 
 type server struct {
@@ -104,6 +107,7 @@ type server struct {
 	redirects  atomic.Uint64
 	lookups    atomic.Uint64
 	challenges atomic.Uint64
+	apiJoins   [2]atomic.Uint64 // host, speaker
 	rejMu      sync.Mutex
 	rejected   map[string]uint64
 }
@@ -193,7 +197,43 @@ func loadConfig() (config, error) {
 	if c.difficulty, err = strconv.Atoi(env("RESERVE_POW_DIFFICULTY", "18")); err != nil || c.difficulty < 0 || c.difficulty > 32 {
 		return c, errors.New("RESERVE_POW_DIFFICULTY must be 0..32")
 	}
+	if c.appleTeamID, c.androidCerts, err = parseAppLinks(os.Getenv("RESERVE_APPLE_TEAM_ID"), os.Getenv("RESERVE_ANDROID_CERT_SHA256")); err != nil {
+		return c, err
+	}
 	return c, nil
+}
+
+// parseAppLinks checks the Apple team ID (10 letters or digits) and the
+// comma-separated SHA-256 fingerprints of the Android signing certs (with or
+// without colons). It returns the fingerprints as AA:BB:…, as Android wants.
+func parseAppLinks(team, certs string) (string, []string, error) {
+	team = strings.TrimSpace(team)
+	if team != "" {
+		if len(team) != 10 || strings.Trim(strings.ToUpper(team), "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789") != "" {
+			return "", nil, errors.New("RESERVE_APPLE_TEAM_ID must be 10 letters or digits")
+		}
+		team = strings.ToUpper(team)
+	}
+	var out []string
+	for _, c := range strings.Split(certs, ",") {
+		if c = strings.TrimSpace(c); c == "" {
+			continue
+		}
+		b, err := hex.DecodeString(strings.ReplaceAll(c, ":", ""))
+		if err != nil || len(b) != sha256.Size {
+			return "", nil, fmt.Errorf("RESERVE_ANDROID_CERT_SHA256: invalid %q (SHA-256 in hex)", c)
+		}
+		h := strings.ToUpper(hex.EncodeToString(b))
+		var f strings.Builder
+		for i := 0; i < len(h); i += 2 {
+			if i > 0 {
+				f.WriteByte(':')
+			}
+			f.WriteString(h[i : i+2])
+		}
+		out = append(out, f.String())
+	}
+	return team, out, nil
 }
 
 // ---- names, secrets, tokens ----
@@ -386,11 +426,11 @@ func (s *server) parseLegacyHostToken(in string) (*legacyClaims, error) {
 }
 
 // extractKey pulls the credential out of whatever the user pasted: a manage
-// link (#k=… or v1 #m=…), a short host link (/h/…), a v1 host link (?jwt=…) or
-// the bare value.
+// link (#k=… or v1 #m=…), a short host or speaker link (/h/…, /s/…), a v1 host
+// link (?jwt=…) or the bare value.
 func (s *server) extractKey(in string) string {
 	in = strings.TrimSpace(in)
-	for _, marker := range []string{"#k=", "#m=", "jwt=", s.cfg.basePath + "/h/"} {
+	for _, marker := range []string{"#k=", "#m=", "jwt=", s.cfg.basePath + "/h/", s.cfg.basePath + "/s/"} {
 		if i := strings.LastIndex(in, marker); i >= 0 {
 			in = in[i+len(marker):]
 		}
@@ -568,6 +608,87 @@ func staticPNG(b []byte) http.HandlerFunc {
 		w.Header().Set("Cache-Control", "public, max-age=86400")
 		w.Write(b)
 	}
+}
+
+// ---- app links ----
+
+// appleAppSiteAssociation lets iOS open short links, manage links and rooms
+// in the app. The first matching component wins. Rooms are one path segment
+// without a dot; everything else on the host is Jitsi files and APIs.
+func (s *server) appleAppSiteAssociation() []byte {
+	bp := s.cfg.basePath
+	type comp struct {
+		Path    string `json:"/"`
+		Frag    string `json:"#,omitempty"`
+		Exclude bool   `json:"exclude,omitempty"`
+		Comment string `json:"comment,omitempty"`
+	}
+	b, _ := json.Marshal(map[string]any{
+		"applinks": map[string]any{
+			"details": []any{map[string]any{
+				"appIDs": []string{s.cfg.appleTeamID + "." + appID},
+				"components": []comp{
+					{Path: bp + "/h/*", Comment: "host link"},
+					{Path: bp + "/s/*", Comment: "speaker link"},
+					{Path: bp + "/", Frag: "k=*", Comment: "manage link"},
+					{Path: bp + "/", Frag: "m=*", Comment: "v1 manage link"},
+					{Path: bp, Exclude: true, Comment: "reserve page"},
+					{Path: bp + "/*", Exclude: true, Comment: "reserve page"},
+					{Path: "/", Exclude: true, Comment: "start page"},
+					{Path: "/*/*", Exclude: true, Comment: "files and APIs"},
+					{Path: "/*.*", Exclude: true, Comment: "files"},
+					{Path: "/http-bind", Exclude: true},
+					{Path: "/xmpp-websocket", Exclude: true},
+					{Path: "/conferenceMapper", Exclude: true},
+					{Path: "/pad", Exclude: true},
+					{Path: "/*", Comment: "room"},
+				},
+			}},
+		},
+	})
+	return b
+}
+
+func (s *server) assetLinks() []byte {
+	b, _ := json.Marshal([]any{map[string]any{
+		"relation": []string{"delegate_permission/common.handle_all_urls"},
+		"target": map[string]any{
+			"namespace":                "android_app",
+			"package_name":             appID,
+			"sha256_cert_fingerprints": s.cfg.androidCerts,
+		},
+	}})
+	return b
+}
+
+// staticJSON serves the app link files. Apple and Google need 200 with
+// application/json and no redirect. Without config the file is 404.
+func staticJSON(b []byte) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if b == nil {
+			http.NotFound(w, r)
+			return
+		}
+		if r.Method != http.MethodGet && r.Method != http.MethodHead {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Cache-Control", "public, max-age=3600")
+		w.Write(b)
+	}
+}
+
+func (s *server) appLinkRoutes(mux *http.ServeMux) {
+	var aasa, assets []byte
+	if s.cfg.appleTeamID != "" {
+		aasa = s.appleAppSiteAssociation()
+	}
+	if len(s.cfg.androidCerts) > 0 {
+		assets = s.assetLinks()
+	}
+	mux.HandleFunc("/.well-known/apple-app-site-association", staticJSON(aasa))
+	mux.HandleFunc("/.well-known/assetlinks.json", staticJSON(assets))
 }
 
 // ---- rooms ----
@@ -952,6 +1073,94 @@ func (s *server) handleJoin(role string) http.HandlerFunc {
 	}
 }
 
+// handleAPIJoin is /api/join for the apps: like the short links, but it
+// returns the token instead of a redirect. The key is any form of a host or
+// speaker link. A host link can also join as speaker, a speaker link never as
+// host. No proof of work, like /api/manage.
+func (s *server) handleAPIJoin(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Key  string `json:"key"`
+		Role string `json:"role"`
+	}
+	if err := decode(w, r, &req); err != nil {
+		s.writeErr(w, err)
+		return
+	}
+	if req.Role != "" && req.Role != roleHost && req.Role != roleSpeaker {
+		s.writeErr(w, fail(400, reasonMalformed, "role must be host or speaker"))
+		return
+	}
+	now := time.Now()
+	rec, role, err := s.resolveJoin(req.Key, now)
+	if err != nil {
+		s.writeErr(w, err)
+		return
+	}
+	if req.Role == roleHost && role != roleHost {
+		s.writeErr(w, fail(403, reasonForbidden, "a speaker link cannot join as host"))
+		return
+	}
+	if req.Role != "" {
+		role = req.Role
+	}
+	exp := min(now.Add(s.cfg.linkTTL).Unix(), rec.Expires)
+	tok, err := s.token(rec.Room, role, rec.Gen, now, time.Unix(exp, 0))
+	if err != nil {
+		s.writeErr(w, err)
+		return
+	}
+	if role == roleHost {
+		s.apiJoins[0].Add(1)
+	} else {
+		s.apiJoins[1].Add(1)
+	}
+	writeJSON(w, 200, map[string]string{
+		"server":       s.cfg.publicURL,
+		"room":         rec.Room,
+		"role":         role,
+		"jwt":          tok,
+		"jwt_expires":  time.Unix(exp, 0).UTC().Format(time.RFC3339),
+		"room_expires": time.Unix(rec.Expires, 0).UTC().Format(time.RFC3339),
+	})
+}
+
+// resolveJoin finds the room and the role of a host or speaker key, with the
+// same checks as handleJoin. v1 host links go through resolve and migrate.
+func (s *server) resolveJoin(raw string, now time.Time) (*record, string, error) {
+	key := s.extractKey(raw)
+	var rec *record
+	role := roleHost
+	if validSecret(key) {
+		var e *secretEntry
+		rec, e = s.store.bySecret(hashSecret(key))
+		if rec == nil {
+			s.peers.pullSoon()
+			rec, e = s.store.bySecret(hashSecret(key))
+		}
+		switch {
+		case rec == nil:
+			return nil, "", fail(404, reasonUnknown, "unknown room or not a host or speaker link")
+		case rec.Revoked != 0:
+			return nil, "", fail(410, reasonDeleted, "room was deleted")
+		case !rec.current(e):
+			return nil, "", fail(410, reasonReplaced, "this link was replaced by new links")
+		}
+		role = e.Role
+	} else {
+		var err error
+		if rec, _, _, err = s.resolve(raw, now); err != nil {
+			return nil, "", err
+		}
+		if rec.Revoked != 0 {
+			return nil, "", fail(410, reasonDeleted, "room was deleted")
+		}
+	}
+	if rec.Expires <= now.Unix() {
+		return nil, "", fail(410, reasonExpired, "room expired")
+	}
+	return rec, role, nil
+}
+
 // handleRoom answers Prosody: may this room exist, and which tokens count?
 // Room names are public (viewer link), so this reveals nothing secret.
 func (s *server) handleRoom(w http.ResponseWriter, r *http.Request) {
@@ -1036,6 +1245,9 @@ func (s *server) handleMetrics(w http.ResponseWriter, r *http.Request) {
 	counter("ffmuc_reserve_link_redirects_total", "Short link redirects since start.", s.redirects.Load())
 	counter("ffmuc_reserve_room_lookups_total", "Prosody room lookups since start.", s.lookups.Load())
 	counter("ffmuc_reserve_challenges_issued_total", "Proof-of-work challenges issued.", s.challenges.Load())
+	fmt.Fprintf(w, "# HELP ffmuc_reserve_api_joins_total Tokens issued by /api/join (apps) since start.\n# TYPE ffmuc_reserve_api_joins_total counter\n")
+	fmt.Fprintf(w, "ffmuc_reserve_api_joins_total{role=%q} %d\n", roleHost, s.apiJoins[0].Load())
+	fmt.Fprintf(w, "ffmuc_reserve_api_joins_total{role=%q} %d\n", roleSpeaker, s.apiJoins[1].Load())
 	gauge("ffmuc_reserve_rooms_stored", "Room records in the replicated store.", st.total)
 	gauge("ffmuc_reserve_rooms_active", "Usable rooms in the replicated store.", st.active)
 	gauge("ffmuc_reserve_rooms_active_legacy", "Usable migrated v1 rooms.", st.legacy)
@@ -1134,12 +1346,14 @@ func main() {
 	mux.HandleFunc(bp+"/api/extend", s.handleExtend)
 	mux.HandleFunc(bp+"/api/rotate", s.handleRotate)
 	mux.HandleFunc(bp+"/api/delete", s.handleDelete)
+	mux.HandleFunc(bp+"/api/join", s.handleAPIJoin)
 	mux.HandleFunc(bp+"/api/room/", s.handleRoom)
 	mux.HandleFunc(bp+"/h/", s.handleJoin(roleHost))
 	mux.HandleFunc(bp+"/s/", s.handleJoin(roleSpeaker))
 	mux.HandleFunc(bp+"/logo.png", staticPNG(logoPNG))
 	mux.HandleFunc(bp+"/favicon.png", staticPNG(faviconPNG))
 	mux.HandleFunc(bp+"/healthz", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("ok\n")) })
+	s.appLinkRoutes(mux)
 
 	// Signed with RESERVE_SYNC_KEY, on its own port so the public proxy can't reach it.
 	smux := http.NewServeMux()
@@ -1166,8 +1380,8 @@ func main() {
 	go ps.loop()
 	go s.gc()
 
-	log.Printf("meet-reserve kid=%d difficulty=%d durations=%v max_ahead=%s peers=%d rooms=%d listen=%s pub=%s",
-		cfg.keyID, cfg.difficulty, cfg.durations, cfg.maxAhead, len(cfg.peers), len(st.rooms), cfg.listen,
+	log.Printf("meet-reserve kid=%d difficulty=%d durations=%v max_ahead=%s peers=%d rooms=%d listen=%s apple_app=%t android_app=%t pub=%s",
+		cfg.keyID, cfg.difficulty, cfg.durations, cfg.maxAhead, len(cfg.peers), len(st.rooms), cfg.listen, cfg.appleTeamID != "", len(cfg.androidCerts) > 0,
 		base64.StdEncoding.EncodeToString(cfg.priv.Public().(ed25519.PublicKey)))
 	srv := &http.Server{Addr: cfg.listen, Handler: mux, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 30 * time.Second}
 	log.Fatal(srv.ListenAndServe())
