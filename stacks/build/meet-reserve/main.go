@@ -62,6 +62,7 @@ const (
 	roleHost       = "host"
 	roleSpeaker    = "speaker"
 	maxRequestBody = 4096
+	appID          = "net.ffmuc.meet" // iOS bundle ID and Android package of the apps
 )
 
 var b32 = base32.StdEncoding.WithPadding(base32.NoPadding)
@@ -86,6 +87,8 @@ type config struct {
 	linkTTL       time.Duration // lifetime of tokens behind the short links
 	legacyMaxExt  time.Duration // v1: how far past the name's expiry tokens could be extended
 	difficulty    int
+	appleTeamID   string   // empty: no apple-app-site-association
+	androidCerts  []string // SHA-256 fingerprints of the app signing certs; empty: no assetlinks.json
 }
 
 type server struct {
@@ -194,7 +197,43 @@ func loadConfig() (config, error) {
 	if c.difficulty, err = strconv.Atoi(env("RESERVE_POW_DIFFICULTY", "18")); err != nil || c.difficulty < 0 || c.difficulty > 32 {
 		return c, errors.New("RESERVE_POW_DIFFICULTY must be 0..32")
 	}
+	if c.appleTeamID, c.androidCerts, err = parseAppLinks(os.Getenv("RESERVE_APPLE_TEAM_ID"), os.Getenv("RESERVE_ANDROID_CERT_SHA256")); err != nil {
+		return c, err
+	}
 	return c, nil
+}
+
+// parseAppLinks checks the Apple team ID (10 letters or digits) and the
+// comma-separated SHA-256 fingerprints of the Android signing certs (with or
+// without colons). It returns the fingerprints as AA:BB:…, as Android wants.
+func parseAppLinks(team, certs string) (string, []string, error) {
+	team = strings.TrimSpace(team)
+	if team != "" {
+		if len(team) != 10 || strings.Trim(strings.ToUpper(team), "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789") != "" {
+			return "", nil, errors.New("RESERVE_APPLE_TEAM_ID must be 10 letters or digits")
+		}
+		team = strings.ToUpper(team)
+	}
+	var out []string
+	for _, c := range strings.Split(certs, ",") {
+		if c = strings.TrimSpace(c); c == "" {
+			continue
+		}
+		b, err := hex.DecodeString(strings.ReplaceAll(c, ":", ""))
+		if err != nil || len(b) != sha256.Size {
+			return "", nil, fmt.Errorf("RESERVE_ANDROID_CERT_SHA256: invalid %q (SHA-256 in hex)", c)
+		}
+		h := strings.ToUpper(hex.EncodeToString(b))
+		var f strings.Builder
+		for i := 0; i < len(h); i += 2 {
+			if i > 0 {
+				f.WriteByte(':')
+			}
+			f.WriteString(h[i : i+2])
+		}
+		out = append(out, f.String())
+	}
+	return team, out, nil
 }
 
 // ---- names, secrets, tokens ----
@@ -569,6 +608,87 @@ func staticPNG(b []byte) http.HandlerFunc {
 		w.Header().Set("Cache-Control", "public, max-age=86400")
 		w.Write(b)
 	}
+}
+
+// ---- app links ----
+
+// appleAppSiteAssociation lets iOS open short links, manage links and rooms
+// in the app. The first matching component wins. Rooms are one path segment
+// without a dot; everything else on the host is Jitsi files and APIs.
+func (s *server) appleAppSiteAssociation() []byte {
+	bp := s.cfg.basePath
+	type comp struct {
+		Path    string `json:"/"`
+		Frag    string `json:"#,omitempty"`
+		Exclude bool   `json:"exclude,omitempty"`
+		Comment string `json:"comment,omitempty"`
+	}
+	b, _ := json.Marshal(map[string]any{
+		"applinks": map[string]any{
+			"details": []any{map[string]any{
+				"appIDs": []string{s.cfg.appleTeamID + "." + appID},
+				"components": []comp{
+					{Path: bp + "/h/*", Comment: "host link"},
+					{Path: bp + "/s/*", Comment: "speaker link"},
+					{Path: bp + "/", Frag: "k=*", Comment: "manage link"},
+					{Path: bp + "/", Frag: "m=*", Comment: "v1 manage link"},
+					{Path: bp, Exclude: true, Comment: "reserve page"},
+					{Path: bp + "/*", Exclude: true, Comment: "reserve page"},
+					{Path: "/", Exclude: true, Comment: "start page"},
+					{Path: "/*/*", Exclude: true, Comment: "files and APIs"},
+					{Path: "/*.*", Exclude: true, Comment: "files"},
+					{Path: "/http-bind", Exclude: true},
+					{Path: "/xmpp-websocket", Exclude: true},
+					{Path: "/conferenceMapper", Exclude: true},
+					{Path: "/pad", Exclude: true},
+					{Path: "/*", Comment: "room"},
+				},
+			}},
+		},
+	})
+	return b
+}
+
+func (s *server) assetLinks() []byte {
+	b, _ := json.Marshal([]any{map[string]any{
+		"relation": []string{"delegate_permission/common.handle_all_urls"},
+		"target": map[string]any{
+			"namespace":                "android_app",
+			"package_name":             appID,
+			"sha256_cert_fingerprints": s.cfg.androidCerts,
+		},
+	}})
+	return b
+}
+
+// staticJSON serves the app link files. Apple and Google need 200 with
+// application/json and no redirect. Without config the file is 404.
+func staticJSON(b []byte) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if b == nil {
+			http.NotFound(w, r)
+			return
+		}
+		if r.Method != http.MethodGet && r.Method != http.MethodHead {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Cache-Control", "public, max-age=3600")
+		w.Write(b)
+	}
+}
+
+func (s *server) appLinkRoutes(mux *http.ServeMux) {
+	var aasa, assets []byte
+	if s.cfg.appleTeamID != "" {
+		aasa = s.appleAppSiteAssociation()
+	}
+	if len(s.cfg.androidCerts) > 0 {
+		assets = s.assetLinks()
+	}
+	mux.HandleFunc("/.well-known/apple-app-site-association", staticJSON(aasa))
+	mux.HandleFunc("/.well-known/assetlinks.json", staticJSON(assets))
 }
 
 // ---- rooms ----
@@ -1233,6 +1353,7 @@ func main() {
 	mux.HandleFunc(bp+"/logo.png", staticPNG(logoPNG))
 	mux.HandleFunc(bp+"/favicon.png", staticPNG(faviconPNG))
 	mux.HandleFunc(bp+"/healthz", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("ok\n")) })
+	s.appLinkRoutes(mux)
 
 	// Signed with RESERVE_SYNC_KEY, on its own port so the public proxy can't reach it.
 	smux := http.NewServeMux()
@@ -1259,8 +1380,8 @@ func main() {
 	go ps.loop()
 	go s.gc()
 
-	log.Printf("meet-reserve kid=%d difficulty=%d durations=%v max_ahead=%s peers=%d rooms=%d listen=%s pub=%s",
-		cfg.keyID, cfg.difficulty, cfg.durations, cfg.maxAhead, len(cfg.peers), len(st.rooms), cfg.listen,
+	log.Printf("meet-reserve kid=%d difficulty=%d durations=%v max_ahead=%s peers=%d rooms=%d listen=%s apple_app=%t android_app=%t pub=%s",
+		cfg.keyID, cfg.difficulty, cfg.durations, cfg.maxAhead, len(cfg.peers), len(st.rooms), cfg.listen, cfg.appleTeamID != "", len(cfg.androidCerts) > 0,
 		base64.StdEncoding.EncodeToString(cfg.priv.Public().(ed25519.PublicKey)))
 	srv := &http.Server{Addr: cfg.listen, Handler: mux, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 30 * time.Second}
 	log.Fatal(srv.ListenAndServe())

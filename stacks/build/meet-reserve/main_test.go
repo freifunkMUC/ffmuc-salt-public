@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -983,3 +984,103 @@ func TestAPIJoinPullOnMiss(t *testing.T) {
 		t.Fatalf("pull on miss: %d %v", code, m)
 	}
 }
+
+func TestParseAppLinks(t *testing.T) {
+	fp := strings.Repeat("ab", 32)
+	team, certs, err := parseAppLinks(" abcde12345 ", fp+", "+strings.ToUpper(strings.Repeat("0f:", 31))+"0F")
+	if err != nil || team != "ABCDE12345" || len(certs) != 2 || certs[0] != strings.Repeat("AB:", 31)+"AB" || certs[1] != strings.Repeat("0F:", 31)+"0F" {
+		t.Fatalf("%q %v %v", team, certs, err)
+	}
+	if team, certs, err := parseAppLinks("", ""); err != nil || team != "" || certs != nil {
+		t.Fatalf("empty: %q %v %v", team, certs, err)
+	}
+	for _, bad := range [][2]string{{"ABCDE1234", ""}, {"ABCDE1234!", ""}, {"", "abcd"}, {"", strings.Repeat("zz", 32)}} {
+		if _, _, err := parseAppLinks(bad[0], bad[1]); err == nil {
+			t.Fatalf("accepted %q", bad)
+		}
+	}
+}
+
+func TestAppLinks(t *testing.T) {
+	get := func(mux http.Handler, path string) *httptest.ResponseRecorder {
+		rec := httptest.NewRecorder()
+		mux.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path, nil))
+		return rec
+	}
+	// not configured: 404
+	s, _ := testServer(t)
+	mux := http.NewServeMux()
+	s.appLinkRoutes(mux)
+	for _, p := range []string{"/.well-known/apple-app-site-association", "/.well-known/assetlinks.json"} {
+		if rec := get(mux, p); rec.Code != 404 {
+			t.Fatalf("%s without config: %d", p, rec.Code)
+		}
+	}
+
+	s.cfg.appleTeamID = "ABCDE12345"
+	s.cfg.androidCerts = []string{strings.Repeat("AB:", 31) + "AB"}
+	mux = http.NewServeMux()
+	s.appLinkRoutes(mux)
+	rec := get(mux, "/.well-known/apple-app-site-association")
+	if rec.Code != 200 || rec.Header().Get("Content-Type") != "application/json" {
+		t.Fatalf("aasa: %d %v", rec.Code, rec.Header())
+	}
+	var aasa struct {
+		Applinks struct {
+			Details []struct {
+				AppIDs     []string         `json:"appIDs"`
+				Components []map[string]any `json:"components"`
+			} `json:"details"`
+		} `json:"applinks"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &aasa); err != nil || len(aasa.Applinks.Details) != 1 || aasa.Applinks.Details[0].AppIDs[0] != "ABCDE12345.net.ffmuc.meet" {
+		t.Fatalf("aasa: %v %s", err, rec.Body)
+	}
+	// Apple's matching: the first component that matches wins
+	comps := aasa.Applinks.Details[0].Components
+	match := func(pattern, s string) bool {
+		re := "^" + strings.NewReplacer("*", ".*", "?", ".", ".", `\.`).Replace(pattern) + "$"
+		return regexpMatch(re, s)
+	}
+	opens := func(path, frag string) bool {
+		for _, c := range comps {
+			if !match(c["/"].(string), path) {
+				continue
+			}
+			if f, ok := c["#"].(string); ok && !match(f, frag) {
+				continue
+			}
+			return c["exclude"] != true
+		}
+		return false
+	}
+	for _, u := range [][2]string{{"/reserve/h/abc", ""}, {"/reserve/s/abc", ""}, {"/reserve/", "k=abc"}, {"/reserve/", "m=x.y.z"}, {"/r-bcdfghjkmnpqrs", ""}, {"/MyRoom", ""}} {
+		if !opens(u[0], u[1]) {
+			t.Fatalf("%v does not open the app", u)
+		}
+	}
+	for _, u := range [][2]string{{"/", ""}, {"/reserve", ""}, {"/reserve/", ""}, {"/reserve/api/join", ""}, {"/reserve/logo.png", ""}, {"/static/x.html", ""},
+		{"/config.js", ""}, {"/libs/app.bundle.min.js", ""}, {"/http-bind", ""}, {"/xmpp-websocket", ""}, {"/colibri-ws/jvb1/x", ""}, {"/about/health", ""},
+		{"/conferenceMapper", ""}, {"/pad/p/x", ""}, {"/.well-known/assetlinks.json", ""}} {
+		if opens(u[0], u[1]) {
+			t.Fatalf("%v opens the app", u)
+		}
+	}
+
+	rec = get(mux, "/.well-known/assetlinks.json")
+	var al []struct {
+		Relation []string `json:"relation"`
+		Target   struct {
+			Namespace   string   `json:"namespace"`
+			PackageName string   `json:"package_name"`
+			Certs       []string `json:"sha256_cert_fingerprints"`
+		} `json:"target"`
+	}
+	if rec.Code != 200 || rec.Header().Get("Content-Type") != "application/json" || json.Unmarshal(rec.Body.Bytes(), &al) != nil || len(al) != 1 ||
+		al[0].Relation[0] != "delegate_permission/common.handle_all_urls" || al[0].Target.Namespace != "android_app" ||
+		al[0].Target.PackageName != "net.ffmuc.meet" || al[0].Target.Certs[0] != s.cfg.androidCerts[0] {
+		t.Fatalf("assetlinks: %d %s", rec.Code, rec.Body)
+	}
+}
+
+func regexpMatch(re, s string) bool { return regexp.MustCompile(re).MatchString(s) }

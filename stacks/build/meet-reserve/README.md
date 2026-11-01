@@ -43,6 +43,27 @@ Errors: see below. Each `/api/join` POST counts for the haproxy POST limit.
 
 The metric `ffmuc_reserve_api_joins_total{role}` counts the tokens.
 
+## App links
+
+meet-reserve serves the files that let iOS and Android open links in the
+app `net.ffmuc.meet`. haproxy sends these paths on meet.ffmuc.net to
+meet-reserve:
+
+- `/.well-known/apple-app-site-association`: needs `RESERVE_APPLE_TEAM_ID`
+  (10 letters or digits).
+- `/.well-known/assetlinks.json`: needs `RESERVE_ANDROID_CERT_SHA256`
+  (SHA-256 fingerprints of the signing certs, comma-separated, with or
+  without colons).
+
+If a value is empty, the file gives HTTP 404. The values are public. Put the
+same values in all `stacks/docker0*/meet-reserve/compose.yaml`.
+
+The app opens host links (`/reserve/h/…`), speaker links (`/reserve/s/…`),
+manage links (`/reserve/#k=…`, `/reserve/#m=…`) and rooms (one path segment
+without a dot, for example `/r-…`). It does not open the start page, the
+reserve page, Jitsi files and APIs. Android uses the path filters of the app
+manifest.
+
 ## API errors
 
 All errors from `/reserve/api/*` are JSON:
