@@ -6,6 +6,18 @@
 # come from the Komodo Stack environment.
 x-zammad-image: &zammad-image ghcr.io/zammad/zammad:7.2.2-0028@sha256:ff8086858d775651b246b77343fb72994de27c1deeea1fb8b86e5a2958685140
 
+# Zammad 7.2.x joins the change lines of webhook notifications with a
+# literal '\n' (zammad/zammad#6449, fixed for 7.3). Patch that line at
+# start; it matches nothing once the image has the fix. Remove with 7.3.
+x-webhook-newline-fix: &webhook-newline-fix
+  - sh
+  - -c
+  - |
+    f=/opt/zammad/app/services/service/template/interpolation/interpolator/webhook/track/notification.rb
+    sed -i "s/\.join('\\\\n')/.join(\"\\\\n\")/" "$$f"
+    exec /opt/zammad/bin/docker-entrypoint "$$@"
+  - zammad-entrypoint
+
 x-ffmuc-app-mounts: &ffmuc-app-mounts
   - /srv/docker/zammad-backup:/var/tmp/zammad:ro
   - /srv/docker/zammad-storage:/opt/zammad/storage
@@ -24,9 +36,11 @@ services:
     volumes: *ffmuc-app-mounts
   zammad-railsserver:
     image: *zammad-image
+    entrypoint: *webhook-newline-fix
     volumes: *ffmuc-app-mounts
   zammad-scheduler:
     image: *zammad-image
+    entrypoint: *webhook-newline-fix
     volumes: *ffmuc-app-mounts
   zammad-websocket:
     image: *zammad-image
