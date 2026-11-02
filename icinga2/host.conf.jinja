@@ -9,9 +9,12 @@
 {%- import_yaml 'icinga2/known_down.yaml' as known_down %}
 {%- set down_ok = (known_down or {}).get(node_id, {}) %}
 
+{%- set is_meet = node_id.endswith('.meet.ffmuc.net') %}
 {%- if 'icinga2_server' not in tags %}
 object Endpoint "{{ node_id }}" {
+	{%- if not is_meet %}
 		host = "{{ node_id }}"
+	{%- endif %}
 }
 
 object Zone "{{ node_id }}" {
@@ -26,7 +29,13 @@ object Host "{{ node_id }}" {
 	display_name = "{{ node_id }}"
 	check_command = "hostalive"
 
-	{%- if 'mine_interval' not in overlay_address %}
+	{%- if is_meet %}
+	{#- Jitsi hosts: the agent connects to the master, the host check pings the public address (as agentless) #}
+	{%- set external = salt['mine.get'](node_id,'minion_external_ip', tgt_type='glob')[node_id] or [] %}
+	{%- if external %}
+	address = "{{ external[0] }}"
+	{%- endif %}
+	{%- elif 'mine_interval' not in overlay_address %}
 	address = "{{ overlay_address | regex_replace('/\d+$','') }}"
 	{%- endif %}
 
