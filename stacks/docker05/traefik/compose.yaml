@@ -1,8 +1,8 @@
 ---
-# Traefik for docker05. Static configuration in traefik.yml (read at start: restart the stack after a
-# change), dynamic defaults in dynamic/ (watched, apply live). ACME account and certificates and the DNS
-# hook stay on the host in /srv/docker/traefik; the access log goes to /srv/docker/traefik/logs
-# (rotated by the logrotate state, not shipped to Graylog).
+# Traefik for docker05. Static configuration in traefik.yml (read at start: restart the stack after
+# a change), dynamic defaults in dynamic/ (watched, apply live). ACME account and certificates and
+# the DNS hook stay on the host in /srv/docker/traefik; the access log goes to
+# /srv/docker/traefik/logs (rotated by the logrotate state, not shipped to Graylog).
 services:
   traefik:
     image: traefik:v3.7.16@sha256:c8a121e4bb1347e8fd52657fab12f2cb70b68f8a018895e2068f92c9e519b9c2
@@ -52,7 +52,8 @@ services:
         max-size: 10m
         max-file: "3"
 
-  # read-only Docker API for Traefik's docker provider: version, ping, container list/inspect, events; no POST
+  # read-only Docker API for Traefik's docker provider: version, ping, container list/inspect,
+  # events; no POST
   socket-proxy:
     image: lscr.io/linuxserver/socket-proxy:3.4.7-r0-ls104@sha256:4e5e59efd3338205561c54262581992036e5a36ccca97d487b1d4ec41f9adc58
     restart: unless-stopped
