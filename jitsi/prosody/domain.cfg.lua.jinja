@@ -156,12 +156,11 @@ VirtualHost "{{ jitsi.xmpp.auth_domain }}"
         key = "/etc/prosody/certs/{{ jitsi.xmpp.auth_domain }}.key";
         certificate = "/etc/prosody/certs/{{ jitsi.xmpp.auth_domain }}.crt";
     }
-    authentication = "internal_plain"
+    authentication = "{{ jitsi.prosody.auth_backend }}"
 
 -- Proxy to jicofo's user JID, so that it doesn't have to register as a component.
 Component "focus.{{ jitsi.public_domain }}" "client_proxy"
     target_address = "{{ jitsi.jicofo.username }}@{{ jitsi.xmpp.auth_domain }}"
-    component_secret = "{{ jitsi.jicofo.secret }}"
 
 Component "speakerstats.{{ jitsi.public_domain }}" "speakerstats_component"
     muc_component = "conference.{{ jitsi.public_domain }}"
@@ -216,7 +215,7 @@ VirtualHost "recorder.{{ jitsi.public_domain }}"
     modules_enabled = {
         "ping";
     }
-    authentication = "internal_plain"
+    authentication = "{{ jitsi.prosody.auth_backend }}"
     c2s_require_encryption = false
     allow_empty_token = true
 {% endif %}{# recorder enabled #}

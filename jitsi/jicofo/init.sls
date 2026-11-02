@@ -25,11 +25,13 @@ jicofo:
   file.managed:
     - source: salt://jitsi/jicofo/config.jinja
     - template: jinja
+    - show_changes: False
 
 /etc/jitsi/jicofo/jicofo.conf:
   file.managed:
     - source: salt://jitsi/jicofo/jicofo.conf.jinja
     - template: jinja
+    - show_changes: False
 
 /etc/jitsi/jicofo/sip-communicator.properties:
   file.managed:

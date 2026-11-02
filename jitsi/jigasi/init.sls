@@ -42,11 +42,13 @@ systemd-reload-jigasi:
   file.managed:
     - source: salt://jitsi/jigasi/config.jinja
     - template: jinja
+    - show_changes: False
 
 /etc/jitsi/jigasi/sip-communicator.properties:
   file.managed:
     - source: salt://jitsi/jigasi/sip-communicator.properties.jinja
     - template: jinja
+    - show_changes: False
 {%- if jitsi.transcription.enabled and jitsi.transcription.save_transcripts %}
 
 /var/lib/jigasi/transcripts:

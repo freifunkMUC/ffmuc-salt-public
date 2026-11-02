@@ -35,7 +35,6 @@ jitsi:
     opts: ""
     username: "focus"
     password: "THIS_IS_SUPER_SECRET_JICOFO"
-    secret: "THIS_IS_A_LEGACY_SECRET"
     bridge_selection_strategy: SplitBridgeSelectionStrategy
 
   videobridge:
@@ -82,6 +81,7 @@ jitsi:
   prosody:
     enabled: false
     version: 1nightly136-1~buster
+    auth_backend: internal_hashed  # service accounts on the auth and recorder domains
 
   jitsi_meet_prosody:
     version: 1.0.9008-1
