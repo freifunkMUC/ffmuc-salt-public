@@ -1,0 +1,12 @@
+---
+# Login with Keycloak realm noc (LDAP group Admin + OTP) through oauth2-proxy on docker07
+# (stacks/docker07/oauth2-proxy). Use as `noc-auth@file` on a router of an internal UI.
+# No fallback: while auth.ov.ffmuc.net is down, the UIs behind it answer with an error.
+http:
+  middlewares:
+    noc-auth:
+      forwardAuth:
+        address: https://auth.ov.ffmuc.net/
+        authResponseHeaders:
+          - X-Auth-Request-User
+          - X-Auth-Request-Preferred-Username

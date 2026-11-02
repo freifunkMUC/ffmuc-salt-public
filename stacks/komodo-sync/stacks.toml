@@ -816,6 +816,22 @@ OIDC_CLIENT_SECRET = [[TUWUNEL_OIDC_CLIENT_SECRET]]
 """
 
 [[stack]]
+name = "docker07-oauth2-proxy"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker07"
+project_name = "oauth2-proxy"
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker07/oauth2-proxy"
+file_paths = ["compose.yaml"]
+environment = """
+OAUTH2_PROXY_CLIENT_SECRET = [[OAUTH2_PROXY_CLIENT_SECRET]]
+OAUTH2_PROXY_COOKIE_SECRET = [[OAUTH2_PROXY_COOKIE_SECRET]]
+"""
+
+[[stack]]
 name = "docker07-element-web"
 tags = ["ffmuc"]
 deploy = false
