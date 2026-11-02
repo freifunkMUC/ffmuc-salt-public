@@ -107,6 +107,20 @@ location /static {
 
 location /wiki/ {
 #deny all;
+	# The media manager (?do=media) is only for signed-in users: scrapers crawl
+	# its endless image/ns/tab combinations from thousands of addresses, and
+	# every request costs PHP and LDAP on docker04. Files stay public below
+	# /wiki/_media/. DokuWiki sets the DW<md5> cookie only at sign-in.
+	set $wiki_media_anon "";
+	if ($arg_do = "media") {
+		set $wiki_media_anon "media";
+	}
+	if ($http_cookie !~ "DW[0-9a-f]{32}=") {
+		set $wiki_media_anon "${wiki_media_anon}-anon";
+	}
+	if ($wiki_media_anon = "media-anon") {
+		return 403;
+	}
 	proxy_pass         http://wiki_upstream/;
 	proxy_redirect     off;
 	proxy_set_header   Host $host;
