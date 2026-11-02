@@ -19,3 +19,6 @@ nagios  ALL=NOPASSWD:	/usr/local/sbin/dhcpd-pool
 nagios	ALL=NOPASSWD:	/usr/lib/nagios/plugins/check_mailq
 
 nagios	ALL=NOPASSWD:	/usr/local/share/monitoring-plugins/check_ffmuc_dumps
+
+# Jitsi dial-in: SIP trunk registration in Asterisk (read only)
+nagios	ALL=NOPASSWD:	/usr/sbin/asterisk -rx pjsip show registrations
