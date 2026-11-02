@@ -19,6 +19,9 @@ services:
     image: quay.io/keycloak/keycloak:26.8.1@sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b
     restart: unless-stopped
     entrypoint: ["/opt/keycloak/bin/kc.sh", "start", "--proxy-headers", "xforwarded"]
+    volumes:
+      # login theme for realm noc; Keycloak caches themes, so a theme change needs a Core restart (redeploy)
+      - ./themes/ffmuc-internal:/opt/keycloak/themes/ffmuc-internal:ro
     env_file:
       - env/keycloak.env
     environment:
