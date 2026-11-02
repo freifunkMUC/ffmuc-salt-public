@@ -17,17 +17,19 @@ Kind={{ kind }}
 ListenPort={{ sites_config[site]['wireguard_port'] }}
 PrivateKey={{ wireguard_key }}
 
-{% for node,bla in salt['mine.get']('netbox:role:name:nextgen-gateway', 'minion_id', tgt_type='pillar').items() | sort %}
-{%- if grains['id'] not in node %}
-{%- set wireguard_public_key = salt['mine.get'](node,'minion_wireguard_public', tgt_type='glob')[node]  %}
-{%- if wireguard_public_key %}
+{% for node, _ in salt['mine.get']('netbox:role:name:nextgen-gateway', 'minion_id', tgt_type='pillar').items() | sort if node != grains['id'] %}
+{%- set wireguard_public_key = salt['mine.get'](node, 'minion_wireguard_public', tgt_type='glob').get(node) %}
+{%- if not (wireguard_public_key is string and wireguard_public_key | regex_match('^([A-Za-z0-9+/]{43}=)$')) %}
+{{- raise('No valid WireGuard public key for gateway ' ~ node ~ ' in the Salt mine (got: ' ~ wireguard_public_key ~ '). '
+          ~ 'Check: salt ' ~ node ~ ' mine.get ' ~ node ~ ' minion_wireguard_public. '
+          ~ 'Refresh: salt ' ~ node ~ ' mine.update. '
+          ~ 'If ' ~ node ~ ' is decommissioned, remove its nextgen-gateway role in NetBox.') }}
+{%- endif %}
 {%- set link_local = salt['wireguard_v6.generate'](wireguard_public_key) %}
 [WireGuardPeer]
 PublicKey={{ wireguard_public_key }}
 AllowedIPs={{ link_local }}/128
 Endpoint={{ node | regex_replace('in\.ffmuc\.net','ext.ffmuc.net') }}:{{ wireguard_port }}
-{%- endif %}
-{%- endif %}
 {%- endfor %}
 {%- endif %}
 
