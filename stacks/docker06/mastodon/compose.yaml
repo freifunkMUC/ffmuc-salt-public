@@ -39,15 +39,16 @@ services:
     image: postgres:17.11-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
     #image: pgautoupgrade/pgautoupgrade:17-alpine
     shm_size: 2gb
-    command: postgres -c 'max_connections=500' -c 'shared_buffers=8776MB' -c 'effective_cache_size=15328MB' -c 'maintenance_work_mem=2GB' -c 'effective_io_concurrency=500' # 48 + 5 + 80 + 140 + 100
+    command: postgres -c 'max_connections=500' -c 'shared_buffers=8776MB' -c 'effective_cache_size=15328MB' -c 'maintenance_work_mem=2GB' -c 'effective_io_concurrency=500' -c 'hba_file=/etc/postgresql/pg_hba.conf' # 48 + 5 + 80 + 140 + 100
     networks:
       - internal_network
     healthcheck:
       test: ['CMD', 'pg_isready', '-U', 'postgres']
     volumes:
       - /srv/docker/mastodon-data/postgres:/var/lib/postgresql/data
+      - ./postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
     environment:
-      POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
       POSTGRES_PASSWORD: ${DB_PASS}
       POSTGRES_DB: mastodon_production
       POSTGRES_USER: mastodon
