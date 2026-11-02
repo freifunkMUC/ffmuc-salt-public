@@ -4,6 +4,7 @@
 komodo:
   periphery:
     enabled: false
+    # renovate: datasource=github-releases depName=moghtech/komodo extractVersion=^v(?<version>.+)$
     version: 2.3.4
     sha256:
       x86_64: 46d50313970aea59d293bbe237648f4becea74e8abc2f30f1bb62b73456fc72e

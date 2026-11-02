@@ -5,6 +5,7 @@
 {%- if 'nextgen-gateway' in role %}
 {#- 2026.3 builds against Linux 5.15 - 7.3 (2024.1 only up to 6.8, so not
     against the noble HWE kernels) and keeps compat version 15. #}
+{#- renovate: datasource=github-tags depName=open-mesh-mirror/batman-adv extractVersion=^v(?<version>.+)$ versioning=loose #}
 {%- set batman_version = '2026.3' %}
 {%- set batman_old_versions = ['2024.1'] %}
 /usr/src/batman-adv-{{ batman_version }}:

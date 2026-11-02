@@ -1,6 +1,48 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended"
+  "extends": ["config:recommended", "docker:pinDigests", "helpers:pinGitHubActionDigests"],
+  "timezone": "Europe/Berlin",
+  "labels": ["dependencies"],
+  "prConcurrentLimit": 10,
+  "prHourlyLimit": 4,
+  "ignorePaths": ["docker-containers/**"],
+  "packageRules": [
+    {
+      "description": "Actions: one PR for minor, patch and digest updates",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor", "patch", "digest", "pinDigest"],
+      "groupName": "GitHub Actions"
+    },
+    {
+      "description": "Core and Periphery run the same version",
+      "matchPackageNames": ["moghtech/komodo", "ghcr.io/moghtech/komodo-core"],
+      "groupName": "komodo"
+    },
+    {
+      "description": "Collector (Salt) and analyzer image (stacks/) are released together",
+      "matchPackageNames": ["awlx/packetyeeter", "ghcr.io/awlx/packetyeeter-analyzer"],
+      "groupName": "packetyeeter"
+    },
+    {
+      "description": "Release assets are verified by sha256 in defaults.yaml, Renovate cannot fill them in",
+      "matchPackageNames": ["krombel/nebula", "moghtech/komodo"],
+      "matchManagers": ["custom.regex"],
+      "addLabels": ["hashes-needed"],
+      "prBodyNotes": ["Add the sha256 of every release asset to `defaults.yaml` in this PR before merging, otherwise `source_hash` fails."]
+    },
+    {
+      "matchPackageNames": ["open-mesh-mirror/batman-adv"],
+      "prBodyNotes": ["Check that the release builds against the gateway kernels (comment in `systemd-networkd/init.sls`) and move the old version to `batman_old_versions`."]
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Versions in Salt states and defaults, marked with a `renovate:` comment on the line above",
+      "managerFilePatterns": ["/(^|/)defaults\\.yaml$/", "/(^|/)init\\.sls$/"],
+      "matchStrings": [
+        "renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)(?: extractVersion=(?<extractVersion>\\S+))?(?: versioning=(?<versioning>\\S+))?[^\\n]*\\n[^\\n]*?(?:version: |_version = ')(?<currentValue>[^'\\s]+)"
+      ]
+    }
   ]
 }
