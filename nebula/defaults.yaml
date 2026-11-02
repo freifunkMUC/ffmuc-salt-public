@@ -3,6 +3,7 @@
 ---
 nebula:
   enabled: false
+  # renovate: datasource=github-releases depName=krombel/nebula extractVersion=^v(?<version>.+)$ versioning=regex:^(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)-(?<build>\d+)$
   version: 1.8.2-2
   packages:
     1.8.2-2:

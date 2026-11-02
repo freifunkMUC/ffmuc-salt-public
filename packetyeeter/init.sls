@@ -79,6 +79,7 @@
 
 {# Default collector release version. When you bump it, also bump the
    analyzer image in stacks/<host>/packetyeeter-analyzer/compose.yaml. #}
+{# renovate: datasource=github-releases depName=awlx/packetyeeter extractVersion=^v(?<version>.+)$ #}
 {% set default_version = '0.2.0' %}
 
 {# The collector runs natively (systemd) since it needs to load eBPF/XDP/TC
