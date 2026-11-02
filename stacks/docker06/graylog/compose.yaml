@@ -5,7 +5,7 @@
 services:
   # MongoDB: https://hub.docker.com/_/mongo/
   mongodb:
-    image: mongo:7.0.45@sha256:c53852c00c23ca9f23fc39690350ffa9a80e3642fe8f96879726d8da0abe80a7
+    image: mongo:7.0.45@sha256:8bb4442761a63a8dda452744082cdac9644b429807eb977b42324a63cef59ca4
     restart: unless-stopped
     networks:
       - graylog
