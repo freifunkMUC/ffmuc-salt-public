@@ -4,10 +4,15 @@ services:
     image: crazymax/diun:4.33.1@sha256:8cc638b4c54e8a0c47898a51b20dae73037ad43310168b5da543a311dc668f77
     hostname: docker06-diun
     restart: always
+    depends_on:
+      - socket-proxy
+    networks:
+      - default
+      - socket-proxy
     volumes:
       - /srv/docker/diun/data:/data
-      - /var/run/docker.sock:/var/run/docker.sock
     environment:
+      - DIUN_PROVIDERS_DOCKER_ENDPOINT=tcp://socket-proxy:2375
       - TZ=Europe/Berlin
       - LOG_LEVEL=info
       - LOG_JSON=false
@@ -21,3 +26,26 @@ services:
       - >-
         DIUN_NOTIF_SLACK_TEMPLATEBODY={{ .Meta.Hostname }}: `{{ .Entry.Image }}`
         {{ if (eq .Entry.Status "new") }}newly added{{ else }}updated{{ end }}.
+
+  # read-only Docker API for diun: version, container list/inspect, image inspect; no POST
+  socket-proxy:
+    image: lscr.io/linuxserver/socket-proxy:3.4.7-r0-ls104@sha256:4e5e59efd3338205561c54262581992036e5a36ccca97d487b1d4ec41f9adc58
+    restart: always
+    read_only: true
+    tmpfs:
+      - /run
+    networks:
+      - socket-proxy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - CONTAINERS=1
+      - IMAGES=1
+      - VERSION=1
+      - POST=0
+      - EVENTS=0
+      - PING=1
+
+networks:
+  socket-proxy:
+    internal: true
