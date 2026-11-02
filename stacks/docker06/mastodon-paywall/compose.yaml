@@ -1,7 +1,7 @@
 ---
 services:
   mastodon-paywall:
-    image: ghcr.io/freifunkmuc/mastodon-paywall:main@sha256:985b06762fdda0e3f894225f0d4af1085a5b1f6f0b9f8b40c541e7fff4df1642
+    image: ghcr.io/freifunkmuc/mastodon-paywall:main@sha256:b27017d3cddd966876e902f846ce9e8d221ebc3ab13bfbd7ebeeb466a3ef8d96
     container_name: mastodon-paywall
     restart: always
     environment:
