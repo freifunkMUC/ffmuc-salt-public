@@ -56,7 +56,7 @@ services:
 
   redis:
     restart: always
-    image: redis:7.4.12-alpine@sha256:338fbfc036dc5517ac0b04d6de21521085935336e565f223406180e9d84166e2
+    image: redis:7.4.12-alpine@sha256:8da19c7399dca900c6822a1cf30f9d2285585e2c4b457ff4095b0f4500054d3f
     networks:
       - internal_network
     healthcheck:
