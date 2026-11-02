@@ -1,0 +1,46 @@
+/* FFMUC colours from the logo; buttons use a darker magenta for 5.7:1 contrast with white text. */
+:root {
+    --ffmuc-magenta: #de2c68;
+    --ffmuc-magenta-dark: #c41f5c;
+    --ffmuc-magenta-darker: #a3194c;
+    --ffmuc-yellow: #ffcc33;
+    --keycloak-card-top-color: var(--ffmuc-magenta);
+    --pf-v5-global--primary-color--100: var(--ffmuc-magenta-dark);
+    --pf-v5-global--primary-color--200: var(--ffmuc-magenta-darker);
+    --pf-v5-global--link--Color: var(--ffmuc-magenta-dark);
+    --pf-v5-global--link--Color--hover: var(--ffmuc-magenta-darker);
+    --pf-v5-global--active-color--100: var(--ffmuc-magenta-dark);
+}
+
+/* plain dark background instead of the Keycloak artwork */
+.login-pf body {
+    background: #1d2127;
+}
+
+#kc-header-wrapper {
+    text-transform: none;
+    letter-spacing: 0.02em;
+    font-weight: 600;
+    font-size: 26px;
+}
+
+#kc-header-wrapper::before {
+    content: "";
+    display: block;
+    width: 88px;
+    height: 88px;
+    margin: 0 auto 0.75rem;
+    background: url("../img/ffmuc-logo.png") center / contain no-repeat;
+}
+
+#ffmuc-footer {
+    margin-block-start: var(--pf-v5-global--spacer--lg);
+    padding-block-end: var(--pf-v5-global--spacer--lg);
+    font-size: var(--pf-v5-global--FontSize--sm);
+    color: var(--pf-v5-global--Color--200);
+    text-align: center;
+}
+
+#ffmuc-footer .ffmuc-legal {
+    margin-block-start: var(--pf-v5-global--spacer--sm);
+}
