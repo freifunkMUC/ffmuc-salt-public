@@ -39,6 +39,8 @@ base:
     - kvm
     - ntp
     - snmpd
+  'icinga-vie01.in.ffmuc.net':
+    - nebula-meet
   '*.meet.ffmuc.net':
     - nebula-meet
     - jitsi.base
