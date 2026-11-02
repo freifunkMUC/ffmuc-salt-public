@@ -10,3 +10,10 @@ http:
         authResponseHeaders:
           - X-Auth-Request-User
           - X-Auth-Request-Preferred-Username
+        # Pass refreshed session cookies (COOKIE_REFRESH) from the 202 back to the browser; oauth2-proxy splits large
+        # cookies into _0, _1, ... Fetch/XHR calls get the redirect to Keycloak once the session ends (reload the page).
+        addAuthCookiesToResponse:
+          - _oauth2_noc
+          - _oauth2_noc_0
+          - _oauth2_noc_1
+          - _oauth2_noc_2
