@@ -9,3 +9,12 @@ services:
     volumes:
       - /srv/docker/dokuwiki/storage:/storage
       - /srv/docker/dokuwiki/ldap.conf:/etc/ldap/ldap.conf:ro
+      - ./apache/mpm_prefork.conf:/etc/apache2/mods-available/mpm_prefork.conf:ro
+    # PHP sessions: every anonymous request opens one, and on disk they piled
+    # up (114k files during a scraper wave). In memory they go with a restart,
+    # which signs people out once; the wiki's login cookie signs them in again.
+    tmpfs:
+      - /tmp:size=512m,mode=1777
+    # One busy service must not starve the others on docker04 (10 cores).
+    cpus: 4
+    mem_limit: 3g
