@@ -1,0 +1,24 @@
+# Managed by Salt (unified-respondd). One instance per controller set, the instance name selects
+# the config /etc/unified-respondd/<instance>.yaml (pillar unified_respondd:instances:<instance>).
+# The config holds the controller credentials: LoadCredential passes it to the unprivileged
+# DynamicUser, so the file stays root:root 0600.
+
+[Unit]
+Description=unified_respondd (%i)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+DynamicUser=yes
+LoadCredential=config.yaml:/etc/unified-respondd/%i.yaml
+Environment=UNIFIED_RESPONDD_CONFIG_FILE=%d/config.yaml
+ExecStart=/opt/unified-respondd/bin/unified-respondd
+Restart=always
+RestartSec=10
+
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE CAP_NET_RAW
+AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_NET_RAW
+
+[Install]
+WantedBy=multi-user.target
