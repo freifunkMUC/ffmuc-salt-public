@@ -1,7 +1,7 @@
 ---
 services:
   mongo:
-    image: mongo:8.0.34-noble@sha256:c2d54fddfb3738fb27fe117f51692e3f44e640a3e7aeb8da3937ee9cd33a650b
+    image: mongo:8.0.34-noble@sha256:3c64937121b9437095921c4bb2569911084c05f7b88e4a263d62a8959d2b2399
     labels:
       komodo.skip: ""
     command: --quiet --wiredTigerCacheSizeGB 0.25
