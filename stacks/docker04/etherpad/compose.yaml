@@ -32,7 +32,7 @@ services:
     mem_limit: 1g
     cpus: 2
   mariadb:
-    image: mariadb:11.8.9-noble@sha256:2d2f4095530294735a857cfe22bb101e19b0849b416911c796ec4aa81b164a62
+    image: mariadb:11.8.9-noble@sha256:c4124d1afa875e47f2892edf26b482fa54f796e2f342d3717a04ca091a22a9bd
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?}
