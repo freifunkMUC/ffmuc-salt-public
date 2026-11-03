@@ -71,15 +71,17 @@ generate-dhparam:
 {%- set role = salt['pillar.get']('netbox:role:name', '') or '' %}
 
 #
-# Traefik ACME DNS update script for docker hosts
+# Traefik ACME DNS update script for docker hosts and mail01 (mailserver role,
+# Traefik under /opt/containers/traefik, see stacks/mail01/traefik)
 #
-{% if "docker" in role %}
-/srv/docker/traefik/update-dns.sh:
+{% if "docker" in role or "mailserver" in role %}
+{% set traefik_dir = '/opt/containers/traefik' if "mailserver" in role else '/srv/docker/traefik' %}
+{{ traefik_dir }}/update-dns.sh:
   file.managed:
     - source: salt://certs/files/traefik-dns-update.sh.jinja
     - template: jinja
     - mode: "0700"
-{% endif %}{# if "docker" in role #}
+{% endif %}{# if "docker" in role or "mailserver" in role #}
 
 {% set gcore_token = salt['pillar.get']('netbox:config_context:gcore:api_token') %}
 {% set cloudflare_token = salt['config.get']('netbox:config_context:cloudflare:api_token') %}

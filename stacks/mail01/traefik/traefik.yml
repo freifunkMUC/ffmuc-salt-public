@@ -1,0 +1,67 @@
+# Static configuration of mail01's Traefik (was data/traefik.yml on the host).
+# Resolver "ov": DNS-01 through nsupdate to the authoritative servers (the
+# script /opt/containers/traefik/update-dns.sh comes from the Salt state certs,
+# as on the docker hosts), for names under ov.ffmuc.net that Let's Encrypt
+# cannot reach over HTTP. "http" and "cloudflare" as before.
+core:
+  defaultRuleSyntax: v2
+api:
+  dashboard: true
+entryPoints:
+  http:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: "https"
+          scheme: "https"
+  https:
+    address: ":443"
+    http:
+      middlewares:
+        - crowdsec-bouncer@file
+    http3:
+      advertisedPort: '443'
+global:
+  checknewversion: true
+  sendanonymoususage: false
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+    network: "proxy"
+  file:
+    filename: "./dynamic_conf.yml"
+    watch: true
+  providersThrottleDuration: 10
+certificatesResolvers:
+  cloudflare:
+    acme:
+      email: hilfe@ffmuc.bayern
+      storage: acme.json
+      dnsChallenge:
+        provider: cloudflare
+        resolvers:
+          - "1.1.1.1:53"
+          - "1.0.0.1:53"
+  http:
+    acme:
+      email: hilfe@ffmuc.bayern
+      storage: acme.json
+      httpChallenge:
+        entryPoint: http
+  ov:
+    acme:
+      email: hilfe@ffmuc.bayern
+      storage: acme.json
+      dnsChallenge:
+        provider: exec
+        propagation:
+          delayBeforeChecks: 0
+          disableChecks: true
+log:
+  level: "INFO"
+  filePath: "/var/log/traefik/traefik.log"
+accessLog:
+  filePath: "/var/log/traefik/access.log"
+  bufferingSize: 100

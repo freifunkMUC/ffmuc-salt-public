@@ -1,8 +1,9 @@
 # Traefik of mail01 (project "traefik", /opt/containers/traefik). It owns the
 # Docker network "proxy" that crowdsec, maintenance and mailserver join as
-# external; keep it first when everything is recreated. Everything below
-# data/ stays on the host: traefik.yml, dynamic_conf.yml (dashboard basic auth
-# hash) and acme.json (certificates, also read by the mailserver).
+# external; keep it first when everything is recreated. traefik.yml is in git;
+# dynamic_conf.yml and acme.json (certificates, also read by the mailserver)
+# stay on the host. The dashboard is Nebula only (traefik-mail01.ov.ffmuc.net)
+# behind the Keycloak realm noc login, as on docker04-07.
 services:
   traefik:
     image: traefik:v3.7.13@sha256:f86a2cab1b5c649070c49f883c743dd32d8485a56e3368c5f93b9e91f1e91259
@@ -19,17 +20,25 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /opt/containers/traefik/data/traefik.yml:/traefik.yml:ro
+      - ./traefik.yml:/traefik.yml:ro
+      # DNS-01 for resolver ov, written by the Salt state certs (0700, holds the update key)
+      - /opt/containers/traefik/update-dns.sh:/tmp/update-dns.sh:ro
       - /opt/containers/traefik/data/acme.json:/acme.json
       - /opt/containers/traefik/data/dynamic_conf.yml:/dynamic_conf.yml
       - /var/log/crowdsec/traefik/:/var/log/traefik/
+    environment:
+      - EXEC_PATH=/tmp/update-dns.sh
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.traefik.entrypoints=https"
-      - "traefik.http.routers.traefik.rule=Host(`traefik.mail01.fnmuc.net`)"
-      - "traefik.http.routers.traefik.middlewares=traefikAuth@file,default@file"
+      - "traefik.http.routers.traefik.rule=Host(`traefik-mail01.ov.ffmuc.net`)"
+      # Login with Keycloak realm noc through oauth2-proxy on docker07 (same settings as docker05's dynamic/noc-auth.yml)
+      - "traefik.http.middlewares.noc-auth.forwardauth.address=https://auth.ov.ffmuc.net/"
+      - "traefik.http.middlewares.noc-auth.forwardauth.authresponseheaders=X-Auth-Request-User,X-Auth-Request-Preferred-Username"
+      - "traefik.http.middlewares.noc-auth.forwardauth.addauthcookiestoresponse=_oauth2_noc,_oauth2_noc_0,_oauth2_noc_1,_oauth2_noc_2"
+      - "traefik.http.routers.traefik.middlewares=noc-auth@docker,default@file"
       - "traefik.http.routers.traefik.tls=true"
-      - "traefik.http.routers.traefik.tls.certresolver=http"
+      - "traefik.http.routers.traefik.tls.certresolver=ov"
       - "traefik.http.routers.traefik-middlewares=error-pages-middleware"
       - "traefik.http.routers.traefik.service=api@internal"
       - "traefik.http.services.traefik.loadbalancer.sticky.cookie.httpOnly=true"
