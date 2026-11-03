@@ -1,7 +1,7 @@
 ---
 services:
   postgresql:
-    image: postgres:17.11@sha256:3b0cda93be7c8dba2ed484d19393d93845dc3dafb88973e248ba8e6d99d784e1
+    image: postgres:18.6@sha256:3a4264520e121176619f54ff867d12774bc81e95e7b84db58d63bccdb6144b81
     environment:
       POSTGRES_USER: "cfssl"
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}

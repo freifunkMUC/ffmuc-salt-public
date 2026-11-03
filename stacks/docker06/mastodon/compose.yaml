@@ -36,7 +36,7 @@ services:
       test: ["CMD-SHELL", "curl -sf localhost:9200/_cluster/health || exit 1"]
   db:
     restart: always
-    image: postgres:17.11-alpine@sha256:266d3c257594e195b309ae9d1805e54c788f1d7b375f56bf6c367aac6c917e7b
+    image: postgres:18.6-alpine@sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5
     #image: pgautoupgrade/pgautoupgrade:17-alpine
     shm_size: 2gb
     command: postgres -c 'max_connections=500' -c 'shared_buffers=8776MB' -c 'effective_cache_size=15328MB' -c 'maintenance_work_mem=2GB' -c 'effective_io_concurrency=500' -c 'hba_file=/etc/postgresql/pg_hba.conf' # 48 + 5 + 80 + 140 + 100
