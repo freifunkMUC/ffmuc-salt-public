@@ -35,6 +35,11 @@
       "allowedVersions": "<5.9"
     },
     {
+      "description": "MongoDB 8.0 is the LTS line and the newest UniFi Network supports (docker05); 8.1+ are rapid releases with a one-way featureCompatibilityVersion. Komodo (docker06) follows the same pin",
+      "matchPackageNames": ["mongo"],
+      "allowedVersions": "<8.1"
+    },
+    {
       "description": "ClickHouse LTS only (x.3 and x.8), as akvorado's own versions.yml does",
       "matchPackageNames": ["clickhouse/clickhouse-server", "clickhouse/clickhouse-keeper"],
       "allowedVersions": "/^\\d+\\.[38](\\.|$)/"
