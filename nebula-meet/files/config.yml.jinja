@@ -165,6 +165,21 @@ firewall:
     proto: udp
     group: jibri
 {%- endif %}
+{%- if "icinga-vie01.in.ffmuc.net" == grains["id"] %}
+  # Icinga agents on the Jitsi hosts connect to the master (agent -> master); several `group:` rules are OR, `groups:` would be AND
+  - port: 5665
+    proto: tcp
+    group: jvb
+  - port: 5665
+    proto: tcp
+    group: jicofo
+  - port: 5665
+    proto: tcp
+    group: jibri
+  - port: 5665
+    proto: tcp
+    group: jigasi
+{%- endif %}
 {%- if salt["pillar.get"]("netbox:config_context:libretranslate:enabled", False) %}
   # LibreTranslate for live translated subtitles, used by jigasi (stacks/docker07/libretranslate)
   - port: {{ salt["pillar.get"]("netbox:config_context:libretranslate:port", 5010) }}

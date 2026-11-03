@@ -39,8 +39,12 @@ base:
     - kvm
     - ntp
     - snmpd
+  'icinga-vie01.in.ffmuc.net':
+    - nebula-meet
   '*.meet.ffmuc.net':
     - nebula-meet
+    - certs
+    - icinga2
     - jitsi.base
     - jitsi.jibri
     - jitsi.videobridge
@@ -48,7 +52,6 @@ base:
     - jitsi.prosody
     - jitsi.jicofo
     - jitsi.meet
-    - certs
     - jitsi.nginx
   'call*':
     - jitsi.asterisk
