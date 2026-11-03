@@ -23,7 +23,7 @@ services:
       MARIADB_AUTO_UPGRADE: "true"
 
   matomo-app:
-    image: matomo:5.14.2-fpm-alpine@sha256:19625e90ba4f3d6b3b03fd516fe4e356d1a074b942906d88bc8899e51c80d93e
+    image: matomo:5.14.2-fpm-alpine@sha256:4bb11d6b1051d868c7cd0472d015e1782ade843bf40ffdba3a7e77a5d7eb19dd
     restart: always
     links:
       - db
@@ -36,7 +36,7 @@ services:
       MATOMO_DATABASE_HOST: db
 
   matomo-cron:
-    image: matomo:5.14.2-fpm-alpine@sha256:19625e90ba4f3d6b3b03fd516fe4e356d1a074b942906d88bc8899e51c80d93e
+    image: matomo:5.14.2-fpm-alpine@sha256:4bb11d6b1051d868c7cd0472d015e1782ade843bf40ffdba3a7e77a5d7eb19dd
     restart: unless-stopped
     depends_on:
       - matomo-app
