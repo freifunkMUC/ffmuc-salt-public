@@ -33,7 +33,7 @@ services:
     restart: unless-stopped
 
   unifi-db:
-    image: mongo:8.0.34-noble@sha256:3c64937121b9437095921c4bb2569911084c05f7b88e4a263d62a8959d2b2399
+    image: mongo:9.0.2-noble@sha256:61dd87ff554dc20386c63ebe1f7ede27314370ad5a7bf357c685fab424672158
     restart: unless-stopped
     # command: --wiredTigerCacheSizeGB 2.5 # Container memory limit - 0.5G
     volumes:
