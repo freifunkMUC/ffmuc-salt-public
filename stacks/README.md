@@ -106,7 +106,7 @@ bcrypt hash), put the reference in single quotes: `NAME = '[[NAME]]'`.
 | `docker0{4,5,6,7}/wgkex` | `WGKEX_EMQX_NODE_COOKIE` (`EMQX_NODE__COOKIE`, same on all hosts). `config/broker/wgkex.yaml` stays on the host (the Salt state `telegraf` reads it too) |
 | `docker04/conferencemapper` | none |
 | `docker04/excalidraw-backend` | none |
-| `docker04/matomo` | `MATOMO_DB_ROOT_PASSWORD`, `MATOMO_DB_PASSWORD` (from `/srv/docker/matomo/db.env`). `nginx.conf` stays on the host |
+| `docker04/matomo` | `MATOMO_DB_ROOT_PASSWORD`, `MATOMO_DB_PASSWORD` (from `/srv/docker/matomo/db.env`). The code comes from the image at every deploy (`matomo-install` into the volume `code`, then `matomo-update` runs `core:update`); `config.ini.php`, `plugins/Provider`, `geoip/` and `nginx.conf` stay on the host. Plugins installed from the web interface do not survive a deploy; add them like `Provider`. Dump the database before a minor or major bump |
 | `docker04/netbox` | `NETBOX_DB_PASSWORD`, `NETBOX_REDIS_PASSWORD` (redis and redis-cache), `NETBOX_SECRET_KEY`, `NETBOX_SUPERUSER_API_TOKEN`, `NETBOX_SUPERUSER_PASSWORD`, `NETBOX_AUTH_LDAP_BIND_PASSWORD`, `NETBOX_API_TOKEN_PEPPER_1` (from `/srv/docker/netbox/env/*.env`). The non-secret values are in `env/`. `configuration/` stays on the host |
 | `docker04/netbox-parker` | `NETBOX_PARKER_DB_PASSWORD`, `NETBOX_PARKER_REDIS_PASSWORD`, `NETBOX_PARKER_REDIS_CACHE_PASSWORD`, `NETBOX_PARKER_SECRET_KEY`, `NETBOX_PARKER_API_TOKEN_PEPPER_1` (from `/srv/docker/netbox-parker/env/*.env`). The non-secret values are in `env/`. `configuration/` stays on the host |
 | `docker04/openldap` | `OPENLDAP_LAM_PASSWORD` (`LAM_PASSWORD` from `/srv/docker/openldap/.env`). `ldif/`, `slapd-data/` and `certs/` stay on the host |

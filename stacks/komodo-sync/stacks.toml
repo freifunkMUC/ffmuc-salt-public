@@ -94,6 +94,7 @@ repo = "freifunkMUC/ffmuc-salt-public"
 branch = "main"
 run_directory = "stacks/docker04/matomo"
 file_paths = ["compose.yaml"]
+ignore_services = ["matomo-install", "matomo-update"]
 environment = """
 MARIADB_ROOT_PASSWORD = [[MATOMO_DB_ROOT_PASSWORD]]
 MARIADB_PASSWORD = [[MATOMO_DB_PASSWORD]]
