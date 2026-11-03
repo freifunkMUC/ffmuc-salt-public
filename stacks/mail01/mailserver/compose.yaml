@@ -79,7 +79,8 @@ services:
       - SETGID
     security_opt:
       - no-new-privileges:true
-    mem_limit: 64m
+    # Image defaults: 64m message + 128m rrset cache.
+    mem_limit: 256m
     networks:
       resolver:
         ipv4_address: 192.168.53.2
