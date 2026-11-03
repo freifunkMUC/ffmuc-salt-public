@@ -144,7 +144,17 @@ nginx-systemd-daemon-reload:
     - require:
       - file: /srv/www/firmware.ffmuc.net
 
-{% for domain in salt['pillar.get']('netbox:config_context:webserver:domains') %}
+# HAProxy sends every request for these to its own backend; remove them from netbox:config_context:webserver:domains too
+{% set retired_domains = ['broker.ffmuc.net', 'chat.ffmuc.net', 'cloud.ffmuc.net', 'cryptpad.ffmuc.net', 'hedgedoc.ffmuc.net',
+                          'social.ffmuc.net', 'speed.ffmuc.net', 'stats.ffmuc.net', 'tickets.ffmuc.net'] %}
+{% for domain in retired_domains %}
+/etc/nginx/sites-enabled/{{ domain }}.conf:
+  file.absent:
+    - watch_in:
+      - cmd: nginx-configtest
+{% endfor %}
+
+{% for domain in salt['pillar.get']('netbox:config_context:webserver:domains') if domain not in retired_domains %}
 /etc/nginx/sites-enabled/{{ domain }}.conf:
   file.managed:
     - source:
