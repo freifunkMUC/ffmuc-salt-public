@@ -94,7 +94,7 @@ services:
       - /srv/docker/mastodon-data/public/system:/mastodon/public/system
 
   streaming:
-    image: ghcr.io/mastodon/mastodon-streaming:v4.7.4@sha256:b896be8bc93db513695c3ebac8442c09453065ab1be06dfc49fe3c16a91c825c
+    image: ghcr.io/mastodon/mastodon-streaming:v4.7.5@sha256:3859d071e61a0ed2610a00e8048d89310235afb86e6923c0243bb4f9f4a31093
     restart: always
     env_file: env/mastodon.env
     environment:
