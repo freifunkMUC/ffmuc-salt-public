@@ -45,3 +45,5 @@ services:
       MM_SQLSETTINGS_DATASOURCE: postgres://mmuser:${POSTGRES_PASSWORD}@postgres:5432/mattermost?sslmode=disable&connect_timeout=10
       MM_BLEVESETTINGS_INDEXDIR: /mattermost/bleve-indexes
       MM_SERVICESETTINGS_SITEURL: https://chat.ffmuc.net
+      # One digest per interval instead of one mail per mention.
+      MM_EMAILSETTINGS_ENABLEEMAILBATCHING: "true"
