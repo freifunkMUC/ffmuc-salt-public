@@ -23,12 +23,16 @@ services:
       - traefik.enable=true
       - traefik.http.routers.traefik.entrypoints=http
       - traefik.http.routers.traefik.rule=Host(`docker07.ov.ffmuc.net`)
-      - traefik.http.middlewares.traefik-auth.basicauth.users=${TRAEFIK_DASHBOARD_USERS}
+      # Login with Keycloak realm noc through oauth2-proxy on docker07 (same settings as docker05's dynamic/noc-auth.yml;
+      # this Traefik has no file provider yet, the Traefik baseline brings one)
+      - traefik.http.middlewares.noc-auth.forwardauth.address=https://auth.ov.ffmuc.net/
+      - traefik.http.middlewares.noc-auth.forwardauth.authresponseheaders=X-Auth-Request-User,X-Auth-Request-Preferred-Username
+      - traefik.http.middlewares.noc-auth.forwardauth.addauthcookiestoresponse=_oauth2_noc,_oauth2_noc_0,_oauth2_noc_1,_oauth2_noc_2
       - traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https
       - traefik.http.routers.traefik.middlewares=traefik-https-redirect
       - traefik.http.routers.traefik-secure.entrypoints=https
       - traefik.http.routers.traefik-secure.rule=Host(`docker07.ov.ffmuc.net`)
-      - traefik.http.routers.traefik-secure.middlewares=traefik-auth
+      - traefik.http.routers.traefik-secure.middlewares=noc-auth@docker
       - traefik.http.routers.traefik-secure.tls=true
       - traefik.http.routers.traefik-secure.tls.certresolver=http
       - traefik.http.routers.traefik-secure.service=api@internal
