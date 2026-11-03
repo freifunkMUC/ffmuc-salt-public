@@ -51,6 +51,12 @@
       "allowedVersions": "<3.15"
     },
     {
+      "description": "bgpalerter copies the node binary into its Alpine 3.19 image; node 23+ needs libatomic, which that image lacks",
+      "matchFileNames": ["stacks/docker07/bgpalerter/Dockerfile"],
+      "matchPackageNames": ["node"],
+      "allowedVersions": "<23"
+    },
+    {
       "description": "Core and Periphery run the same version",
       "matchPackageNames": ["moghtech/komodo", "ghcr.io/moghtech/komodo-core"],
       "groupName": "komodo"
