@@ -66,6 +66,7 @@ docker-systemd-daemon-reload:
             "max-size": "10m",
             "max-file": "3"
           },
+          "live-restore": true,
           "default-address-pools": [
             {
               "base": "172.17.0.0/12",
@@ -80,7 +81,8 @@ docker-systemd-daemon-reload:
 
 {#- Deliberately no service watch on daemon.json: restarting dockerd would
     restart every container on the host. Changes here take effect on the
-    next manual docker restart or reboot. #}
+    next manual docker restart or reboot. With live-restore on, that restart
+    (and a dockerd upgrade) leaves the containers running. #}
 /usr/local/bin/docker-compose:
   file.absent
 {% endif  %}
