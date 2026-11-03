@@ -24,6 +24,33 @@
       "groupName": "GitHub Actions"
     },
     {
+      "description": "Major versions of container images (databases, search, brokers) need a data migration or a matching client: Renovate lists them in the Dependency Dashboard and opens a PR only when it is ticked there",
+      "matchManagers": ["docker-compose", "dockerfile"],
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "EMQX 5.9 and later are BSL 1.1: free only as single nodes, and wgkex runs a four-node cluster (docker04-07). Stay on the last Apache-2.0 line until wgkex has another broker.",
+      "matchPackageNames": ["emqx/emqx"],
+      "allowedVersions": "<5.9"
+    },
+    {
+      "description": "MongoDB 8.0 is the LTS line and the newest UniFi Network supports (docker05); 8.1+ are rapid releases with a one-way featureCompatibilityVersion. Komodo (docker06) follows the same pin",
+      "matchPackageNames": ["mongo"],
+      "allowedVersions": "<8.1"
+    },
+    {
+      "description": "ClickHouse LTS only (x.3 and x.8), as akvorado's own versions.yml does",
+      "matchPackageNames": ["clickhouse/clickhouse-server", "clickhouse/clickhouse-keeper"],
+      "allowedVersions": "/^\\d+\\.[38](\\.|$)/"
+    },
+    {
+      "description": "CI tests dhcp-server in the Python of Salt's onedir (3008.3: 3.14); raise together with Salt",
+      "matchManagers": ["github-actions"],
+      "matchDepNames": ["python"],
+      "allowedVersions": "<3.15"
+    },
+    {
       "description": "Core and Periphery run the same version",
       "matchPackageNames": ["moghtech/komodo", "ghcr.io/moghtech/komodo-core"],
       "groupName": "komodo"
