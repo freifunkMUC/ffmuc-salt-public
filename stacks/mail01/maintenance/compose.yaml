@@ -1,0 +1,37 @@
+# Error pages for Traefik's errors middleware (project "maintenance",
+# /opt/containers/maintenance). The middleware error-pages-middleware is
+# defined by these labels and used by the router in the traefik project.
+services:
+  error-pages:
+    image: tarampampam/error-pages:4.2.5@sha256:6d42b5d6e1a014fa2373e3587f9e85c25589a089fd5f6fc4f2a496858f5e365d
+    restart: unless-stopped
+    read_only: true
+    mem_limit: 128m
+    cpus: 0.5
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+    environment:
+      TEMPLATE_NAME: cats
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.error-pages.priority=10"
+      - "traefik.http.routers.error-pages.entrypoints=https"
+      - "traefik.http.routers.error-pages.rule=HostRegexp(`{host:.+}`)"
+      - "traefik.http.routers.error-pages.tls=true"
+      - "traefik.http.routers.error-pages.tls.certresolver=http"
+      - "traefik.http.routers.error-pages.middlewares=default@file"
+      - "traefik.http.middlewares.error-pages-middleware.errors.status=400-599"
+      - "traefik.http.middlewares.error-pages-middleware.errors.service=error-pages"
+      - "traefik.http.middlewares.error-pages-middleware.errors.query=/{status}.html"
+      - "traefik.http.services.error-pages.loadbalancer.server.port=8080"
+      - "traefik.docker.network=proxy"
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true

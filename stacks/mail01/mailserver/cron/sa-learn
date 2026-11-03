@@ -1,0 +1,12 @@
+# This assumes you're having `environment: ONE_DIR=1` in the env-mailserver,
+# with a consolidated config in `/var/mail-state`
+#
+# m h dom mon dow user command
+#
+# Everyday 3:00AM, learn spam from all users of a domain
+# spam: junk directory
+0  3 * * * root  sa-learn --spam /var/mail/fnmuc.net/*/.Junk --dbpath /var/mail-state/lib-amavis/.spamassassin
+# ham: archive directories
+15 3 * * * root  sa-learn --ham /var/mail/fnmuc.net/*/.Archive* --dbpath /var/mail-state/lib-amavis/.spamassassin
+# ham: inbox subdirectories
+30 3 * * * root  sa-learn --ham /var/mail/fnmuc.net/*/cur* --dbpath /var/mail-state/lib-amavis/.spamassassin

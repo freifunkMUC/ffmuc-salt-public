@@ -1,0 +1,52 @@
+# Traefik of mail01 (project "traefik", /opt/containers/traefik). It owns the
+# Docker network "proxy" that crowdsec, maintenance and mailserver join as
+# external; keep it first when everything is recreated. Everything below
+# data/ stays on the host: traefik.yml, dynamic_conf.yml (dashboard basic auth
+# hash) and acme.json (certificates, also read by the mailserver).
+services:
+  traefik:
+    image: traefik:v3.7.13@sha256:f86a2cab1b5c649070c49f883c743dd32d8485a56e3368c5f93b9e91f1e91259
+    container_name: traefik
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - proxy
+    ports:
+      - 80:80
+      - 443:443/tcp
+      - 443:443/udp
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /opt/containers/traefik/data/traefik.yml:/traefik.yml:ro
+      - /opt/containers/traefik/data/acme.json:/acme.json
+      - /opt/containers/traefik/data/dynamic_conf.yml:/dynamic_conf.yml
+      - /var/log/crowdsec/traefik/:/var/log/traefik/
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.entrypoints=https"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.mail01.fnmuc.net`)"
+      - "traefik.http.routers.traefik.middlewares=traefikAuth@file,default@file"
+      - "traefik.http.routers.traefik.tls=true"
+      - "traefik.http.routers.traefik.tls.certresolver=http"
+      - "traefik.http.routers.traefik-middlewares=error-pages-middleware"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.services.traefik.loadbalancer.sticky.cookie.httpOnly=true"
+      - "traefik.http.services.traefik.loadbalancer.sticky.cookie.secure=true"
+      - "providers.file.filename=/dynamic_conf.yml"
+      - "traefik.docker.network=proxy"
+
+networks:
+  default:
+    driver: bridge
+    enable_ipv6: true
+    ipam:
+      driver: default
+      config:
+        - subnet: fd00:0123:4567::/48
+          gateway: fd00:0123:4567::1
+  proxy:
+    name: proxy
+    driver: bridge
+    attachable: true

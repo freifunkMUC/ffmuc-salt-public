@@ -1,0 +1,3 @@
+mail._domainkey.fnmuc.net fnmuc.net:mail:/etc/opendkim/keys/fnmuc.net/mail.private
+mail._domainkey.ffmuc.bayern ffmuc.bayern:mail:/etc/opendkim/keys/ffmuc.bayern/mail.private
+mail._domainkey.ffmuc.net ffmuc.net:mail:/etc/opendkim/keys/ffmuc.net/mail.private

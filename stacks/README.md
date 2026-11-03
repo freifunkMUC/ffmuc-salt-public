@@ -128,6 +128,10 @@ bcrypt hash), put the reference in single quotes: `NAME = '[[NAME]]'`.
 | `docker06/komodo` | none in Komodo; Core's own secrets stay in its bootstrap `.env` |
 | `docker07/tuwunel` | `TUWUNEL_OIDC_CLIENT_SECRET` (Keycloak client `matrix` in realm `ffmuc`) |
 | `docker07/element-web` | none; `config.json` is public anyway |
+| `mail01/mailserver` | `MAILSERVER_ROUNDCUBEMAIL_DB_PASSWORD`, `MAILSERVER_POSTGRES_PASSWORD`, `MAILSERVER_ROUNDCUBEMAIL_DES_KEY` (Roundcube's database login, the Postgres password and the key that encrypts the IMAP password in the session). Data, `state/`, `logs/`, `certs/` (mail_crypt key pair), `database/` and the mutable part of `config/` (accounts, aliases, quotas, DKIM keys) stay on the host in `/opt/containers/mailserver`; the files in this directory are mounted over them |
+| `mail01/crowdsec` | `CROWDSEC_TRAEFIK_BOUNCER_KEY` (compose variable `TRAEFIK_BOUNCER_KEY`, the bouncer's API key, must equal the key registered in crowdsec). `config/config.yaml`, the `*_api_credentials.yaml`, the hub and `data/` stay on the host |
+| `mail01/traefik` | none. `data/traefik.yml`, `dynamic_conf.yml` (dashboard basic auth hash) and `acme.json` stay on the host |
+| `mail01/maintenance` | none |
 
 ### Taking a project over
 
@@ -186,8 +190,7 @@ Note deviations from upstream and the reason in the PR.
 - Projects that are not in this repository are listed with
   `files_on_host = true` and their existing directory as `run_directory`, so
   Komodo shows them without changing anything. Taking one over means moving
-  its compose file here and switching the Stack to `repo`. The projects on
-  mail01 stay on the host (mailserver role of GoliathLabs/ansible).
+  its compose file here and switching the Stack to `repo`.
 - Projects that come from an upstream compose repository (`docker04/netbox`,
   `docker04/netbox-parker`, `docker07/peeringmanager`) keep the upstream file
   layout: `compose.yaml` is the upstream file, `compose.override.yaml` has
@@ -203,7 +206,7 @@ Note deviations from upstream and the reason in the PR.
   changes in `ffmuc/docker-compose-ffmuc.yml`, the last file in `file_paths`.
 - Komodo reads `files_on_host` compose files into its database, so projects
   with literal secrets in their compose files are left out until their secrets
-  have moved: docker04 `tuwunel-test`; mail01 `mailserver`; rw-vpn01/02 `wg-access-server`.
+  have moved: docker04 `tuwunel-test`; rw-vpn01/02 `wg-access-server`.
 - Taking over a running project: see *Taking a project over*, then compare
   the Stack's diff and *Deploy*. The old `/srv/docker/<project>/docker-compose.y*ml`
   stays on the host as rollback: `docker compose -p <project> -f <old file> up -d`
