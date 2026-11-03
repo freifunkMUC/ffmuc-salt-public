@@ -23,7 +23,7 @@ services:
   kafka:
     image: apache/kafka:4.3.2@sha256:852a0d49fc4e656b022e7f23785411802c9a088c78a7c5e39f33969de9c227a7
   redis:
-    image: valkey/valkey:9.1@sha256:3add1a336a920ea54770a001ab6feb3da5fceea96a40373a3a2cd469b815f0b7
+    image: valkey/valkey:9.2@sha256:247b5e730bdc9dc29fddb8274d1731b203a1a1a46af63eae3a9d55b4bf74853f
   clickhouse:
     image: clickhouse/clickhouse-server:26.8@sha256:d426d2f612e1e189c90f9a3f8dcd85a03c6851273833817a296bb327e63aa7a7  # one-line switch: CH_IMAGE=... in the upgrade script (default 26.8; 25.8 digest is in its header)
     labels:
