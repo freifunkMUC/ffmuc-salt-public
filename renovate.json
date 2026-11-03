@@ -24,6 +24,12 @@
       "groupName": "GitHub Actions"
     },
     {
+      "description": "Major versions of container images (databases, search, brokers) need a data migration or a matching client: Renovate lists them in the Dependency Dashboard and opens a PR only when it is ticked there",
+      "matchManagers": ["docker-compose", "dockerfile"],
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    },
+    {
       "description": "EMQX 5.9 and later are BSL 1.1: free only as single nodes, and wgkex runs a four-node cluster (docker04-07). Stay on the last Apache-2.0 line until wgkex has another broker.",
       "matchPackageNames": ["emqx/emqx"],
       "allowedVersions": "<5.9"
