@@ -20,7 +20,7 @@ services:
       MQTT_TLS: "False"
 
   mqtt_cluster:
-    image: emqx/emqx:5.8.9@sha256:35b46f7aa7a0d51f3959e4344221ac5ec7f948b03e43099286b6c40a07bb393b
+    image: emqx/emqx:6.3.2@sha256:135116400e11b25224350b2e55c874f4e224d357b593fb554ca1b1f398c631ac
     container_name: mqtt_cluster
     restart: unless-stopped
     environment:
