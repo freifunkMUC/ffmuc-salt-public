@@ -15,11 +15,9 @@ services:
     stop_grace_period: 1m
     security_opt:
       - no-new-privileges:true
+    # Own recursive resolver: URIBL and others refuse queries through shared resolvers.
     dns:
-      - 5.1.66.255
-      - 185.150.99.255
-      - "2001:678:e68:f000::"
-      - "2001:678:ed0:f000::"
+      - 192.168.53.2
     ports:
       - "25:25"    # SMTP  (explicit TLS => STARTTLS)
       - "143:143"  # IMAP4 (explicit TLS => STARTTLS)
@@ -46,6 +44,8 @@ services:
       - ./config/opendkim/TrustedHosts:/tmp/docker-mailserver/opendkim/TrustedHosts:ro
       - ./config/rspamd/local.d/multimap.conf:/etc/rspamd/local.d/multimap.conf
       - ./config/rspamd/local.d/groups.conf:/etc/rspamd/local.d/groups.conf
+      - ./config/rspamd/local.d/classifier-bayes.conf:/etc/rspamd/local.d/classifier-bayes.conf:ro
+      - ./config/rspamd/maps/from_hidden_chars.map:/etc/rspamd/maps/from_hidden_chars.map:ro
       - ./config/rspamd/maps/local_bl_subject_map.inc:/etc/rspamd/maps/local_bl_subject.inc
       - ./config/rspamd/maps/local_bl_tld_from.map.inc:/etc/rspamd/maps/local_bl_tld_from.map.inc
       - ./config/rspamd/plugins.d/kits_header_google_group.lua:/etc/rspamd/plugins.d/kits_header_google_group.lua
@@ -55,13 +55,34 @@ services:
     cap_add:
       - NET_ADMIN
     networks:
-      - ip6net
-      - default
+      ip6net: {}
+      default: {}
+      resolver:
+        ipv4_address: 192.168.53.3
+    depends_on:
+      - unbound
     # Checks every service that mailserver.env switches on (new in 16.0.0).
     healthcheck:
       test: dms-healthcheck
       timeout: 10s
       start_period: 1m
+
+  unbound:
+    image: docker.io/klutchell/unbound:1.26.1@sha256:9a3939ca33d6d3b42b81a70391bb8e43f0a08d2bd7a3fdffb43d427493345c36
+    restart: unless-stopped
+    # Not read_only: unbound updates root.key (RFC 5011).
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+      - SETUID
+      - SETGID
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 64m
+    networks:
+      resolver:
+        ipv4_address: 192.168.53.2
 
   autodiscover:
     image: ghcr.io/freifunkmuc/autodiscover-email-settings:2.0.2@sha256:be0fd56a7c257d53870b6de790f9657577a480589af03a560591b24ca4a3f1ac
@@ -176,6 +197,10 @@ services:
 networks:
   proxy:
     external: true
+  resolver:
+    ipam:
+      config:
+        - subnet: 192.168.53.0/29
   ip6net:
     enable_ipv6: true
     ipam:
