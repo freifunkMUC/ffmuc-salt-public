@@ -6,7 +6,17 @@
   "prConcurrentLimit": 10,
   "prHourlyLimit": 4,
   "ignorePaths": ["docker-containers/**"],
+  "registryAliases": { "lscr.io": "ghcr.io" },
   "packageRules": [
+    {
+      "description": "linuxserver.io tags carry -lsN (socket-proxy also -rN); Docker versioning treats that as a suffix and finds nothing newer.",
+      "matchDepNames": ["lscr.io/linuxserver/socket-proxy"],
+      "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)-r(?<build>\\d+)-ls(?<revision>\\d+)$"
+    },
+    {
+      "matchDepNames": ["ghcr.io/linuxserver/unifi-network-application"],
+      "versioning": "regex:^(?<compatibility>v?)(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)(?:\\.(?<build>\\d+))?-ls(?<revision>\\d+)$"
+    },
     {
       "description": "Actions: one PR for minor, patch and digest updates",
       "matchManagers": ["github-actions"],
