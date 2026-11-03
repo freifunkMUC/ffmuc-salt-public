@@ -29,10 +29,9 @@ services:
       - EXEC_PATH=/tmp/update-dns.sh
     labels:
       - traefik.enable=true
-      - traefik.http.middlewares.traefik-auth.basicauth.users=${TRAEFIK_DASHBOARD_USERS}
       - traefik.http.routers.traefik-secure.entrypoints=https
       - traefik.http.routers.traefik-secure.rule=Host(`docker05.ov.ffmuc.net`)
-      - traefik.http.routers.traefik-secure.middlewares=traefik-auth
+      - traefik.http.routers.traefik-secure.middlewares=noc-auth@file
       - traefik.http.routers.traefik-secure.tls=true
       - traefik.http.routers.traefik-secure.tls.certresolver=http
       - traefik.http.routers.traefik-secure.service=api@internal
