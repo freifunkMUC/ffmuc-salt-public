@@ -25,7 +25,7 @@ services:
   redis:
     image: valkey/valkey:9.1@sha256:3add1a336a920ea54770a001ab6feb3da5fceea96a40373a3a2cd469b815f0b7
   clickhouse:
-    image: clickhouse/clickhouse-server:26.8@sha256:d426d2f612e1e189c90f9a3f8dcd85a03c6851273833817a296bb327e63aa7a7  # one-line switch: CH_IMAGE=... in the upgrade script (default 26.8; 25.8 digest is in its header)
+    image: clickhouse/clickhouse-server:26.10@sha256:739e099abd1157390960a59e4532d21781d8fde57e6e4151cb920ea02c30b1ce  # one-line switch: CH_IMAGE=... in the upgrade script (default 26.8; 25.8 digest is in its header)
     labels:
       - traefik.enable=false
   kafka-ui:
