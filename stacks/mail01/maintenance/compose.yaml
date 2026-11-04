@@ -3,7 +3,7 @@
 # defined by these labels and used by the router in the traefik project.
 services:
   error-pages:
-    image: tarampampam/error-pages:4.2.5@sha256:6d42b5d6e1a014fa2373e3587f9e85c25589a089fd5f6fc4f2a496858f5e365d
+    image: tarampampam/error-pages:4.2.7@sha256:f59453fef7ca963c2239cbb021896c71e6f375d85e5ef3f9c6495c1367a7de4e
     restart: unless-stopped
     read_only: true
     mem_limit: 128m
