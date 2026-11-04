@@ -12,6 +12,9 @@
 {% if behind_haproxy %}
 {% set sslPort = 8843 %}{# not enabled during testing #}
 {% endif %}
+{# behind HAProxy nginx only answers on loopback, so nothing bypasses HAProxy's filters #}
+{% set sslListen = ('127.0.0.1:' ~ sslPort) if behind_haproxy else (sslPort | string) %}
+{% set sslListen6 = ('[::1]:' ~ sslPort) if behind_haproxy else ('[::]:' ~ sslPort) %}
 
 nginx-repo-key:
   cmd.run:
@@ -144,7 +147,18 @@ nginx-systemd-daemon-reload:
     - require:
       - file: /srv/www/firmware.ffmuc.net
 
-{% for domain in salt['pillar.get']('netbox:config_context:webserver:domains') %}
+# HAProxy sends every request for these to its own backend; remove them from netbox:config_context:webserver:domains too
+{% set retired_domains = ['broker.ffmuc.net', 'chat.ffmuc.net', 'cloud.ffmuc.net', 'cryptpad.ffmuc.net', 'excalidraw.ffmuc.net',
+                          'getsocial.ffmuc.net', 'hedgedoc.ffmuc.net', 'influx.ffmuc.net', 'keycloak.ffmuc.net', 'matomo.ffmuc.net',
+                          'social.ffmuc.net', 'speed.ffmuc.net', 'stats.ffmuc.net', 'tickets.ffmuc.net'] %}
+{% for domain in retired_domains %}
+/etc/nginx/sites-enabled/{{ domain }}.conf:
+  file.absent:
+    - watch_in:
+      - cmd: nginx-configtest
+{% endfor %}
+
+{% for domain in salt['pillar.get']('netbox:config_context:webserver:domains') if domain not in retired_domains %}
 /etc/nginx/sites-enabled/{{ domain }}.conf:
   file.managed:
     - source:
@@ -155,6 +169,8 @@ nginx-systemd-daemon-reload:
         domain: {{ domain }}
         behind_haproxy: {{ behind_haproxy }}
         sslPort: {{ sslPort }}
+        sslListen: "{{ sslListen }}"
+        sslListen6: "{{ sslListen6 }}"
     - template: jinja
     - require:
       - pkg: nginx
