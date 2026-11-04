@@ -1,0 +1,71 @@
+# crowdsec for Traefik on mail01 (project "crowdsec", /opt/containers/crowdsec)
+# and Traefik's forward-auth bouncer. The bouncer fails closed: while crowdsec
+# or the bouncer is down, every site behind Traefik answers 403. Never stop
+# this project without a plan to start it again.
+# On the host only: config/config.yaml, the *_api_credentials.yaml, the hub and
+# data/. acquis, console, profiles and simulation come from this directory
+# (read-only mounts over the host's config/). The bouncer key
+# TRAEFIK_BOUNCER_KEY comes from the Periphery secret CROWDSEC_TRAEFIK_BOUNCER_KEY and
+# must be the key registered in crowdsec's LAPI.
+services:
+  crowdsec:
+    restart: unless-stopped
+    container_name: crowdsec
+    image: crowdsecurity/crowdsec:v1.8.2@sha256:65b74942f7e7ed5c60fde4ac15fc4ba715904c398c8b16dd451f4907d90347d4
+    mem_limit: 512m
+    cpus: 1.0
+    pids_limit: 200
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - 127.0.0.1:8080:8080
+    environment:
+      PGID: "1000"
+      COLLECTIONS: "crowdsecurity/traefik crowdsecurity/http-cve crowdsecurity/whitelist-good-actors"
+    healthcheck:
+      test: ["CMD", "cscli", "lapi", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /opt/containers/crowdsec/config:/etc/crowdsec
+      - ./config/acquis.yaml:/etc/crowdsec/acquis.yaml:ro
+      - ./config/console.yaml:/etc/crowdsec/console.yaml:ro
+      - ./config/profiles.yaml:/etc/crowdsec/profiles.yaml:ro
+      - ./config/simulation.yaml:/etc/crowdsec/simulation.yaml:ro
+      - /opt/containers/crowdsec/data:/var/lib/crowdsec/data
+      - /var/log/auth.log:/var/log/auth.log:ro
+      - /var/log/crowdsec:/var/log/crowdsec:ro
+    networks:
+      - proxy
+    hostname: crowdsec
+
+  bouncer-traefik:
+    container_name: crowdsec-bouncer-traefik
+    image: ghcr.io/freifunkmuc/traefik-crowdsec-bouncer:v1.0.0@sha256:6b1f677d931a7b2d364394ab1087bffac981bce0acb47c0c27054e8745713430
+    read_only: true
+    mem_limit: 64m
+    cpus: 0.25
+    pids_limit: 100
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      CROWDSEC_BOUNCER_API_KEY: ${TRAEFIK_BOUNCER_KEY:?set TRAEFIK_BOUNCER_KEY}
+      CROWDSEC_AGENT_HOST: crowdsec:8080
+    restart: unless-stopped
+    depends_on:
+      - crowdsec
+    networks:
+      - proxy
+    hostname: crowdsec-bouncer-traefik
+
+networks:
+  proxy:
+    external: true

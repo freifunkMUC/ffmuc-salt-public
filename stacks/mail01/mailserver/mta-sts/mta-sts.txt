@@ -1,0 +1,5 @@
+version: STSv1
+mode: enforce
+mx: mail01.fnmuc.net
+mx: *.fnmuc.net
+max_age: 604800
