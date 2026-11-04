@@ -123,7 +123,7 @@ services:
   # files is written at start, so a new file needs a recreate) and updates the
   # database schema.
   roundcubemail:
-    image: roundcube/roundcubemail:1.7.4-apache-nonroot@sha256:22a0ed6be0d08a30fbe68301e7bb91dfa7811c4a884eb91a75e92076ca0be097
+    image: roundcube/roundcubemail:1.7.5-apache-nonroot@sha256:b0a0ed861d6786fad93ee33757470da605d4a39a4ff9081cdd4529e0196deaf9
     container_name: roundcubemail
     restart: unless-stopped
     depends_on:
