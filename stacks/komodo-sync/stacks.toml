@@ -206,9 +206,6 @@ repo = "freifunkMUC/ffmuc-salt-public"
 branch = "main"
 run_directory = "stacks/docker04/traefik"
 file_paths = ["compose.yaml"]
-environment = """
-TRAEFIK_DASHBOARD_USERS = '[[TRAEFIK_DASHBOARD_USERS_DOCKER04]]'
-"""
 
 [[stack]]
 name = "docker04-wgkex"
@@ -362,9 +359,6 @@ repo = "freifunkMUC/ffmuc-salt-public"
 branch = "main"
 run_directory = "stacks/docker06/traefik"
 file_paths = ["compose.yaml"]
-environment = """
-TRAEFIK_DASHBOARD_USERS = '[[TRAEFIK_DASHBOARD_USERS]]'
-"""
 
 [[stack]]
 name = "docker06-wgkex"
@@ -516,9 +510,6 @@ repo = "freifunkMUC/ffmuc-salt-public"
 branch = "main"
 run_directory = "stacks/docker05/traefik"
 file_paths = ["compose.yaml"]
-environment = """
-TRAEFIK_DASHBOARD_USERS = '[[TRAEFIK_DASHBOARD_USERS]]'
-"""
 
 [[stack]]
 name = "docker05-wgkex"
@@ -689,9 +680,6 @@ repo = "freifunkMUC/ffmuc-salt-public"
 branch = "main"
 run_directory = "stacks/docker07/traefik"
 file_paths = ["compose.yaml"]
-environment = """
-TRAEFIK_DASHBOARD_USERS = '[[TRAEFIK_DASHBOARD_USERS]]'
-"""
 
 [[stack]]
 name = "docker07-uisp"
