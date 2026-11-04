@@ -84,7 +84,7 @@ services:
     # Graylog: https://hub.docker.com/r/graylog/graylog/
   graylog:
     hostname: "server"
-    image: graylog/graylog:7.2.1@sha256:ed3f6008881f16315d16b0c8d3c6abe689ebe647e14fb5f3ba8bc034fa424776
+    image: graylog/graylog:7.2.2@sha256:d4cf618fa0b1d44f639e5fe37c77a1b332f74ae69bd6d77f2b9b94bb2f2e067d
     depends_on:
       mongodb:
         condition: "service_started"
