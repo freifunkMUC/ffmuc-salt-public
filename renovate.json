@@ -62,6 +62,11 @@
       "groupName": "komodo"
     },
     {
+      "description": "Graylog server and Data Node must run the same version",
+      "matchPackageNames": ["graylog/graylog", "graylog/graylog-datanode"],
+      "groupName": "graylog"
+    },
+    {
       "description": "Collector (Salt) and analyzer image (stacks/) are released together",
       "matchPackageNames": ["awlx/packetyeeter", "ghcr.io/awlx/packetyeeter-analyzer"],
       "groupName": "packetyeeter"
