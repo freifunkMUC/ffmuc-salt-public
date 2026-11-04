@@ -9,3 +9,11 @@
 // X-Forwarded-For and X-Forwarded-Proto are believed (logs and login rate
 // limits see the client, the session cookie is marked secure).
 $config['proxy_whitelist'] = ['172.18.0.0/16'];
+
+// Club name and logos; the logo files and the colours are built into the image (roundcube/Dockerfile).
+$config['product_name'] = 'Freifunk München Webmail';
+$config['skin_logo'] = [
+    'elastic:login' => '/images/brand/logo.png',
+    'elastic:*' => '/images/brand/logo-small.png',
+    '[favicon]' => '/images/brand/favicon.png',
+];
