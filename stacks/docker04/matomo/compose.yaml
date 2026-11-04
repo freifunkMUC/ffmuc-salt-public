@@ -4,11 +4,14 @@ x-db-env: &db-env
   MARIADB_PASSWORD: ${MARIADB_PASSWORD}
   MARIADB_DATABASE: matomo
   MARIADB_USER: matomo
-  MATOMO_DATABASE_ADAPTER: mysql
-  MATOMO_DATABASE_TABLES_PREFIX: matomo_
-  MATOMO_DATABASE_USERNAME: matomo
-  MATOMO_DATABASE_PASSWORD: ${MARIADB_PASSWORD}
-  MATOMO_DATABASE_DBNAME: matomo
+
+# Code comes from the image at every deploy; only these files come from the host.
+x-matomo-files: &matomo-files
+  - code:/var/www/html
+  - /srv/docker/matomo/config.ini.php:/var/www/html/config/config.ini.php
+  - ./config.php:/var/www/html/config/config.php:ro
+  - /srv/docker/matomo/plugins/Provider:/var/www/html/plugins/Provider:ro
+  - /srv/docker/matomo/geoip:/var/lib/matomo/geoip
 
 services:
   db:
@@ -21,27 +24,62 @@ services:
       <<: *db-env
       MYSQL_ROOT_PASSWORD: ""
       MARIADB_AUTO_UPGRADE: "true"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 1m
+      start_interval: 2s
+
+  # Replaces the code in the volume with the image's; keeps the mount points of the host files.
+  matomo-install:
+    image: matomo:5.14.2-fpm-alpine@sha256:4bb11d6b1051d868c7cd0472d015e1782ade843bf40ffdba3a7e77a5d7eb19dd
+    user: "82:82"
+    restart: "no"
+    volumes:
+      - code:/var/www/html
+    entrypoint:
+      - sh
+      - -euc
+      - |
+        cd /var/www/html
+        find . -mindepth 1 -maxdepth 1 ! -name config ! -name plugins ! -name tmp -exec rm -rf {} +
+        [ ! -d config ] || find config -mindepth 1 -maxdepth 1 ! -name config.ini.php ! -name config.php -exec rm -rf {} +
+        [ ! -d plugins ] || find plugins -mindepth 1 -maxdepth 1 ! -name Provider -exec rm -rf {} +
+        cp -R /usr/src/matomo/. .
+
+  # Migrates the database after a new version, does nothing otherwise.
+  matomo-update:
+    image: matomo:5.14.2-fpm-alpine@sha256:4bb11d6b1051d868c7cd0472d015e1782ade843bf40ffdba3a7e77a5d7eb19dd
+    user: "82:82"
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+      matomo-install:
+        condition: service_completed_successfully
+    volumes: *matomo-files
+    tmpfs:
+      - /var/www/html/tmp:uid=82,gid=82
+    environment:
+      PHP_MEMORY_LIMIT: 512M
+    command: ["php", "console", "core:update", "--yes", "--no-interaction"]
 
   matomo-app:
     image: matomo:5.14.2-fpm-alpine@sha256:4bb11d6b1051d868c7cd0472d015e1782ade843bf40ffdba3a7e77a5d7eb19dd
     restart: always
-    links:
-      - db
-    volumes:
-      - /srv/docker/matomo/matomo:/var/www/html
+    depends_on:
+      matomo-update:
+        condition: service_completed_successfully
+    volumes: *matomo-files
     tmpfs:
       - /var/www/html/tmp:uid=82,gid=82
-    environment:
-      <<: *db-env
-      MATOMO_DATABASE_HOST: db
 
   matomo-cron:
     image: matomo:5.14.2-fpm-alpine@sha256:4bb11d6b1051d868c7cd0472d015e1782ade843bf40ffdba3a7e77a5d7eb19dd
+    user: "82:82"
     restart: unless-stopped
     depends_on:
       - matomo-app
-    volumes:
-      - /srv/docker/matomo/matomo:/var/www/html:ro
+    volumes: *matomo-files
     tmpfs:
       - /var/www/html/tmp:uid=82,gid=82
     entrypoint: "sh -c 'while true; do php console core:archive --url=matomo.ffmuc.net; sleep 600; done'"
@@ -49,9 +87,14 @@ services:
   matomo-web:
     image: nginx:1.31.8-alpine@sha256:785835ea65db4bba6f021acc0f3be91b0fef76a53fe41f8588c6698d2aed0606
     restart: always
+    depends_on:
+      - matomo-app
     volumes:
-      - /srv/docker/matomo/matomo:/var/www/html:ro
+      - code:/var/www/html:ro
       # see https://github.com/matomo-org/matomo-nginx
       - /srv/docker/matomo/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     ports:
       - 8092:80
+
+volumes:
+  code:
