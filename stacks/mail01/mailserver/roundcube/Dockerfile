@@ -17,3 +17,4 @@ RUN npm install --global --no-fund --no-audit "less@${LESS_VERSION}" "less-plugi
 FROM roundcube
 COPY --from=skin /elastic/styles/styles.min.css /elastic/styles/embed.min.css /usr/src/roundcubemail/skins/elastic/styles/
 COPY logo.png logo-small.png favicon.png /usr/src/roundcubemail/skins/elastic/images/brand/
+COPY legal_links/ /usr/src/roundcubemail/plugins/legal_links/

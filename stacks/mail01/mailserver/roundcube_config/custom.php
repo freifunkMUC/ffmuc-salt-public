@@ -17,3 +17,10 @@ $config['skin_logo'] = [
     'elastic:*' => '/images/brand/logo-small.png',
     '[favicon]' => '/images/brand/favicon.png',
 ];
+
+// Imprint and privacy policy of the club in the login footer (plugin in roundcube/legal_links).
+$config['plugins'][] = 'legal_links';
+$config['legal_links'] = [
+    'Impressum' => 'https://ffmuc.net/impressum/',
+    'Datenschutz' => 'https://ffmuc.net/privacy/',
+];
