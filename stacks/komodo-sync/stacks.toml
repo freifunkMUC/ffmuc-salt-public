@@ -791,6 +791,7 @@ repo = "freifunkMUC/ffmuc-salt-public"
 branch = "main"
 run_directory = "stacks/mail01/mailserver"
 file_paths = ["compose.yaml"]
+run_build = true
 environment = """
 ROUNDCUBE_DB_PASSWORD = [[MAILSERVER_ROUNDCUBEMAIL_DB_PASSWORD]]
 ROUNDCUBE_POSTGRES_PASSWORD = [[MAILSERVER_POSTGRES_PASSWORD]]
