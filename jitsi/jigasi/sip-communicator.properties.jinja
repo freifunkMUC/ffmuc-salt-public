@@ -114,7 +114,7 @@ net.java.sip.communicator.service.gui.ALWAYS_TRUST_MODE_ENABLED=true
 {%- set control_user = jitsi.transcription.jigasi_username ~ "@" ~ jitsi.xmpp.auth_domain %}
 
 org.jitsi.jigasi.ENABLE_TRANSCRIPTION=true
-org.jitsi.jigasi.ENABLE_SIP=true
+org.jitsi.jigasi.ENABLE_SIP={{ 'true' if jitsi.dial_in.enabled else 'false' }}
 org.jitsi.jigasi.transcription.customService=org.jitsi.jigasi.transcription.VoskTranscriptionService
 org.jitsi.jigasi.transcription.vosk.websocket_url={{ jitsi.transcription.get('vosk_url') or 'ws://' ~ jitsi.vosk.interface ~ ':' ~ jitsi.vosk.port }}
 org.jitsi.jigasi.transcription.ADVERTISE_URL=false

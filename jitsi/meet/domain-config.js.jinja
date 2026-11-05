@@ -1315,8 +1315,10 @@ var config = {
     // {"countryCode":"US","tollFree":false,"formattedNumber":"+1 123-456-7890"}
     // dialInConfCodeUrl is the conference mapper converting a meeting id to a PIN used for dial-in
     // or the other way around (more info in resources/cloud-api.swagger)
+{%- if jitsi.dial_in.enabled %}
     dialInNumbersUrl: 'https://{{ domain }}/numbers.json',
     dialInConfCodeUrl: 'https://{{ domain }}/conferenceMapper',
+{%- endif %}
 
     // List of undocumented settings used in jitsi-meet
     /**

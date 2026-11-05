@@ -103,6 +103,10 @@ jitsi:
       password: sip-password
       host: sip.example.com
 
+  # Phone dial-in (jigasi SIP gateway and the dial-in info in the web app); false while the SIP trunk is down
+  dial_in:
+    enabled: true
+
   jigasi:
     enabled: false
     version: 1.1-178-g3c53cf6-1
