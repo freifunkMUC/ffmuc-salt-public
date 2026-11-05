@@ -1,0 +1,51 @@
+#!/usr/bin/python3
+#
+# Icinga plugin: CRITICAL when a domain on a gateway lacks one of its interfaces
+# or one is not administratively up. A domain is every br-<domain> bridge;
+# its bat-, vx- and wg- interfaces must exist and carry the UP flag (their
+# operstate is UNKNOWN by design, so the flag is checked, not the state).
+#
+
+import re
+import subprocess
+import sys
+
+OK, CRITICAL, UNKNOWN = 0, 2, 3
+PREFIXES = ("br-", "bat-", "vx-", "wg-")
+
+
+def main():
+    try:
+        out = subprocess.run(
+            ["/sbin/ip", "-o", "link", "show"],
+            capture_output=True, text=True, timeout=20, check=True,
+        ).stdout
+    except (OSError, subprocess.SubprocessError) as err:
+        print(f"UNKNOWN - ip link failed: {err}")
+        return UNKNOWN
+    links = {}
+    for line in out.splitlines():
+        m = re.match(r"\d+:\s+([^:@\s]+)[^<]*<([^>]*)>", line)
+        if m:
+            links[m.group(1)] = set(m.group(2).split(","))
+    domains = sorted(n[3:] for n in links if n.startswith("br-"))
+    if not domains:
+        print("CRITICAL - no br-<domain> bridges found")
+        return CRITICAL
+    bad = []
+    for d in domains:
+        for pre in PREFIXES:
+            flags = links.get(pre + d)
+            if flags is None:
+                bad.append(f"{pre}{d} missing")
+            elif "UP" not in flags:
+                bad.append(f"{pre}{d} down")
+    if bad:
+        print(f"CRITICAL - {len(bad)} problem(s): " + ", ".join(bad[:8]))
+        return CRITICAL
+    print(f"OK - {len(domains)} domains, all br/bat/vx/wg interfaces up")
+    return OK
+
+
+if __name__ == "__main__":
+    sys.exit(main())
