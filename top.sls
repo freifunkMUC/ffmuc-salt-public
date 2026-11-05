@@ -71,6 +71,8 @@ base:
     - dns-auth
     - pdns-recursor
     - github-downloader
+  'mail01.in.ffmuc.net':
+    - mailqueue
   'guardian-*.in.ffmuc.net':
     - sflowtool
   'vpn0*.in.ffmuc.net':
