@@ -22,38 +22,76 @@ x-ffmuc-app-mounts: &ffmuc-app-mounts
   - /srv/docker/zammad-backup:/var/tmp/zammad:ro
   - /srv/docker/zammad-storage:/opt/zammad/storage
 
+# Services that run as a non-root user. Backup, PostgreSQL and Redis start
+# as root (dump into the uid 1000 backup dir, chown in the entrypoint) and
+# only get no-new-privileges.
+x-hardening: &hardening
+  security_opt: ["no-new-privileges:true"]
+  cap_drop: [ALL]
+
 services:
   zammad-backup:
     image: *zammad-image
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 512m
     volumes:
       - /srv/docker/zammad-backup:/var/tmp/zammad
       - /srv/docker/zammad-storage:/opt/zammad/storage
   zammad-init:
+    <<: *hardening
     image: *zammad-image
     volumes: *ffmuc-app-mounts
+    mem_limit: 1g
   zammad-nginx:
+    <<: *hardening
     image: *zammad-image
-    volumes: *ffmuc-app-mounts
+    # favicon and app icon, nginx serves them from public/
+    volumes:
+      - /srv/docker/zammad-backup:/var/tmp/zammad:ro
+      - /srv/docker/zammad-storage:/opt/zammad/storage
+      - ./branding/favicon.ico:/opt/zammad/public/favicon.ico:ro
+      - ./branding/apple-touch-icon.png:/opt/zammad/public/apple-touch-icon.png:ro
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "-o", "/dev/null", "http://127.0.0.1:8080/"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    mem_limit: 256m
   zammad-railsserver:
+    <<: *hardening
     image: *zammad-image
     entrypoint: *webhook-newline-fix
     volumes: *ffmuc-app-mounts
+    mem_limit: 2g
   zammad-scheduler:
+    <<: *hardening
     image: *zammad-image
     entrypoint: *webhook-newline-fix
     volumes: *ffmuc-app-mounts
+    mem_limit: 2g
   zammad-websocket:
+    <<: *hardening
     image: *zammad-image
     volumes: *ffmuc-app-mounts
+    mem_limit: 1g
   zammad-memcached:
+    <<: *hardening
+    mem_limit: 384m
     image: memcached:1.6.45-alpine@sha256:6a089e37cbb8acd75c80c6c0667fe57ec54db68782fb1b3afb1d0eb265e50070
   zammad-redis:
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 256m
     image: redis:7.4.12-alpine@sha256:8da19c7399dca900c6822a1cf30f9d2285585e2c4b457ff4095b0f4500054d3f
   zammad-postgresql:
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 2g
     image: postgres:15.19-alpine@sha256:54e0dd8e8cddcdbb9156c2486eed5a43eccb7214d7c6828097d41ce049fb3984
     volumes:
       - /srv/docker/postgresql-zammad/data:/var/lib/postgresql/data:z
   zammad-elasticsearch:
+    <<: *hardening
+    mem_limit: 4g
     image: elasticsearch:8.19.23@sha256:ef5cafd961d7e273f13fed8def82e63c5ae0491106b5eecb5a69aa12d64f089b
     volumes:
       - /srv/docker/elasticsearch-zammad/data:/usr/share/elasticsearch/data
