@@ -1,0 +1,15 @@
+#!/bin/bash
+# Dead-man switch: pings the external heartbeat URL stored in /etc/icinga2/heartbeat.url (Salt, never in git).
+# The external service alerts when the pings stop. The URL is passed to curl on stdin, not on the command line.
+F=/etc/icinga2/heartbeat.url
+if [ ! -s "$F" ]; then
+  echo "WARNING - no heartbeat URL configured"
+  exit 1
+fi
+read -r url < "$F"
+if curl -fsS -m 15 -o /dev/null --config - <<< "url = \"$url\"" 2>/dev/null; then
+  echo "OK - heartbeat sent"
+  exit 0
+fi
+echo "CRITICAL - heartbeat request failed"
+exit 2

@@ -1,0 +1,25 @@
+#!/bin/bash
+# State of the rustic backup: CRITICAL when ffmuc-rustic-backup.service failed or the last successful run is too old.
+# The service touches /var/lib/ffmuc-rustic-last-success after "backup" and "forget" (rustic state).
+# Usage: check_ffmuc_rustic [warning hours] [critical hours]
+M=/var/lib/ffmuc-rustic-last-success
+W=${1:-30}
+C=${2:-54}
+U=ffmuc-rustic-backup.service
+if [ "$(systemctl is-failed "$U" 2>/dev/null)" = "failed" ]; then
+  echo "CRITICAL - $U failed"
+  exit 2
+fi
+if [ ! -e "$M" ]; then
+  echo "WARNING - no successful backup recorded"
+  exit 1
+fi
+age=$(( ($(date +%s) - $(stat -c %Y "$M")) / 3600 ))
+if [ "$age" -ge "$C" ]; then
+  echo "CRITICAL - last successful backup ${age}h ago"
+  exit 2
+elif [ "$age" -ge "$W" ]; then
+  echo "WARNING - last successful backup ${age}h ago"
+  exit 1
+fi
+echo "OK - last successful backup ${age}h ago"
