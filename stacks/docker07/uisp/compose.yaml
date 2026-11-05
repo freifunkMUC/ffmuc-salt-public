@@ -1,7 +1,7 @@
 ---
 services:
   unms:
-    image: ghcr.io/freifunkmuc/docker-unms:3.1.65-php8.3.36@sha256:b4077d9dd737bab25a5625b2e601c274cea59614f24a2a58d60e97a31c7be1d9
+    image: nico640/docker-unms:3.1.70@sha256:59eb621788426fede06d47d333afc12237a04b4820946738f40a694d3085605c
     restart: always
     ports:
       - 8099:80
