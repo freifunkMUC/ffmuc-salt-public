@@ -542,6 +542,7 @@ ignore_services = ["zammad-init"]
 environment = """
 NGINX_PORT = 8080
 NGINX_EXPOSE_PORT = 8002
+HOLD_DAYS = 3
 NGINX_SERVER_SCHEME = https
 POSTGRES_USER = postgres
 POSTGRES_PASS = [[ZAMMAD_POSTGRES_PASS]]
