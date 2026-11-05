@@ -54,7 +54,7 @@ services:
   postgres:
     # Same major as the data directory (PG_VERSION 16), same Alpine release as
     # the image it ran on (16.14-alpine3.24), so the collation does not change.
-    image: docker.io/postgres:16.15-alpine3.24@sha256:0cefaabd882e42bcb2a2f3dc56d3ce4770560ba62fd7f197f1a2e008fd5731ab
+    image: docker.io/postgres:16.15-alpine3.24@sha256:1fb72075a1de85a1d39de23c2da81baef1b71bf5c0b61a14cbbfdb072a6246d9
     restart: always
     environment:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
