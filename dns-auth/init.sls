@@ -225,6 +225,7 @@ record-A-{{ node_id }}:
       - pip: dnspython
       - file: dns-key
 
+  {%- if salt['network.ip_in_subnet'](address | regex_replace('/\d+$',''), '10.80.0.0/16') %}{# zone 80.10.in-addr.arpa; a primary address elsewhere (mail01 at Hetzner) has no PTR here #}
 record-PTR-{{ node_id }}:
   ddns.present:
     - name: {{  salt.network.reverse_ip(address | regex_replace('/\d+$','')) }}.
@@ -240,6 +241,7 @@ record-PTR-{{ node_id }}:
     - require:
       - pip: dnspython
       - file: dns-key
+  {%- endif %}{# PTR only inside the zone #}
 
   {% endif %}
 
@@ -261,6 +263,7 @@ record-AAAA-{{ node_id }}:
       - pip: dnspython
       - file: dns-key
 
+  {%- if salt['network.ip_in_subnet'](address6 | regex_replace('/\d+$',''), '2001:608:a01::/48') %}{# zone 1.0.a.0.8.0.6.0.1.0.0.2.ip6.arpa; a primary address elsewhere (mail01 at Hetzner) has no PTR here #}
 record-PTR6-{{ node_id }}:
   ddns.present:
     - name: {{  salt.network.reverse_ip(address6 | regex_replace('/\d+$','')) }}.
@@ -276,6 +279,7 @@ record-PTR6-{{ node_id }}:
     - require:
       - pip: dnspython
       - file: dns-key
+  {%- endif %}{# PTR only inside the zone #}
 
   {%- endif %}
 
