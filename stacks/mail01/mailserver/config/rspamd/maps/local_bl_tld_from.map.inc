@@ -7,4 +7,4 @@
 # lookahead of the first line, not a new line.
 #
 # Our own domains (and any subdomain, as the registered domain is matched).
-/^(?!(?:fnmuc\.net|ffmuc\.net|ffmuc\.bayern)$).+\.(?:accountant|autos|beauty|bid|bond|boats|buzz|cf|cfd|click|cricket|cyou|date|download|faith|ga|gdn|gq|icu|kim|loan|ml|mom|monster|party|pw|quest|racing|rest|review|sbs|science|stream|tk|top|trade|webcam|win|work|xyz)$/i
+/^(?!(?:fnmuc\.net|ffmuc\.net|ffmuc\.bayern)$).+\.(?:accountant|autos|beauty|bid|bond|boats|buzz|cf|cfd|click|cricket|cyou|date|download|faith|ga|gdn|gq|icu|kim|loan|ml|mom|monster|party|pw|quest|racing|rest|review|sbs|science|stream|tk|top|trade|vip|webcam|win|work|xyz)$/i
