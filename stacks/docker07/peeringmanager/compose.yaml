@@ -81,7 +81,7 @@ services:
       - peeringmanager-postgres-data:/var/lib/postgresql/data
 
   redis:
-    image: docker.io/valkey/valkey:8.1.11-alpine@sha256:2602ace2be6569bc2bbb06f873776516ab9089821525be34f4305c67eb9db02a
+    image: docker.io/valkey/valkey:9.1.3-alpine@sha256:bf09d58e96d6b4524a15396b65b242bbe18beebbcc15a04d8ee75ddac62fae0b
     command:
       - sh
       - -c # this is to evaluate the $REDIS_PASSWORD from the env
@@ -96,7 +96,7 @@ services:
     volumes:
       - peeringmanager-redis-data:/data
   redis-cache:
-    image: docker.io/valkey/valkey:8.1.11-alpine@sha256:2602ace2be6569bc2bbb06f873776516ab9089821525be34f4305c67eb9db02a
+    image: docker.io/valkey/valkey:9.1.3-alpine@sha256:bf09d58e96d6b4524a15396b65b242bbe18beebbcc15a04d8ee75ddac62fae0b
     command:
       - sh
       - -c # this is to evaluate the $REDIS_PASSWORD from the env
