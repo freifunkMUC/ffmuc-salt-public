@@ -23,7 +23,7 @@ services:
       - /srv/docker/wg-access-server/config.yaml:/config.yaml
       - /lib/modules:/lib/modules:ro
   haproxy:
-    image: haproxy:3.4-alpine
+    image: haproxy:3.4-alpine@sha256:5312d37032c079c4937d45ef63758852434351f3b425a3703521fd999837abcf
     restart: always
     network_mode: host
     user: root:root
@@ -31,7 +31,7 @@ services:
       - /srv/docker/wg-access-server/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
       - /srv/docker/wg-access-server/haproxy-certs:/certs:ro
   acme-sh:
-    image: neilpang/acme.sh
+    image: neilpang/acme.sh@sha256:b0a3af2a3163ead9d35434fa117a94bed2717d893c0923e9c1e347e78cae4dc6
     restart: always
     network_mode: host
     command: daemon
@@ -42,7 +42,7 @@ services:
       - /srv/docker/wg-access-server/acme.sh-out:/acme.sh
       - /srv/docker/wg-access-server/haproxy-certs:/haproxy-certs
   proxyguard:
-    image: ghcr.io/freifunkmuc/proxyguard-docker:2
+    image: ghcr.io/freifunkmuc/proxyguard-docker:2@sha256:b376e6ef61b47f5cb01b5b148e5198a6210a90cd5b755022cee2f05450052073
     restart: always
     network_mode: host
     environment:
