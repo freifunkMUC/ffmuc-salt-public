@@ -43,10 +43,10 @@ services:
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
 volumes:
-  netbox-postgres-data:
+  netbox-postgres18-data:
     driver: local
     driver_opts:
-      device: /srv/docker/postgres-netbox
+      device: /srv/docker/postgres18-netbox
       type: bind
       o: bind
 networks:
