@@ -24,7 +24,7 @@ services:
     command: redis-server --requirepass ${REDIS_PASSWORD}
 
   app:
-    image: nextcloud:35.0.2-fpm@sha256:245ebca5d5ae0f6f7b5a5f6c8b936691607011177f4f70bcc076cc0f87ad4207
+    image: nextcloud:35.0.2-fpm@sha256:a95dee2ba3e6be69840baac100dc81741f145427a92d0489711a85819d8cb448
     restart: unless-stopped
     depends_on:
       - db
