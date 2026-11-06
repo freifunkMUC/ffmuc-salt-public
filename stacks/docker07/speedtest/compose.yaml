@@ -2,7 +2,25 @@
 services:
   speedtest:
     image: openspeedtest/latest:v2.0.8@sha256:1127de0693c36bcf8c297c73d09891df8ec243680d027a6b6fab13fa0954ff46
-    restart: always
+    restart: unless-stopped
+    user: "101:101"
     ports:
       # haproxy speed_backend (speed.ffmuc.net)
       - "3000:3000"
+    # nginx (101) as in the image; its entrypoint only tries to edit conf.d (fails harmlessly)
+    read_only: true
+    tmpfs:
+      - /tmp:uid=101,gid=101
+      - /run:uid=101,gid=101
+      - /var/cache/nginx:uid=101,gid=101
+      - /var/log/nginx:uid=101,gid=101
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 256m
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
