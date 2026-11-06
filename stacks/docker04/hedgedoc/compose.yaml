@@ -39,6 +39,9 @@ services:
       - CMD_SESSION_SECRET=${HEDGEDOC_SESSION_SECRET}
     volumes:
       - /srv/docker/hedgedoc/data:/config
+      - ./public-docs/imprint.md:/app/hedgedoc/public/docs/imprint.md:ro
+      - ./public-docs/privacy.md:/app/hedgedoc/public/docs/privacy.md:ro
+      - ./public-docs/terms-of-use.md:/app/hedgedoc/public/docs/terms-of-use.md:ro
     ports:
       - "0.0.0.0:8085:3000"
   db:
