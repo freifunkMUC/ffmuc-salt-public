@@ -1,4 +1,4 @@
-FROM golang:1.27-alpine@sha256:d200d2dd76b03a99b52651fd1325aff7dcd35422c35c01bac56571b0507f3deb AS build
+FROM golang:1.27-alpine@sha256:dbaa054703263d06c8b49576667418473b6231f8c0fa69dee103207fdb8e3654 AS build
 WORKDIR /src
 COPY go.mod main.go store.go peers.go index.html logo.png favicon.png ./
 RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /meet-reserve .
