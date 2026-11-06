@@ -52,14 +52,13 @@ services:
     environment: *pm-secrets
 
   postgres:
-    # Same major as the data directory (PG_VERSION 16), same Alpine release as
-    # the image it ran on (16.14-alpine3.24), so the collation does not change.
-    image: docker.io/postgres:16.15-alpine3.24@sha256:0cefaabd882e42bcb2a2f3dc56d3ce4770560ba62fd7f197f1a2e008fd5731ab
+    # PostgreSQL 18 layout (data in 18/docker below the mount); !override drops the base file's mount.
+    image: docker.io/postgres:18.6-alpine@sha256:80df0884d0d3b7f0f7b2c37f273b1c12d5fd66e25aaef2e19ebf95908d620f11
     restart: always
     environment:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - /srv/docker/peeringmanager-postgres:/var/lib/postgresql/data
+    volumes: !override
+      - /srv/docker/peeringmanager-postgres18:/var/lib/postgresql
 
   redis:
     restart: always
