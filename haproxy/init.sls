@@ -92,8 +92,6 @@ haproxy-configtest:
       - file: /etc/haproxy/lua/ja4.lua
       - file: /etc/haproxy/lua/ja4h.lua
       - file: packetyeeter-spoe-conf
-      - file: packetyeeter-spoe-tune-timeout-hello
-      - file: packetyeeter-spoe-tune-timeout-processing
 {% endif %}
 
 {% if "packetyeeter-collector" in tags %}
@@ -138,45 +136,18 @@ haproxy-configtest:
     - require:
       - pkg: haproxy
 
+{# Tighten upstream timeouts (avg ~14us/message; on-timeout ignore keeps requests safe).
+   Patched at render time so one file.managed stays idempotent. #}
+{%- set spoe_conf = salt['http.query']('https://raw.githubusercontent.com/awlx/packetyeeter/' ~ packetyeeter_ref ~ '/examples/packetyeeter.spoe.conf')['body']
+      | regex_replace('^(\\s*timeout hello\\s+).*$', '\\g<1>100ms', multiline=True)
+      | regex_replace('^(\\s*timeout processing\\s+).*$', '\\g<1>50ms', multiline=True) %}
 packetyeeter-spoe-conf:
   file.managed:
     - name: /etc/haproxy/spoe/packetyeeter.conf
-    - source: https://raw.githubusercontent.com/awlx/packetyeeter/{{ packetyeeter_ref }}/examples/packetyeeter.spoe.conf
-    - skip_verify: True
+    - contents: {{ spoe_conf | yaml_encode }}
     - mode: "0644"
     - require:
       - file: /etc/haproxy/spoe
-
-{# Tighten the upstream example's default timeouts, which are far more
-   generous than real measured processing time (observed avg ~14us/message
-   in production - see packetyeeter_spoe_processing_seconds metric). This
-   filter runs synchronously on every HTTP response (event on-http-response),
-   so "timeout processing" directly bounds worst-case added latency per
-   request when the local collector is slow/stuck; "on-timeout ignore" +
-   "option continue-on-error" mean a timeout just skips this request's
-   signal rather than failing it, so tightening is safe. Patched via
-   file.replace (not a local template) to stay in sync with upstream's
-   message/args definitions, which we intentionally fetch rather than
-   vendor (see comment above). #}
-packetyeeter-spoe-tune-timeout-hello:
-  file.replace:
-    - name: /etc/haproxy/spoe/packetyeeter.conf
-    - pattern: '^(\s*timeout hello\s+).*$'
-    - repl: '\g<1>100ms'
-    - flags:
-      - MULTILINE
-    - require:
-      - file: packetyeeter-spoe-conf
-
-packetyeeter-spoe-tune-timeout-processing:
-  file.replace:
-    - name: /etc/haproxy/spoe/packetyeeter.conf
-    - pattern: '^(\s*timeout processing\s+).*$'
-    - repl: '\g<1>50ms'
-    - flags:
-      - MULTILINE
-    - require:
-      - file: packetyeeter-spoe-conf
 {% endif %}
 
 /etc/haproxy/haproxy.cfg:
