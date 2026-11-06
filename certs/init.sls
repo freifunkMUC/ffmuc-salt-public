@@ -274,6 +274,7 @@ ffmuc-cloudflare-domains-cert:
         --preferred-challenges dns --expand
         -d "ffmeet.net" -d "*.ffmeet.net"
         -d "ffmeet.de" -d "*.ffmeet.de"
+        -d "klassenkonferenz.de" -d "*.klassenkonferenz.de"
         -d "ffmuc.bayern"
         -d "*.ffmuc.bayern"
         -d "fnmuc.net"
@@ -288,7 +289,7 @@ ffmuc-cloudflare-domains-cert:
     - unless: >
         test -f /etc/letsencrypt/live/ffmuc-cloudflare/fullchain.pem &&
         openssl x509 -noout -checkend 2592000 -in /etc/letsencrypt/live/ffmuc-cloudflare/fullchain.pem &&
-        openssl x509 -noout -ext subjectAltName -in /etc/letsencrypt/live/ffmuc-cloudflare/fullchain.pem | grep -q 'DNS:\*.ffmeet.de'
+        openssl x509 -noout -ext subjectAltName -in /etc/letsencrypt/live/ffmuc-cloudflare/fullchain.pem | grep -q 'DNS:\*.klassenkonferenz.de'
     - require:
       - pip: certbot-venv-cloudflare-plugin
       - file: dns_cloudflare_credentials
