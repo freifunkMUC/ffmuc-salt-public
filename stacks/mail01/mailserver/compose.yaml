@@ -39,9 +39,7 @@ services:
       # aliases, quotas and the DKIM keys stay there).
       - ./config/dovecot.cf:/tmp/docker-mailserver/dovecot.cf:ro
       - ./config/fail2ban-jail.cf:/tmp/docker-mailserver/fail2ban-jail.cf:ro
-      - ./config/opendkim/KeyTable:/tmp/docker-mailserver/opendkim/KeyTable:ro
-      - ./config/opendkim/SigningTable:/tmp/docker-mailserver/opendkim/SigningTable:ro
-      - ./config/opendkim/TrustedHosts:/tmp/docker-mailserver/opendkim/TrustedHosts:ro
+      - ./config/postfix-main.cf:/tmp/docker-mailserver/postfix-main.cf:ro
       - ./config/rspamd/local.d/multimap.conf:/etc/rspamd/local.d/multimap.conf
       - ./config/rspamd/local.d/groups.conf:/etc/rspamd/local.d/groups.conf
       - ./config/rspamd/local.d/classifier-bayes.conf:/etc/rspamd/local.d/classifier-bayes.conf:ro
@@ -51,6 +49,7 @@ services:
       - ./config/rspamd/plugins.d/kits_header_google_group.lua:/etc/rspamd/plugins.d/kits_header_google_group.lua
       - ./config/rspamd/modules.d/kits_header_google_group.conf:/etc/rspamd/modules.d/kits_header_google_group.conf
       - ./config/rspamd/override.d/composites.conf:/etc/rspamd/override.d/composites.conf
+      - ./config/rspamd/override.d/dkim_signing.conf:/etc/rspamd/override.d/dkim_signing.conf:ro
       - ./cron/sa-learn:/etc/cron.d/sa-learn
     cap_add:
       - NET_ADMIN
