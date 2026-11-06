@@ -359,6 +359,22 @@ Cleanup /etc/icinga2/zones.d/master/ffmuc-conf.d/hosts/generated/:
       - service: icinga2-service
 {%- endfor %}
 
+{%- set heartbeat_url = salt['config.get']('netbox:config_context:icinga2:heartbeat_url', '') %}
+# URL for check_heartbeat (NetBox config context icinga2.heartbeat_url)
+/etc/icinga2/heartbeat.url:
+{%- if heartbeat_url %}
+  file.managed:
+    - contents: {{ heartbeat_url | yaml_dquote }}
+    - mode: "0640"
+    - user: root
+    - group: nagios
+    - show_changes: False
+    - require:
+      - user: icinga-user
+{%- else %}
+  file.absent
+{%- endif %}
+
 /etc/icinga2/scripts/mattermost-notifications.py:
   file.managed:
     - source: salt://icinga2/mattermost-notifications.py

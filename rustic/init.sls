@@ -65,6 +65,12 @@ backup-script:
       - file: backup-config
       - file: /usr/local/sbin/ffmuc-rustic-dumps.sh
 
+# Icinga check_ffmuc_rustic reads the mtime; seeded once so a fresh host does not alert before its first run
+ffmuc-rustic-last-success-seed:
+  cmd.run:
+    - name: touch /var/lib/ffmuc-rustic-last-success
+    - creates: /var/lib/ffmuc-rustic-last-success
+
 /etc/systemd/system/ffmuc-rustic-backup.timer:
   file.managed:
     - source: salt://rustic/files/ffmuc-rustic-backup.timer

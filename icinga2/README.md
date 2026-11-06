@@ -55,3 +55,13 @@ nothing until the host has the NetBox tag `icinga2_client`.
 - Both run `birdc show protocols` / `wg show all latest-handshakes` through sudo (`icinga2.sudoers`).
 - Sessions or tunnels that are down on purpose go into `known_down.yaml` (per host, fnmatch patterns); they are
   still listed in the check output but keep the service OK.
+
+## Backups and heartbeat
+
+- `ffmuc_rustic` (`plugins/check_ffmuc_rustic`): CRITICAL when `ffmuc-rustic-backup.service` is failed or the last
+  successful run (`/var/lib/ffmuc-rustic-last-success`, touched by the unit after `backup` and `forget`) is older than
+  54 h, WARNING after 30 h. Hosts with the NetBox tag `backup`. `ffmuc_dumps` stays as it is.
+- `heartbeat` (`plugins/check_heartbeat`, master only): every 5 minutes a request to the URL in
+  `/etc/icinga2/heartbeat.url`, written by Salt from the NetBox config context `icinga2.heartbeat_url` of the master
+  (`icinga2_server`). The external service (Statuscake heartbeat or healthchecks.io) alerts when the pings stop, on a
+  channel other than Mattermost. Without the context value the file is removed and the service is WARNING.
