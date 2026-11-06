@@ -1,7 +1,7 @@
 ---
 services:
   map:
-    image: ghcr.io/freifunkmuc/freifunk-map-modern:latest
+    image: ghcr.io/freifunkmuc/freifunk-map-modern:sha-a1426da@sha256:30abf40c5b6d7de5898ea2bf719fec0e9a16d53f5a5ffb0601cee01b4eef1eb8
     command: ["/config.federation.json"]
     restart: unless-stopped
     read_only: true
