@@ -5,7 +5,7 @@
 - **Workers** run on the gateways (`nextgen-gateway` role) and are managed by this formula: git checkout of `main`
   in `/srv/wgkex/wgkex`, config `/etc/wgkex.yaml` from `wgkex.yaml.jinja`.
 - **Brokers** run on docker04–07 from the docker compose project in `/srv/docker/wgkex` (image
-  `ghcr.io/freifunkmuc/wgkex:main`). Their config `/srv/docker/wgkex/config/broker/wgkex.yaml` is **not** managed by
+  `ghcr.io/freifunkmuc/wgkex:v0.4.0`). Their config `/srv/docker/wgkex/config/broker/wgkex.yaml` is **not** managed by
   Salt. Requests reach them through haproxy (`broker_backend`), which overwrites `X-Forwarded-For`, so the brokers
   trust it from the webfrontends (`broker.trusted_proxies`).
 - Metrics: telegraf scrapes the workers on `127.0.0.1:9101` and the brokers on `127.0.0.1:5000` (measurement

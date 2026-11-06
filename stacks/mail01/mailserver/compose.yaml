@@ -86,7 +86,7 @@ services:
         ipv4_address: 192.168.53.2
 
   autodiscover:
-    image: ghcr.io/freifunkmuc/autodiscover-email-settings:2.0.2@sha256:be0fd56a7c257d53870b6de790f9657577a480589af03a560591b24ca4a3f1ac
+    image: ghcr.io/freifunkmuc/autodiscover-email-settings:2.0.3@sha256:06056fde95cc8965a042eb86be7143da4fe5dcdb04ca73f49493e465c0f096e8
     restart: unless-stopped
     environment:
       - COMPANY_NAME=Freie Netze München e.V.
