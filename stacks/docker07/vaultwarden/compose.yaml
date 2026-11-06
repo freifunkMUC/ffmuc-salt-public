@@ -20,6 +20,9 @@ services:
       - /srv/docker/vaultwarden/data:/data
     ports:
       - 11001:8080
+    read_only: true
+    tmpfs:
+      - /tmp:uid=1000,gid=1000
     cap_drop: [ALL]
     security_opt: ["no-new-privileges:true"]
     mem_limit: 256m
