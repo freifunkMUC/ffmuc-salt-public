@@ -93,6 +93,6 @@ services:
   zammad-elasticsearch:
     <<: *hardening
     mem_limit: 4g
-    image: elasticsearch:9.5.5@sha256:23085da1c610cde5dae29b4b57227875f39f804fedb034325fcae4eb3e3cf0a2
+    image: elasticsearch:9.5.5@sha256:a418cab5c89773ab827d1d146e6c95a3658226216d8d934d404c33e7a09a147d
     volumes:
       - /srv/docker/elasticsearch9-zammad/data:/usr/share/elasticsearch/data
