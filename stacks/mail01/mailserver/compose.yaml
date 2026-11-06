@@ -151,7 +151,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.roundcube.entrypoints=https"
-      - "traefik.http.routers.roundcube.rule=Host(`mail01.fnmuc.net`, `mail01-v4.fnmuc.net`, `webmail.fnmuc.net`, `webmail.mail01.fnmuc.net`, `imap.fnmuc.net`, `smtp.fnmuc.net`)"
+      - "traefik.http.routers.roundcube.rule=Host(`mail01.fnmuc.net`, `mail01-v4.fnmuc.net`, `webmail.fnmuc.net`, `webmail.mail01.fnmuc.net`, `imap.fnmuc.net`, `smtp.fnmuc.net`, `mail.ext.ffmuc.net`)"
       - "traefik.http.routers.roundcube.tls=true"
       - "traefik.http.routers.roundcube.tls.certresolver=http"
       - "traefik.http.routers.roundcube.service=roundcube"
