@@ -1,4 +1,4 @@
-# Dovecot 2.4 syntax (docker-mailserver 16). docker-mailserver copies this
+# Dovecot 2.4 syntax (docker-mailserver 16 and 17). docker-mailserver copies this
 # file to /etc/dovecot/local.conf, which dovecot.conf includes last.
 
 # Dovecot defaults: 10 and 100.
