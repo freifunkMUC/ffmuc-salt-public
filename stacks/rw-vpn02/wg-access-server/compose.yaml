@@ -1,0 +1,50 @@
+---
+# Takeover of the hand-maintained /srv/docker/wg-access-server (same project name, same
+# service configuration, so the running containers are adopted without a recreate).
+# haproxy.cfg, config.yaml (OIDC and session secrets) and data/ stay on the host.
+name: wg-access-server
+services:
+  wg-access-server:
+    container_name: wg-access-server
+    image: ghcr.io/freifunkmuc/wg-access-server:v1.3.0@sha256:2e8c6f0a8969f831c359d9d28a80ad10a6ffea6e82b0cfc7ac659a5b91c446cb
+    restart: always
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      WG_ADMIN_USERNAME: ${WG_ADMIN_USERNAME:?}
+      WG_ADMIN_PASSWORD: ${WG_ADMIN_PASSWORD:?}
+      WG_WIREGUARD_PRIVATE_KEY: ${WG_WIREGUARD_PRIVATE_KEY:?}
+    volumes:
+      - /srv/docker/wg-access-server/data:/data
+      - /srv/docker/wg-access-server/config.yaml:/config.yaml
+      - /lib/modules:/lib/modules:ro
+  haproxy:
+    image: haproxy:3.4-alpine
+    restart: always
+    network_mode: host
+    user: root:root
+    volumes:
+      - /srv/docker/wg-access-server/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+      - /srv/docker/wg-access-server/haproxy-certs:/certs:ro
+  acme-sh:
+    image: neilpang/acme.sh
+    restart: always
+    network_mode: host
+    command: daemon
+    environment:
+      DEPLOY_HAPROXY_PEM_PATH: /haproxy-certs
+      DEPLOY_HAPROXY_RELOAD: ""
+    volumes:
+      - /srv/docker/wg-access-server/acme.sh-out:/acme.sh
+      - /srv/docker/wg-access-server/haproxy-certs:/haproxy-certs
+  proxyguard:
+    image: ghcr.io/freifunkmuc/proxyguard-docker:2
+    restart: always
+    network_mode: host
+    environment:
+      LISTEN_PORT: "8080"
+      TO: "[::1]:51820"
