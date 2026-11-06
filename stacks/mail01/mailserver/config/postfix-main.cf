@@ -1,0 +1,2 @@
+# Locally submitted mail (bounces, Sieve, sendmail) also through Rspamd, so it is DKIM-signed.
+non_smtpd_milters = $rspamd_milter
