@@ -124,6 +124,7 @@ bcrypt hash), put the reference in single quotes: `NAME = '[[NAME]]'`.
 | `docker06/mastodon` | `MASTODON_DB_PASS` (also `POSTGRES_PASSWORD`), `MASTODON_SECRET_KEY_BASE`, `MASTODON_OTP_SECRET`, `MASTODON_VAPID_PRIVATE_KEY`, `MASTODON_SMTP_PASSWORD`, `MASTODON_ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY`, `MASTODON_ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT`, `MASTODON_ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY` (from `/srv/docker/mastodon/.env.production`); `TRUSTED_PROXY_IP` is literal in `stacks.toml` (internal addresses, not a secret; a Periphery secret would mask them in the logs). The other values that are not secret are in `env/mastodon.env` |
 | `docker07/akvorado` | none. `config/` stays on the host (`outlet.yaml` has the SNMP community) |
 | `docker07/keycloak` | `KEYCLOAK_DB_PASSWORD` (`POSTGRES_PASSWORD` and `KC_DB_PASSWORD`), `KEYCLOAK_ADMIN_PASSWORD` (from `/srv/docker/keycloak/docker-compose.yml` and `keycloak.env`). The values that are not secret are in `env/keycloak.env` |
+| `rw-vpn0{1,2}/wg-access-server` | `WG_ACCESS_SERVER_WG_ADMIN_USERNAME`, `WG_ACCESS_SERVER_WG_ADMIN_PASSWORD`, `WG_ACCESS_SERVER_WG_WIREGUARD_PRIVATE_KEY` (compose environment of the old file; the key is also in `config.yaml`). `config.yaml` (OIDC client secret, session secret, key), `haproxy.cfg` (per host), `data/` (SQLite, TLS key) and `acme.sh-out/`, `haproxy-certs/` stay on the host. Taken over unchanged (images as running, `restart: always`); hardening is a follow-up |
 | `docker07/vaultwarden` | `VAULTWARDEN_ADMIN_TOKEN` (from `/srv/docker/vaultwarden/.env`, an argon2 hash with `$`, so it is single-quoted in `stacks.toml`), `VAULTWARDEN_SSO_CLIENT_SECRET` (from `/srv/docker/vaultwarden/docker-compose.yaml`) |
 | `docker06/komodo` | none in Komodo; Core's own secrets stay in its bootstrap `.env` |
 | `docker07/tuwunel` | `TUWUNEL_OIDC_CLIENT_SECRET` (Keycloak client `matrix` in realm `ffmuc`) |
@@ -206,7 +207,7 @@ Note deviations from upstream and the reason in the PR.
   changes in `ffmuc/docker-compose-ffmuc.yml`, the last file in `file_paths`.
 - Komodo reads `files_on_host` compose files into its database, so projects
   with literal secrets in their compose files are left out until their secrets
-  have moved: docker04 `tuwunel-test`; rw-vpn01/02 `wg-access-server`.
+  have moved: docker04 `tuwunel-test`.
 - Taking over a running project: see *Taking a project over*, then compare
   the Stack's diff and *Deploy*. The old `/srv/docker/<project>/docker-compose.y*ml`
   stays on the host as rollback: `docker compose -p <project> -f <old file> up -d`
