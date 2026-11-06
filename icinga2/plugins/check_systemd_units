@@ -1,0 +1,72 @@
+#!/usr/bin/python3
+#
+# Icinga plugin: CRITICAL when a systemd unit is not active.
+#
+# Units come from --unit (repeatable) and from template instances: with
+# --template NAME@ the instances are derived from --from-links (interface names
+# with the given prefix, e.g. br-: br-welt gives NAME@welt) or --from-systemd
+# (instances systemd has loaded, failed ones included; a unit stopped by hand
+# is unloaded and no longer seen). No instances and no --unit: OK.
+#
+
+import argparse
+import os
+import subprocess
+import sys
+
+OK, CRITICAL, UNKNOWN = 0, 2, 3
+
+
+def parse_args():
+    p = argparse.ArgumentParser(description="Check that systemd units are active")
+    p.add_argument("--unit", action="append", default=[], help="unit name; repeatable")
+    p.add_argument("--template", help="template prefix, e.g. respondd@")
+    p.add_argument("--from-systemd", action="store_true", help="instances systemd has loaded")
+    p.add_argument("--from-links", help="interface prefix; instance = name after it")
+    return p.parse_args()
+
+
+def instances(args):
+    names = set()
+    if args.from_systemd:
+        out = subprocess.run(
+            ["/bin/systemctl", "list-units", "--all", "--plain", "--no-legend", f"{args.template}*.service"],
+            capture_output=True, text=True, timeout=20, check=False,
+        ).stdout
+        names |= {l.split()[0][len(args.template):-len(".service")] for l in out.splitlines() if l.strip()}
+    if args.from_links:
+        pre = args.from_links
+        names |= {n[len(pre):] for n in os.listdir("/sys/class/net") if n.startswith(pre)}
+    return sorted(names)
+
+
+def main():
+    args = parse_args()
+    units = list(args.unit)
+    if args.template:
+        units += [f"{args.template}{i}.service" for i in instances(args)]
+    if not units:
+        print("OK - no units configured")
+        return OK
+    try:
+        proc = subprocess.run(
+            ["/bin/systemctl", "is-active", *units],
+            capture_output=True, text=True, timeout=20, check=False,
+        )
+    except (OSError, subprocess.SubprocessError) as err:
+        print(f"UNKNOWN - systemctl failed: {err}")
+        return UNKNOWN
+    states = proc.stdout.split()
+    if len(states) != len(units):
+        print("UNKNOWN - unexpected systemctl output")
+        return UNKNOWN
+    bad = [f"{u}={s}" for u, s in zip(units, states) if s != "active"]
+    if bad:
+        print(f"CRITICAL - {len(bad)}/{len(units)} not active: " + ", ".join(bad[:8]))
+        return CRITICAL
+    print(f"OK - {len(units)} unit(s) active")
+    return OK
+
+
+if __name__ == "__main__":
+    sys.exit(main())
