@@ -1,0 +1,7 @@
+[Unit]
+Description=Write the mail queue state for Icinga
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/ffmuc-mailqueue-snapshot
