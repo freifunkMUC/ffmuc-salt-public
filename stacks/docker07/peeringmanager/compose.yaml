@@ -69,7 +69,7 @@ services:
       interval: 15s
 
   postgres:
-    image: docker.io/postgres:17-alpine@sha256:266d3c257594e195b309ae9d1805e54c788f1d7b375f56bf6c367aac6c917e7b
+    image: docker.io/postgres:17-alpine@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac
     healthcheck:
       test: pg_isready -q -t 2 -d $$POSTGRES_DB -U $$POSTGRES_USER
       start_period: 20s
