@@ -31,7 +31,9 @@ services:
       TUWUNEL_IDENTITY_PROVIDER__0__CALLBACK_URL: https://matrix.ffmuc.net/_matrix/client/unstable/login/sso/callback/matrix
       TUWUNEL_IDENTITY_PROVIDER__0__TRUSTED: "true"
       TUWUNEL_IDENTITY_PROVIDER__0__USERID_CLAIMS: '["preferred_username"]'
-      TUWUNEL_IDENTITY_PROVIDER__0__REGISTRATION: "false"
+      # POC: no import yet, the account is created at the first SSO login (realm ffmuc holds only the testers).
+      # Back to "false" before the Mattermost import (accounts then come from the import).
+      TUWUNEL_IDENTITY_PROVIDER__0__REGISTRATION: "true"
       TUWUNEL_IDENTITY_PROVIDER__0__UNIQUE_ID_FALLBACKS: "false"
     volumes:
       - /srv/docker/tuwunel/db/rocksdb:/var/lib/tuwunel/db
