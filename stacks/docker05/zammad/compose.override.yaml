@@ -82,7 +82,7 @@ services:
   zammad-redis:
     security_opt: ["no-new-privileges:true"]
     mem_limit: 256m
-    image: redis:8.10.3-alpine@sha256:21090af93f8324db2f0f0f4f38a7c60369d47d917e000c3423d89d2ae2883537
+    image: redis:8.10.3-alpine@sha256:71885d8cc6e42f2bc0aa2eb853bfc4be200b5108a46ac50e117ae1df0531fb80
   zammad-postgresql:
     # new directories for Postgres 17 and ES 9; the old ones stay as the way back
     security_opt: ["no-new-privileges:true"]
