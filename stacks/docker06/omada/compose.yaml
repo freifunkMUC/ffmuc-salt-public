@@ -13,9 +13,14 @@ services:
       - PORTAL_HTTPS_PORT=8043
       - SHOW_SERVER_LOGS=true
       - SHOW_MONGODB_LOGS=false
+      - ROOTLESS=true
       - SSL_CERT_NAME="tls.crt"
       - SSL_KEY_NAME="tls.key"
     network_mode: host
+    # Rootless mode: 508 owns data/, work/ and logs/; all ports are above 1024.
+    user: "508:508"
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
     volumes:
       - /srv/docker/omada/data:/opt/tplink/EAPController/data
       - /srv/docker/omada/work:/opt/tplink/EAPController/work
