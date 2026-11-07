@@ -57,10 +57,10 @@ services:
       REDIS_PASSWORD: ${REDIS_CACHE_PASSWORD}
 
 volumes:
-  netbox-postgres-data:
+  netbox-postgres18-data:
     driver: local
     driver_opts:
-      device: /srv/docker/netbox-parker/vol_postgres
+      device: /srv/docker/postgres18-netbox-parker
       type: bind
       o: bind
 
