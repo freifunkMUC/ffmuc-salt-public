@@ -31,7 +31,7 @@ services:
       - /srv/docker/wg-access-server/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
       - /srv/docker/wg-access-server/haproxy-certs:/certs:ro
   acme-sh:
-    image: neilpang/acme.sh@sha256:b0a3af2a3163ead9d35434fa117a94bed2717d893c0923e9c1e347e78cae4dc6
+    image: neilpang/acme.sh@sha256:475e6c0f1fb861ea8011d7ab9dd3d7490d98540970827ecc36290a3afa411673
     restart: always
     network_mode: host
     command: daemon
