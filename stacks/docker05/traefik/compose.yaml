@@ -5,7 +5,7 @@
 # /srv/docker/traefik/logs (rotated by the logrotate state, not shipped to Graylog).
 services:
   traefik:
-    image: traefik:v3.7.17@sha256:68ae5fe5b64ca166704b746a9e8afcd385e36b3f569a5691401bf652d57b3748
+    image: traefik:v3.7.17@sha256:f4bb143d1135a579b630ed491e17ec50f6f7c9c6a30585ff3d385471d2a86f5a
     container_name: traefik
     restart: unless-stopped
     depends_on:
@@ -54,7 +54,7 @@ services:
   # read-only Docker API for Traefik's docker provider: version, ping, container list/inspect,
   # events; no POST
   socket-proxy:
-    image: lscr.io/linuxserver/socket-proxy:3.4.7-r0-ls104@sha256:4e5e59efd3338205561c54262581992036e5a36ccca97d487b1d4ec41f9adc58
+    image: lscr.io/linuxserver/socket-proxy:3.4.7-r0-ls105@sha256:823dda971e9a3951257eb251586a804199819fe1587c35faa43adc7b52a2ff16
     restart: unless-stopped
     read_only: true
     tmpfs:
