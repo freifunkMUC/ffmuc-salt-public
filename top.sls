@@ -16,6 +16,7 @@ base:
     - nebula
     - needrestart
     - resolv
+    - salt-minion
     - screen
     - sudo
     - sysctl
