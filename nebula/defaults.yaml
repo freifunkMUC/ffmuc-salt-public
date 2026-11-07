@@ -4,7 +4,7 @@
 nebula:
   enabled: false
   # renovate: datasource=github-releases depName=krombel/nebula extractVersion=^v(?<version>.+)$ versioning=regex:^(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)-(?<build>\d+)$
-  version: 1.8.2-2
+  version: 1.12.0-1
   packages:
     1.8.2-2:
       amd64: 43237bbc52f3db30262e8432ff89673cf26d8a5da6fa9d3e718920877ca44696
