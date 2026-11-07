@@ -2,7 +2,7 @@
 # for palette changes (skins/elastic/README.md); rebuilt on every Roundcube update, so the CSS always matches.
 FROM roundcube/roundcubemail:1.7.5-apache-nonroot@sha256:b0a0ed861d6786fad93ee33757470da605d4a39a4ff9081cdd4529e0196deaf9 AS roundcube
 
-FROM node:24.22.2-alpine@sha256:a34ab6d7f6f4813f4d0c5469d74685604b962fbdbf5793a7bc7b4998ecb867c8 AS skin
+FROM node:26.13.0-alpine@sha256:8996bb5821d62a8fd9bb27c1cb07462f3fdce6e47d640c6a881ead0b064ce216 AS skin
 # renovate: datasource=npm depName=less
 ARG LESS_VERSION=4.9.1
 # renovate: datasource=npm depName=less-plugin-clean-css
