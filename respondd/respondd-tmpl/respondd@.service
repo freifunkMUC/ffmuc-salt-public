@@ -8,6 +8,7 @@ StartLimitIntervalSec=0
 Type=simple
 User=root
 Group=root
+Environment=PYTHONUNBUFFERED=1
 WorkingDirectory=/opt/respondd-%I
 ExecStart=/opt/respondd-%I/ext-respondd.py
 Restart=on-failure
