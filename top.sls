@@ -77,6 +77,7 @@ base:
   'mail01.in.ffmuc.net':
     - mailqueue
   'guardian-*.in.ffmuc.net':
+    - dhcp-server.guardian
     - sflowtool
   'vpn0*.in.ffmuc.net':
     - wireguard

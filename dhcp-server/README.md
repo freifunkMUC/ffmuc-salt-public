@@ -1,6 +1,6 @@
 # dhcp-server
 
-DHCPv4 for the client networks on the gateways (`gw*`). Owned by
+DHCPv4 for the client networks on the gateways (`gw*`) and, via `guardian.sls`, on the guardians (see below). Owned by
 `@freifunkMUC/salt-stack` (see `CODEOWNERS`).
 
 Two implementations, selected per gateway by a NetBox tag:
@@ -61,3 +61,38 @@ and isc-dhcp-server starts again with its previous config.
 ```
 python3 -m unittest discover -s dhcp-server/tests
 ```
+
+## Guardians (`guardian.sls`)
+
+Raspbian bookworm (armhf), top entry `guardian-*`. ISC's repository has no
+armhf packages, so the guardians run Raspbian's Kea 2.2.0 (`kea-dhcp4-server`,
+unit `kea-dhcp4-server`): no hooks, hence **no ping check** (a client with a
+static address inside the pool is not detected), and `output_options` /
+`control-socket` in the older spelling (`kea-dhcp4-guardian.conf.jinja`).
+The gateways' `init.sls` is not used and not changed.
+
+There are no NetBox site prefixes here, so everything comes from the device's
+NetBox config context `dhcp_guardian` (shape: `dhcpd_to_context.py`):
+
+```
+{"dhcp_guardian": {
+  "enabled": true,
+  "interfaces": ["eth0"],
+  "domain_name": "<domain>",
+  "valid_lifetime": 1800, "max_valid_lifetime": 3600,
+  "subnets": [{"subnet": "<net/len>", "pool": "<first> - <last>", "routers": "<ip>",
+               "dns": "<ip>", "next_server": "<ip>", "boot_file": "<file>",
+               "reservations": [{"mac": "<mac>", "ip": "<ip>", "hostname": "<name>"}]}]}}
+```
+
+- key absent: the state does nothing (`dhcpd.conf` stays as it is)
+- `enabled: true`: package, config (`kea-dhcp4 -t` as `check_cmd`), then
+  isc-dhcp-server stopped and disabled, then Kea started. If the config test
+  fails, dhcpd keeps serving.
+- `enabled: false`: rollback, Kea stopped and disabled, isc-dhcp-server
+  running again. isc-dhcp-server and its `dhcpd.conf` are never removed.
+
+`dhcpd_to_context.py` builds the context from an existing `dhcpd.conf`
+(contains MAC addresses: paste only into NetBox; `--summary` prints counts).
+Leases are not migrated (lease time 1800 s, clients renew within 15-30 min).
+Pool statistics (`kea-pool-stats`) are not set up on the guardians.
