@@ -72,6 +72,8 @@ base:
     - dns-auth
     - pdns-recursor
     - github-downloader
+  'gw04.in.ffmuc.net':
+    - meshviewer-web
   'mail01.in.ffmuc.net':
     - mailqueue
   'guardian-*.in.ffmuc.net':
