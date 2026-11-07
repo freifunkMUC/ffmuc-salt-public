@@ -739,6 +739,18 @@ ADMIN_PASSWORD = [[KEYCLOAK_ADMIN_PASSWORD]]
 """
 
 [[stack]]
+name = "docker07-federated-map"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker07"
+project_name = "federated-map"
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker07/federated-map"
+file_paths = ["compose.yaml"]
+
+[[stack]]
 name = "docker07-vaultwarden"
 tags = ["ffmuc"]
 deploy = false

@@ -1,0 +1,26 @@
+---
+services:
+  map:
+    image: ghcr.io/freifunkmuc/freifunk-map-modern:sha-a1426da@sha256:30abf40c5b6d7de5898ea2bf719fec0e9a16d53f5a5ffb0601cee01b4eef1eb8
+    command: ["/config.federation.json"]
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 1g
+    tmpfs:
+      - /tmp
+    volumes:
+      # Caches only, rebuilt by the next crawl.
+      - data:/data
+    ports:
+      - "0.0.0.0:8097:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-qO", "/dev/null", "http://127.0.0.1:8080/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  data:
