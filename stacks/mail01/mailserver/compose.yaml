@@ -173,8 +173,14 @@ services:
       - POSTGRES_PASSWORD=${ROUNDCUBE_POSTGRES_PASSWORD:?set ROUNDCUBE_POSTGRES_PASSWORD}
 
   mta-sts:
-    image: nginx:1.31.8-alpine@sha256:b2f80f8f88146b0772fdcc7d92cea621aa8c2889fa8d07ed61d4884fcea53e09
+    # Unprivileged nginx: listens on 8080, pid and cache in /tmp.
+    image: nginxinc/nginx-unprivileged:1.31.7-alpine@sha256:b5047b9b76845eac124358373c6852377c52e4b05834a47647e955dd91cb8f1e
     restart: unless-stopped
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    tmpfs:
+      - /tmp
     volumes:
       - ./mta-sts:/usr/share/nginx/html:ro
       - ./mta-sts.conf:/etc/nginx/conf.d/default.conf:ro
@@ -186,12 +192,12 @@ services:
       - "traefik.http.routers.mta-sts.tls.certresolver=http"
       - "traefik.http.routers.mta-sts.middlewares=default@file"
       - "traefik.http.routers.mta-sts.service=mta-sts"
-      - "traefik.http.services.mta-sts.loadbalancer.server.port=80"
+      - "traefik.http.services.mta-sts.loadbalancer.server.port=8080"
       - "traefik.docker.network=proxy"
     networks:
       - proxy
     healthcheck:
-      test: ["CMD-SHELL", "wget -O /dev/null http://localhost || exit 1"]
+      test: ["CMD-SHELL", "wget -O /dev/null http://localhost:8080 || exit 1"]
       interval: 2s
       timeout: 30s
       retries: 15

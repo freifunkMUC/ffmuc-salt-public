@@ -65,7 +65,10 @@ services:
 
   matomo-app:
     image: matomo:5.14.2-fpm-alpine@sha256:552f5fd9bfe290ad152a03b748d6db371525412ac544c0f18ac0509d44bfdbc8
+    user: "82:82"
     restart: always
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
     depends_on:
       matomo-update:
         condition: service_completed_successfully
