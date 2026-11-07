@@ -1,0 +1,52 @@
+{#-
+  Guardian Kea DHCPv4 configuration (Salt managed). Unlike the gateways
+  (kea-dhcp4.conf.jinja) the guardians have no NetBox site prefixes: subnets,
+  pools and reservations come from the device's NetBox config context
+  `dhcp_guardian` (see README). Kea 2.2 from Raspbian bookworm: `output_options`
+  with underscore, singular `control-socket`, no hooks (so no ping check).
+#}
+{%- set cfg = salt['config.get']('netbox:config_context:dhcp_guardian', {}) %}
+{%- set subnets = [] %}
+{%- for s in cfg.get('subnets', []) %}
+{%- set options = [] %}
+{%- if s.get('routers') %}{% do options.append({'name': 'routers', 'data': s['routers']}) %}{% endif %}
+{%- if s.get('dns') %}{% do options.append({'name': 'domain-name-servers', 'data': s['dns']}) %}{% endif %}
+{%- set subnet = {
+	'id': loop.index,
+	'subnet': s['subnet'],
+	'pools': [{'pool': s['pool']}],
+	'option-data': options,
+} %}
+{%- if s.get('next_server') %}{% do subnet.update({'next-server': s['next_server']}) %}{% endif %}
+{%- if s.get('boot_file') %}{% do subnet.update({'boot-file-name': s['boot_file']}) %}{% endif %}
+{%- set reservations = [] %}
+{%- for r in s.get('reservations', []) %}
+{%- set res = {'hw-address': r['mac'], 'ip-address': r['ip']} %}
+{%- if r.get('hostname') %}{% do res.update({'hostname': r['hostname']}) %}{% endif %}
+{%- do reservations.append(res) %}
+{%- endfor %}
+{%- if reservations %}{% do subnet.update({'reservations': reservations}) %}{% endif %}
+{%- do subnets.append(subnet) %}
+{%- endfor %}
+{%- set global_options = [] %}
+{%- if cfg.get('domain_name') %}{% do global_options.append({'name': 'domain-name', 'data': cfg['domain_name']}) %}{% endif %}
+{%- set config = {
+	'Dhcp4': {
+		'interfaces-config': {'interfaces': cfg.get('interfaces', [])},
+		'control-socket': {'socket-type': 'unix', 'socket-name': '/run/kea/kea4-ctrl-socket'},
+		'lease-database': {'type': 'memfile', 'lfc-interval': 3600},
+		'authoritative': true,
+		'valid-lifetime': cfg.get('valid_lifetime', 1800),
+		'max-valid-lifetime': cfg.get('max_valid_lifetime', 3600),
+		'option-data': global_options,
+		'subnet4': subnets,
+		'loggers': [
+			{
+				'name': 'kea-dhcp4',
+				'output_options': [{'output': 'stdout'}],
+				'severity': 'INFO',
+			},
+		],
+	},
+} -%}
+{{ config | tojson(indent=2) }}
