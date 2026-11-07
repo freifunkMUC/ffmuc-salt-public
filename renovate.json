@@ -31,6 +31,25 @@
       "dependencyDashboardApproval": true
     },
     {
+      "description": "One major-update PR per stack directory instead of one spanning several stacks",
+      "matchManagers": ["docker-compose", "dockerfile"],
+      "matchUpdateTypes": ["major"],
+      "additionalBranchPrefix": "{{{replace '/' '-' packageFileDir}}}-",
+      "commitMessageSuffix": "({{{packageFileDir}}})"
+    },
+    {
+      "description": "Graylog 7.2 supports OpenSearch up to 3.7 (compatibility matrix: go2docs.graylog.org)",
+      "matchFileNames": ["stacks/docker06/graylog/**"],
+      "matchPackageNames": ["public.ecr.aws/opensearchproject/opensearch"],
+      "allowedVersions": "<3.8"
+    },
+    {
+      "description": "Mastodon does not officially support OpenSearch; stay on 2.x",
+      "matchFileNames": ["stacks/docker06/mastodon/**"],
+      "matchPackageNames": ["public.ecr.aws/opensearchproject/opensearch"],
+      "allowedVersions": "<3"
+    },
+    {
       "description": "EMQX 5.9 and later are BSL 1.1: free only as single nodes, and wgkex runs a four-node cluster (docker04-07). Stay on the last Apache-2.0 line until wgkex has another broker.",
       "matchPackageNames": ["emqx/emqx"],
       "allowedVersions": "<5.9"
