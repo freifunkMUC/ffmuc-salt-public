@@ -1,0 +1,22 @@
+# Weekly cache cleanup of Mastodon's media: avatars and headers of remote accounts
+# nobody follows, link preview images older than 14 days, files without a database row.
+# Runs a one-off `web` container of the Komodo stack (its compose file only, no other).
+[[procedure]]
+name = "docker06-mastodon-media-cleanup"
+description = "Weekly tootctl media cleanup, Sundays 04:00 (after rustic, before the prune)"
+tags = ["ffmuc"]
+[procedure.config]
+schedule_format = "Cron"
+schedule = "0 0 4 ? * SUN"
+schedule_timezone = "Europe/Berlin"
+schedule_alert = false
+failure_alert = true
+
+[[procedure.config.stage]]
+name = "tootctl"
+executions = [
+  { execution.type = "RunStackService", execution.params.stack = "docker06-mastodon", execution.params.service = "web", execution.params.no_deps = true, execution.params.no_tty = true, execution.params.command = [
+    "bash", "-c",
+    "set -e; bin/tootctl media remove --prune-profiles --days 30 --concurrency 2; bin/tootctl preview_cards remove --days 14 --concurrency 2; bin/tootctl media remove-orphans",
+  ] },
+]
