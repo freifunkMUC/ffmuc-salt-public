@@ -14,15 +14,10 @@ salt-minion-restart-keepalive:
     - onchanges:
       - file: /etc/salt/minion.d/tcp-keepalive.conf
 
-# A Nebula restart empties its conntrack; the master's packets are then dropped (no inbound rule) and its TCP
-# retransmits back off to minutes. Reconnect the minion shortly after every Nebula start (delayed: a running job returns first).
+# The reconnect drop-in (#693) gained nothing on jvb14 (41 s without, 42 s with); remove it where it was applied.
 {%- for unit in ['nebula', 'nebula-meet'] %}
 /etc/systemd/system/{{ unit }}.service.d/salt-minion-reconnect.conf:
-  file.managed:
-    - makedirs: True
-    - contents: |
-        [Service]
-        ExecStartPost=-/usr/bin/systemd-run --on-active=15 /bin/systemctl restart salt-minion
+  file.absent
 {%- endfor %}
 
 salt-minion-reconnect-daemon-reload:
