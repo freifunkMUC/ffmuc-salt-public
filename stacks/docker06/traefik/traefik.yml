@@ -1,0 +1,75 @@
+---
+# Static configuration, read once at start: restart the stack after changing this file.
+global:
+  checkNewVersion: false
+  sendAnonymousUsage: false
+
+api:
+  dashboard: true
+
+ping: {}
+
+log:
+  level: INFO
+  format: json
+
+# Client addresses are personal data: the file stays on the host with a short rotation (logrotate
+# state) until a retention period is agreed. Request headers are not logged.
+accessLog:
+  filePath: /logs/access.log
+  format: json
+  bufferingSize: 100
+  fields:
+    headers:
+      defaultMode: drop
+
+# aliasHeadersStrategy delete: drop request headers whose name aliases another one (X_Auth_User for
+# X-Auth-User), so they cannot pass for a header an auth middleware sets.
+entryPoints:
+  http:
+    address: ":80"
+    forwardedHeaders:
+      trustedIPs: ["10.8.0.0/24"]
+    http:
+      aliasHeadersStrategy: delete
+      redirections:
+        entryPoint:
+          to: https
+          scheme: https
+          permanent: true
+          # Lowest priority, so an explicit router on `http` (a service that must stay reachable
+          # over plain HTTP) wins over the redirect.
+          priority: 1
+  https:
+    address: ":443"
+    forwardedHeaders:
+      trustedIPs: ["10.8.0.0/24"]
+    http:
+      aliasHeadersStrategy: delete
+      middlewares:
+        - security-headers@file
+  # internal: ping for the healthcheck, not published
+  traefik:
+    address: ":8080"
+    http:
+      aliasHeadersStrategy: delete
+
+providers:
+  docker:
+    endpoint: tcp://socket-proxy:2375
+    exposedByDefault: false
+    network: proxy
+  file:
+    directory: /etc/traefik/dynamic
+    watch: true
+
+certificatesResolvers:
+  http:
+    acme:
+      email: noc@fnmuc.net
+      storage: acme.json
+      dnsChallenge:
+        provider: exec
+        propagation:
+          delayBeforeChecks: 0
+          disableChecks: true
