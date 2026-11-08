@@ -1,8 +1,9 @@
-# Traefik access log on docker hosts (stacks/<host>/traefik). Short retention until a retention
-# period for access logs is agreed; copytruncate because Traefik keeps the file open.
+# Traefik access log on docker hosts (stacks/<host>/traefik): kept 7 days, then deleted.
+# copytruncate because Traefik keeps the file open.
 /srv/docker/traefik/logs/access.log
 {
-        rotate 3
+        rotate 6
+        maxage 7
         daily
         maxsize 100M
         missingok
