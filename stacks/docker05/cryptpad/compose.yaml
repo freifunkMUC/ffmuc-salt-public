@@ -2,17 +2,29 @@
 services:
   cryptpad:
     image: cryptpad/cryptpad:version-2026.10.0@sha256:61a12565a532a046996e47b3180a8ac9855d86c262dc98a1bb8d1107557bfe3a
-    restart: always
+    restart: unless-stopped
     hostname: cryptpad
+    # Runs as uid 4001 on port 3000, no capabilities needed
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    mem_limit: 3g
+    pids_limit: 512
+    # Each start runs install-office.sh and npm run build
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://localhost:3000/"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 300s
     environment:
       - CPAD_MAIN_DOMAIN=https://cryptpad.ffmuc.net
       - CPAD_SANDBOX_DOMAIN=https://cryptpad-sb.ffmuc.net
       - CPAD_CONF=/cryptpad/config/config.js
-      # Traefik can't use HTTP2 to communicate with cryptpad_websocket
-      # A workaround is disabling HTTP2 in Nginx
-      - CPAD_HTTP2_DISABLE=true
-      - CPAD_TRUSTED_PROXY=10.8.0.0/24
-      - CPAD_REALIP_HEADER=X-Real-IP
       - CPAD_INSTALL_ONLYOFFICE=yes
     volumes:
       - /srv/docker/cryptpad/data/blob:/cryptpad/blob
