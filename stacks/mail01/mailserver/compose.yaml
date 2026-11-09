@@ -69,6 +69,12 @@ services:
   unbound:
     image: docker.io/klutchell/unbound:1.26.2@sha256:50cbeb32b5838a829a7226b19cb151f9535bd7f9f3190f950780f452fe807478
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "drill-hc", "@127.0.0.1", "dnssec.works"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     # Not read_only: unbound updates root.key (RFC 5011).
     cap_drop:
       - ALL
@@ -87,6 +93,12 @@ services:
   autodiscover:
     image: ghcr.io/freifunkmuc/autodiscover-email-settings:2.0.3@sha256:06056fde95cc8965a042eb86be7143da4fe5dcdb04ca73f49493e465c0f096e8
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     environment:
       - COMPANY_NAME=Freie Netze München e.V.
       - SUPPORT_URL=https://autodiscover.fnmuc.net
@@ -165,6 +177,12 @@ services:
     image: postgres:18.6-alpine@sha256:123b17998ccaf47e53b502e8c6a1e79afd8f579c6f3eec83c563da026f957395
     container_name: roundcubedb
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     volumes:
       - /opt/containers/mailserver/database:/var/lib/postgresql/18/docker
     environment:
