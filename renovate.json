@@ -101,6 +101,25 @@
     {
       "matchPackageNames": ["open-mesh-mirror/batman-adv"],
       "prBodyNotes": ["Check that the release builds against the gateway kernels (comment in `systemd-networkd/init.sls`) and move the old version to `batman_old_versions`."]
+    },
+    {
+      "description": "Salt: master image and minion version (salt-minion/init.sls) in one PR; Broadcom advises the same pinned version on master and minions",
+      "matchDepNames": ["ghcr.io/cdalvaro/docker-salt-master"],
+      "groupName": "Salt",
+      "additionalBranchPrefix": "",
+      "commitMessageSuffix": ""
+    },
+    {
+      "description": "Salt majors (master and minions together) only after approval in the Dependency Dashboard",
+      "matchDepNames": ["ghcr.io/cdalvaro/docker-salt-master"],
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "The minion version in salt-minion/init.sls has no digest",
+      "matchManagers": ["custom.regex"],
+      "matchDepNames": ["ghcr.io/cdalvaro/docker-salt-master"],
+      "pinDigests": false
     }
   ],
   "customManagers": [
