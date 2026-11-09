@@ -3,8 +3,8 @@
 #
 {% set site_slug = salt['pillar.get']("netbox:site:slug") %}
 
-{% if grains.os == 'Ubuntu' and grains.osmajorrelease >= 24 %}
-/etc/apt/sources.list.d/ubuntu.sources:
+{% if (grains.os == 'Ubuntu' and grains.osmajorrelease >= 24) or (grains.os == 'Debian' and grains.osmajorrelease >= 13) %}
+/etc/apt/sources.list.d/{{ grains.os|lower }}.sources:
 {% else %}
 /etc/apt/sources.list:
 {% endif %}
