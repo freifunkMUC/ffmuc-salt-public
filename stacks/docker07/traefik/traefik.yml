@@ -13,8 +13,8 @@ log:
   level: INFO
   format: json
 
-# Client addresses are personal data: the file stays on the host with a short rotation (logrotate
-# state) until a retention period is agreed. Request headers are not logged.
+# Client addresses are personal data: the file stays on the host and is kept 7 days (logrotate
+# state). Request headers are not logged.
 accessLog:
   filePath: /logs/access.log
   format: json
