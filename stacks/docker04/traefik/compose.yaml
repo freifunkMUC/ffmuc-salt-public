@@ -1,38 +1,37 @@
 ---
+# Traefik for docker04. Static configuration in traefik.yml (read at start: restart the stack after
+# a change), dynamic defaults in dynamic/ (watched, apply live). ACME account and certificates and
+# the DNS hook stay on the host in /srv/docker/traefik; the access log goes to
+# /srv/docker/traefik/logs (rotated by the logrotate state, not shipped to Graylog).
 services:
   traefik:
     image: traefik:v3.7.17@sha256:f4bb143d1135a579b630ed491e17ec50f6f7c9c6a30585ff3d385471d2a86f5a
     container_name: traefik
     restart: unless-stopped
+    depends_on:
+      - socket-proxy
     security_opt:
       - no-new-privileges:true
     networks:
       - proxy
+      - socket-proxy
     ports:
       - 80:80
       - 443:443
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /srv/docker/traefik/traefik.yml:/traefik.yml:ro
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./dynamic:/etc/traefik/dynamic:ro
       - /srv/docker/traefik/acme.json:/acme.json
-      - /srv/docker/traefik/update-dns.sh:/tmp/update-dns.sh
+      - /srv/docker/traefik/update-dns.sh:/tmp/update-dns.sh:ro
+      - /srv/docker/traefik/logs:/logs
     environment:
       - EXEC_PATH=/tmp/update-dns.sh
     labels:
       - traefik.enable=true
-      - traefik.http.routers.traefik.entrypoints=http
-      - traefik.http.routers.traefik.rule=Host(`traefik-docker04.ov.ffmuc.net`)
-      # Login with Keycloak realm noc through oauth2-proxy on docker07 (same settings as docker05's dynamic/noc-auth.yml;
-      # this Traefik has no file provider yet, the Traefik baseline brings one)
-      - traefik.http.middlewares.noc-auth.forwardauth.address=https://auth.ov.ffmuc.net/
-      - traefik.http.middlewares.noc-auth.forwardauth.authresponseheaders=X-Auth-Request-User,X-Auth-Request-Preferred-Username
-      - traefik.http.middlewares.noc-auth.forwardauth.addauthcookiestoresponse=_oauth2_noc,_oauth2_noc_0,_oauth2_noc_1,_oauth2_noc_2
-      - traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https
-      - traefik.http.routers.traefik.middlewares=traefik-https-redirect
       - traefik.http.routers.traefik-secure.entrypoints=https
       - traefik.http.routers.traefik-secure.rule=Host(`traefik-docker04.ov.ffmuc.net`)
-      - traefik.http.routers.traefik-secure.middlewares=noc-auth@docker
+      - traefik.http.routers.traefik-secure.middlewares=noc-auth@file
       - traefik.http.routers.traefik-secure.tls=true
       - traefik.http.routers.traefik-secure.tls.certresolver=http
       - traefik.http.routers.traefik-secure.service=api@internal
@@ -51,6 +50,32 @@ services:
       options:
         max-size: 10m
         max-file: "3"
+
+  # read-only Docker API for Traefik's docker provider: version, ping, container list/inspect,
+  # events; no POST
+  socket-proxy:
+    image: lscr.io/linuxserver/socket-proxy:3.4.7-r0-ls105@sha256:823dda971e9a3951257eb251586a804199819fe1587c35faa43adc7b52a2ff16
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /run
+    networks:
+      - socket-proxy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - CONTAINERS=1
+      - EVENTS=1
+      - PING=1
+      - VERSION=1
+      - POST=0
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+
 networks:
   proxy:
     external: true
+  socket-proxy:
+    internal: true

@@ -18,6 +18,11 @@ services:
     image: mariadb:12.3.3-noble@sha256:d46e102fa8b9b72bfcdeb56f9dd538742092119dc8b11f31fe662605cd234cd9
     command: --max-allowed-packet=64MB
     restart: always
+    # Data directory is already owned by uid 999; started as that user the entrypoint needs no capabilities.
+    user: "999:999"
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 1536m
     volumes:
       - /srv/docker/matomo/database:/var/lib/mysql
     environment:
@@ -34,6 +39,9 @@ services:
     image: matomo:5.14.2-fpm-alpine@sha256:43f4c619873154350c8a8cdf6dd4dcf046cdf827a8a931241e61cf6a94566c9e
     user: "82:82"
     restart: "no"
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 256m
     volumes:
       - code:/var/www/html
     entrypoint:
@@ -51,6 +59,9 @@ services:
     image: matomo:5.14.2-fpm-alpine@sha256:43f4c619873154350c8a8cdf6dd4dcf046cdf827a8a931241e61cf6a94566c9e
     user: "82:82"
     restart: "no"
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 768m
     depends_on:
       db:
         condition: service_healthy
@@ -69,6 +80,13 @@ services:
     restart: always
     cap_drop: [ALL]
     security_opt: ["no-new-privileges:true"]
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD", "nc", "-z", "127.0.0.1", "9000"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     depends_on:
       matomo-update:
         condition: service_completed_successfully
@@ -80,24 +98,40 @@ services:
     image: matomo:5.14.2-fpm-alpine@sha256:43f4c619873154350c8a8cdf6dd4dcf046cdf827a8a931241e61cf6a94566c9e
     user: "82:82"
     restart: unless-stopped
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 1g
     depends_on:
       - matomo-app
     volumes: *matomo-files
     tmpfs:
       - /var/www/html/tmp:uid=82,gid=82
-    entrypoint: "sh -c 'while true; do php console core:archive --url=matomo.ffmuc.net; sleep 600; done'"
+    entrypoint: "sh -c 'while true; do php console core:archive --url=https://matomo.ffmuc.net/; sleep 600; done'"
 
   matomo-web:
-    image: nginx:1.31.8-alpine@sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11
+    # Unprivileged nginx: listens on 8080, pid and temp files in /tmp (image default).
+    image: nginxinc/nginx-unprivileged:1.31.7-alpine@sha256:b5047b9b76845eac124358373c6852377c52e4b05834a47647e955dd91cb8f1e
     restart: always
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    mem_limit: 64m
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/matomo.js"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    tmpfs:
+      - /tmp
     depends_on:
       - matomo-app
     volumes:
       - code:/var/www/html:ro
       # see https://github.com/matomo-org/matomo-nginx
-      - /srv/docker/matomo/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
     ports:
-      - 8092:80
+      - 8092:8080
 
 volumes:
   code:
