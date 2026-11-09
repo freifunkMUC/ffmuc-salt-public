@@ -18,6 +18,12 @@ services:
       MQTT_PASSWORD: ""
       MQTT_KEEPALIVE: "5"
       MQTT_TLS: "False"
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection((\"127.0.0.1\", 5000), 4)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
   mqtt_cluster:
     image: emqx/emqx:5.8.9@sha256:35b46f7aa7a0d51f3959e4344221ac5ec7f948b03e43099286b6c40a07bb393b

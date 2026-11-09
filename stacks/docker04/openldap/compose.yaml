@@ -36,6 +36,12 @@ services:
         max-file: "5"
     networks:
       - default
+    healthcheck:
+      test: ["CMD", "ldapsearch", "-x", "-LLL", "-H", "ldap://127.0.0.1:1389", "-s", "base", "-b", "", "namingContexts"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
   ldap-account-manager:
     image: ghcr.io/ldapaccountmanager/lam:9.7@sha256:ce7fa36fe6b2afc1a6e2423567c806c13bd4578e13c3869aa9e6557c065c7be0
