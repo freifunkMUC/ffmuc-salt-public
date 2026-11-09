@@ -7,6 +7,7 @@ because secrets and variables only exist on the host at deploy time; YAML,
 schema and file errors still fail. Also fails for compose files below stacks/
 that no stack in komodo-sync/stacks.toml lists.
 """
+
 import fnmatch
 import os
 import subprocess
@@ -31,7 +32,9 @@ for s in stacks:
     for f in files:
         cmd += ["-f", f]
     cmd += ["config", "-q", "--no-interpolate"]
-    r = subprocess.run(cmd, cwd=os.path.join(ROOT, run_dir), capture_output=True, text=True)
+    r = subprocess.run(
+        cmd, cwd=os.path.join(ROOT, run_dir), capture_output=True, text=True
+    )
     if r.returncode:
         broken += 1
         failed += 1
@@ -45,9 +48,16 @@ for dirpath, _, names in os.walk("stacks"):
         continue
     for n in names:
         p = os.path.normpath(os.path.join(dirpath, n))
-        if any(fnmatch.fnmatch(n, g) for g in ("compose*.y*ml", "docker-compose*.y*ml")) and p not in listed:
+        if (
+            any(
+                fnmatch.fnmatch(n, g) for g in ("compose*.y*ml", "docker-compose*.y*ml")
+            )
+            and p not in listed
+        ):
             failed += 1
-            print(f"::error file={p}::compose file not listed in komodo-sync/stacks.toml")
+            print(
+                f"::error file={p}::compose file not listed in komodo-sync/stacks.toml"
+            )
 
 print(f"{len(stacks) - broken} of {len(stacks)} stacks ok, {failed} failed")
 sys.exit(1 if failed else 0)
