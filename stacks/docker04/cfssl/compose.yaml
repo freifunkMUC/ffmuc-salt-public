@@ -33,10 +33,6 @@ services:
       - 8080:8080
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.cfssl.entrypoints=http"
-      - "traefik.http.routers.cfssl.rule=Host(`ca.ov.ffmuc.net`)"
-      - "traefik.http.middlewares.cfssl-https-redirect.redirectscheme.scheme=https"
-      - "traefik.http.routers.cfssl.middlewares=cfssl-https-redirect"
       - "traefik.http.routers.cfssl-secure.entrypoints=https"
       - "traefik.http.routers.cfssl-secure.rule=Host(`ca.ov.ffmuc.net`)"
       - "traefik.http.routers.cfssl-secure.tls=true"

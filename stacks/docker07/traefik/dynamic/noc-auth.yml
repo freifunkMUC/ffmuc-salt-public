@@ -7,6 +7,9 @@ http:
     noc-auth:
       forwardAuth:
         address: https://auth.ov.ffmuc.net/
+        # X-Forwarded-* come from Traefik itself (entry point trustedIPs); oauth2-proxy only trusts Traefik
+        trustForwardHeader: false
+        maxResponseBodySize: 65536
         authResponseHeaders:
           - X-Auth-Request-User
           - X-Auth-Request-Preferred-Username

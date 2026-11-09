@@ -48,10 +48,6 @@ services:
     labels:
       - traefik.enable=true
       - traefik.docker.network=proxy
-      - traefik.http.middlewares.komodo-https-redirect.redirectscheme.scheme=https
-      - traefik.http.routers.komodo.entrypoints=http
-      - traefik.http.routers.komodo.rule=Host(`komodo.ov.ffmuc.net`)
-      - traefik.http.routers.komodo.middlewares=komodo-https-redirect
       - traefik.http.routers.komodo-secure.entrypoints=https
       - traefik.http.routers.komodo-secure.rule=Host(`komodo.ov.ffmuc.net`)
       - traefik.http.routers.komodo-secure.tls=true

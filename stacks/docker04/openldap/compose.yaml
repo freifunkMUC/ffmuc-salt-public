@@ -51,10 +51,6 @@ services:
       - openldap
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.ldap-web.entrypoints=http"
-      - "traefik.http.routers.ldap-web.rule=Host(`ldap-web.ov.ffmuc.net`)"
-      - "traefik.http.middlewares.ldap-web-https-redirect.redirectscheme.scheme=https"
-      - "traefik.http.routers.ldap-web.middlewares=ldap-web-https-redirect"
       - "traefik.http.routers.ldap-web-secure.entrypoints=https"
       - "traefik.http.routers.ldap-web-secure.rule=Host(`ldap-web.ov.ffmuc.net`)"
       - "traefik.http.routers.ldap-web-secure.tls=true"

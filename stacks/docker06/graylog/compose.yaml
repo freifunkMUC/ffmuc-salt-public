@@ -121,10 +121,6 @@ services:
     restart: unless-stopped
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.log.entrypoints=http"
-      - "traefik.http.routers.log.rule=Host(`log.ov.ffmuc.net`)"
-      - "traefik.http.middlewares.log-https-redirect.redirectscheme.scheme=https"
-      - "traefik.http.routers.log.middlewares=log-https-redirect"
       - "traefik.http.routers.log-secure.entrypoints=https"
       - "traefik.http.routers.log-secure.rule=Host(`log.ov.ffmuc.net`)"
       - "traefik.http.routers.log-secure.tls=true"

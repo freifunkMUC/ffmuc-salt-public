@@ -15,10 +15,6 @@ services:
       - 8087:8080
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.nb.entrypoints=http"
-      - "traefik.http.routers.nb.rule=Host(`nb.ov.ffmuc.net`)"
-      - "traefik.http.middlewares.nb-https-redirect.redirectscheme.scheme=https"
-      - "traefik.http.routers.nb.middlewares=nb-https-redirect"
       - "traefik.http.routers.nb-secure.entrypoints=https"
       - "traefik.http.routers.nb-secure.rule=Host(`nb.ov.ffmuc.net`)"
       - "traefik.http.routers.nb-secure.tls=true"
