@@ -23,7 +23,7 @@ ffmuc_packages:
       - mtr-tiny
       - lldpd
       - sysstat
-      - dnsutils
+      - bind9-dnsutils
       - curl
       - iptraf-ng
 {% if (grains.os == 'Ubuntu' and grains.osmajorrelease >= 24) or (grains.os == 'Debian' and grains.osmajorrelease >= 13) %}
