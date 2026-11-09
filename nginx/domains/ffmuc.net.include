@@ -130,6 +130,11 @@ location /wiki/ {
 	proxy_http_version 1.1;
 	client_max_body_size 200M;
 	proxy_request_buffering off;
+
+	# Matomo (cookieless); Accept-Encoding is cleared so sub_filter sees uncompressed HTML
+	proxy_set_header   Accept-Encoding "";
+	sub_filter_once    on;
+	sub_filter         '</head>' '<script>var _paq=window._paq=window._paq||[];_paq.push(["disableCookies"]);_paq.push(["setDoNotTrack",true]);_paq.push(["trackPageView"]);_paq.push(["enableLinkTracking"]);(function(){var u="https://matomo.ffmuc.net/";_paq.push(["setTrackerUrl",u+"matomo.php"]);_paq.push(["setSiteId","4"]);var d=document,g=d.createElement("script"),s=d.getElementsByTagName("script")[0];g.async=true;g.src=u+"matomo.js";s.parentNode.insertBefore(g,s);})();</script></head>';
 }
 
 location /draw/ {
