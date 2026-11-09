@@ -7,7 +7,7 @@
 # Secrets come from the Periphery secrets (see the Stack in stacks.toml).
 services:
   mailserver:
-    image: docker.io/mailserver/docker-mailserver:17.0.0@sha256:4ef24d9762893a28c0c90d8213e3c697adc42f0dd903476db0b54627d2d80514
+    image: docker.io/mailserver/docker-mailserver:17.0.0@sha256:b9a5f5045b4dae139201281f68f976b7ae7a5f451e3e61aaa935ad6def026bcb
     hostname: mail01
     domainname: fnmuc.net
     env_file: mailserver.env
