@@ -188,6 +188,10 @@ Note deviations from upstream and the reason in the PR.
   so the Komodo configuration is code as well. Changes in the UI that are not
   in the TOML show up as pending sync diffs. The sync never deletes
   (`delete = false`) and does not deploy (`deploy = false` on every Stack).
+- Scheduled jobs are Komodo Procedures in `stacks/komodo-sync/procedures.toml`
+  (cron `schedule`, `failure_alert`). `RunStackService` runs a one-off container
+  of a Stack with that Stack's compose file, e.g. the weekly Mastodon media
+  cleanup; no script or timer on the host.
 - Projects that are not in this repository are listed with
   `files_on_host = true` and their existing directory as `run_directory`, so
   Komodo shows them without changing anything. Taking one over means moving

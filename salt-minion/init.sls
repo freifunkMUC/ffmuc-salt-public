@@ -13,3 +13,16 @@ salt-minion-restart-keepalive:
     - name: systemd-run --on-active=15 systemctl restart salt-minion
     - onchanges:
       - file: /etc/salt/minion.d/tcp-keepalive.conf
+
+# The reconnect drop-in (#693) gained nothing on jvb14 (41 s without, 42 s with); remove it where it was applied.
+{%- for unit in ['nebula', 'nebula-meet'] %}
+/etc/systemd/system/{{ unit }}.service.d/salt-minion-reconnect.conf:
+  file.absent
+{%- endfor %}
+
+salt-minion-reconnect-daemon-reload:
+  cmd.run:
+    - name: systemctl daemon-reload
+    - onchanges:
+      - file: /etc/systemd/system/nebula.service.d/salt-minion-reconnect.conf
+      - file: /etc/systemd/system/nebula-meet.service.d/salt-minion-reconnect.conf
