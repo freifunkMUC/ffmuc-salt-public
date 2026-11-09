@@ -34,6 +34,8 @@ services:
       - "traefik.http.routers.traefik.rule=Host(`traefik-mail01.ov.ffmuc.net`)"
       # Login with Keycloak realm noc through oauth2-proxy on docker07 (same settings as docker05's dynamic/noc-auth.yml)
       - "traefik.http.middlewares.noc-auth.forwardauth.address=https://auth.ov.ffmuc.net/"
+      - "traefik.http.middlewares.noc-auth.forwardauth.trustforwardheader=false"
+      - "traefik.http.middlewares.noc-auth.forwardauth.maxresponsebodysize=65536"
       - "traefik.http.middlewares.noc-auth.forwardauth.authresponseheaders=X-Auth-Request-User,X-Auth-Request-Preferred-Username"
       - "traefik.http.middlewares.noc-auth.forwardauth.addauthcookiestoresponse=_oauth2_noc,_oauth2_noc_0,_oauth2_noc_1,_oauth2_noc_2"
       - "traefik.http.routers.traefik.middlewares=noc-auth@docker,default@file"
