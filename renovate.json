@@ -25,6 +25,40 @@
       "groupName": "GitHub Actions"
     },
     {
+      "description": "Actions run with read-only tokens and no secrets: minor, patch and digest updates merge on their own once the checks are green. timestamp-optional: some actions give Renovate no release timestamp",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor", "patch", "digest", "pinDigest"],
+      "minimumReleaseAge": "3 days",
+      "minimumReleaseAgeBehaviour": "timestamp-optional",
+      "automerge": true
+    },
+    {
+      "description": "Digest updates of container images (same tag, new build) merge on their own once the compose check (.github/workflows/compose.yml) is green. Renovate merges itself, not GitHub (platformAutomerge). Exclusions follow below and must stay after this rule: later rules win",
+      "matchManagers": ["docker-compose", "dockerfile"],
+      "matchUpdateTypes": ["digest", "pinDigest"],
+      "minimumReleaseAge": "3 days",
+      "minimumReleaseAgeBehaviour": "timestamp-optional",
+      "platformAutomerge": false,
+      "automerge": true
+    },
+    {
+      "description": "No automerge for the mail server (mail01 incl. Roundcube), Komodo itself, the Salt master and Graylog with its OpenSearch: an update that goes wrong takes the management or the mail path down",
+      "matchFileNames": [
+        "stacks/mail01/**",
+        "stacks/docker06/komodo/**",
+        "stacks/docker05/salt-master/**",
+        "stacks/docker06/graylog/**"
+      ],
+      "automerge": false
+    },
+    {
+      "description": "No automerge for databases, search and brokers with persistent data, wherever they run (a new build can migrate the data directory)",
+      "matchPackageNames": [
+        "/(^|/)(postgres|mariadb|mysql|mongo|redis|valkey|elasticsearch|opensearch|clickhouse-server|clickhouse-keeper)$/"
+      ],
+      "automerge": false
+    },
+    {
       "description": "Major versions of container images (databases, search, brokers) need a data migration or a matching client: Renovate lists them in the Dependency Dashboard and opens a PR only when it is ticked there",
       "matchManagers": ["docker-compose", "dockerfile"],
       "matchUpdateTypes": ["major"],
