@@ -5,6 +5,8 @@ services:
     container_name: mastodon-paywall
     restart: always
     environment:
+      # Next.js binds to $HOSTNAME (the container ID); 0.0.0.0 lets the healthcheck reach 127.0.0.1.
+      HOSTNAME: 0.0.0.0
       API_TOKEN: ${API_TOKEN}
       PAYPAL_CLIENT_ID: ${PAYPAL_CLIENT_ID}
       PAYPAL_CLIENT_SECRET: ${PAYPAL_CLIENT_SECRET}
