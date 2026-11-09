@@ -62,6 +62,37 @@ python3-apt:
 # Purge old stuff
 /etc/apt/sources.list.d/raspi.list:
   file.absent
+{%- if salt['pillar.get']('netbox:role:name') == 'guardian' %}
+# guardians on Debian: only the bootloader and its tools from the Raspberry Pi repo, kernel and firmware come from Debian
+# (key from raspberrypi-archive-keyring 2025.1+rpt1, CF8A1AF502A2AA2D763BAE7E82B129927FA3303E, accepted by sqv)
+/etc/apt/keyrings/raspberrypi-archive-keyring.pgp:
+  file.managed:
+    - source: salt://apt/raspberrypi-archive-keyring.pgp
+    - makedirs: True
+    - mode: "0644"
+
+/etc/apt/sources.list.d/raspi.sources:
+  file.managed:
+    - contents: |
+        Types: deb
+        URIs: https://archive.raspberrypi.com/debian/
+        Suites: {{ grains.oscodename }}
+        Components: main
+        Signed-By: /etc/apt/keyrings/raspberrypi-archive-keyring.pgp
+    - require:
+      - file: /etc/apt/keyrings/raspberrypi-archive-keyring.pgp
+
+/etc/apt/preferences.d/raspi:
+  file.managed:
+    - contents: |
+        Package: *
+        Pin: origin archive.raspberrypi.com
+        Pin-Priority: 1
+
+        Package: rpi-eeprom raspi-utils* raspinfo libdtovl0 libgpiolib0 kms++-utils libkms++0
+        Pin: origin archive.raspberrypi.com
+        Pin-Priority: 500
+{%- endif %}
 {%- endif %}
 
 /etc/apt/sources.list.d/universe-factory.list:
