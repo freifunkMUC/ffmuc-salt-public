@@ -2,6 +2,11 @@
 # Stuff for every FFMUC machine
 #
 
+# repo key states pipe into gpg (curl ... | gpg --dearmor); minimal Debian (trixie guardians) ships none
+gpg:
+  pkg.installed:
+    - order: 1
+
 ffmuc_packages:
   pkg.installed:
     - pkgs:
