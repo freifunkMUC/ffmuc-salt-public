@@ -1,0 +1,21 @@
+---
+
+name: Compose
+# yamllint disable-line rule:truthy
+on:
+  pull_request:
+    paths: ["stacks/**", "ci/compose_check.py", ".github/workflows/compose.yml"]
+  push:
+    branches: [main]
+    paths: ["stacks/**", "ci/compose_check.py", ".github/workflows/compose.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  compose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: docker compose config
+        run: python3 ci/compose_check.py
