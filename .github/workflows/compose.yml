@@ -3,8 +3,8 @@
 name: Compose
 # yamllint disable-line rule:truthy
 on:
+  # every PR: `compose` is a required check, a path filter would leave other PRs waiting for it
   pull_request:
-    paths: ["stacks/**", "ci/compose_check.py", ".github/workflows/compose.yml"]
   push:
     branches: [main]
     paths: ["stacks/**", "ci/compose_check.py", ".github/workflows/compose.yml"]
