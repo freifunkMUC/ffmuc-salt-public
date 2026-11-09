@@ -25,11 +25,11 @@ executions = [
 # Allowlist only; unlisted stacks stay manual. Never add docker06-komodo. Disabled until tested.
 [[procedure]]
 name = "auto-apply-nightly"
-description = "Daily 05:30 UTC: sync, then deploy changed low-risk stacks per host, Traefik one host at a time"
+description = "Mon-Sat 05:30 UTC: sync, then deploy changed low-risk stacks per host, Traefik one host at a time"
 tags = ["ffmuc"]
 [procedure.config]
 schedule_format = "Cron"
-schedule = "0 30 5 * * ?"
+schedule = "0 30 5 ? * MON-SAT"
 schedule_timezone = "UTC"
 schedule_enabled = false
 schedule_alert = false
@@ -53,7 +53,6 @@ executions = [
   { execution.type = "DeployStackIfChanged", execution.params.stack = "docker04-packetyeeter-analyzer" },
   { execution.type = "DeployStackIfChanged", execution.params.stack = "docker04-whitebophir" },
   { execution.type = "DeployStackIfChanged", execution.params.stack = "docker04-cfssl" },
-  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker04-uptime-kuma" },
   { execution.type = "DeployStackIfChanged", execution.params.stack = "docker04-dokuwiki" },
 ]
 
@@ -63,7 +62,6 @@ executions = [
   { execution.type = "DeployStackIfChanged", execution.params.stack = "docker05-diun" },
   { execution.type = "DeployStackIfChanged", execution.params.stack = "docker05-meet-reserve" },
   { execution.type = "DeployStackIfChanged", execution.params.stack = "docker05-speedtest" },
-  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker05-cryptpad" },
 ]
 
 [[procedure.config.stage]]
@@ -159,6 +157,13 @@ executions = [
   { execution.type = "DeployStackIfChanged", execution.params.stack = "docker04-matomo" },
   { execution.type = "DeployStackIfChanged", execution.params.stack = "docker04-netbox" },
   { execution.type = "DeployStackIfChanged", execution.params.stack = "docker04-netbox-parker" },
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker04-uptime-kuma" },
+]
+
+[[procedure.config.stage]]
+name = "docker05"
+executions = [
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker05-cryptpad" },
 ]
 
 [[procedure.config.stage]]
