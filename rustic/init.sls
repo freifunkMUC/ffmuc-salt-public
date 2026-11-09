@@ -1,8 +1,38 @@
-{#- salt://rustic/files/rustic* are x86_64 builds #}
-{%- if 'backup' in salt['pillar.get']('netbox:tag_list', []) and grains.osarch == 'amd64' -%}
+{#- salt://rustic/files/rustic* are x86_64 builds; arm64 (guardians) takes the upstream release #}
+{%- if 'backup' in salt['pillar.get']('netbox:tag_list', []) and grains.osarch in ['amd64', 'arm64'] -%}
 
 {% set rustic_version = "v0.11.4" %}
 {% set rustic_version = "nightly" %}
+{%- if grains.osarch == 'arm64' %}
+{%- set rustic_release = "v0.11.4" %}
+rustic-release:
+  archive.extracted:
+    - name: /usr/local/lib/rustic-{{ rustic_release }}
+    - source: https://github.com/rustic-rs/rustic/releases/download/{{ rustic_release }}/rustic-{{ rustic_release }}-aarch64-unknown-linux-musl.tar.gz
+    - source_hash: sha256=35ccd40ff565b9760245dd391f9fef04c46778ce5e073d833288abe2e5eabd20
+    - enforce_toplevel: False
+    - user: root
+    - group: root
+
+install_rustic:
+  file.symlink:
+    - name: /usr/local/bin/rustic
+    - target: /usr/local/lib/rustic-{{ rustic_release }}/rustic
+    - force: True
+    - require:
+      - archive: rustic-release
+
+# 1.8 GB RAM and bird on the same Pi: an OOM kill takes rustic
+/etc/systemd/system/ffmuc-rustic-backup.service.d/memory.conf:
+  file.managed:
+    - makedirs: True
+    - contents: |
+        [Service]
+        MemoryMax=1200M
+        OOMScoreAdjust=1000
+    - onchanges_in:
+      - cmd: systemd-reload-ffmuc-backup
+{%- else %}
 install_rustic:
   #archive.extracted:
   #  - name: /tmp/rustic
@@ -21,6 +51,7 @@ install_rustic:
         - salt://rustic/files/rustic-{{ rustic_version }}
         - salt://rustic/files/rustic
     - mode: "0755"
+{%- endif %}
 
 backup-config:
   file.managed:
