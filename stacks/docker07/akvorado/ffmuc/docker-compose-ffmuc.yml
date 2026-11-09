@@ -57,7 +57,7 @@ services:
     labels:
       - traefik.enable=false
   # Console router labels: the one place to change when a forward-auth (Keycloak) middleware comes: define the
-  # middleware here and put it into traefik.http.routers.akvorado-console-secure.middlewares (and the http router).
+  # middleware here and put it into traefik.http.routers.akvorado-console-secure.middlewares.
   akvorado-console:
     image: *akvorado
     networks:
@@ -67,10 +67,6 @@ services:
       - traefik.enable=true
       - traefik.docker.network=proxy
       - traefik.http.services.akvorado-console.loadbalancer.server.port=8080
-      - "traefik.http.routers.akvorado-console.rule=Host(`flow.ov.ffmuc.net`)"
-      - traefik.http.routers.akvorado-console.entrypoints=http
-      - traefik.http.routers.akvorado-console.middlewares=akvorado-console-https-redirect
-      - traefik.http.middlewares.akvorado-console-https-redirect.redirectscheme.scheme=https
       - traefik.http.middlewares.akvorado-console-headers.headers.customrequestheaders.X-Forwarded-Proto=https
       - traefik.http.middlewares.akvorado-console-headers.headers.customrequestheaders.X-Forwarded-Port=443
       - traefik.http.routers.akvorado-console-secure.entrypoints=https
