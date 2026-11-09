@@ -2,10 +2,10 @@
 
 [wgkex](https://github.com/freifunkMUC/wgkex) hands out WireGuard gateways to the nodes.
 
-- **Workers** run on the gateways (`nextgen-gateway` role) and are managed by this formula: git checkout of `main`
+- **Workers** run on the gateways (`nextgen-gateway` role) and are managed by this formula: git checkout of the release tag `wgkex_version` in `init.sls` (pillar `wgkex:rev` overrides it, e.g. to test a branch)
   in `/srv/wgkex/wgkex`, config `/etc/wgkex.yaml` from `wgkex.yaml.jinja`.
-- **Brokers** run on docker04–07 from the docker compose project in `/srv/docker/wgkex` (image
-  `ghcr.io/freifunkmuc/wgkex:v0.4.0`). Their config `/srv/docker/wgkex/config/broker/wgkex.yaml` is **not** managed by
+- **Brokers** run on docker04–07 as Komodo stacks `docker04-wgkex` … `docker07-wgkex` (`stacks/docker0X/wgkex/compose.yaml`, image
+  `ghcr.io/freifunkmuc/wgkex`, same tag as the workers; Renovate bumps both in one PR). Their config `/srv/docker/wgkex/config/broker/wgkex.yaml` is **not** managed by
   Salt. Requests reach them through haproxy (`broker_backend`), which overwrites `X-Forwarded-For`, so the brokers
   trust it from the webfrontends (`broker.trusted_proxies`).
 - Metrics: telegraf scrapes the workers on `127.0.0.1:9101` and the brokers on `127.0.0.1:5000` (measurement
@@ -17,8 +17,8 @@ Brokers publish v2 keys only to the chosen worker (`wireguard/{domain}/{worker}`
 `wireguard/{domain}/all`, so **update the workers first**, then the brokers:
 
 ```sh
-salt 'gw0*' state.apply wgkex                     # pulls main and restarts the worker
-salt 'docker0[4-7]*' cmd.run 'cd /srv/docker/wgkex && docker compose pull broker && docker compose up -d broker'
+salt 'gw0*' state.apply wgkex                     # checks out the pinned tag and restarts the worker
+# then deploy the stacks docker04-wgkex … docker07-wgkex in Komodo, one at a time
 ```
 
 ## Planned gateway reboot (drain)

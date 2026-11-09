@@ -126,6 +126,12 @@
       "groupName": "packetyeeter"
     },
     {
+      "description": "Workers (wgkex/init.sls) and broker image (stacks/) are released together",
+      "matchPackageNames": ["freifunkMUC/wgkex", "ghcr.io/freifunkmuc/wgkex"],
+      "groupName": "wgkex",
+      "prBodyNotes": ["Roll out the workers first (`state.apply wgkex` on the gateways), then deploy the broker stacks, see `wgkex/README.md`."]
+    },
+    {
       "description": "Release assets are verified by sha256 in defaults.yaml, Renovate cannot fill them in",
       "matchPackageNames": ["krombel/nebula", "moghtech/komodo"],
       "matchManagers": ["custom.regex"],
