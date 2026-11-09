@@ -63,9 +63,11 @@ bandwidth-monitor-repo:
     - require:
       - cmd: bandwidth-monitor-repo-key
 
+{#- the repository keeps only the newest version; renovate: datasource=github-releases depName=awlx/bandwidth-monitor extractVersion=^v(?<version>.+)$ #}
+{%- set bandwidth_top_version = '0.0.41' %}
 bandwidth-top:
   pkg.installed:
-    - version: '0.0.36'
+    - version: '{{ bandwidth_top_version }}'
     - require:
       - pkgrepo: bandwidth-monitor-repo
 {%- endif %}
