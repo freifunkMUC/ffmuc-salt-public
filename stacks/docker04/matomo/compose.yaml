@@ -11,6 +11,7 @@ x-matomo-files: &matomo-files
   - /srv/docker/matomo/config.ini.php:/var/www/html/config/config.ini.php
   - ./config.php:/var/www/html/config/config.php:ro
   - /srv/docker/matomo/plugins/Provider:/var/www/html/plugins/Provider:ro
+  - /srv/docker/matomo/plugins/LoginOIDC:/var/www/html/plugins/LoginOIDC:ro
   - /srv/docker/matomo/geoip:/var/lib/matomo/geoip
 
 services:
@@ -51,7 +52,7 @@ services:
         cd /var/www/html
         find . -mindepth 1 -maxdepth 1 ! -name config ! -name plugins ! -name tmp -exec rm -rf {} +
         [ ! -d config ] || find config -mindepth 1 -maxdepth 1 ! -name config.ini.php ! -name config.php -exec rm -rf {} +
-        [ ! -d plugins ] || find plugins -mindepth 1 -maxdepth 1 ! -name Provider -exec rm -rf {} +
+        [ ! -d plugins ] || find plugins -mindepth 1 -maxdepth 1 ! -name Provider ! -name LoginOIDC -exec rm -rf {} +
         cp -R /usr/src/matomo/. .
 
   # Migrates the database after a new version, does nothing otherwise.
