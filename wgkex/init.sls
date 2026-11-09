@@ -1,4 +1,7 @@
 {%- if 'nextgen-gateway' in salt['pillar.get']('netbox:role:name') %}
+{#- Worker release; Renovate bumps it together with the broker image (stacks/docker0[4-7]/wgkex). #}
+{# renovate: datasource=github-releases depName=freifunkMUC/wgkex #}
+{% set wgkex_version = 'v0.4.0' %}
 
 python3-virtualenv:
   pkg.installed
@@ -12,7 +15,7 @@ python3-virtualenv:
 /srv/wgkex/wgkex:
   git.latest:
     - name: https://github.com/freifunkMUC/wgkex.git
-    - rev: main
+    - rev: {{ salt['pillar.get']('wgkex:rev', wgkex_version) }}
     - target: /srv/wgkex/wgkex
     - user: wgkex
     - force_reset: True
