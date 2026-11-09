@@ -24,10 +24,6 @@ services:
     restart: unless-stopped
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.nb-parker.entrypoints=http"
-      - "traefik.http.routers.nb-parker.rule=Host(`nb-parker.ov.ffmuc.net`)"
-      - "traefik.http.middlewares.nb-parker-https-redirect.redirectscheme.scheme=https"
-      - "traefik.http.routers.nb-parker.middlewares=nb-parker-https-redirect"
       - "traefik.http.routers.nb-parker-secure.entrypoints=https"
       - "traefik.http.routers.nb-parker-secure.rule=Host(`nb-parker.ov.ffmuc.net`)"
       - "traefik.http.routers.nb-parker-secure.tls=true"

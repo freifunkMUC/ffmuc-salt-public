@@ -13,10 +13,6 @@ services:
       - 1935:1935
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.owncast.entrypoints=http"
-      - "traefik.http.routers.owncast.rule=Host(`tv.ov.ffmuc.net`)"
-      - "traefik.http.middlewares.owncast-https-redirect.redirectscheme.scheme=https"
-      - "traefik.http.routers.owncast.middlewares=owncast-https-redirect"
       - "traefik.http.routers.owncast-secure.entrypoints=https"
       - "traefik.http.routers.owncast-secure.rule=Host(`tv.ov.ffmuc.net`)"
       - "traefik.http.routers.owncast-secure.tls=true"
