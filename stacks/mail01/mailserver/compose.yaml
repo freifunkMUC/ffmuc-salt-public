@@ -94,7 +94,7 @@ services:
     image: ghcr.io/freifunkmuc/autodiscover-email-settings:2.0.3@sha256:06056fde95cc8965a042eb86be7143da4fe5dcdb04ca73f49493e465c0f096e8
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8000/"]
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8000/mail/config-v1.1.xml"]
       interval: 30s
       timeout: 5s
       retries: 3
