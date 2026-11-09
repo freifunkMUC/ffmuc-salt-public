@@ -15,6 +15,12 @@ services:
       - MARIADB_AUTO_UPGRADE=1
     networks:
       - default
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 1m
 
   redis:
     image: redis:8.10.3-alpine@sha256:71885d8cc6e42f2bc0aa2eb853bfc4be200b5108a46ac50e117ae1df0531fb80
@@ -22,6 +28,12 @@ services:
       - default
     restart: unless-stopped
     command: redis-server --requirepass ${REDIS_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli --no-auth-warning -a ${REDIS_PASSWORD} ping | grep -q PONG"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   app:
     image: nextcloud:35.0.2-fpm@sha256:a95dee2ba3e6be69840baac100dc81741f145427a92d0489711a85819d8cb448
@@ -40,6 +52,12 @@ services:
       - ./config/ldap.conf:/etc/ldap/ldap.conf
     networks:
       - default
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(@fsockopen(\"127.0.0.1\", 9000) ? 0 : 1);"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 1m
 
   web:
     # Unprivileged nginx: listens on 8080, pid and temp files in /tmp.
@@ -60,3 +78,9 @@ services:
     restart: unless-stopped
     networks:
       - default
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/status.php"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s

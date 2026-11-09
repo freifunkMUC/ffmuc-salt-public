@@ -6,3 +6,9 @@ services:
     ports:
       - "0.0.0.0:8090:80"
       - "0.0.0.0:8091:9090" # metrics
+    healthcheck:
+      test: ["CMD", "node", "-e", "require(\"http\").get(\"http://127.0.0.1:80/\", r => process.exit(r.statusCode < 500 ? 0 : 1)).on(\"error\", () => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s

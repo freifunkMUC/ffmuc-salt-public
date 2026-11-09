@@ -15,6 +15,12 @@ services:
       POSTGRES_DB: keycloak
       POSTGRES_USER: keycloak
       POSTGRES_PASSWORD: ${DB_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
   keycloak:
     image: quay.io/keycloak/keycloak:26.8.2@sha256:723b1d6e254c0fc96d5cffec860c7e0744d6a3277822b865bb538cf891575e41
     restart: unless-stopped
@@ -32,3 +38,9 @@ services:
       - 8081:8080
     depends_on:
       - postgres
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf \"GET /realms/master HTTP/1.0\\r\\n\\r\\n\" >&3 && head -n1 <&3 | grep -q \" 200 \""]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 2m

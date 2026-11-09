@@ -44,6 +44,12 @@ services:
       - ./public-docs/terms-of-use.md:/app/hedgedoc/public/docs/terms-of-use.md:ro
     ports:
       - "0.0.0.0:8085:3000"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3000/_health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 1m
   db:
     image: mariadb:12.3.3-noble@sha256:d46e102fa8b9b72bfcdeb56f9dd538742092119dc8b11f31fe662605cd234cd9
     command: ["--innodb-snapshot-isolation=OFF"]  # 11.8 behaviour; 12.3 defaults to ON
@@ -56,3 +62,9 @@ services:
       - MARIADB_AUTO_UPGRADE=1
     volumes:
       - /srv/docker/hedgedoc/database:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 1m

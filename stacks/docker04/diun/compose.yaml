@@ -45,6 +45,12 @@ services:
       - POST=0
       - EVENTS=0
       - PING=1
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:2375/_ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
 networks:
   socket-proxy:

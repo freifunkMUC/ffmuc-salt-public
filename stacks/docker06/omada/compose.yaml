@@ -32,3 +32,9 @@ services:
           memory: 10g
     mem_limit: 10g # must be consistent with deploy.resources.limits.memory
     memswap_limit: 10g # if set to same value as mem_limit, swap is disabled
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "--no-check-certificate", "https://127.0.0.1:8043/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5m
