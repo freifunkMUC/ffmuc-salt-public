@@ -36,4 +36,25 @@ COMMIT
 :INPUT ACCEPT
 :FORWARD ACCEPT
 :OUTPUT ACCEPT
+
+{#- Own nebula port, derived like in nebula_map.jinja #}
+{%- set overlay_split = salt['mine.get'](grains.id, 'minion_overlay_address', tgt_type='glob')[grains.id].split('/')[0].split('.') %}
+{%- set own_nebula_port = 20000 + overlay_split[2] | int * 256 + overlay_split[3] | int %}
+
+-A INPUT -i lo -j ACCEPT
+-A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A INPUT -p icmp -j ACCEPT
+{#- Management (ssh, icinga2, snmp) over nebula; ssh also from the local LAN as fallback #}
+-A INPUT -i nebula0 -p tcp -m tcp --dport 22 -j ACCEPT
+-A INPUT -i eth0 -p tcp -m tcp --dport 22 -j ACCEPT
+-A INPUT -i nebula0 -p tcp -m tcp --dport 5665 -j ACCEPT
+-A INPUT -i nebula0 -p udp -m udp --dport 161 -j ACCEPT
+{#- BGP and sFlow come from the router on the uplink VLAN #}
+-A INPUT -i {{ uplink_iface }} -p tcp -m tcp --dport 179 -j ACCEPT
+-A INPUT -i {{ uplink_iface }} -p udp -m udp --dport 6343 -j ACCEPT
+-A INPUT -p udp -m udp --dport {{ own_nebula_port }} -j ACCEPT
+-A INPUT -p udp -m udp --dport 123 -j ACCEPT
+-A INPUT -i eth0 -p udp -m udp --dport 67 -j ACCEPT
+-A INPUT -j REJECT --reject-with icmp-port-unreachable
+
 COMMIT

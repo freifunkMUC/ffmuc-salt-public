@@ -26,4 +26,19 @@ fail2ban-service:
     # restart, not reload: a reload with a changed banaction drops the jail's actions
     - require:
       - pkg: fail2ban-pkg
+{% if 'guardian' in grains.id %}
+    - watch:
+      - file: fail2ban-banaction
+
+# The guardians have iptables-nft but no nft binary
+fail2ban-banaction:
+  file.managed:
+    - name: /etc/fail2ban/jail.d/banaction.local
+    - contents: |
+        [DEFAULT]
+        banaction = iptables-multiport
+        banaction_allports = iptables-allports
+    - require:
+      - pkg: fail2ban-pkg
+{% endif %}
 {% endif %}
