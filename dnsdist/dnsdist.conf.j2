@@ -198,19 +198,38 @@ setRingBuffersSize(100000)
 
 -- Be generous with the sockets setting of newServer. A starting points is to configure twice as many sockets as Recursor threads.
 {%- if 'muc01' in salt['pillar.get']('netbox:site:slug') %}
-newServer({address="10.80.248.73:1653", name="web05", weight=500, retries=2, id="7cd4655e-071e-4a9a-9623-834ba49ea472", sockets=28})
-newServer({address="10.80.248.74:1653", name="web06", weight=500, retries=2, id="d5d0a3a9-6787-479f-ad0f-106d4618ccc2", sockets=28})
-newServer({address="10.80.248.68:1653", name="gw06", weight=500, retries=2, id="42c4bdfe-0ccc-4e9e-8816-7f88421b50f8", sockets=28})
-newServer({address="10.80.248.69:1653", name="gw07", weight=500, retries=2, id="1c961f33-3a09-4b40-ae9d-5b5a8dd71061", sockets=28})
+newServer({address="10.80.248.73:1653", name="web05", weight=500, retries=2, pool={"", "retry"}, id="7cd4655e-071e-4a9a-9623-834ba49ea472", sockets=28})
+newServer({address="10.80.248.74:1653", name="web06", weight=500, retries=2, pool={"", "retry"}, id="d5d0a3a9-6787-479f-ad0f-106d4618ccc2", sockets=28})
+newServer({address="10.80.248.68:1653", name="gw06", weight=500, retries=2, pool={"", "retry"}, id="42c4bdfe-0ccc-4e9e-8816-7f88421b50f8", sockets=28})
+newServer({address="10.80.248.69:1653", name="gw07", weight=500, retries=2, pool={"", "retry"}, id="1c961f33-3a09-4b40-ae9d-5b5a8dd71061", sockets=28})
 {%- elif 'vie01' in salt['pillar.get']('netbox:site:slug') %}
-newServer({address="10.80.248.36:1653", name="web03", weight=500, retries=2, id="23b0121d-91c5-4338-8c5a-cc8ba6f2ca8d", sockets=28})
-newServer({address="10.80.248.37:1653", name="web04", weight=500, retries=2, id="0ed35651-7766-492c-ab44-562e76d395b6", sockets=28})
-newServer({address="10.80.248.39:1653", name="gw04", weight=500, retries=2, id="fec91b13-6d71-4162-92a5-68c197ee99c4", sockets=28})
-newServer({address="10.80.248.40:1653", name="gw05", weight=500, retries=2, id="24d189ad-2070-458d-b34a-7c0c22ba7bcd", sockets=28})
+newServer({address="10.80.248.36:1653", name="web03", weight=500, retries=2, pool={"", "retry"}, id="23b0121d-91c5-4338-8c5a-cc8ba6f2ca8d", sockets=28})
+newServer({address="10.80.248.37:1653", name="web04", weight=500, retries=2, pool={"", "retry"}, id="0ed35651-7766-492c-ab44-562e76d395b6", sockets=28})
+newServer({address="10.80.248.39:1653", name="gw04", weight=500, retries=2, pool={"", "retry"}, id="fec91b13-6d71-4162-92a5-68c197ee99c4", sockets=28})
+newServer({address="10.80.248.40:1653", name="gw05", weight=500, retries=2, pool={"", "retry"}, id="24d189ad-2070-458d-b34a-7c0c22ba7bcd", sockets=28})
 {%- endif %}
 
 setWHashedPertubation(3962345)
 setServerPolicy(chashed)
+
+-- Retry a SERVFAIL once on another recursor: chashed pins a name to one backend, so a single broken one fails it for everyone.
+-- The failed backend is tagged and skipped by orderedWrandUntag in the "retry" pool (dnsdist >= 2.1).
+setPoolServerPolicy(orderedWrandUntag, "retry")
+function makeRestartable(dq)
+  dq:setRestartable()
+  return DNSAction.None
+end
+function retryOnServFail(dr)
+  local backend = dr:getSelectedBackend()
+  if dr.rcode == DNSRCode.SERVFAIL and dr.pool == "" and dr:getRestartCount() == 0 and backend ~= nil then
+    dr:setTag(backend:getNameWithAddr(), "1")
+    dr.pool = "retry"
+    dr:restart()
+  end
+  return DNSResponseAction.None
+end
+addAction(AllRule(), LuaAction(makeRestartable), {name="Restartable"})
+addResponseAction(AllRule(), LuaResponseAction(retryOnServFail), {name="Retry-SERVFAIL"})
 
 -- ask authorative servers for ffmuc.net directly
 {%- if 'authorative-dns' in salt['pillar.get']('netbox:tag_list', []) %}
@@ -255,8 +274,10 @@ newServer({address="[2003:a:133:1500::2]:53", name="v6.ns27.de.opennic", pool="o
 addAction({'bbs','chan','cyb','dns.opennic.glue','dyn','geek','gopher','indy','libre','neo','null','o','opennic.glue','oss','oz','parody','pirate'}, PoolAction("opennic"), {name="Redirect-OpenNIC"})
 
 -- add cache for X possible entries
-pc = newPacketCache(4000000)
+-- the first SERVFAIL is never cached (restart precedes cache insertion); a final one only briefly
+pc = newPacketCache(4000000, {temporaryFailureTTL=10})
 getPool(""):setCache(pc)
+getPool("retry"):setCache(pc)
 getPool("auth"):setCache(pc)
 
 {%- set dnsdist_webserver = salt["pillar.get"]("netbox:config_context:dnsdist:webserver", []) %}
