@@ -173,6 +173,15 @@ nginx-systemd-daemon-reload:
     - clean: True
 {% endif %}{# if domain == "recorder.ffmuc.net" #}
 
+{% if domain == "map.ffdon.net" %}
+/srv/www/map.ffdon.net:
+  file.directory:
+    - user: deploy-map
+    - group: nogroup  # as /srv/www/map.ffmuc.net; deploy-map is created by hand, not by Salt
+    - mode: '0755'
+    - makedirs: True
+{% endif %}{# if domain == "map.ffdon.net" #}
+
 {% if domain == "apt.ffmuc.net" %}
 {% for old in ["nebula", "systemd-packages", "ifupdown2_1.2.8-1_all.deb",
                "jitsi-videobridge2_2.1-394-g36698039-1_all.deb", "yanic_1.2.1-1_amd64.deb", "yanic_1.5.2-2_amd64.deb",

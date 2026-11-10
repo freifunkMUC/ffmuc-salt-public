@@ -8,6 +8,16 @@
 
 HOST="_acme-challenge"
 
+{#- Names in zones we do not serve: _acme-challenge.<name> is a CNAME into one of ours. #}
+{%- set acme_aliases = {'map.ffdon.net': 'donau-ries.freifunk.net'} %}
+ZONE="${CERTBOT_DOMAIN}"
+RECORD="${HOST}.${CERTBOT_DOMAIN}"
+case "${CERTBOT_DOMAIN}" in
+{%- for name, zone in acme_aliases.items() %}
+	{{ name }}) ZONE="{{ zone }}"; RECORD="${HOST}.{{ name.split('.')[0] }}.{{ zone }}" ;;
+{%- endfor %}
+esac
+
 {%- set update_key = salt['config.get']('netbox:config_context:dns_zones:update_keys:letsencrypt:key') %}
 UPDATE_KEY="{{ update_key }}"
 
@@ -25,9 +35,9 @@ AUTH_SERVERS=("webfrontend03.ov.ffmuc.net" "webfrontend04.ov.ffmuc.net" "webfron
 for AUTH in ${AUTH_SERVERS[@]}; do
 	nsupdate -y "hmac-sha512:letsencrypt:${UPDATE_KEY}" << EOM
 server ${AUTH} 553
-zone ${CERTBOT_DOMAIN}
+zone ${ZONE}
 {#- Don't delete existing records as they might be of other webfrontends renewing simultaneously. #}
-update add ${HOST}.${CERTBOT_DOMAIN} 5 TXT "${CERTBOT_VALIDATION}"
+update add ${RECORD} 5 TXT "${CERTBOT_VALIDATION}"
 send
 EOM
 	echo ""
