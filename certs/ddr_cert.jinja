@@ -7,8 +7,8 @@
         responder: true   # peers table + HTTP-01 responder in haproxy, ACME accounts, thumbprints in the mine
         staging: true     # request a test certificate "ffmuc-dns-staging" from the LE staging CA
         issue: true       # request the real certificate "ffmuc-dns"
-        haproxy: true     # serve ffmuc-dns on 443 (TCP + QUIC) for SNI doh/dns.ffmuc.net
-        dot: true         # serve ffmuc-dns on DoT 853 for SNI dot.ffmuc.net (wildcard stays default)
+        haproxy: true     # serve ffmuc-dns on 443 (TCP + QUIC) for SNI doh/dns.ffmuc.net and as default (no SNI)
+        dot: true         # serve ffmuc-dns on DoT 853 for SNI dot.ffmuc.net and as default (no SNI)
         doq: true         # serve ONLY ffmuc-dns on DoQ 853 (quiche has no SNI selection)
 
     Import with: {% from "certs/ddr_cert.jinja" import ... with context %} -#}
