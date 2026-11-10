@@ -39,6 +39,14 @@ object Host "{{ node_id }}" {
 	address = "{{ overlay_address | regex_replace('/\d+$','') }}"
 	{%- endif %}
 
+	{%- if not is_meet %}
+	{%- set external4 = salt['mine.get'](node_id,'minion_external_ip', tgt_type='glob').get(node_id) or [] %}
+	{%- if external4 %}
+	# Public unicast IPv4, used by checks that must not go through the overlay
+	vars.external_address_4 = "{{ external4[0].split('/')[0] }}"
+	{%- endif %}
+	{%- endif %}
+
 	{%- if minion_external_address6 %}
 	# Used to determine whether a host has IPv6
 	vars.external_address_6 = "{{ minion_external_address6 }}"
