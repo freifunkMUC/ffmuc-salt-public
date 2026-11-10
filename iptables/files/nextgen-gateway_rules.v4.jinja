@@ -39,8 +39,8 @@ COMMIT
 -A INPUT -i {{ internal_vlan_if }} -j ACCEPT
 {%- endfor %}
 {#- Clients: DNS, DHCP, NTP, respondd #}
--A INPUT -i br+ -p udp -m multiport --dports 53,67,123,1001,40311 -j ACCEPT
--A INPUT -i br+ -p tcp -m tcp --dport 53 -j ACCEPT
+-A INPUT -i br+ -p udp -m multiport --dports 53,67,123,1001,45124,40311 -j ACCEPT
+-A INPUT -i br+ -p tcp -m multiport --dports 53,80 -j ACCEPT -m comment --comment "DNS, node connectivity check"
 {#- VXLAN inside the WireGuard tunnels #}
 -A INPUT -i wg-+ -p udp -m udp --dport 8472 -j ACCEPT
 {#- Public: WireGuard (wgkex), Nebula, BGP to the upstream only #}
