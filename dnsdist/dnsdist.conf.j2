@@ -27,22 +27,39 @@ addLocal("::", {reusePort=true})
 {%- if 'webfrontend' in grains.id %}
 ssl_cert="/etc/letsencrypt/live/ffmuc.net/fullchain.pem"
 ssl_key="/etc/letsencrypt/live/ffmuc.net/privkey.pem"
+{%- from "certs/ddr_cert.jinja" import ddr_cert_dir, ddr_serve_dot, ddr_serve_doq with context %}
+{%- set dot_cert_args = 'ssl_cert, ssl_key' %}
+{%- set doq_cert_args = 'ssl_cert, ssl_key' %}
+{%- if ddr_serve_dot or ddr_serve_doq %}
+
+-- DDR certificate (certs/ddr_cert.jinja): SNI dot/doq.ffmuc.net and the anycast IPs
+ddr_cert="{{ ddr_cert_dir }}/fullchain.pem"
+ddr_key="{{ ddr_cert_dir }}/privkey.pem"
+{%- endif %}
+{%- if ddr_serve_dot %}
+-- DoT: dnsdist selects the certificate by exact SNI match, the first one (wildcard) is the default
+{%- set dot_cert_args = '{ssl_cert, ddr_cert}, {ssl_key, ddr_key}' %}
+{%- endif %}
+{%- if ddr_serve_doq %}
+-- DoQ: quiche has no SNI selection, so serve only the DDR certificate
+{%- set doq_cert_args = 'ddr_cert, ddr_key' %}
+{%- endif %}
 
 -- listen for DoT on external interface
-addTLSLocal("0.0.0.0", ssl_cert, ssl_key, { numberOfStoredSessions=0, reusePort=true, tcpFastOpenQueueSize=20, minTLSVersion="tls1.2" })
-addTLSLocal("0.0.0.0", ssl_cert, ssl_key, { numberOfStoredSessions=0, reusePort=true, tcpFastOpenQueueSize=20, minTLSVersion="tls1.2" })
-addTLSLocal("0.0.0.0", ssl_cert, ssl_key, { numberOfStoredSessions=0, reusePort=true, tcpFastOpenQueueSize=20, minTLSVersion="tls1.2" })
-addTLSLocal("0.0.0.0", ssl_cert, ssl_key, { numberOfStoredSessions=0, reusePort=true, tcpFastOpenQueueSize=20, minTLSVersion="tls1.2" })
-addTLSLocal("[::]", ssl_cert, ssl_key, { numberOfStoredSessions=0, reusePort=true, tcpFastOpenQueueSize=20, minTLSVersion="tls1.2" })
-addTLSLocal("[::]", ssl_cert, ssl_key, { numberOfStoredSessions=0, reusePort=true, tcpFastOpenQueueSize=20, minTLSVersion="tls1.2" })
-addTLSLocal("[::]", ssl_cert, ssl_key, { numberOfStoredSessions=0, reusePort=true, tcpFastOpenQueueSize=20, minTLSVersion="tls1.2" })
-addTLSLocal("[::]", ssl_cert, ssl_key, { numberOfStoredSessions=0, reusePort=true, tcpFastOpenQueueSize=20, minTLSVersion="tls1.2" })
+addTLSLocal("0.0.0.0", {{ dot_cert_args }}, { numberOfStoredSessions=0, reusePort=true, tcpFastOpenQueueSize=20, minTLSVersion="tls1.2" })
+addTLSLocal("0.0.0.0", {{ dot_cert_args }}, { numberOfStoredSessions=0, reusePort=true, tcpFastOpenQueueSize=20, minTLSVersion="tls1.2" })
+addTLSLocal("0.0.0.0", {{ dot_cert_args }}, { numberOfStoredSessions=0, reusePort=true, tcpFastOpenQueueSize=20, minTLSVersion="tls1.2" })
+addTLSLocal("0.0.0.0", {{ dot_cert_args }}, { numberOfStoredSessions=0, reusePort=true, tcpFastOpenQueueSize=20, minTLSVersion="tls1.2" })
+addTLSLocal("[::]", {{ dot_cert_args }}, { numberOfStoredSessions=0, reusePort=true, tcpFastOpenQueueSize=20, minTLSVersion="tls1.2" })
+addTLSLocal("[::]", {{ dot_cert_args }}, { numberOfStoredSessions=0, reusePort=true, tcpFastOpenQueueSize=20, minTLSVersion="tls1.2" })
+addTLSLocal("[::]", {{ dot_cert_args }}, { numberOfStoredSessions=0, reusePort=true, tcpFastOpenQueueSize=20, minTLSVersion="tls1.2" })
+addTLSLocal("[::]", {{ dot_cert_args }}, { numberOfStoredSessions=0, reusePort=true, tcpFastOpenQueueSize=20, minTLSVersion="tls1.2" })
 
 -- listen for DoQ on external interface
-addDOQLocal("0.0.0.0", ssl_cert, ssl_key, { reusePort=true })
-addDOQLocal("0.0.0.0", ssl_cert, ssl_key, { reusePort=true })
-addDOQLocal("[::]", ssl_cert, ssl_key, { reusePort=true })
-addDOQLocal("[::]", ssl_cert, ssl_key, { reusePort=true})
+addDOQLocal("0.0.0.0", {{ doq_cert_args }}, { reusePort=true })
+addDOQLocal("0.0.0.0", {{ doq_cert_args }}, { reusePort=true })
+addDOQLocal("[::]", {{ doq_cert_args }}, { reusePort=true })
+addDOQLocal("[::]", {{ doq_cert_args }}, { reusePort=true})
 
 -- listen for DoH on localhost for reverse proxy
 addDOHLocal("127.0.0.1:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reusePort=true, trustForwardedForHeader=true })

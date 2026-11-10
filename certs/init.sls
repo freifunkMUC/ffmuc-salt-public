@@ -84,6 +84,7 @@ generate-dhparam:
 {% endif %}{# if "docker" in role or "mailserver" in role #}
 
 {% set gcore_token = salt['pillar.get']('netbox:config_context:gcore:api_token') %}
+{% from "certs/ddr_cert.jinja" import ddr_responder, ddr_staging, ddr_issue, ddr_cert_name, ddr_dns_names, ddr_ips with context %}
 {% set cloudflare_token = salt['config.get']('netbox:config_context:cloudflare:api_token') %}
 
 {% if "webserver-external" in role %}
@@ -145,7 +146,8 @@ certbot-venv-packages:
   pip.installed:
     - bin_env: /opt/certbot-venv/bin/pip
     - pkgs:
-      - certbot>=2.0.0
+      # DDR certificate ffmuc-dns needs >= 5.4: --ip-address and --preferred-profile (certs/ddr_cert.jinja)
+      - certbot>={{ '5.4' if ddr_responder else '2.0.0' }}
     - require:
       - cmd: certbot-venv
       - pkg: python3-pip
@@ -239,6 +241,120 @@ ffmuc-wildcard-cert:
       - file: /etc/letsencrypt/renewal-hooks/deploy/03-reload-haproxy.sh
       {% endif %}{# if "webserver-external" in role #}
 {% endif %}{# if ("webserver-external" in role or "jitsi meet" in role) and gcore_token #}
+
+{% if "webserver-external" in role and gcore_token and ddr_responder %}
+#
+# DDR certificate "ffmuc-dns" (RFC 9462): anycast resolver IPs + DoH/DoT/DoQ names.
+# Gated by NetBox config context ddr_cert, see certs/ddr_cert.jinja.
+# Names: DNS-01 (Gcore). IPs: HTTP-01, answered by haproxy on every webfrontend
+# from the peers table meet/acme (haproxy/haproxy.cfg).
+#
+{% set acme_hook = '/var/lib/cache/salt/ffmuc-dns-acme-hook.py' %}
+{% set acme_accounts = '/etc/letsencrypt/accounts' %}
+
+ffmuc-dns-acme-hook:
+  file.managed:
+    - name: {{ acme_hook }}
+    - source: salt://certs/files/ffmuc-dns-acme-hook.py
+    - makedirs: True
+    - mode: "0700"
+
+# One ACME account per node. haproxy needs the thumbprint of every account to answer HTTP-01.
+{% for acme_server, server_flag in [('acme-v02.api.letsencrypt.org', ''), ('acme-staging-v02.api.letsencrypt.org', '--staging')] %}
+ffmuc-dns-acme-account-{{ acme_server.split('.')[0] }}:
+  cmd.run:
+    - name: /opt/certbot-venv/bin/certbot register -n --agree-tos -m hilfe@ffmuc.net {{ server_flag }}
+    - unless: ls {{ acme_accounts }}/{{ acme_server }}/directory/*/private_key.json
+    - require:
+      - pip: certbot-venv-packages
+{% endfor %}
+
+# Publish the public account thumbprints (RFC 7638) in the Salt mine as "acme_thumbprints".
+# Only when they changed, so a highstate stays clean.
+{% set thumbprints_now = salt['ffmuc_acme.account_thumbprints']() if 'ffmuc_acme.account_thumbprints' in salt else [] %}
+{% set thumbprints_mine = (salt['mine.get'](grains['id'], 'acme_thumbprints', tgt_type='glob') or {}).get(grains['id']) %}
+ffmuc-dns-acme-thumbprints:
+  module.run:
+    - mine.send:
+      - acme_thumbprints
+      - mine_function: ffmuc_acme.account_thumbprints
+    - require:
+      - cmd: ffmuc-dns-acme-account-acme-v02
+      - cmd: ffmuc-dns-acme-account-acme-staging-v02
+{% if thumbprints_now and thumbprints_mine == thumbprints_now %}
+    - onchanges:
+      - cmd: ffmuc-dns-acme-account-acme-v02
+      - cmd: ffmuc-dns-acme-account-acme-staging-v02
+{% endif %}
+
+# dnsdist runs as _dnsdist (group ssl-cert) and must read the key of a new lineage
+/etc/letsencrypt/renewal-hooks/deploy/00-ffmuc-dns-permissions.sh:
+  file.managed:
+    - contents: |
+        #!/bin/sh
+        case "$RENEWED_LINEAGE" in
+          */{{ ddr_cert_name }}|*/{{ ddr_cert_name }}-staging)
+            key="$(readlink -f "$RENEWED_LINEAGE/privkey.pem")"
+            chgrp ssl-cert "$key" && chmod 0640 "$key"
+            ;;
+        esac
+    - mode: "0750"
+    - makedirs: True
+
+{% set ddr_lineages = [] %}
+{% if ddr_staging %}{% do ddr_lineages.append((ddr_cert_name ~ '-staging', '--staging')) %}{% endif %}
+{% if ddr_issue %}{% do ddr_lineages.append((ddr_cert_name, '')) %}{% endif %}
+{% for lineage, server_flag in ddr_lineages %}
+# Let's Encrypt "shortlived" profile (6 days, required for IP addresses). certbot renews
+# certificates with less than 10 days lifetime when half of it is left (or earlier via ARI).
+{{ lineage }}-cert:
+  cmd.run:
+    - name: >
+        /opt/certbot-venv/bin/certbot certonly -n --agree-tos -m hilfe@ffmuc.net {{ server_flag }}
+        --cert-name {{ lineage }}
+        --manual
+        --manual-auth-hook "{{ acme_hook }} auth"
+        --manual-cleanup-hook "{{ acme_hook }} cleanup"
+        --preferred-challenges dns,http
+        --preferred-profile shortlived
+        {%- for name in ddr_dns_names %}
+        -d "{{ name }}"
+        {%- endfor %}
+        {%- for ip in ddr_ips %}
+        --ip-address "{{ ip }}"
+        {%- endfor %}
+    # Valid for more than 2 days and SANs match (an address change triggers a new certificate)
+    - unless: >
+        /opt/certbot-venv/bin/python3 {{ acme_hook }} covers /etc/letsencrypt/live/{{ lineage }}/fullchain.pem 172800
+        {{ (ddr_dns_names + ddr_ips) | join(' ') }}
+    - require:
+      - file: ffmuc-dns-acme-hook
+      - file: dns_gcore_credentials
+      - pip: certbot-venv-gcore-plugin
+      - cmd: ffmuc-wildcard-cert
+      - module: ffmuc-dns-acme-thumbprints
+      - file: /etc/letsencrypt/renewal-hooks/deploy/00-ffmuc-dns-permissions.sh
+      - file: /etc/letsencrypt/renewal-hooks/deploy/01-reload-nginx.sh
+      - file: /etc/letsencrypt/renewal-hooks/deploy/02-reload-dnsdist-certs.sh
+      - file: /etc/letsencrypt/renewal-hooks/deploy/03-reload-haproxy.sh
+
+# certbot runs the deploy hooks only on renewal, so fix the key permissions after the first issuance
+{{ lineage }}-key-permissions:
+  cmd.run:
+    - name: /etc/letsencrypt/renewal-hooks/deploy/00-ffmuc-dns-permissions.sh
+    - env:
+      - RENEWED_LINEAGE: /etc/letsencrypt/live/{{ lineage }}
+    - onchanges:
+      - cmd: {{ lineage }}-cert
+{% endfor %}
+
+{% if not ddr_staging %}
+{{ ddr_cert_name }}-staging-cert-absent:
+  cmd.run:
+    - name: /opt/certbot-venv/bin/certbot delete -n --cert-name {{ ddr_cert_name }}-staging
+    - onlyif: test -e /etc/letsencrypt/renewal/{{ ddr_cert_name }}-staging.conf
+{% endif %}
+{% endif %}{# if "webserver-external" in role and gcore_token and ddr_responder #}
 
 
 {% if ("webserver-external" in role or "jitsi meet" in role) and cloudflare_token %}

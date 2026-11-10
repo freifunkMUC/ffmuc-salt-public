@@ -1,0 +1,70 @@
+{#- DDR certificate "ffmuc-dns" (RFC 9462): shared settings for
+    certs/init.sls, haproxy/haproxy.cfg and dnsdist/dnsdist.conf.j2.
+
+    Everything is off unless enabled per node in the NetBox config context:
+
+      ddr_cert:
+        responder: true   # peers table + HTTP-01 responder in haproxy, ACME accounts, thumbprints in the mine
+        staging: true     # request a test certificate "ffmuc-dns-staging" from the LE staging CA
+        issue: true       # request the real certificate "ffmuc-dns"
+        haproxy: true     # serve ffmuc-dns on 443 (TCP + QUIC) for SNI doh/dns.ffmuc.net
+        dot: true         # serve ffmuc-dns on DoT 853 for SNI dot.ffmuc.net (wildcard stays default)
+        doq: true         # serve ONLY ffmuc-dns on DoQ 853 (quiche has no SNI selection)
+
+    Import with: {% from "certs/ddr_cert.jinja" import ... with context %} -#}
+
+{#- Anycast resolver addresses, advertised as SVCB ipv4hint/ipv6hint in dns-auth/db.resolver.arpa -#}
+{%- set ddr_anycast_ips = ['185.150.99.255', '5.1.66.255', '2001:678:e68:f000::', '2001:678:ed0:f000::'] %}
+{#- Validated with DNS-01. Never add "ffmuc.net" or "*.ffmuc.net": dnsdist merges certificates with
+    the same name into one SNI context, so an overlap with the wildcard certificate could replace it. -#}
+{%- set ddr_dns_names = [
+  'doh.ffmuc.net',
+  'dns.ffmuc.net',
+  'dot.ffmuc.net',
+  'doq.ffmuc.net',
+  'anycast.ffmuc.net',
+  'anycast01.ffmuc.net',
+  'anycast02.ffmuc.net',
+] %}
+{%- set ddr_cert_name = 'ffmuc-dns' %}
+{%- set ddr_cert_dir = '/etc/letsencrypt/live/' ~ ddr_cert_name %}
+
+{%- set ddr_config = salt['config.get']('netbox:config_context:ddr_cert', {}) or {} %}
+{%- set ddr_responder = ddr_config.get('responder', False) is sameas true %}
+{%- set ddr_staging = ddr_responder and ddr_config.get('staging', False) is sameas true %}
+{%- set ddr_issue = ddr_responder and ddr_config.get('issue', False) is sameas true %}
+
+{#- The node's own public addresses: they make the identifier set of every node unique
+    (Let's Encrypt allows 5 certificates per week for the same set of identifiers).
+    The mine (network.ip_addrs) also contains the anycast addresses, in no fixed order.
+    Remove them and use the address that stays. If none or more than one stays, use no own address. -#}
+{%- set ddr_own_ips = [] %}
+{%- for mine_function in (['minion_external_ip', 'minion_external_ip6'] if ddr_responder else []) %}
+  {%- set mine_data = salt['mine.get'](grains['id'], mine_function, tgt_type='glob') %}
+  {%- set addresses = mine_data.get(grains['id']) if mine_data else None %}
+  {%- set unicast = [] %}
+  {%- if addresses and addresses is not string and addresses is not mapping %}
+    {%- for address in addresses if address is string %}
+      {%- set address = address.split('/')[0] %}
+      {%- set anycast = [] %}
+      {%- for anycast_ip in ddr_anycast_ips %}
+        {%- if salt['network.ip_in_subnet'](address, anycast_ip ~ ('/128' if ':' in anycast_ip else '/32')) %}
+          {%- do anycast.append(anycast_ip) %}
+        {%- endif %}
+      {%- endfor %}
+      {%- if not anycast and address not in unicast %}
+        {%- do unicast.append(address) %}
+      {%- endif %}
+    {%- endfor %}
+  {%- endif %}
+  {%- if unicast | length == 1 %}
+    {%- do ddr_own_ips.append(unicast[0]) %}
+  {%- endif %}
+{%- endfor %}
+{%- set ddr_ips = ddr_anycast_ips + ddr_own_ips %}
+
+{#- Serve the certificate only if it was issued, so a failed issuance never breaks a config -#}
+{%- set ddr_cert_exists = ddr_responder and salt['file.file_exists'](ddr_cert_dir ~ '/fullchain.pem') %}
+{%- set ddr_serve_haproxy = ddr_cert_exists and ddr_config.get('haproxy', False) is sameas true %}
+{%- set ddr_serve_dot = ddr_cert_exists and ddr_config.get('dot', False) is sameas true %}
+{%- set ddr_serve_doq = ddr_cert_exists and ddr_config.get('doq', False) is sameas true %}

@@ -21,5 +21,10 @@ jobs:
       # renovate: datasource=pypi depName=jinja2
       - name: test dependencies
         run: python3 -m pip install jinja2==3.1.6
+      # renovate: datasource=pypi depName=cryptography
+      - name: certs test dependencies
+        run: python3 -m pip install cryptography==50.0.2
       - name: dhcp-server
         run: python3 -m unittest discover -s dhcp-server/tests -v
+      - name: certs
+        run: python3 -m unittest discover -s certs/tests -v
