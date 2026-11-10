@@ -212,12 +212,28 @@ class HaproxyRenderTest(unittest.TestCase):
         binds = [line for line in cfg.splitlines() if ":443" in line and "bind" in line]
         self.assertEqual(len(binds), 4)
         for bind in binds:
+            # The DDR certificate (with the IP addresses) is the default for clients without SNI
             self.assertIn(
-                'crt "@/ffmuc.net" crt "@/ffmuc-dns" crt "@/ffmuc-cloudflare"', bind
+                'ssl default-crt "@/ffmuc-dns" crt "@/ffmuc.net" crt "@/ffmuc-cloudflare"',
+                bind,
             )
+            self.assertEqual(bind.count("ffmuc-dns"), 1)
 
     def test_serve_needs_certificate(self):
         cfg = render("haproxy/haproxy.cfg", FakeSalt(ALL_ON, cert_exists=False))
+        self.assertNotIn('"@/ffmuc-dns"', cfg)
+        self.assertNotIn("default-crt", cfg)
+        binds = [line for line in cfg.splitlines() if ":443" in line and "bind" in line]
+        self.assertEqual(len(binds), 4)
+        for bind in binds:
+            self.assertIn('ssl crt "@/ffmuc.net" crt "@/ffmuc-cloudflare"', bind)
+
+    def test_haproxy_flag_off(self):
+        cfg = render(
+            "haproxy/haproxy.cfg",
+            FakeSalt(dict(ALL_ON, haproxy=False), cert_exists=True),
+        )
+        self.assertNotIn("default-crt", cfg)
         self.assertNotIn('"@/ffmuc-dns"', cfg)
 
 
@@ -235,7 +251,8 @@ class DnsdistRenderTest(unittest.TestCase):
         self.assertEqual(len(tls), 8)
         self.assertEqual(len(doq), 4)
         for line in tls:
-            self.assertIn("{ssl_cert, ddr_cert}, {ssl_key, ddr_key}", line)
+            # The DDR certificate (with the IP addresses) is first: the default for clients without SNI
+            self.assertIn("{ddr_cert, ssl_cert}, {ddr_key, ssl_key}", line)
         for line in doq:
             self.assertIn("ddr_cert, ddr_key", line)
             self.assertNotIn("ssl_cert", line)
@@ -248,6 +265,20 @@ class DnsdistRenderTest(unittest.TestCase):
         doq = [line for line in cfg.splitlines() if line.startswith("addDOQLocal")]
         for line in doq:
             self.assertIn("ssl_cert, ssl_key", line)
+        tls = [line for line in cfg.splitlines() if line.startswith("addTLSLocal")]
+        for line in tls:
+            self.assertIn("{ddr_cert, ssl_cert}, {ddr_key, ssl_key}", line)
+
+    def test_doq_only(self):
+        cfg = render(
+            "dnsdist/dnsdist.conf.j2",
+            FakeSalt({"responder": True, "doq": True}, cert_exists=True),
+        )
+        tls = [line for line in cfg.splitlines() if line.startswith("addTLSLocal")]
+        self.assertEqual(len(tls), 8)
+        for line in tls:
+            self.assertIn("ssl_cert, ssl_key", line)
+            self.assertNotIn("ddr_cert", line)
 
     def test_serve_needs_certificate(self):
         cfg = render("dnsdist/dnsdist.conf.j2", FakeSalt(ALL_ON, cert_exists=False))

@@ -81,8 +81,10 @@ ddr_cert="{{ ddr_cert_dir }}/fullchain.pem"
 ddr_key="{{ ddr_cert_dir }}/privkey.pem"
 {%- endif %}
 {%- if ddr_serve_dot %}
--- DoT: dnsdist selects the certificate by exact SNI match, the first one (wildcard) is the default
-{%- set dot_cert_args = '{ssl_cert, ddr_cert}, {ssl_key, ddr_key}' %}
+-- DoT: dnsdist selects the certificate by exact SNI match (no wildcards), else the first one.
+-- The DDR certificate is first: it contains the IP addresses for clients without SNI.
+-- SNI ffmuc.net gets the wildcard certificate. Other names that are not in a certificate get the DDR certificate.
+{%- set dot_cert_args = '{ddr_cert, ssl_cert}, {ddr_key, ssl_key}' %}
 {%- endif %}
 {%- if ddr_serve_doq %}
 -- DoQ: quiche has no SNI selection, so serve only the DDR certificate
