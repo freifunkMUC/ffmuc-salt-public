@@ -57,8 +57,7 @@ services:
       - 10179:10179/tcp
     labels:
       - traefik.enable=false
-  # Console router labels: the one place to change when a forward-auth (Keycloak) middleware comes: define the
-  # middleware here and put it into traefik.http.routers.akvorado-console-secure.middlewares.
+  # Console router labels; login with Keycloak realm noc via noc-auth@file (stacks/docker07/traefik/dynamic).
   akvorado-console:
     image: *akvorado
     networks:
@@ -72,7 +71,7 @@ services:
       - traefik.http.middlewares.akvorado-console-headers.headers.customrequestheaders.X-Forwarded-Port=443
       - traefik.http.routers.akvorado-console-secure.entrypoints=https
       - "traefik.http.routers.akvorado-console-secure.rule=Host(`flow.ov.ffmuc.net`)"
-      - traefik.http.routers.akvorado-console-secure.middlewares=akvorado-console-headers
+      - traefik.http.routers.akvorado-console-secure.middlewares=noc-auth@file,akvorado-console-headers
       - traefik.http.routers.akvorado-console-secure.tls=true
       - traefik.http.routers.akvorado-console-secure.tls.certresolver=http
       - metrics.enable=true
