@@ -42,6 +42,28 @@
       "automerge": true
     },
     {
+      "description": "Patch updates of container images in the nightly-tier stacks (docs/plans/komodo-auto-apply.md; Komodo's auto-apply-nightly deploys them at 05:30 UTC) merge on their own once the checks are green. Weekly-tier and excluded stacks stay manual for patch. Must stay before the exclusions below: later rules win",
+      "matchManagers": ["docker-compose", "dockerfile"],
+      "matchFileNames": [
+        "stacks/docker04/{cfssl,conferencemapper,diun,dokuwiki,excalidraw-backend,meet-reserve,owncast,packetyeeter-analyzer,traefik,whitebophir}/**",
+        "stacks/docker05/{diun,meet-reserve,speedtest,traefik}/**",
+        "stacks/docker06/{diun,mastodon-paywall,meet-reserve,packetyeeter-analyzer,traefik}/**",
+        "stacks/docker07/{bgpalerter,diun,element-web,federated-map,libretranslate,meet-reserve,oauth2-proxy,speedtest,traefik}/**",
+        "stacks/build/meet-reserve/**"
+      ],
+      "matchUpdateTypes": ["patch"],
+      "minimumReleaseAge": "3 days",
+      "minimumReleaseAgeBehaviour": "timestamp-optional",
+      "platformAutomerge": false,
+      "automerge": true
+    },
+    {
+      "description": "Our own images are rebuilt nightly by their repositories: no waiting period, the compose check is the gate",
+      "matchManagers": ["docker-compose", "dockerfile"],
+      "matchPackageNames": ["ghcr.io/freifunkmuc/**"],
+      "minimumReleaseAge": null
+    },
+    {
       "description": "No automerge for the mail server (mail01 incl. Roundcube), Komodo itself, the Salt master and Graylog with its OpenSearch: an update that goes wrong takes the management or the mail path down",
       "matchFileNames": [
         "stacks/mail01/**",
