@@ -61,6 +61,9 @@ nothing until the host has the NetBox tag `icinga2_client`.
 - `ffmuc_rustic` (`plugins/check_ffmuc_rustic`): CRITICAL when `ffmuc-rustic-backup.service` is failed or the last
   successful run (`/var/lib/ffmuc-rustic-last-success`, touched by the unit after `backup` and `forget`) is older than
   54 h, WARNING after 30 h. Hosts with the NetBox tag `backup`. `ffmuc_dumps` stays as it is.
+- `zammad_index` (`plugins/check_zammad_index`): tickets, users and organizations in the Zammad database minus the
+  Elasticsearch document count (rows changed in the last 15 minutes ignored); WARNING from 5, CRITICAL from 20
+  missing rows of any type. Runs on docker05 through sudo (`icinga2.sudoers`); `docker05.in.ffmuc.net` only.
 - `heartbeat` (`plugins/check_heartbeat`, master only): every 5 minutes a request to the URL in
   `/etc/icinga2/heartbeat.url`, written by Salt from the NetBox config context `icinga2.heartbeat_url` of the master
   (`icinga2_server`). The external service (Statuscake heartbeat or healthchecks.io) alerts when the pings stop, on a
