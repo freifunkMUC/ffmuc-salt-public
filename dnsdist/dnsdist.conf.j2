@@ -9,8 +9,8 @@ end
 setACL({'0.0.0.0/0', '::/0'})
 
 -- Usage metrics with labels (prometheus only). Never use client addresses as labels.
---   dnsdist_ddr_queries{proto, dst}            DDR discovery: _dns.resolver.arpa SVCB (RFC 9462)
---   dnsdist_encrypted_queries{proto, dst, sni} DoT, DoH and DoQ queries
+--   ddr-queries{proto, dst}            DDR discovery: _dns.resolver.arpa SVCB (RFC 9462)
+--   encrypted-queries{proto, dst, sni} DoT, DoH and DoQ queries
 -- dst: the anycast resolver address the client sent the query to, else "other".
 --      The names (doh/dot/doq.ffmuc.net) resolve to only one IPv4 and one IPv6 anycast address,
 --      so queries to the other two come from DDR clients or clients that use the IP address.
@@ -30,7 +30,7 @@ local function sniLabel(name)
 end
 declareMetric("ddr-queries", "counter", "DDR discovery queries (_dns.resolver.arpa SVCB) by protocol and destination address", {withLabels=true})
 function countDDRQuery(dq)
-  incMetric("ddr-queries", {labels={proto=dq:getProtocol(), dst=dstLabel(dq.localaddr:toString())}})
+  incMetric("ddr-queries", { labels = { proto = dq:getProtocol(), dst = dstLabel(dq.localaddr:toString()) } })
   return DNSAction.None, ""
 end
 addAction(AndRule({QNameRule("_dns.resolver.arpa"), QTypeRule(64)}), LuaAction(countDDRQuery), {name="Count-DDR"})
@@ -45,10 +45,11 @@ function countEncryptedQuery(dq)
   else
     dst, name = dq.localaddr:toString(), dq:getServerNameIndication()
   end
-  incMetric("encrypted-queries", {labels={proto=proto, dst=dstLabel(dst), sni=sniLabel(name)}})
+  incMetric("encrypted-queries", { labels = { proto = proto, dst = dstLabel(dst), sni = sniLabel(name) } })
   return DNSAction.None, ""
 end
-addAction(OrRule({IncomingProtocolRule("DoT"), IncomingProtocolRule("DoH"), IncomingProtocolRule("DoQ")}), LuaAction(countEncryptedQuery), {name="Count-Encrypted"})
+local encryptedRule = OrRule({IncomingProtocolRule("DoT"), IncomingProtocolRule("DoH"), IncomingProtocolRule("DoQ")})
+addAction(encryptedRule, LuaAction(countEncryptedQuery), {name="Count-Encrypted"})
 {%- endif %}
 -- https://blog.cloudflare.com/rfc8482-saying-goodbye-to-any/
 addAction(QTypeRule(DNSQType.ANY), RCodeAction(DNSRCode.NOTIMP), {name="Drop ANY"})
