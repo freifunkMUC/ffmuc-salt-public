@@ -20,3 +20,163 @@ executions = [
     "set -e; bin/tootctl media remove --prune-profiles --days 30 --concurrency 2; bin/tootctl preview_cards remove --days 14 --concurrency 2; bin/tootctl media remove-orphans",
   ] },
 ]
+
+# Auto-apply: RunSync, then DeployStackIfChanged per host (no blind redeploys).
+# Allowlist only; unlisted stacks stay manual. Never add docker06-komodo. Disabled until tested.
+[[procedure]]
+name = "auto-apply-nightly"
+description = "Mon-Sat 05:30 UTC: sync, then deploy changed low-risk stacks per host, Traefik one host at a time"
+tags = ["ffmuc"]
+[procedure.config]
+schedule_format = "Cron"
+schedule = "0 30 5 ? * MON-SAT"
+schedule_timezone = "UTC"
+schedule_enabled = false
+schedule_alert = false
+failure_alert = true
+webhook_enabled = false
+
+[[procedure.config.stage]]
+name = "sync"
+executions = [
+  { execution.type = "RunSync", execution.params.sync = "ffmuc-salt-public" },
+]
+
+[[procedure.config.stage]]
+name = "docker04"
+executions = [
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker04-conferencemapper" },
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker04-diun" },
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker04-excalidraw-backend" },
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker04-meet-reserve" },
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker04-owncast" },
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker04-packetyeeter-analyzer" },
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker04-whitebophir" },
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker04-cfssl" },
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker04-dokuwiki" },
+]
+
+[[procedure.config.stage]]
+name = "docker05"
+executions = [
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker05-diun" },
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker05-meet-reserve" },
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker05-speedtest" },
+]
+
+[[procedure.config.stage]]
+name = "docker06"
+executions = [
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker06-diun" },
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker06-meet-reserve" },
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker06-mastodon-paywall" },
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker06-packetyeeter-analyzer" },
+]
+
+[[procedure.config.stage]]
+name = "docker07"
+executions = [
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker07-diun" },
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker07-meet-reserve" },
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker07-speedtest" },
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker07-bgpalerter" },
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker07-libretranslate" },
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker07-federated-map" },
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker07-oauth2-proxy" },
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker07-element-web" },
+]
+
+[[procedure.config.stage]]
+name = "traefik-docker04"
+executions = [
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker04-traefik" },
+]
+
+[[procedure.config.stage]]
+name = "wait-1"
+executions = [
+  { execution.type = "Sleep", execution.params.duration_ms = 120000 },
+]
+
+[[procedure.config.stage]]
+name = "traefik-docker05"
+executions = [
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker05-traefik" },
+]
+
+[[procedure.config.stage]]
+name = "wait-2"
+executions = [
+  { execution.type = "Sleep", execution.params.duration_ms = 120000 },
+]
+
+[[procedure.config.stage]]
+name = "traefik-docker07"
+executions = [
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker07-traefik" },
+]
+
+[[procedure.config.stage]]
+name = "wait-3"
+executions = [
+  { execution.type = "Sleep", execution.params.duration_ms = 120000 },
+]
+
+[[procedure.config.stage]]
+name = "traefik-docker06"
+executions = [
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker06-traefik" },
+]
+
+# Auto-apply, slower tier: apps whose compose file carries their own database or state.
+# Same pattern as auto-apply-nightly; the Sunday window leaves a week to catch a bad update.
+[[procedure]]
+name = "auto-apply-weekly"
+description = "Sundays 05:30 UTC: stateful apps with their own database, one host at a time"
+tags = ["ffmuc"]
+[procedure.config]
+schedule_format = "Cron"
+schedule = "0 30 5 ? * SUN"
+schedule_timezone = "UTC"
+schedule_enabled = false
+schedule_alert = false
+failure_alert = true
+webhook_enabled = false
+
+[[procedure.config.stage]]
+name = "sync"
+executions = [
+  { execution.type = "RunSync", execution.params.sync = "ffmuc-salt-public" },
+]
+
+[[procedure.config.stage]]
+name = "docker04"
+executions = [
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker04-etherpad" },
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker04-hedgedoc" },
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker04-matomo" },
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker04-netbox" },
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker04-netbox-parker" },
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker04-uptime-kuma" },
+]
+
+[[procedure.config.stage]]
+name = "docker05"
+executions = [
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker05-cryptpad" },
+]
+
+[[procedure.config.stage]]
+name = "docker06"
+executions = [
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker06-omada" },
+]
+
+[[procedure.config.stage]]
+name = "docker07"
+executions = [
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker07-tuwunel" },
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker07-peeringmanager" },
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker07-uisp" },
+  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker07-akvorado" },
+]
