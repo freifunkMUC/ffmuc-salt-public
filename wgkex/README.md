@@ -17,7 +17,7 @@ Brokers publish v2 keys only to the chosen worker (`wireguard/{domain}/{worker}`
 `wireguard/{domain}/all`, so **update the workers first**, then the brokers:
 
 ```sh
-salt 'gw0*' state.apply wgkex                     # checks out the pinned tag and restarts the worker
+salt 'gw0*' state.apply wgkex                     # or wait for the 18:00 highstate; checks out the pinned tag, restarts the worker
 # then deploy the stacks docker04-wgkex … docker07-wgkex in Komodo, one at a time
 ```
 
