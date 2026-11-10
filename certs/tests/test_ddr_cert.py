@@ -52,7 +52,9 @@ ANYCAST = ["185.150.99.255", "5.1.66.255", "2001:678:e68:f000::", "2001:678:ed0:
 class FakeSalt(dict):
     """Minimal salt[...] for the templates (config.get, mine.get, file.file_exists, pillar.get)."""
 
-    def __init__(self, ddr_cert=None, cert_exists=False, thumbprints=None):
+    def __init__(
+        self, ddr_cert=None, cert_exists=False, thumbprints=None, external=None
+    ):
         super().__init__()
         config = {
             "netbox:site:name": "MUC01",
@@ -70,6 +72,7 @@ class FakeSalt(dict):
             "minion_overlay_address": {NODE: "10.8.0.1/16", PEER: "10.8.0.2/16"},
             "minion_external_ip": {NODE: ["198.51.100.1/32"], PEER: ["198.51.100.2"]},
             "minion_external_ip6": {NODE: ["2001:db8::1/64"], PEER: ["2001:db8::2"]},
+            **(external or {}),
             "acme_thumbprints": thumbprints
             or {NODE: [TP_NODE], PEER: [TP_PEER, "bad thumbprint"]},
         }
@@ -84,6 +87,9 @@ class FakeSalt(dict):
         self["pillar.get"] = lambda key, default=None: config.get(key, default)
         self["mine.get"] = mine_get
         self["file.file_exists"] = lambda path: cert_exists
+        self["network.ip_in_subnet"] = lambda address, cidr: ipaddress.ip_address(
+            address
+        ) in ipaddress.ip_network(cidr)
 
 
 def regex_match(value, pattern):
@@ -249,8 +255,8 @@ class DnsdistRenderTest(unittest.TestCase):
 
 
 class CertsStateRenderTest(unittest.TestCase):
-    def render_sls(self, ddr_cert):
-        salt = FakeSalt(ddr_cert)
+    def render_sls(self, ddr_cert, external=None):
+        salt = FakeSalt(ddr_cert, external=external)
         config = {
             "netbox:role:name": "webserver-external",
             "netbox:config_context:gcore:api_token": "token",
@@ -290,6 +296,54 @@ class CertsStateRenderTest(unittest.TestCase):
     def test_issue_needs_responder(self):
         sls = self.render_sls({"issue": True})
         self.assertNotIn("ffmuc-dns-acme", sls)
+
+
+class OwnAddressTest(unittest.TestCase):
+    """The mine (network.ip_addrs) has unicast and anycast addresses in any order."""
+
+    def ip_addresses(self, v4, v6):
+        sls = CertsStateRenderTest.render_sls(
+            self,
+            {"responder": True, "issue": True},
+            external={
+                "minion_external_ip": {NODE: v4},
+                "minion_external_ip6": {NODE: v6},
+            },
+        )
+        issue = sls.split("ffmuc-dns-cert:")[1].split("\n\n")[0]
+        return re.findall(r'--ip-address "([^"]+)"', issue)
+
+    def test_anycast_first(self):
+        self.assertEqual(
+            self.ip_addresses(
+                ["5.1.66.255", "5.1.66.1"],
+                ["2001:678:e68:f000:0:0:0:0/128", "2001:678:e68:1::1/64"],
+            ),
+            ANYCAST + ["5.1.66.1", "2001:678:e68:1::1"],
+        )
+
+    def test_anycast_last(self):
+        self.assertEqual(
+            self.ip_addresses(
+                ["5.1.66.1/32", "185.150.99.255/32"],
+                ["2001:678:e68:1::1", "2001:678:ED0:F000::"],
+            ),
+            ANYCAST + ["5.1.66.1", "2001:678:e68:1::1"],
+        )
+
+    def test_only_anycast_or_ambiguous(self):
+        self.assertEqual(
+            self.ip_addresses(
+                ["5.1.66.255"], ["2001:678:e68:f000::", "2001:db8::1", "2001:db8::2"]
+            ),
+            ANYCAST,
+        )
+
+    def test_duplicates(self):
+        self.assertEqual(
+            self.ip_addresses(["5.1.66.1", "5.1.66.1/32", "5.1.66.255"], []),
+            ANYCAST + ["5.1.66.1"],
+        )
 
 
 class HookTest(unittest.TestCase):
