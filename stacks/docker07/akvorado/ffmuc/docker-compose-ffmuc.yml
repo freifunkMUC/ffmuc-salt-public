@@ -3,7 +3,7 @@
 # local deviation lives in this file, the last entry of file_paths of the Komodo Stack. Placed outside docker/ so that
 # the next upgrade can replace docker/ wholesale. Needs Docker Compose >= 2.24 (!override, !reset).
 #  - images pinned by digest here (upstream's versions.yml has `akvorado:main` and floating tags)
-#  - config/ is not in git (outlet.yaml has the SNMP community): absolute bind mount to the host directory
+#  - config/ is in git (../config); only the SNMP community stays on the host (snmp-credentials.yaml, !include'd by outlet.yaml)
 #  - geoip is pulled by digest only, no local build (upstream's Dockerfile and script are not in git)
 #  - upstream's own traefik service is not used: the host Traefik (/srv/docker/traefik) serves the console
 #  - network `default` without upstream's fixed class-E subnets and br-akvorado (as before this upgrade)
@@ -38,7 +38,8 @@ services:
   akvorado-orchestrator:
     image: &akvorado quay.io/akvorado/akvorado:2026.10.1@sha256:6454527fcbe27a88f5031e6ad46b9b1514c285ef7548ae18ad95d69b114fc818
     volumes: !override
-      - /srv/docker/akvorado/config:/etc/akvorado:ro
+      - ../config:/etc/akvorado:ro
+      - /srv/docker/akvorado/snmp-credentials.yaml:/etc/akvorado/snmp-credentials.yaml:ro
     labels:
       - traefik.enable=false
   akvorado-inlet:

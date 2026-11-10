@@ -1,0 +1,27 @@
+---
+# Migrated from the v1 layout on 2026-10-23 (ops/ffmuc-akvorado-upgrade.sh); the original is in the backup.
+kafka:
+  topic: flows
+  brokers:
+  - kafka:9092
+  topic-configuration:
+    num-partitions: 8
+    replication-factor: 1
+    config-entries:
+      segment.bytes: 1073741824
+      retention.ms: 86400000
+      cleanup.policy: delete
+      compression.type: producer
+
+clickhousedb:
+  servers:
+  - clickhouse:9000
+
+clickhouse:
+  orchestrator-url: http://akvorado-orchestrator:8080
+  asns:
+    212567: Freie Netze Munich
+
+inlet: !include "inlet.yaml"
+outlet: !include "outlet.yaml"
+console: !include "console.yaml"
