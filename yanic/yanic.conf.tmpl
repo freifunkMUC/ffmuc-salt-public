@@ -1,5 +1,6 @@
 {% set sites = salt['pillar.get']('netbox:config_context:sites') -%}
 {% set influxdb = salt['pillar.get']('netbox:config_context:yanic:influxdb', {}) -%}
+{% set no_owner = salt['pillar.get']('netbox:config_context:yanic:no_owner', False) -%}
 ###
 # yanic config (salt managed)
 ###
@@ -42,21 +43,22 @@ save_interval = "30s"
 # Set node to offline if not seen within this period
 offline_after = "10m"
 
-# no_owner: contact details stay out of the public files; admins can look them up in state_path.
+# no_owner (NetBox config context yanic.no_owner, default off): contact details stay out of the public files;
+# admins can look them up in state_path.
 # definition for the new more compressed meshviewer.json
 [[nodes.output.meshviewer-ffrgb]]
 enable   = true
 path = "/srv/yanic/meshviewer.json"
 
 [nodes.output.meshviewer-ffrgb.filter]
-no_owner = true
+no_owner = {{ 'true' if no_owner else 'false' }}
 
 [[nodes.output.meshviewer-ffrgb]]
 enable = true
 path = "/srv/yanic/meshviewer-ffdon.json"
 
 [nodes.output.meshviewer-ffrgb.filter]
-no_owner = true
+no_owner = {{ 'true' if no_owner else 'false' }}
 domain_as_site = true
 sites = [{% for domain in sites["ffdon"] %}"ffdon_{{ domain }}", {% endfor %}]
 
@@ -65,7 +67,7 @@ enable = true
 path = "/srv/yanic/meshviewer-ffwert.json"
 
 [nodes.output.meshviewer-ffrgb.filter]
-no_owner = true
+no_owner = {{ 'true' if no_owner else 'false' }}
 domain_as_site = true
 sites = [{% for domain in sites["ffwert"] %}"ffwert_{{ domain }}", {% endfor %}]
 
@@ -74,7 +76,7 @@ enable = true
 path = "/srv/yanic/meshviewer-augsburg.json"
 
 [nodes.output.meshviewer-ffrgb.filter]
-no_owner = true
+no_owner = {{ 'true' if no_owner else 'false' }}
 domain_as_site = true
 sites = ["ffmuc_augsburg"]
 
@@ -83,7 +85,7 @@ enable = true
 path = "/srv/yanic/meshviewer-freising.json"
 
 [nodes.output.meshviewer-ffrgb.filter]
-no_owner = true
+no_owner = {{ 'true' if no_owner else 'false' }}
 domain_as_site = true
 sites = ["ffmuc_freising"]
 
@@ -92,7 +94,7 @@ enable = true
 path = "/srv/yanic/meshviewer-ulm.json"
 
 [nodes.output.meshviewer-ffrgb.filter]
-no_owner = true
+no_owner = {{ 'true' if no_owner else 'false' }}
 domain_as_site = true
 sites = ["ffmuc_ulm"]
 
@@ -101,7 +103,7 @@ enable = true
 path = "/srv/yanic/meshviewer-dlg.json"
 
 [nodes.output.meshviewer-ffrgb.filter]
-no_owner = true
+no_owner = {{ 'true' if no_owner else 'false' }}
 domain_as_site = true
 sites = ["ffmuc_dlg"]
 
@@ -113,14 +115,14 @@ nodes_path = "/srv/yanic/nodes.json"
 graph_path = "/srv/yanic/graph.json"
 
 [nodes.output.meshviewer.filter]
-no_owner = true
+no_owner = {{ 'true' if no_owner else 'false' }}
 
 [[nodes.output.geojson]]
 enable   = true
 path = "/srv/yanic/nodes.geojson"
 
 [nodes.output.geojson.filter]
-no_owner = true
+no_owner = {{ 'true' if no_owner else 'false' }}
 
 [[nodes.output.nodelist]]
 enable   = true
