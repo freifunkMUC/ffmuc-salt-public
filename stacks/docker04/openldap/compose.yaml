@@ -8,7 +8,7 @@ services:
     # configuration. Before 14.10.2026: startcodex/openldap, see
     # docker-compose.yaml.pre-openldap-docker; its data stays in data/ and
     # config/ on the host for a rollback.
-    image: ghcr.io/freifunkmuc/openldap-docker:2.6.10@sha256:168359f84c4b869ba10fa112f59032d4cdce6fab47d87018529c02dbc71f2df2
+    image: ghcr.io/freifunkmuc/openldap-docker:2.6.10@sha256:5d6eb34cb83fd6d16ef799bbc37fbc3c3d9fe18e98ea2d002931d7f2d1aa638a
     entrypoint:
       - sh
       - -ec
