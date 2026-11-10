@@ -35,7 +35,7 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       KC_FEATURES: authorization,token-exchange,docker,impersonation,scripts,web-authn,client-policies,parameterized-scopes
     ports:
-      - 8081:8080
+      - "10.8.0.16:8081:8080"  # Nebula only, haproxy on the webfrontends
     depends_on:
       - postgres
     healthcheck:
