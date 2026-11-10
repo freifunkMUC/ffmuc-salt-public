@@ -119,6 +119,10 @@ firewall:
   - port: 10001
     proto: tcp
     group: webfrontend
+    # DoT (dnsdist): Icinga check ddr-cert-853 (icinga2/services/dns.conf)
+  - port: 853
+    proto: tcp
+    host: icinga-vie01.in.ffmuc.net
 {%- endif %}
     # HTTPS
   - port: 443
