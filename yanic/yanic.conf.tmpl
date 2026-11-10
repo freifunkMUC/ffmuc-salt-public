@@ -53,6 +53,14 @@ path = "/srv/yanic/meshviewer.json"
 [nodes.output.meshviewer-ffrgb.filter]
 no_owner = {{ 'true' if no_owner else 'false' }}
 
+# internal copy with owner contacts, outside the web root (directory 0750 yanic, read over SSH by admins)
+[[nodes.output.meshviewer-ffrgb]]
+enable = true
+path = "/srv/yanic-internal/meshviewer.json"
+
+[nodes.output.meshviewer-ffrgb.filter]
+no_owner = false
+
 [[nodes.output.meshviewer-ffrgb]]
 enable = true
 path = "/srv/yanic/meshviewer-ffdon.json"

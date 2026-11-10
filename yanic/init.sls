@@ -10,6 +10,16 @@
   file.directory:
     - makedirs: True
 
+# internal output with owner contacts: not linked into any web root
+/srv/yanic-internal:
+  file.directory:
+    - user: yanic
+    - group: yanic
+    - mode: "0750"
+    - makedirs: True
+    - require:
+      - pkg: yanic
+
 # copy yanic binary to destination
 # the binary needs to be provided by the salt-master
 yanic:
@@ -40,5 +50,6 @@ yanic:
     - template: jinja
     - require:
       - file: /srv/yanic
+      - file: /srv/yanic-internal
 
 {% endif %}{# yanic in tags #}
