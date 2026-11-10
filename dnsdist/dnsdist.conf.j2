@@ -7,6 +7,49 @@ end
 --- now the real config
 
 setACL({'0.0.0.0/0', '::/0'})
+
+-- Usage metrics with labels (prometheus only). Never use client addresses as labels.
+--   dnsdist_ddr_queries{proto, dst}            DDR discovery: _dns.resolver.arpa SVCB (RFC 9462)
+--   dnsdist_encrypted_queries{proto, dst, sni} DoT, DoH and DoQ queries
+-- dst: the anycast resolver address the client sent the query to, else "other".
+--      The names (doh/dot/doq.ffmuc.net) resolve to only one IPv4 and one IPv6 anycast address,
+--      so queries to the other two come from DDR clients or clients that use the IP address.
+-- sni: "none" if the client sent no name (TLS SNI, for DoH the HTTP Host) or an IP address, else "set".
+{%- from "certs/ddr_cert.jinja" import ddr_anycast_ips with context %}
+local anycastAddresses = { {%- for ip in ddr_anycast_ips %}["{{ ip }}"]=true{{ ', ' if not loop.last }}{%- endfor %} }
+local function dstLabel(address)
+  address = (address or ""):gsub("^::ffff:", "")
+  return anycastAddresses[address] and address or "other"
+end
+local function sniLabel(name)
+  name = (name or ""):gsub(":%d+$", "")
+  if name == "" or name:sub(1, 1) == "[" or name:match("^[%d%.]+$") then
+    return "none"
+  end
+  return "set"
+end
+declareMetric("ddr-queries", "counter", "DDR discovery queries (_dns.resolver.arpa SVCB) by protocol and destination address", {withLabels=true})
+function countDDRQuery(dq)
+  incMetric("ddr-queries", {labels={proto=dq:getProtocol(), dst=dstLabel(dq.localaddr:toString())}})
+  return DNSAction.None, ""
+end
+addAction(AndRule({QNameRule("_dns.resolver.arpa"), QTypeRule(64)}), LuaAction(countDDRQuery), {name="Count-DDR"})
+{%- if 'webfrontend' in grains.id %}
+declareMetric("encrypted-queries", "counter", "DoT, DoH and DoQ queries by protocol, destination address and presence of a server name", {withLabels=true})
+function countEncryptedQuery(dq)
+  local proto = dq:getProtocol()
+  local dst, name
+  if proto == "DNS over HTTPS" then
+    -- haproxy terminates TLS and sets X-DNS-Dst (doh_backend_v4/v6)
+    dst, name = dq:getHTTPHeaders()["x-dns-dst"], dq:getHTTPHost()
+  else
+    dst, name = dq.localaddr:toString(), dq:getServerNameIndication()
+  end
+  incMetric("encrypted-queries", {labels={proto=proto, dst=dstLabel(dst), sni=sniLabel(name)}})
+  return DNSAction.None, ""
+end
+addAction(OrRule({IncomingProtocolRule("DoT"), IncomingProtocolRule("DoH"), IncomingProtocolRule("DoQ")}), LuaAction(countEncryptedQuery), {name="Count-Encrypted"})
+{%- endif %}
 -- https://blog.cloudflare.com/rfc8482-saying-goodbye-to-any/
 addAction(QTypeRule(DNSQType.ANY), RCodeAction(DNSRCode.NOTIMP), {name="Drop ANY"})
 addAction(RegexRule(".*\\.(10|168\\.192|(1[6-9]|2[0-9]|3[0-1])\\.172)\\.in-addr\\.arpa$"), RCodeAction(DNSRCode.NXDOMAIN), {name="RFC1918-PTR-NXDOMAIN"})
@@ -62,18 +105,18 @@ addDOQLocal("[::]", {{ doq_cert_args }}, { reusePort=true })
 addDOQLocal("[::]", {{ doq_cert_args }}, { reusePort=true})
 
 -- listen for DoH on localhost for reverse proxy
-addDOHLocal("127.0.0.1:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reusePort=true, trustForwardedForHeader=true })
-addDOHLocal("127.0.0.1:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reusePort=true, trustForwardedForHeader=true })
-addDOHLocal("127.0.0.1:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reusePort=true, trustForwardedForHeader=true })
-addDOHLocal("127.0.0.1:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reusePort=true, trustForwardedForHeader=true })
-addDOHLocal("[::1]:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reusePort=true, trustForwardedForHeader=true })
-addDOHLocal("[::1]:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reusePort=true, trustForwardedForHeader=true })
-addDOHLocal("[::1]:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reusePort=true, trustForwardedForHeader=true })
-addDOHLocal("[::1]:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reusePort=true, trustForwardedForHeader=true })
+addDOHLocal("127.0.0.1:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reusePort=true, trustForwardedForHeader=true, keepIncomingHeaders=true })
+addDOHLocal("127.0.0.1:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reusePort=true, trustForwardedForHeader=true, keepIncomingHeaders=true })
+addDOHLocal("127.0.0.1:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reusePort=true, trustForwardedForHeader=true, keepIncomingHeaders=true })
+addDOHLocal("127.0.0.1:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reusePort=true, trustForwardedForHeader=true, keepIncomingHeaders=true })
+addDOHLocal("[::1]:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reusePort=true, trustForwardedForHeader=true, keepIncomingHeaders=true })
+addDOHLocal("[::1]:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reusePort=true, trustForwardedForHeader=true, keepIncomingHeaders=true })
+addDOHLocal("[::1]:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reusePort=true, trustForwardedForHeader=true, keepIncomingHeaders=true })
+addDOHLocal("[::1]:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reusePort=true, trustForwardedForHeader=true, keepIncomingHeaders=true })
 
 {%- set address = salt['pillar.get']('netbox:primary_ip4:address') | regex_replace('/\d+$','') %}
 -- listen for DoH on nebula for failover
-addDOHLocal("{{ address }}:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reusePort=true, trustForwardedForHeader=true })
+addDOHLocal("{{ address }}:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reusePort=true, trustForwardedForHeader=true, keepIncomingHeaders=true })
 
 if not file_exists("/var/lib/dnsdist/providerPrivate.key") then
   infolog("Generate DNSCrypt provider keys.")
