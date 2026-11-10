@@ -3,7 +3,7 @@
 kafka:
   topic: flows
   brokers:
-  - kafka:9092
+    - kafka:9092
   topic-configuration:
     num-partitions: 8
     replication-factor: 1
@@ -15,7 +15,7 @@ kafka:
 
 clickhousedb:
   servers:
-  - clickhouse:9000
+    - clickhouse:9000
 
 clickhouse:
   orchestrator-url: http://akvorado-orchestrator:8080

@@ -2,9 +2,9 @@
 geoip:
   optional: true
   asn-database:
-  - /usr/share/GeoIP/asn.mmdb
+    - /usr/share/GeoIP/asn.mmdb
   geo-database:
-  - /usr/share/GeoIP/country.mmdb
+    - /usr/share/GeoIP/country.mmdb
 networks:
   networks:
     2001:678:e68::/48:
@@ -29,23 +29,23 @@ core:
   classifier-cache-duration: 10m
   default-sampling-rate: 1000
   exporter-classifiers:
-  - ClassifySiteRegex(Exporter.Name, "^[^-]+-(\\w+)", "$1")
-  - ClassifyRegion("europe")
-  - ClassifyTenant("acme")
-  - ClassifyRole("edge")
+    - ClassifySiteRegex(Exporter.Name, "^[^-]+-(\\w+)", "$1")
+    - ClassifyRegion("europe")
+    - ClassifyTenant("acme")
+    - ClassifyRole("edge")
   interface-classifiers:
-  - 'ClassifyConnectivityRegex(Interface.Description, "^(?i)(transit|pni|ppni|ix):? ", "$1") &&
+    - 'ClassifyConnectivityRegex(Interface.Description, "^(?i)(transit|pni|ppni|ix):? ", "$1") &&
 
-    ClassifyProviderRegex(Interface.Description, "^\\S+?\\s(\\S+)", "$1") &&
+      ClassifyProviderRegex(Interface.Description, "^\\S+?\\s(\\S+)", "$1") &&
 
-    ClassifyExternal()
+      ClassifyExternal()
 
-    '
-  - ClassifyInternal()
+      '
+    - ClassifyInternal()
 metadata:
   providers:
-  - type: snmp
-    credentials: !include "snmp-credentials.yaml"
-    agents:
-      172.31.0.65: 10.8.0.35
-      172.31.0.33: 10.8.0.3
+    - type: snmp
+      credentials: !include "snmp-credentials.yaml"
+      agents:
+        172.31.0.65: 10.8.0.35
+        172.31.0.33: 10.8.0.3
