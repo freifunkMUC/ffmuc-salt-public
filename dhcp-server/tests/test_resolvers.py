@@ -20,6 +20,15 @@ VIE6 = ["2001:678:e68:f000::", "2001:678:ed0:f000::"]
 MUC6 = ["2001:678:ed0:f000::", "2001:678:e68:f000::"]
 
 
+def ip_in_subnet(address, cidr):
+    """Like Salt: a network with host bits set never matches."""
+    try:
+        network = ipaddress.ip_network(cidr, strict=True)
+    except ValueError:
+        return False
+    return ipaddress.ip_address(address) in network
+
+
 def render(path, ipv4):
     """Render a gateway template for a node with the IPv4 addresses ipv4."""
     prefix = "10.80.136.0/21"
@@ -46,8 +55,7 @@ def render(path, ipv4):
             "muc_nord": {"prefix": prefix}
         },
         "network.convert_cidr": convert_cidr,
-        "network.ip_in_subnet": lambda address, cidr: ipaddress.ip_address(address)
-        in ipaddress.ip_network(cidr, strict=False),
+        "network.ip_in_subnet": ip_in_subnet,
         "network.calc_net": lambda cidr: str(ipaddress.ip_network(cidr, strict=False)),
     }
     env = jinja2.Environment(
@@ -109,10 +117,7 @@ class AnycastTest(unittest.TestCase):
             {
                 "salt": {
                     "config.get": lambda key, default=None: default,
-                    "network.ip_in_subnet": lambda address, cidr: ipaddress.ip_address(
-                        address
-                    )
-                    in ipaddress.ip_network(cidr, strict=False),
+                    "network.ip_in_subnet": ip_in_subnet,
                 },
                 "grains": {"ipv4": GW_MUC},
             }
