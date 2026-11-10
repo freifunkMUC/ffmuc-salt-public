@@ -11,9 +11,14 @@ Two implementations, selected per gateway by a NetBox tag:
 | `dhcp-kea` | Kea 3.0 from ISC's repository | `kea-dhcp4.conf.jinja` |
 
 Both serve the same networks: one shared network per NetBox site prefix,
-pool `.10`-`.254`, the gateway as router and resolver, 600 s default and
+pool `.10`-`.254`, the gateway as router, 600 s default and
 3600 s maximum lease time, and the same options (MTU 1280, captive portal,
 DNR, UniFi and Omada controller address).
+
+The resolvers are the two anycast IPv4 addresses, the one of the own site
+first (`ddr_resolvers4` in `certs/ddr_cert.jinja`). The DDR certificate
+contains these addresses, so clients can do verified DDR (RFC 9462).
+radvd sends the IPv6 anycast addresses as RDNSS in the same order.
 
 ## Kea
 
@@ -32,8 +37,8 @@ DNR, UniFi and Omada controller address).
   Clients renewing their own active lease are not pinged. Declined addresses
   return to the pool after 1 h (`decline-probation-period`).
 - **DNR (RFC 9463):** the option advertises DoH, DoT and DoQ on the anycast
-  resolver (`netbox:config_context:dhcp:dnr_address`, default
-  `185.150.99.255`). Unlike the raw dhcpd option it includes the resolver
+  resolver (`netbox:config_context:dhcp:dnr_address`, default the first
+  resolver). Unlike the raw dhcpd option it includes the resolver
   address, which RFC 9463 section 3.1.8 requires and Kea enforces.
 - **Monitoring:** `/usr/local/bin/kea-pool-stats` reads the pool statistics
   from the control socket and prints the `dhcpd-pools` JSON format, so the

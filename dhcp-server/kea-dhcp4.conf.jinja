@@ -10,7 +10,8 @@
 ) %}
 {%- set sites = salt['pillar.get']('netbox:config_context:sites', {}).values() | sum(start=[]) %}
 {%- set controller = salt['config.get']('netbox:config_context:dhcp:controller_address', '5.1.66.255') %}
-{%- set dnr_address = salt['config.get']('netbox:config_context:dhcp:dnr_address', '185.150.99.255') %}
+{%- from "certs/ddr_cert.jinja" import ddr_resolvers4 with context %}
+{%- set dnr_address = salt['config.get']('netbox:config_context:dhcp:dnr_address', ddr_resolvers4[0]) %}
 
 {#- RFC 9463 DNR: DoH, DoT and DoQ on the anycast resolvers. Unlike the raw
     dhcpd option this includes the resolver address, which RFC 9463 section
@@ -37,11 +38,11 @@
 	{'name': 'interface-mtu', 'data': '1280'},
 	{'name': 'v4-captive-portal', 'data': captive_portal},
 	{'name': 'v4-dnr', 'data': dnr},
+	{'name': 'domain-name-servers', 'data': ddr_resolvers4 | join(', ')},
 ] %}
 {%- for ip in salt['grains.get']('ipv4') %}
 {%- if salt['network.ip_in_subnet'](ip, prefix) %}
 {%- do options.append({'name': 'routers', 'data': ip}) %}
-{%- do options.append({'name': 'domain-name-servers', 'data': ip}) %}
 {%- endif %}
 {%- endfor %}
 {%- do shared_networks.append({

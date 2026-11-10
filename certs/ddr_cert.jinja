@@ -15,6 +15,25 @@
 
 {#- Anycast resolver addresses, advertised as SVCB ipv4hint/ipv6hint in dns-auth/db.resolver.arpa -#}
 {%- set ddr_anycast_ips = ['185.150.99.255', '5.1.66.255', '2001:678:e68:f000::', '2001:678:ed0:f000::'] %}
+
+{#- The same anycast addresses per site (IPv4, IPv6), for the clients of a gateway (DHCPv4, RDNSS).
+    The site whose IPv4 /24 contains an own address of the node (e.g. the gateway NAT address on dummy0) comes first. -#}
+{%- set ddr_anycast_sites = [['5.1.66.255', '2001:678:e68:f000::'], ['185.150.99.255', '2001:678:ed0:f000::']] %}
+{%- set local_sites = [] %}
+{%- set other_sites = [] %}
+{%- for site in ddr_anycast_sites %}
+  {%- set own = [] %}
+  {%- for ip in grains.get('ipv4', []) if ip != site[0] and salt['network.ip_in_subnet'](ip, site[0] ~ '/24') %}
+    {%- do own.append(ip) %}
+  {%- endfor %}
+  {%- do (local_sites if own else other_sites).append(site) %}
+{%- endfor %}
+{%- set ddr_resolvers4 = [] %}
+{%- set ddr_resolvers6 = [] %}
+{%- for site in local_sites + other_sites %}
+  {%- do ddr_resolvers4.append(site[0]) %}
+  {%- do ddr_resolvers6.append(site[1]) %}
+{%- endfor %}
 {#- Validated with DNS-01. Never add "ffmuc.net" or "*.ffmuc.net": dnsdist merges certificates with
     the same name into one SNI context, so an overlap with the wildcard certificate could replace it. -#}
 {%- set ddr_dns_names = [
