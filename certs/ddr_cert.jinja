@@ -23,7 +23,8 @@
 {%- set other_sites = [] %}
 {%- for site in ddr_anycast_sites %}
   {%- set own = [] %}
-  {%- for ip in grains.get('ipv4', []) if ip != site[0] and salt['network.ip_in_subnet'](ip, site[0] ~ '/24') %}
+  {%- set site_net = site[0].rsplit('.', 1)[0] ~ '.0/24' %}
+  {%- for ip in grains.get('ipv4', []) if ip != site[0] and salt['network.ip_in_subnet'](ip, site_net) %}
     {%- do own.append(ip) %}
   {%- endfor %}
   {%- do (local_sites if own else other_sites).append(site) %}
