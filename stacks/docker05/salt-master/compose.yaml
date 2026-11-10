@@ -14,7 +14,7 @@ services:
         target: /tmp
         tmpfs:
           size: 100m
-          mode: 1777
+          mode: 1023  # 01777; a bare 1777 is decimal (= 03361)
     ports:
       - "4505:4505"
       - "4506:4506"
