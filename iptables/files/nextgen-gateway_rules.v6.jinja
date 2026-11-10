@@ -27,7 +27,7 @@ COMMIT
 {%- endfor %}
 {#- Clients: DNS, NTP, respondd and yanic replies #}
 -A INPUT -i br+ -p udp -m multiport --dports 53,123,1001,45124,40311 -j ACCEPT
--A INPUT -i br+ -p tcp -m tcp --dport 53 -j ACCEPT
+-A INPUT -i br+ -p tcp -m multiport --dports 53,80 -j ACCEPT -m comment --comment "DNS, node connectivity check"
 -A INPUT -i wg-+ -p udp -m udp --dport 8472 -j ACCEPT
 -A INPUT -p udp -m multiport --dports 40000:40200 -j ACCEPT
 -A INPUT -p udp -m udp --dport {{ nebula.listen.port }} -j ACCEPT
