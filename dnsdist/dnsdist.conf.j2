@@ -231,7 +231,7 @@ end
 addAction(AllRule(), LuaAction(makeRestartable), {name="Restartable"})
 addResponseAction(AllRule(), LuaResponseAction(retryOnServFail), {name="Retry-SERVFAIL"})
 
--- ask authorative servers for ffmuc.net directly
+-- ask authorative servers for the zones they host directly
 {%- if 'authorative-dns' in salt['pillar.get']('netbox:tag_list', []) %}
 newServer({address="127.0.0.1:553", name="local-auth", pool="auth"}){# bind #}
 {%- else %}
@@ -239,7 +239,8 @@ newServer({address="127.0.0.1:553", name="local-auth", pool="auth"}){# bind #}
   newServer({address="5.1.66.255", name="anycast01", pool="auth"})
 {%- endif %}{# authoritative #}
 
-addAction({'in.ffmuc.net', 'ov.ffmuc.net', 'ffmuc.net', 'ffmuc.bayern', 'fnmuc.net', 'freewifi.bayern', 'freifunk-muenchen.de', 'xn--freifunk-mnchen-8vb.de.', 'freifunk-muenchen.net', 'muenchen.freifunk.net', 'xn--mnchen-3ya.freifunk.net', 'augsburg.freifunk.net', 'wertingen.freifunk.net', 'donau-ries.freifunk.net'}, PoolAction("auth"), {name="Redirect-Auth"})
+-- only zones that bind hosts (dns-auth/init.sls); the rest of ffmuc.net and the externally hosted domains go to the recursors
+addAction({'in.ffmuc.net', 'ov.ffmuc.net', 'ext.ffmuc.net'}, PoolAction("auth"), {name="Redirect-Auth"})
 addAction(AndRule({OpcodeRule(DNSOpcode.Notify), NotRule(makeRule("213.160.72.212"))}), RCodeAction(DNSRCode.REFUSED))
 addAction({'freifunk.net'}, PoolAction("auth"), {name="Redirect-Auth-freifunk.net"})
 addAction({'resolver.arpa'}, PoolAction("auth"), {name="Redirect-resolver.arpa"})
