@@ -64,6 +64,13 @@ services:
       interval: 1s
       retries: 5
     restart: always
+    cap_drop:
+      - ALL
+    cap_add:
+      - DAC_OVERRIDE
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 128m
     env_file: env/redis.env
     volumes:
       - netbox-redis-data:/data
@@ -76,6 +83,13 @@ services:
       - valkey-server --requirepass $$REDIS_PASSWORD ## $$ because of docker-compose
     healthcheck: *redis-healthcheck
     restart: always
+    cap_drop:
+      - ALL
+    cap_add:
+      - DAC_OVERRIDE
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 128m
     env_file: env/redis-cache.env
     volumes:
       - netbox-redis-cache-data:/data
