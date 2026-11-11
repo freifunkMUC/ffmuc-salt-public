@@ -19,6 +19,9 @@ services:
       - /srv/docker/whitebophir/boards:/opt/app/server-data:z
     cap_drop:
       - ALL
+    # the image's node binary carries file capability cap_net_bind_service; without it exec fails (EPERM)
+    cap_add:
+      - NET_BIND_SERVICE
     security_opt:
       - no-new-privileges:true
     mem_limit: 256m
