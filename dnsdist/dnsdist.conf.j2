@@ -230,6 +230,16 @@ function retryOnServFail(dr)
 end
 addAction(AllRule(), LuaAction(makeRestartable), {name="Restartable"})
 addResponseAction(AllRule(), LuaResponseAction(retryOnServFail), {name="Retry-SERVFAIL"})
+-- If the retry times out, send the query again to the first recursor. It has the SERVFAIL cached and answers fast.
+-- Without this, the client gets no answer (UDP/TCP) or HTTP 502 (DoH).
+function retryTimeoutFallback(dr)
+  if dr.pool == "retry" and dr:getRestartCount() == 1 then
+    dr.pool = ""
+    dr:restart()
+  end
+  return DNSResponseAction.None
+end
+addTimeoutResponseAction(AllRule(), LuaResponseAction(retryTimeoutFallback), {name="Retry-SERVFAIL-timeout"})
 
 -- ask authorative servers for the zones they host directly
 {%- if 'authorative-dns' in salt['pillar.get']('netbox:tag_list', []) %}
