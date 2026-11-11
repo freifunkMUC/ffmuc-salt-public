@@ -24,6 +24,11 @@ services:
       timeout: 5s
       retries: 3
       start_period: 30s
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 128m
 
   mqtt_cluster:
     image: emqx/emqx:5.8.9@sha256:35b46f7aa7a0d51f3959e4344221ac5ec7f948b03e43099286b6c40a07bb393b
@@ -43,3 +48,8 @@ services:
       - "1883:1883"
       - "4370:4370"
       - "5369:5369"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 1g
