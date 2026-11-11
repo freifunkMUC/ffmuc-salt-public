@@ -57,7 +57,8 @@ services:
       - 10179:10179/tcp
     labels:
       - traefik.enable=false
-  # Console router labels; login with Keycloak realm noc via noc-auth@file (stacks/docker07/traefik/dynamic).
+  # Console router labels; login with Keycloak realm noc via noc-auth@file (stacks/docker07/traefik/dynamic),
+  # except the console API for the Grafana host (router akvorado-console-grafana).
   akvorado-console:
     image: *akvorado
     networks:
@@ -74,5 +75,15 @@ services:
       - traefik.http.routers.akvorado-console-secure.middlewares=noc-auth@file,akvorado-console-headers
       - traefik.http.routers.akvorado-console-secure.tls=true
       - traefik.http.routers.akvorado-console-secure.tls.certresolver=http
+      # Grafana (stats.ffmuc.net, datasource ovhcloud-akvorado-datasource) calls the console API without login.
+      # Only from the Nebula address of metrics.ov.ffmuc.net; ClientIP matches the TCP peer, not X-Forwarded-For.
+      # Update the address when Grafana moves to another host.
+      - traefik.http.routers.akvorado-console-grafana.entrypoints=https
+      - "traefik.http.routers.akvorado-console-grafana.rule=Host(`flow.ov.ffmuc.net`) && PathPrefix(`/api/v0/console/`) && ClientIP(`10.8.0.41/32`)"
+      - traefik.http.routers.akvorado-console-grafana.priority=1000
+      - traefik.http.routers.akvorado-console-grafana.service=akvorado-console
+      - traefik.http.routers.akvorado-console-grafana.middlewares=akvorado-console-headers
+      - traefik.http.routers.akvorado-console-grafana.tls=true
+      - traefik.http.routers.akvorado-console-grafana.tls.certresolver=http
       - metrics.enable=true
       - metrics.path=/api/v0/metrics
