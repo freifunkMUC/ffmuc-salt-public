@@ -36,6 +36,12 @@ services:
       test: ["CMD-SHELL", "curl -sf localhost:9200/_cluster/health || exit 1"]
   db:
     restart: always
+    user: "70:70"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 28g
     image: postgres:17.11-alpine@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac
     #image: pgautoupgrade/pgautoupgrade:17-alpine
     shm_size: 2gb
@@ -56,6 +62,12 @@ services:
 
   redis:
     restart: always
+    user: "999:1000"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
     image: redis:8.10.3-alpine@sha256:71885d8cc6e42f2bc0aa2eb853bfc4be200b5108a46ac50e117ae1df0531fb80
     networks:
       - internal_network
