@@ -56,6 +56,7 @@ services:
       - CHOWN
       - DAC_OVERRIDE
       - FOWNER
+      - KILL
       - SETGID
       - SETUID
     security_opt:
