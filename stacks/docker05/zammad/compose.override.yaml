@@ -90,7 +90,7 @@ services:
     # new directories for Postgres 17 and ES 9; the old ones stay as the way back
     security_opt: ["no-new-privileges:true"]
     mem_limit: 2g
-    image: postgres:17.11-alpine@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac
+    image: postgres:18.6-alpine@sha256:123b17998ccaf47e53b502e8c6a1e79afd8f579c6f3eec83c563da026f957395
     user: "70:70"
     cap_drop:
       - ALL
