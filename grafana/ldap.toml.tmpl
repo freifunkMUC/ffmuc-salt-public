@@ -24,7 +24,9 @@ root_ca_cert = "/etc/ssl/certs/ca-certificates.crt"
 bind_dn = "{{ salt['pillar.get']('grafana:ldap:bind_dn', 'uid=grafana,ou=Services,dc=ffmuc,dc=net') }}"
 # Search user bind password
 # If the password contains # or ; you have to wrap it with trippel quotes. Ex """#password;"""
-bind_password = """{{ salt['pillar.get']('grafana:ldap:bind_password') }}"""
+{%- set bind_password = salt['pillar.get']('grafana:ldap:bind_password') %}
+{%- if not bind_password %}{{ raise('pillar grafana:ldap:bind_password is not set') }}{% endif %}
+bind_password = """{{ bind_password }}"""
 
 # User search filter, for example "(cn=%s)" or "(sAMAccountName=%s)" or "(uid=%s)"
 search_filter = "(cn=%s)"
