@@ -71,6 +71,7 @@ base:
 #    - cloudflare
   'webfrontend0[3-6].in.ffmuc.net':
     - haproxy
+    - plymouth
     - dns-auth
     - pdns-recursor
     - github-downloader
