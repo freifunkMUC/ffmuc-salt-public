@@ -54,7 +54,7 @@ services:
     restart: unless-stopped
 
   opensearch:
-    image: public.ecr.aws/opensearchproject/opensearch:2.19.7@sha256:3bfa1ec74d56928c2e018033d45c460ce2c0ea65a5cedd577de3102326c31b89
+    image: public.ecr.aws/opensearchproject/opensearch:3.7.0@sha256:44ba7ea58a319adf61c33ab16873f9ef5dbb30b291a832d375172f0b2d24e3c9
     volumes:
       - /srv/docker/graylog/opensearch-data:/usr/share/opensearch/data:z
     environment:
