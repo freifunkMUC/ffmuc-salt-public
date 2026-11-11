@@ -34,6 +34,10 @@ services:
       - internal_network
     healthcheck:
       test: ["CMD-SHELL", "curl -sf localhost:9200/_cluster/health || exit 1"]
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
   db:
     restart: always
     user: "70:70"

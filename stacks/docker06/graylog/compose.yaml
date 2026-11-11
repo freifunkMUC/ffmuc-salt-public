@@ -88,6 +88,10 @@ services:
     restart: unless-stopped
 
     # Graylog: https://hub.docker.com/r/graylog/graylog/
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
   graylog:
     hostname: "server"
     image: graylog/graylog:7.2.2@sha256:d4cf618fa0b1d44f639e5fe37c77a1b332f74ae69bd6d77f2b9b94bb2f2e067d
