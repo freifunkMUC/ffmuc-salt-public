@@ -17,6 +17,11 @@ services:
       # v1 boards are board-<name>.json. v2 writes board-<name>.svg next to
       # them on first load and keeps the JSON file.
       - /srv/docker/whitebophir/boards:/opt/app/server-data:z
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 256m
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:80/"]
       interval: 30s

@@ -23,6 +23,11 @@ services:
     networks:
       - default
       - proxy
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/api/status"]
       interval: 30s
