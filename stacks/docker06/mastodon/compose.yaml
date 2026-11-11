@@ -92,6 +92,11 @@ services:
       - "3000"
     volumes:
       - /srv/docker/mastodon-data/public/system:/mastodon/public/system
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 24g
 
   streaming:
     image: ghcr.io/mastodon/mastodon-streaming:v4.7.5@sha256:3859d071e61a0ed2610a00e8048d89310235afb86e6923c0243bb4f9f4a31093
@@ -113,6 +118,11 @@ services:
     depends_on:
       - db
       - redis
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
 
   sidekiq-pull:
     # You can uncomment the following line if you want to not use the prebuilt image, for example if you have local code changes
@@ -134,6 +144,11 @@ services:
       - /srv/docker/mastodon-data/public/system:/mastodon/public/system
     healthcheck:
       test: ['CMD-SHELL', "ps aux | grep '[s]idekiq\ 8' || false"]
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 2g
 
   sidekiq-ingress:
     image: ghcr.io/mastodon/mastodon:v4.7.5@sha256:1cf98fb199f8cc1dcf4bb174095656bd5e19e99f29e935c2a838132083e1f609
@@ -153,6 +168,11 @@ services:
       - /srv/docker/mastodon-data/public/system:/mastodon/public/system
     healthcheck:
       test: ['CMD-SHELL', "ps aux | grep '[s]idekiq\ 8' || false"]
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 2g
 
   sidekiq-scheduler:
     image: ghcr.io/mastodon/mastodon:v4.7.5@sha256:1cf98fb199f8cc1dcf4bb174095656bd5e19e99f29e935c2a838132083e1f609
@@ -172,6 +192,11 @@ services:
       - /srv/docker/mastodon-data/public/system:/mastodon/public/system
     healthcheck:
       test: ['CMD-SHELL', "ps aux | grep '[s]idekiq\ 8' || false"]
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 1280m
 
 
   sidekiq-default:
@@ -211,6 +236,11 @@ services:
   #   networks:
   #     - external_network
   #     - internal_network
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 1536m
 
 networks:
   external_network:

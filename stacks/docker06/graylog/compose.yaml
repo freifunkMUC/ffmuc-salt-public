@@ -137,6 +137,10 @@ services:
     networks:
       - graylog
       - proxy
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
 networks:
   graylog:
     driver: bridge

@@ -38,6 +38,11 @@ services:
       - "traefik.http.routers.packetyeeter-secure.tls.certresolver=http"
       - "traefik.http.routers.packetyeeter-secure.service=packetyeeter"
       - "traefik.http.services.packetyeeter.loadbalancer.server.port=9092"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 4g
 
 networks:
   proxy:
