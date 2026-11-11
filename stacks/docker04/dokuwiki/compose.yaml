@@ -18,3 +18,7 @@ services:
     # One busy service must not starve the others on docker04 (10 cores).
     cpus: 4
     mem_limit: 3g
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true

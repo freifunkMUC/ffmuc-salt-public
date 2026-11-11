@@ -26,6 +26,11 @@ services:
       # GeoIP files are downloaded by the Salt state packetyeeter
       - /srv/docker/packetyeeter-analyzer/geoip/GeoLite2-Country.mmdb:/data/geoip/GeoLite2-Country.mmdb:ro
       - /srv/docker/packetyeeter-analyzer/geoip/GeoLite2-ASN.mmdb:/data/geoip/GeoLite2-ASN.mmdb:ro
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 3g
     networks:
       - default
       - proxy
