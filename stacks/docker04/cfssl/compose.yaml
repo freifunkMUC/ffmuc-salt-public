@@ -9,6 +9,12 @@ services:
     volumes:
       - /srv/docker/cfssl/volumes/postgresql18:/var/lib/postgresql  # 18 layout: data in 18/docker below the mount
     restart: always
+    user: "999:999"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 256m
     networks:
       - default
     healthcheck:
