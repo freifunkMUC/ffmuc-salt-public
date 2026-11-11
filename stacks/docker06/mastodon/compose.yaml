@@ -34,6 +34,10 @@ services:
       - internal_network
     healthcheck:
       test: ["CMD-SHELL", "curl -sf localhost:9200/_cluster/health || exit 1"]
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
   db:
     restart: always
     image: postgres:17.11-alpine@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac
