@@ -75,6 +75,17 @@ services:
       timeout: 5s
       retries: 3
       start_period: 1m
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 2g
 
   web:
     # Unprivileged nginx: listens on 8080, pid and temp files in /tmp.
@@ -101,6 +112,7 @@ services:
       timeout: 5s
       retries: 3
       start_period: 30s
+    mem_limit: 128m
 
 configs:
   redis_conf:
