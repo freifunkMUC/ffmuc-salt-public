@@ -3,8 +3,9 @@
 {%- set role = salt['pillar.get']('netbox:role:name', '') or '' %}
 
 {%- if 'nextgen-gateway' in role %}
-{#- 2026.3 builds against Linux 5.15 - 7.3 (2024.1 only up to 6.8, so not
-    against the noble HWE kernels) and keeps compat version 15. #}
+{#- 2026.x builds against Linux 5.15 - 7.3 (2024.1 only up to 6.8, so not
+    against the noble HWE kernels) and keeps compat version 15. Since 2026.4,
+    the DKMS pre-build hook is needed for kernels with backported lock guards. #}
 {#- renovate: datasource=github-tags depName=open-mesh-mirror/batman-adv extractVersion=^v(?<version>.+)$ versioning=loose #}
 {%- set batman_version = '2026.4' %}
 {%- set batman_old_versions = ['2024.1'] %}
@@ -27,10 +28,18 @@
         BUILT_MODULE_NAME=batman-adv
         BUILT_MODULE_LOCATION=net/batman-adv
 
+        PRE_BUILD="dkms-pre-build.sh ${kernel_source_dir}"
         MAKE="'make' KERNELPATH=${kernel_source_dir}"
         CLEAN="'make' clean"
 
         AUTOINSTALL="yes"
+
+/usr/src/batman-adv-{{ batman_version }}/dkms-pre-build.sh:
+  file.managed:
+    - source: salt://systemd-networkd/files/batman-adv-dkms-pre-build.sh
+    - mode: '0755'
+    - require:
+      - git: /usr/src/batman-adv-{{ batman_version }}
 
 batman-adv-dkms-deps:
   pkg.installed:
@@ -50,6 +59,7 @@ batman-adv-dkms-install:
     - require:
       - git: /usr/src/batman-adv-{{ batman_version }}
       - file: /usr/src/batman-adv-{{ batman_version }}/dkms.conf
+      - file: /usr/src/batman-adv-{{ batman_version }}/dkms-pre-build.sh
       - pkg: batman-adv-dkms-deps
 
 {%- for old_version in batman_old_versions %}
