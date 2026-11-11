@@ -52,3 +52,5 @@ services:
       MM_SERVICESETTINGS_SITEURL: https://chat.ffmuc.net
       # One digest per interval instead of one mail per mention.
       MM_EMAILSETTINGS_ENABLEEMAILBATCHING: "true"
+    cap_drop:
+      - ALL
