@@ -45,6 +45,12 @@ services:
       interval: 10s
       retries: 5
     restart: always
+    user: "70:70"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
     env_file: env/postgres.env
     volumes:
       - netbox-postgres18-data:/var/lib/postgresql
