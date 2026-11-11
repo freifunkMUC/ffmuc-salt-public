@@ -18,6 +18,11 @@ services:
       - netbox-media-files:/opt/netbox/netbox/media:rw
       - netbox-reports-files:/opt/netbox/netbox/reports:rw
       - netbox-scripts-files:/opt/netbox/netbox/scripts:rw
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 3g
   netbox-worker:
     <<: *netbox
     depends_on:
@@ -32,6 +37,11 @@ services:
       start_period: 20s
       timeout: 3s
       interval: 15s
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 1g
 
   # postgres
   postgres:

@@ -50,6 +50,17 @@ services:
       timeout: 5s
       retries: 3
       start_period: 1m
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
   db:
     image: mariadb:12.3.3-noble@sha256:d46e102fa8b9b72bfcdeb56f9dd538742092119dc8b11f31fe662605cd234cd9
     command: ["--innodb-snapshot-isolation=OFF"]  # 11.8 behaviour; 12.3 defaults to ON
