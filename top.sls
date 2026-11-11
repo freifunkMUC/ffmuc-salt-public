@@ -15,6 +15,7 @@ base:
     - motd
     - nebula
     - needrestart
+    - plymouth
     - resolv
     - salt-minion
     - screen
