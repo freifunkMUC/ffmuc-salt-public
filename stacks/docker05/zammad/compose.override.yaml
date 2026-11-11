@@ -83,11 +83,17 @@ services:
     security_opt: ["no-new-privileges:true"]
     mem_limit: 256m
     image: redis:8.10.3-alpine@sha256:71885d8cc6e42f2bc0aa2eb853bfc4be200b5108a46ac50e117ae1df0531fb80
+    user: "999:1000"
+    cap_drop:
+      - ALL
   zammad-postgresql:
     # new directories for Postgres 17 and ES 9; the old ones stay as the way back
     security_opt: ["no-new-privileges:true"]
     mem_limit: 2g
     image: postgres:17.11-alpine@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac
+    user: "70:70"
+    cap_drop:
+      - ALL
     volumes:
       - /srv/docker/postgresql17-zammad/data:/var/lib/postgresql/data:z
   zammad-elasticsearch:
