@@ -139,6 +139,8 @@ services:
       - proxy
     cap_drop:
       - ALL
+    cap_add:
+      - NET_BIND_SERVICE # java carries file capabilities; exec fails without it
     security_opt:
       - no-new-privileges:true
 networks:
