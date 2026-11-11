@@ -6,7 +6,9 @@ http:
   middlewares:
     noc-auth:
       forwardAuth:
-        address: https://auth.ov.ffmuc.net/
+        # docker07 only: straight over network proxy; via auth.ov the hairpin source 172.16.1.1 is untrusted and the
+        # original host gets lost (login ends on auth.ov with "Authenticated")
+        address: http://oauth2-proxy:4180/
         # X-Forwarded-* come from Traefik itself (entry point trustedIPs); oauth2-proxy only trusts Traefik
         trustForwardHeader: false
         maxResponseBodySize: 65536
