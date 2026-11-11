@@ -47,7 +47,7 @@ services:
 
   bouncer-traefik:
     container_name: crowdsec-bouncer-traefik
-    image: ghcr.io/freifunkmuc/traefik-crowdsec-bouncer:v1.0.1@sha256:774a9ea3f86428203af559d09fbb08eff67747cf131500d3199d21c76a57db23
+    image: ghcr.io/freifunkmuc/traefik-crowdsec-bouncer:v1.0.2@sha256:7bb8846bf4e122e3e260417da05412144124acb04c7abea4e39411940e054c14
     read_only: true
     mem_limit: 64m
     cpus: 0.25
