@@ -36,6 +36,12 @@ services:
       test: ["CMD-SHELL", "curl -sf localhost:9200/_cluster/health || exit 1"]
   db:
     restart: always
+    user: "70:70"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 28g
     image: postgres:17.11-alpine@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac
     #image: pgautoupgrade/pgautoupgrade:17-alpine
     shm_size: 2gb
@@ -56,6 +62,12 @@ services:
 
   redis:
     restart: always
+    user: "999:1000"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
     image: redis:8.10.3-alpine@sha256:71885d8cc6e42f2bc0aa2eb853bfc4be200b5108a46ac50e117ae1df0531fb80
     networks:
       - internal_network
@@ -92,6 +104,11 @@ services:
       - "3000"
     volumes:
       - /srv/docker/mastodon-data/public/system:/mastodon/public/system
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 24g
 
   streaming:
     image: ghcr.io/mastodon/mastodon-streaming:v4.7.5@sha256:3859d071e61a0ed2610a00e8048d89310235afb86e6923c0243bb4f9f4a31093
@@ -113,6 +130,11 @@ services:
     depends_on:
       - db
       - redis
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
 
   sidekiq-pull:
     # You can uncomment the following line if you want to not use the prebuilt image, for example if you have local code changes
@@ -134,6 +156,11 @@ services:
       - /srv/docker/mastodon-data/public/system:/mastodon/public/system
     healthcheck:
       test: ['CMD-SHELL', "ps aux | grep '[s]idekiq\ 8' || false"]
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 2g
 
   sidekiq-ingress:
     image: ghcr.io/mastodon/mastodon:v4.7.5@sha256:1cf98fb199f8cc1dcf4bb174095656bd5e19e99f29e935c2a838132083e1f609
@@ -153,6 +180,11 @@ services:
       - /srv/docker/mastodon-data/public/system:/mastodon/public/system
     healthcheck:
       test: ['CMD-SHELL', "ps aux | grep '[s]idekiq\ 8' || false"]
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 2g
 
   sidekiq-scheduler:
     image: ghcr.io/mastodon/mastodon:v4.7.5@sha256:1cf98fb199f8cc1dcf4bb174095656bd5e19e99f29e935c2a838132083e1f609
@@ -172,6 +204,11 @@ services:
       - /srv/docker/mastodon-data/public/system:/mastodon/public/system
     healthcheck:
       test: ['CMD-SHELL', "ps aux | grep '[s]idekiq\ 8' || false"]
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 1280m
 
 
   sidekiq-default:
@@ -211,6 +248,11 @@ services:
   #   networks:
   #     - external_network
   #     - internal_network
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 1536m
 
 networks:
   external_network:

@@ -37,6 +37,12 @@ services:
   postgres:
     # PostgreSQL 18 layout: data in 18/docker below the mount, new volume for the dump/restore
     image: docker.io/postgres:18.6-alpine@sha256:123b17998ccaf47e53b502e8c6a1e79afd8f579c6f3eec83c563da026f957395
+    user: "70:70"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 768m
     healthcheck:
       test: pg_isready -q -t 2 -d $$POSTGRES_DB -U $$POSTGRES_USER
       start_period: 20s
@@ -51,6 +57,13 @@ services:
   redis:
     # FFMUC: stay on the running Valkey major for now (clean rollback); upstream: 9.1
     image: docker.io/valkey/valkey:9.1.3-alpine@sha256:bf09d58e96d6b4524a15396b65b242bbe18beebbcc15a04d8ee75ddac62fae0b
+    cap_drop:
+      - ALL
+    cap_add:
+      - DAC_OVERRIDE
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 128m
     command:
       - sh
       - -c # this is to evaluate the $REDIS_PASSWORD from the env
@@ -67,6 +80,13 @@ services:
   redis-cache:
     # FFMUC: stay on the running Valkey major for now (clean rollback); upstream: 9.1
     image: docker.io/valkey/valkey:9.1.3-alpine@sha256:bf09d58e96d6b4524a15396b65b242bbe18beebbcc15a04d8ee75ddac62fae0b
+    cap_drop:
+      - ALL
+    cap_add:
+      - DAC_OVERRIDE
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 128m
     command:
       - sh
       - -c # this is to evaluate the $REDIS_PASSWORD from the env

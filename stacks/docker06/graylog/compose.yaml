@@ -7,6 +7,12 @@ services:
   mongodb:
     image: mongo:8.0.34-noble@sha256:3c64937121b9437095921c4bb2569911084c05f7b88e4a263d62a8959d2b2399
     restart: unless-stopped
+    user: "999:999"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 1g
     networks:
       - graylog
     volumes:
@@ -96,6 +102,7 @@ services:
       # GRAYLOG_DATANODE_PASSWORD_SECRET and GRAYLOG_PASSWORD_SECRET MUST be the same value
       GRAYLOG_PASSWORD_SECRET: "${GRAYLOG_PASSWORD_SECRET:?Please configure GRAYLOG_PASSWORD_SECRET in the .env file}"
       GRAYLOG_ROOT_PASSWORD_SHA2: "${GRAYLOG_ROOT_PASSWORD_SHA2:?Please configure GRAYLOG_ROOT_PASSWORD_SHA2 in the .env file}"
+      GRAYLOG_SERVER_JAVA_OPTS: "-Xms3g -Xmx3g" # appended to the image defaults
       GRAYLOG_HTTP_BIND_ADDRESS: "0.0.0.0:9000"
       GRAYLOG_HTTP_EXTERNAL_URI: "https://log.ov.ffmuc.net/"
       GRAYLOG_MESSAGE_JOURNAL_MAX_SIZE: "12gb"
@@ -137,6 +144,12 @@ services:
     networks:
       - graylog
       - proxy
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE # java carries file capabilities; exec fails without it
+    security_opt:
+      - no-new-privileges:true
 networks:
   graylog:
     driver: bridge

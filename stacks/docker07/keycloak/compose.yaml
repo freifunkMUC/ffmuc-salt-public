@@ -9,6 +9,12 @@ services:
   postgres:
     image: postgres:18.6-alpine@sha256:123b17998ccaf47e53b502e8c6a1e79afd8f579c6f3eec83c563da026f957395
     restart: always
+    user: "70:70"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
     volumes:
       - /srv/docker/keycloak/data18:/var/lib/postgresql
     environment:
@@ -16,7 +22,7 @@ services:
       POSTGRES_USER: keycloak
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -44,3 +50,8 @@ services:
       timeout: 5s
       retries: 3
       start_period: 2m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 3g
