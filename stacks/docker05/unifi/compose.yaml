@@ -41,6 +41,11 @@ services:
   unifi-db:
     image: mongo:8.0.34-noble@sha256:3c64937121b9437095921c4bb2569911084c05f7b88e4a263d62a8959d2b2399
     restart: unless-stopped
+    user: "999:999"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     # command: --wiredTigerCacheSizeGB 2.5 # Container memory limit - 0.5G
     volumes:
       - /srv/docker/unifi/database:/data/db
