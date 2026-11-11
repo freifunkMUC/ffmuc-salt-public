@@ -26,6 +26,11 @@ services:
       - >-
         DIUN_NOTIF_SLACK_TEMPLATEBODY={{ .Meta.Hostname }}: `{{ .Entry.Image }}`
         {{ if (eq .Entry.Status "new") }}newly added{{ else }}updated{{ end }}.
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 128m
 
   # read-only Docker API for diun: version, container list/inspect, image inspect; no POST
   socket-proxy:

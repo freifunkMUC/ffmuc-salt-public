@@ -42,6 +42,7 @@ services:
       timeout: 5s
       retries: 3
       start_period: 30s
+    mem_limit: 256m
 
   ldap-account-manager:
     image: ghcr.io/ldapaccountmanager/lam:9.7@sha256:ce7fa36fe6b2afc1a6e2423567c806c13bd4578e13c3869aa9e6557c065c7be0
@@ -69,6 +70,13 @@ services:
       - proxy
     ports:
       - 8443:8080
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 256m
 
 networks:
   proxy:
