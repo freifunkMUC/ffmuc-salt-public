@@ -18,3 +18,8 @@ services:
       interval: 60s
       timeout: 2s
       retries: 15
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 1536m

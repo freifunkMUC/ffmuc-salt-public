@@ -16,6 +16,11 @@ services:
       interval: 15s
     volumes:
       - /srv/docker/peeringmanager/configuration:/etc/peering-manager/config:z,ro
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 1g
   rqworker:
     <<: *peering-manager
     depends_on:
@@ -33,6 +38,11 @@ services:
   # As of 1.11 the rqworker runs these two tasks itself, on a schedule managed
   # in Admin > Scheduled Tasks. The services below serve an external scheduler
   # instead: disable the tasks there, then start this profile.
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
   housekeeping:
     <<: *peering-manager
     profiles:
