@@ -1,7 +1,7 @@
 services:
   netbox: &netbox
     # FFMUC: exact version, pinned by digest
-    image: docker.io/netboxcommunity/netbox:v4.7.4-5.1.1@sha256:69cd72d0b0e4928a90940a7011954aaa7060c75fddd8dc6cea2f19407bae45b1
+    image: docker.io/netboxcommunity/netbox:v4.7.5-5.1.1@sha256:fb49a2ae5cc2707d1a2e078ad676cef428587641cbc5a219b9ecf1cd876b1381
     depends_on:
       - postgres
       - redis
