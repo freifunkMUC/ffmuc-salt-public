@@ -44,3 +44,8 @@ services:
       timeout: 5s
       retries: 3
       start_period: 2m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 3g
