@@ -4,17 +4,13 @@
     --ffmuc-magenta-dark: #c41f5c;
     --ffmuc-magenta-darker: #a3194c;
     --ffmuc-yellow: #ffcc33;
+    --ffmuc-ink: #1d2127;
     --keycloak-card-top-color: var(--ffmuc-magenta);
     --pf-v5-global--primary-color--100: var(--ffmuc-magenta-dark);
     --pf-v5-global--primary-color--200: var(--ffmuc-magenta-darker);
     --pf-v5-global--link--Color: var(--ffmuc-magenta-dark);
     --pf-v5-global--link--Color--hover: var(--ffmuc-magenta-darker);
     --pf-v5-global--active-color--100: var(--ffmuc-magenta-dark);
-}
-
-/* plain dark background instead of the Keycloak artwork */
-.login-pf body {
-    background: #1d2127;
 }
 
 #kc-header-wrapper {
@@ -39,6 +35,10 @@
     font-size: var(--pf-v5-global--FontSize--sm);
     color: var(--pf-v5-global--Color--200);
     text-align: center;
+}
+
+#ffmuc-footer .ffmuc-notice:empty {
+    display: none;
 }
 
 #ffmuc-footer .ffmuc-legal {

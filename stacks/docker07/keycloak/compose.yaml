@@ -32,8 +32,11 @@ services:
     restart: unless-stopped
     entrypoint: ["/opt/keycloak/bin/kc.sh", "start", "--proxy-headers", "xforwarded"]
     volumes:
-      # login theme for realm noc; Keycloak caches themes, so a theme change needs a Core restart (redeploy)
+      # login themes (shared ffmuc + one per realm); Keycloak caches themes, so a theme change needs a redeploy
+      - ./themes/ffmuc:/opt/keycloak/themes/ffmuc:ro
       - ./themes/ffmuc-internal:/opt/keycloak/themes/ffmuc-internal:ro
+      - ./themes/ffmuc-member:/opt/keycloak/themes/ffmuc-member:ro
+      - ./themes/ffmuc-chat:/opt/keycloak/themes/ffmuc-chat:ro
     env_file:
       - env/keycloak.env
     environment:
