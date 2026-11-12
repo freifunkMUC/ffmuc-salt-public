@@ -1,0 +1,28 @@
+/* realm chat: magenta page and yellow accents (dark text on yellow, 13:1 contrast) */
+:root {
+    --keycloak-card-top-color: var(--ffmuc-yellow);
+}
+
+.login-pf body {
+    background: linear-gradient(160deg, var(--ffmuc-magenta) 0%, var(--ffmuc-magenta-darker) 55%, #5c0e2b 100%);
+}
+
+.pf-v5-c-button.pf-m-primary {
+    --pf-v5-c-button--m-primary--BackgroundColor: var(--ffmuc-yellow);
+    --pf-v5-c-button--m-primary--Color: var(--ffmuc-ink);
+    --pf-v5-c-button--m-primary--hover--BackgroundColor: #f2b800;
+    --pf-v5-c-button--m-primary--hover--Color: var(--ffmuc-ink);
+    --pf-v5-c-button--m-primary--focus--BackgroundColor: #f2b800;
+    --pf-v5-c-button--m-primary--focus--Color: var(--ffmuc-ink);
+    --pf-v5-c-button--m-primary--active--BackgroundColor: #e0a800;
+    --pf-v5-c-button--m-primary--active--Color: var(--ffmuc-ink);
+    font-weight: 600;
+}
+
+/* white disc behind the logo, the magenta ring would vanish on the magenta page */
+#kc-header-wrapper::before {
+    background-color: #ffffff;
+    border-radius: 50%;
+    background-size: 84%;
+    box-shadow: 0 2px 12px rgb(0 0 0 / 25%);
+}
