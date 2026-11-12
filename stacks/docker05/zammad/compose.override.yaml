@@ -78,7 +78,7 @@ services:
   zammad-memcached:
     <<: *hardening
     mem_limit: 384m
-    image: memcached:1.6.45-alpine@sha256:bfc2ee42c4edb65f436dafc6a61cbc6938c30118e11ddea2f968e1a2c90bb12a
+    image: memcached:1.6.45-alpine@sha256:084fb554292d1447bc2c68b80c2331b98834514f56c866bc21a61be3c2ee376d
   zammad-redis:
     security_opt: ["no-new-privileges:true"]
     mem_limit: 256m
