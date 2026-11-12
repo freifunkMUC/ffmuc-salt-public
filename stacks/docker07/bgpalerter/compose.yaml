@@ -3,7 +3,7 @@ services:
   bgpalerter:
     # node2shell (CVE-2026-111497): upstream still ships a vulnerable Node, see Dockerfile
     build: .
-    image: local/bgpalerter:v2.0.1-node22.23.4
+    image: local/bgpalerter:v2.0.1-node22.23.5
     pull_policy: build
     command: run serve -- --d /opt/bgpalerter/volume/
     container_name: bgpalerter

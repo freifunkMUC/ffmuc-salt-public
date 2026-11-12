@@ -3,7 +3,7 @@ services:
   hedgedoc:
     # node2shell (CVE-2026-111497): upstream still ships a vulnerable Node, see Dockerfile
     build: .
-    image: local/hedgedoc:1.12.0-ls208-node26.12.1
+    image: local/hedgedoc:1.12.0-ls208-node26.13.1
     pull_policy: build
     restart: unless-stopped
     depends_on:
