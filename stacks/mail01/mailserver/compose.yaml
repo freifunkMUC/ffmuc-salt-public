@@ -91,7 +91,7 @@ services:
         ipv4_address: 192.168.53.2
 
   autodiscover:
-    image: ghcr.io/freifunkmuc/autodiscover-email-settings:2.0.3@sha256:c5ae4610bebbfa84e581015ec9a5006e25a95a329fdc4d67fc9289be0c8f0294
+    image: ghcr.io/freifunkmuc/autodiscover-email-settings:2.0.3@sha256:903498a62724eac90417b4f197a3d25fc762e1738c5e3fc0ef251703c2a482af
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8000/mail/config-v1.1.xml"]
