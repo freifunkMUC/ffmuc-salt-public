@@ -27,7 +27,7 @@ services:
       TUWUNEL_IDENTITY_PROVIDER__0__NAME: FFMUC
       TUWUNEL_IDENTITY_PROVIDER__0__CLIENT_ID: matrix
       TUWUNEL_IDENTITY_PROVIDER__0__CLIENT_SECRET: ${OIDC_CLIENT_SECRET:?}
-      TUWUNEL_IDENTITY_PROVIDER__0__ISSUER_URL: https://keycloak.ffmuc.net/realms/ffmuc
+      TUWUNEL_IDENTITY_PROVIDER__0__ISSUER_URL: https://keycloak.ffmuc.net/realms/chat
       TUWUNEL_IDENTITY_PROVIDER__0__CALLBACK_URL: https://matrix.ffmuc.net/_matrix/client/unstable/login/sso/callback/matrix
       TUWUNEL_IDENTITY_PROVIDER__0__TRUSTED: "true"
       TUWUNEL_IDENTITY_PROVIDER__0__USERID_CLAIMS: '["preferred_username"]'
