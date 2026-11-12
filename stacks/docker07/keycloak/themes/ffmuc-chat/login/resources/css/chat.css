@@ -1,11 +1,12 @@
-/* realm chat: magenta page and yellow accents (dark text on yellow, 13:1 contrast) */
+/* realm chat: dark page like noc with a faint magenta glow, yellow accents (dark text on yellow, 13:1 contrast) */
 :root {
     --keycloak-card-top-color: var(--ffmuc-yellow);
 }
 
 .login-pf body {
-    background: linear-gradient(160deg, var(--ffmuc-magenta) 0%, var(--ffmuc-magenta-darker) 55%, #5c0e2b 100%);
+    background: radial-gradient(ellipse 60% 40% at 50% 0%, rgb(222 44 104 / 30%), transparent 70%), var(--ffmuc-ink);
 }
+
 
 .pf-v5-c-button.pf-m-primary {
     --pf-v5-c-button--m-primary--BackgroundColor: var(--ffmuc-yellow);
