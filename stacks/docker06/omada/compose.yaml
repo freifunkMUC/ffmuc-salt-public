@@ -2,7 +2,7 @@
 services:
   omada-controller:
     container_name: omada-controller
-    image: mbentley/omada-controller:6.3.0.111@sha256:7258ebe7b9ba356b52122ed5bb68b42b1b5e959674ec1b8d3918f82dbe05a53d
+    image: mbentley/omada-controller:6.3.0.111@sha256:7ffded380f2e5806bc92f4ae47518c2a60ee3b46f3bf03ebd0725078e960cb49
     environment:
       - TZ=Europe/Berlin
       - JAVA_MAX_HEAP_SIZE=3g
