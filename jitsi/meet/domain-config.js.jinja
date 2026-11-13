@@ -268,9 +268,11 @@ var config = {
     // Desktop sharing
 
     // Optional desktop sharing frame rate options. Default value: min:5, max:5.
+    // max > 5 selects the high-fps path: contentHint 'motion', keep frame rate and drop resolution under load.
+    // The top layer still uses videoQuality.<codec>.maxBitratesVideo.ssHigh. Set max: 5 for sharpest text.
     desktopSharingFrameRate: {
         min: 5,
-        max: 10
+        max: 15
     },
 
     // This option has been deprecated since it is no longer supported as per the w3c spec.
@@ -419,10 +421,17 @@ var config = {
           codecPreferenceOrder: [ 'VP9', 'AV1', 'VP8' ],
           // Mobile endpoints: VP8 first, cheaper to encode (battery/CPU).
           mobileCodecPreferenceOrder: [ 'VP8', 'VP9', 'AV1' ],
-          screenshareCodec: 'AV1',
+          // VP9 for screen share: AV1 screen encoding overloads weaker laptops and the client then drops resolution.
+          screenshareCodec: 'VP9',
           mobileScreenshareCodec: 'VP8',
           // Lower outgoing quality automatically when the client CPU is overloaded.
           enableAdaptiveMode: true,
+          // Max screen share bitrate per sender (upstream default 2.5 Mbps). Camera bitrates stay at the defaults.
+          // Each receiver gets only what its bandwidth estimate allows. Set for all codecs because screen share
+          // can fall back to VP8 or AV1.
+          vp9: { maxBitratesVideo: { ssHigh: 5000000 } },
+          av1: { maxBitratesVideo: { ssHigh: 5000000 } },
+          vp8: { maxBitratesVideo: { ssHigh: 5000000 } },
     //
     //    // Provides a way to enforce the preferred codec for the conference even when the conference has endpoints
     //    // that do not support the preferred codec. For example, older versions of Safari do not support VP9 yet.
