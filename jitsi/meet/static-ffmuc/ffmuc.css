@@ -287,39 +287,262 @@ button {
     color: var(--ff-magenta);
 }
 
-.ffm-reserve {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    padding: 20px;
-    border-radius: 14px;
-    background: #fff7e6;
-    border: 1px solid #ffe2a3;
-}
-
-.ffm-reserve p {
-    flex: 1;
-    margin: 0;
-    font-size: 0.9rem;
-    line-height: 1.5;
-    color: var(--ff-ink);
-}
-
+/* reserved rooms box and donation banner (reserved-rooms.js) */
 .ffm-btn {
-    display: inline-block;
-    padding: 12px 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    height: 40px;
+    margin: 0;
+    padding: 0 16px;
+    border: 1.5px solid var(--ff-magenta);
     border-radius: 10px;
     background: var(--ff-magenta);
     color: #fff !important;
+    font-family: inherit;
+    font-size: 0.9rem !important;
     font-weight: 600;
-    font-size: 0.9rem;
-    text-decoration: none;
+    line-height: 1;
+    text-decoration: none !important;
     white-space: nowrap;
+    cursor: pointer;
     transition: background-color 0.2s;
 }
 
 .ffm-btn:hover {
     background: var(--ff-magenta-dark);
+    border-color: var(--ff-magenta-dark);
+}
+
+.ffm-btn.ffm-outline {
+    background: #fff;
+    color: var(--ff-magenta) !important;
+}
+
+.ffm-btn.ffm-outline:hover {
+    background: #fdeef6;
+}
+
+.ffm-rooms-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 4px;
+}
+
+.ffm-card .ffm-rooms-head h2 {
+    flex: 1;
+    margin: 0;
+}
+
+/* both header buttons have the same size */
+.ffm-rooms-actions {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 8px;
+}
+
+.ffm-rooms-actions .ffm-btn {
+    min-width: 160px;
+}
+
+.ffm-rooms-add {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 0 16px;
+}
+
+.ffm-rooms-add input {
+    flex: 1 1 200px;
+    min-width: 0;
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid var(--ff-line);
+    border-radius: 10px;
+    font: inherit;
+    font-size: 0.9rem;
+}
+
+.ffm-rooms-add input[name="name"] {
+    flex: 0 1 220px;
+}
+
+.ffm-rooms-err {
+    width: 100%;
+    color: #b91c1c;
+    font-size: 0.85rem;
+}
+
+.ffm-rooms-err:empty {
+    display: none;
+}
+
+.ffm-rooms-note {
+    margin: 0 0 12px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: #fff7e6;
+    border: 1px solid #ffe2a3;
+    color: var(--ff-ink);
+    font-size: 0.85rem;
+}
+
+.ffm-rooms-list {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ffm-rooms-list li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 14px;
+    background: var(--ff-bg);
+}
+
+.ffm-rooms-name {
+    flex: 1;
+    min-width: 0;
+}
+
+.ffm-rooms-name button {
+    display: block;
+    max-width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--ff-ink);
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: text;
+}
+
+.ffm-rooms-name small {
+    color: var(--ff-muted);
+    font-size: 0.82rem;
+}
+
+.ffm-rooms-soon {
+    color: #b45309;
+    font-weight: 600;
+}
+
+/* fixed widths, so that the buttons of all rows align */
+.ffm-rooms-join {
+    width: 210px;
+}
+
+.ffm-rooms-manage {
+    width: 120px;
+}
+
+.ffm-rooms-x {
+    flex: none;
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 8px;
+    background: none;
+    color: var(--ff-muted);
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.ffm-rooms-x:hover {
+    background: var(--ff-line);
+}
+
+.ffm-rooms-small {
+    margin: 12px 0 0;
+    color: var(--ff-muted);
+    font-size: 0.85rem;
+}
+
+.ffm-donate {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-sizing: border-box;
+    /* Same outer width as .welcome-card: 100% plus its 1px border. */
+    width: calc(100% + 2px);
+    padding: 20px 24px;
+    border-radius: 18px;
+    background: linear-gradient(100deg, #e2007a, #ff5fa8);
+    color: #fff;
+}
+
+.ffm-donate-icon {
+    font-size: 28px;
+}
+
+.ffm-donate p {
+    flex: 1;
+    margin: 0;
+    font-size: 0.92rem;
+    line-height: 1.45;
+}
+
+.ffm-donate a {
+    flex: none;
+    padding: 10px 18px;
+    border-radius: 10px;
+    background: #fff;
+    color: #e2007a !important;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-decoration: none !important;
+}
+
+/* Jitsi's recent rooms list: show its screen-reader heading as a title */
+.welcome .welcome-tabs h2.sr-only {
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    margin: 16px 20px 2px !important;
+    overflow: visible !important;
+    clip: auto !important;
+    clip-path: none !important;
+    white-space: normal !important;
+    font-size: 0 !important;
+    color: var(--ff-ink);
+}
+
+.welcome .welcome-tabs h2.sr-only::before {
+    content: "Recently used rooms";
+    display: block;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.welcome .welcome-tabs h2.sr-only::after {
+    content: "Normal rooms you opened in this browser. Anyone with the name can join.";
+    display: block;
+    margin-top: 2px;
+    color: var(--ff-muted);
+    font-size: 0.8rem;
+    font-weight: 400;
+}
+
+html[lang|="de"] .welcome .welcome-tabs h2.sr-only::before {
+    content: "Zuletzt genutzte Räume";
+}
+
+html[lang|="de"] .welcome .welcome-tabs h2.sr-only::after {
+    content: "Normale Räume, die du in diesem Browser geöffnet hast. Jede Person mit dem Namen kann beitreten.";
 }
 
 .ffm-more {
@@ -425,9 +648,29 @@ button {
         grid-template-columns: 1fr;
     }
 
-    .ffm-reserve {
-        flex-direction: column;
-        align-items: flex-start;
+    .ffm-rooms-actions,
+    .ffm-rooms-actions .ffm-btn {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .ffm-rooms-list li,
+    .ffm-donate {
+        flex-wrap: wrap;
+    }
+
+    .ffm-donate p {
+        flex-basis: 70%;
+    }
+
+    .ffm-rooms-name {
+        flex-basis: 100%;
+    }
+
+    .ffm-rooms-join,
+    .ffm-rooms-manage {
+        flex: 1;
+        width: auto;
     }
 
     .welcome .welcome-card-text {
