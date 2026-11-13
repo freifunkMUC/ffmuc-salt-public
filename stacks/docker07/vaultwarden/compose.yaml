@@ -13,7 +13,7 @@ services:
       ADMIN_TOKEN: ${ADMIN_TOKEN}
       SSO_ENABLED: true
       SSO_ONLY: false
-      SSO_AUTHORITY: "https://keycloak.ffmuc.net/realms/master"
+      SSO_AUTHORITY: "https://keycloak.ffmuc.net/realms/ffmuc"
       SSO_CLIENT_ID: "vault"
       SSO_CLIENT_SECRET: ${SSO_CLIENT_SECRET}
     volumes:
