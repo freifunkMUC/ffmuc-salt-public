@@ -52,6 +52,11 @@ var config = {
     // Websocket URL
     websocket: 'wss://{{ domain }}/' + subdir + 'xmpp-websocket',
 
+    // Use the SCTP data channel on the media path for the bridge channel, colibri websocket only as fallback.
+    bridgeChannel: {
+        preferSctp: true
+    },
+
     // The real JID of focus participant - can be overridden here
     // Do not change username - FIXME: Make focus username configurable
     // https://github.com/jitsi/jitsi-meet/issues/7376
@@ -64,6 +69,9 @@ var config = {
     testing: {
         // Firefox stalls on AV1 streams with spatial layers, don't send it AV1 at all.
         disableAV1DecodeForFF: true,
+
+        // On a shard change, reconnect in place instead of a forced page reload.
+        enableGracefulReconnect: true,
 
         // Disables the End to End Encryption feature. Useful for debugging
         // issues related to insertable streams.
@@ -181,11 +189,11 @@ var config = {
     // Beware, by doing so, you are disabling echo cancellation, noise suppression and AGC.
     // Specify enableOpusDtx to enable support for opus-dtx where
     // audio packets won’t be transmitted while participant is silent or muted.
-    // audioQuality: {
+    audioQuality: {
     //     stereo: false,
     //     opusMaxAverageBitrate: null, // Value to fit the 6000 to 510000 range.
-    //     enableOpusDtx: false,
-    // },
+        enableOpusDtx: true,
+    },
 
     // Video
 
@@ -497,13 +505,12 @@ var config = {
     // Disables or enables REMB support in this client (default: enabled).
     // enableRemb: true,
 
-    // Enables ICE restart logic in LJM and displays the page reload overlay on
-    // ICE failure. Current disabled by default because it's causing issues with
-    // signaling when Octo is enabled. Also when we do an "ICE restart"(which is
-    // not a real ICE restart), the client maintains the TCC sequence number
-    // counter, but the bridge resets it. The bridge sends media packets with
-    // TCC sequence numbers starting from 0.
-    // enableIceRestart: false,
+    // In-place (make-before-break) ICE restart of the bridge connection, e.g. after a network change.
+    // Jicofo and JVB of this release support it by default.
+    enableIceRestart: true,
+
+    // Mobile only: request the ICE restart when the device changes network, do not wait for ICE failure.
+    enableIceRestartOnNetworkChange: true,
 
     // Enables forced reload of the client when the call is migrated as a result of
     // the bridge going down.
