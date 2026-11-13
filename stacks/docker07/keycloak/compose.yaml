@@ -32,7 +32,8 @@ services:
     restart: unless-stopped
     entrypoint: ["/opt/keycloak/bin/kc.sh", "start", "--proxy-headers", "xforwarded"]
     volumes:
-      # login themes (shared ffmuc + one per realm); Keycloak caches themes, so a theme change needs a redeploy
+      # login themes (shared ffmuc + one per realm), read-only bind mounts: a Komodo pull updates the files, Keycloak caches themes so a restart is needed
+      # (komodo-stack.sh docker07-keycloak restart); browsers cache CSS for 30 days, so bump ?v= in theme.properties
       - ./themes/ffmuc:/opt/keycloak/themes/ffmuc:ro
       - ./themes/ffmuc-internal:/opt/keycloak/themes/ffmuc-internal:ro
       - ./themes/ffmuc-member:/opt/keycloak/themes/ffmuc-member:ro
