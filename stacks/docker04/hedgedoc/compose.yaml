@@ -26,12 +26,12 @@ services:
       - CMD_ALLOW_EMAIL_REGISTER=false
       - CMD_ALLOW_EMAIL_SIGNIN=false
       - CMD_RATE_LIMIT_NEW_NOTES=0
-      - CMD_OAUTH2_USER_PROFILE_URL=https://keycloak.ffmuc.net/realms/master/protocol/openid-connect/userinfo
+      - CMD_OAUTH2_USER_PROFILE_URL=https://keycloak.ffmuc.net/realms/ffmuc/protocol/openid-connect/userinfo
       - CMD_OAUTH2_USER_PROFILE_USERNAME_ATTR=preferred_username
       - CMD_OAUTH2_USER_PROFILE_DISPLAY_NAME_ATTR=name
       - CMD_OAUTH2_USER_PROFILE_EMAIL_ATTR=email
-      - CMD_OAUTH2_TOKEN_URL=https://keycloak.ffmuc.net/realms/master/protocol/openid-connect/token
-      - CMD_OAUTH2_AUTHORIZATION_URL=https://keycloak.ffmuc.net/realms/master/protocol/openid-connect/auth
+      - CMD_OAUTH2_TOKEN_URL=https://keycloak.ffmuc.net/realms/ffmuc/protocol/openid-connect/token
+      - CMD_OAUTH2_AUTHORIZATION_URL=https://keycloak.ffmuc.net/realms/ffmuc/protocol/openid-connect/auth
       - CMD_OAUTH2_CLIENT_ID=hedgedoc
       - CMD_OAUTH2_CLIENT_SECRET=${HEDGEDOC_OAUTH2_CLIENT_SECRET}
       - CMD_OAUTH2_PROVIDERNAME=Keycloak
