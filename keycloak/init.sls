@@ -1,7 +1,8 @@
 ###
 # Keycloak ALTCHA registration provider (docker07)
 # The Komodo stack docker07/keycloak mounts /srv/docker/keycloak/providers read-only at /opt/keycloak/providers; `kc.sh start`
-# (not --optimized) picks the JAR up at the next boot. Apply this state BEFORE the stack is deployed and the flow is bound.
+# (not --optimized) picks the JAR up at the next boot. Apply this state BEFORE the stack is deployed and the flow is bound;
+# after a version bump restart the stack (Komodo) so Keycloak loads the new JAR.
 # Upstream: https://git.lacontrevoie.fr/lacontrevoie/keycloak-altcha (MIT, built against Keycloak 26.6.3). Version bump by hand:
 # new URL and sha256 (no Renovate manager for Gitea releases), then test registration on the new Keycloak before it goes live.
 ###

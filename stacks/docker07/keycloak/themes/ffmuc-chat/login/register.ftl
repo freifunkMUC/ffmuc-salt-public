@@ -26,7 +26,7 @@
 
             <@registerCommons.termsAcceptance/>
 
-            <#-- ALTCHA proof-of-work (provider keycloak-altcha, Dockerfile): only when the flow has the ALTCHA step -->
+            <#-- ALTCHA proof-of-work (provider keycloak-altcha, see its README; js = altcha@3.0.11 dist/main/altcha.i18n.min.js from npm): only when the flow has the ALTCHA step -->
             <#if altchaRequired??>
                 <altcha-widget challenge='${altchaPayload}' auto="${altchaAuto}" configuration='{"minDuration": ${altchaMinDuration}, "hideFooter": ${altchaHideFooter} }' display="${altchaDisplay}"></altcha-widget>
                 <script type="module" src="${url.resourcesPath}/js/altcha.i18n.min.js"></script>
