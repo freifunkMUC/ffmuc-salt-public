@@ -38,6 +38,9 @@ services:
       - ./themes/ffmuc-internal:/opt/keycloak/themes/ffmuc-internal:ro
       - ./themes/ffmuc-member:/opt/keycloak/themes/ffmuc-member:ro
       - ./themes/ffmuc-chat:/opt/keycloak/themes/ffmuc-chat:ro
+      # ALTCHA registration provider (realm chat): the JAR is placed by the Salt state `keycloak` (pinned URL + sha256).
+      # `start` (not --optimized) rebuilds the provider index at boot.
+      - /srv/docker/keycloak/providers:/opt/keycloak/providers:ro
     env_file:
       - env/keycloak.env
     environment:

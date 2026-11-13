@@ -77,6 +77,7 @@ base:
     - github-downloader
   'docker07.in.ffmuc.net':
     - akvorado
+    - keycloak
   'gw04.in.ffmuc.net':
     - meshviewer-web
   'mail01.in.ffmuc.net':
