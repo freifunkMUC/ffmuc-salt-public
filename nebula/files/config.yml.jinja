@@ -241,16 +241,39 @@ firewall:
   - port: 8092
     proto: tcp
     group: webfrontend
-  # Allow connections for ldap
+  # LDAPS (ldap.ov.ffmuc.net): the hosts that bind to it (seen in the slapd log over 7 days) and the admin jump host
   - port: 636
     proto: tcp
-    host: any
+    host: docker05.in.ffmuc.net
+  - port: 636
+    proto: tcp
+    host: docker06.in.ffmuc.net
+  - port: 636
+    proto: tcp
+    host: docker07.in.ffmuc.net
+  - port: 636
+    proto: tcp
+    host: metrics.in.ffmuc.net
+  - port: 636
+    proto: tcp
+    host: icinga-vie01.in.ffmuc.net
+  - port: 636
+    proto: tcp
+    host: gw04.in.ffmuc.net
+  - port: 636
+    proto: tcp
+    cidr: 10.8.1.245/32  # admin roadwarrior, direct Nebula host
   - port: 80
     proto: tcp
     host: any
+  # NetBox (8087) and LAM (8443) are served by Traefik on 443 over the proxy network; the published ports are
+  # for the admin jump host only
   - port: 8087
     proto: tcp
-    host: any
+    host: gw04.in.ffmuc.net
+  - port: 8087
+    proto: tcp
+    cidr: 10.8.1.245/32  # admin roadwarrior
   # Allow connections for conferencemapper.ffmuc.net
   - port: 8001
     proto: tcp
@@ -259,10 +282,12 @@ firewall:
   - port: 1935
     proto: tcp
     host: any
-  # Allow connections for ldap
   - port: 8443
     proto: tcp
-    host: any
+    host: gw04.in.ffmuc.net
+  - port: 8443
+    proto: tcp
+    cidr: 10.8.1.245/32  # admin roadwarrior
   # Allow streetmap
   - port: 8881
     proto: tcp

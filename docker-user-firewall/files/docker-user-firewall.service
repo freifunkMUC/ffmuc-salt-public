@@ -1,0 +1,15 @@
+# Managed by Salt (docker-user-firewall/init.sls)
+[Unit]
+Description=Filter published Docker ports (DOCKER-USER chain)
+After=docker.service
+Requires=docker.service
+PartOf=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/docker-user-firewall start
+ExecStop=/usr/local/sbin/docker-user-firewall stop
+
+[Install]
+WantedBy=multi-user.target
