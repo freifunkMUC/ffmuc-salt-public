@@ -17,9 +17,9 @@ rules() {  # stdin of ip(6)tables-restore: declaring the chain flushes it
     for i in lo docker0 br+ nebula+; do echo "-A $CHAIN -i $i -j RETURN"; done
     # Underlay and anything else: only these sources (none by default, see allow_sources) may open connections
     for src in "$@"; do echo "-A $CHAIN -s $src -j RETURN"; done
-    echo "-A $CHAIN -m conntrack --ctstate NEW -m conntrack --ctstatus DNAT -m limit --limit 20/min -j LOG --log-prefix \"docker-user-drop: \""
+    echo "-A $CHAIN -m conntrack --ctstate NEW -m conntrack --ctstate DNAT -m limit --limit 20/min -j LOG --log-prefix \"docker-user-drop: \""
 {%- if mode == 'enforce' %}
-    echo "-A $CHAIN -m conntrack --ctstate NEW -m conntrack --ctstatus DNAT -j DROP"
+    echo "-A $CHAIN -m conntrack --ctstate NEW -m conntrack --ctstate DNAT -j DROP"
 {%- endif %}
   fi
   echo "-A $CHAIN -j RETURN"
