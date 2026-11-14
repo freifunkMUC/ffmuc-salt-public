@@ -30,6 +30,26 @@ jitsi-meet-web-overlay:
     - require:
       - pkg: jitsi-meet-web-pkgs
 
+# Link the FFMUC static files with ?v=<content hash>. nginx sends no
+# Cache-Control, so browsers can keep old files for days. A new hash gives a
+# new URL each time a file changes.
+{%- set ver = {} %}
+{%- for f in ["ffmuc.css", "placeholder.js", "reserved-rooms.js"] %}
+{%-   do ver.update({f: salt["cp.hash_file"]("salt://jitsi/meet/static-ffmuc/" ~ f)["hsum"][:10]}) %}
+{%- endfor %}
+{% for src, dst in [("plugin.head.html", "plugin.head.html"), ("recommendedBrowsers.html", "static/recommendedBrowsers.html")] %}
+/usr/share/jitsi-meet/{{ dst }}:
+  file.managed:
+    - source: salt://jitsi/meet/{{ src }}.jinja
+    - template: jinja
+    - mode: '0644'
+    - context:
+        ver: {{ ver | json }}
+    - require:
+      - file: jitsi-meet-web-overlay
+      - file: /usr/share/jitsi-meet/static/ffmuc
+{% endfor %}
+
 {% for domain in ["meet.ffmuc.net","klassenkonferenz.de"] %}
 /etc/jitsi/meet/{{ domain }}-config.js:
   file.managed:
