@@ -12,6 +12,8 @@ fail2ban-banaction:
         [DEFAULT]
         banaction = iptables-multiport
         banaction_allports = iptables-allports
+        # never ban the management paths (Nebula, guardian LANs)
+        ignoreip = 127.0.0.1/8 ::1 10.8.0.0/23 10.80.248.0/24
     - mode: '0644'
     - require:
       - pkg: fail2ban-pkg
@@ -26,21 +28,4 @@ fail2ban-service:
     # restart, not reload: a reload with a changed banaction drops the jail's actions
     - require:
       - pkg: fail2ban-pkg
-{% if 'guardian' in grains.id %}
-    - watch:
-      - file: fail2ban-banaction
-
-# The guardians have iptables-nft but no nft binary
-fail2ban-banaction:
-  file.managed:
-    - name: /etc/fail2ban/jail.d/banaction.local
-    - contents: |
-        [DEFAULT]
-        banaction = iptables-multiport
-        banaction_allports = iptables-allports
-        # never ban the management paths (Nebula, guardian LANs)
-        ignoreip = 127.0.0.1/8 ::1 10.8.0.0/23 10.80.248.0/24
-    - require:
-      - pkg: fail2ban-pkg
-{% endif %}
 {% endif %}
