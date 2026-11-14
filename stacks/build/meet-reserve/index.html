@@ -125,6 +125,12 @@
   .icon-btn.danger { border-color: rgba(255,80,80,.35); color: #ffb3b3; }
   .icon-btn.danger:hover { background: rgba(255,80,80,.12); }
   .icon-btn:disabled { opacity: .5; cursor: default; }
+  .remember { display: flex; gap: .7rem; align-items: flex-start; margin: 0 0 .8rem; font-size: .92rem; cursor: pointer; }
+  .remember input { flex: none; width: 18px; height: 18px; margin: .2rem 0 0; accent-color: var(--accent); }
+  .remember small { display: block; color: var(--muted); font-size: .84rem; }
+  .remname { display: block; width: calc(100% - 28px); margin: 0 0 1rem 28px; background: rgba(0,0,0,.3); color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: .6rem .7rem; font: inherit; font-size: .9rem; outline: none; }
+  .remname:focus { border-color: var(--accent); }
+  .remname[hidden] { display: none; }
 </style>
 </head>
 <body>
@@ -160,6 +166,8 @@
         </ul>
         <div class="durlabel" data-i18n="durL"></div>
         <div class="dur" id="durNew" role="group"></div>
+        <label class="remember"><input type="checkbox" id="remNew"><span><b data-i18n="remember"></b><small data-i18n="rememberHint"></small></span></label>
+        <input class="remname" id="remNewName" type="text" maxlength="60" autocomplete="off" hidden>
         <button class="btn" id="goNew" data-i18n="button"></button>
         <div class="work" id="workNew"><div class="bar"><i></i></div><div class="worklabel"><span data-i18n="working"></span><span class="rate"></span></div></div>
         <div class="err" id="errNew"></div>
@@ -171,6 +179,8 @@
           <input id="extIn" type="url" autocomplete="off" spellcheck="false">
           <small data-i18n="openHint"></small>
         </div>
+        <label class="remember"><input type="checkbox" id="remOpen"><span><b data-i18n="remember"></b><small data-i18n="rememberHint"></small></span></label>
+        <input class="remname" id="remOpenName" type="text" maxlength="60" autocomplete="off" hidden>
         <button class="btn" id="goOpen" data-i18n="openButton"></button>
         <div class="err" id="errOpen"></div>
       </div>
@@ -201,6 +211,10 @@
             <button class="icon-btn" id="ics" data-i18n="ics"></button>
             <button class="icon-btn" id="copyall" data-i18n="copyall"></button>
           </span>
+        </div>
+        <div class="panel">
+          <label class="remember"><input type="checkbox" id="remRes"><span><b data-i18n="remember"></b><small data-i18n="rememberHint"></small></span></label>
+          <input class="remname" id="remResName" type="text" maxlength="60" autocomplete="off" hidden>
         </div>
 
         <div class="panel" id="extendPanel">
@@ -292,6 +306,7 @@ const T = {
     },
     tooMany: "zu viele Anfragen, bitte später nochmal",
     another: "Neuen Raum erstellen", imprint: "Impressum", privacy: "Datenschutz",
+    remember: "Auf diesem Gerät merken", rememberHint: "Der Raum erscheint dann auf der Startseite. Nicht auf geteilten Computern verwenden: Wer dieses Gerät nutzt, kann den Raum moderieren.", rememberName: "Name, zum Beispiel Vereinssitzung (optional)",
     allText: (r, e) => `Verwalten: ${r.manage_url}\n\nModeration: ${r.host_url}\n\nSprecher: ${r.speaker_url}\n\nZuschauer: ${r.guest_url}\n\nGültig bis ${e}`,
   },
   en: {
@@ -343,6 +358,7 @@ const T = {
     },
     tooMany: "too many requests, try again later",
     another: "Create a new room", imprint: "Imprint", privacy: "Privacy",
+    remember: "Remember on this device", rememberHint: "The room then shows on the start page. Do not use on shared computers: anyone who uses this device can host the room.", rememberName: "Name, for example Club meeting (optional)",
     allText: (r, e) => `Manage: ${r.manage_url}\n\nHost: ${r.host_url}\n\nSpeaker: ${r.speaker_url}\n\nViewer: ${r.guest_url}\n\nValid until ${e}`,
   },
   fr: {
@@ -394,6 +410,7 @@ const T = {
     },
     tooMany: "trop de requêtes, réessaie plus tard",
     another: "Créer une nouvelle salle", imprint: "Mentions légales", privacy: "Confidentialité",
+    remember: "Mémoriser sur cet appareil", rememberHint: "La salle s’affiche alors sur la page d’accueil. N’utilisez pas cette option sur un ordinateur partagé : toute personne qui utilise cet appareil peut animer la salle.", rememberName: "Nom, par exemple Réunion du club (facultatif)",
     allText: (r, e) => `Gérer : ${r.manage_url}\n\nModération : ${r.host_url}\n\nIntervenant : ${r.speaker_url}\n\nSpectateur : ${r.guest_url}\n\nValable jusqu'au ${e}`,
   },
   es: {
@@ -445,6 +462,7 @@ const T = {
     },
     tooMany: "demasiadas solicitudes, inténtalo más tarde",
     another: "Crear una sala nueva", imprint: "Aviso legal", privacy: "Privacidad",
+    remember: "Recordar en este dispositivo", rememberHint: "La sala aparece entonces en la página de inicio. No lo uses en ordenadores compartidos: cualquiera que use este dispositivo puede moderar la sala.", rememberName: "Nombre, por ejemplo Reunión del club (opcional)",
     allText: (r, e) => `Gestionar: ${r.manage_url}\n\nModeración: ${r.host_url}\n\nPonente: ${r.speaker_url}\n\nEspectador: ${r.guest_url}\n\nVálida hasta ${e}`,
   },
   uk: {
@@ -496,6 +514,7 @@ const T = {
     },
     tooMany: "забагато запитів, спробуй пізніше",
     another: "Створити нову кімнату", imprint: "Імпресум", privacy: "Конфіденційність",
+    remember: "Запам’ятати на цьому пристрої", rememberHint: "Кімната з’явиться на головній сторінці. Не використовуйте на спільних комп’ютерах: будь-хто, хто користується цим пристроєм, зможе модерувати кімнату.", rememberName: "Назва, наприклад Збори клубу (необов’язково)",
     allText: (r, e) => `Керування: ${r.manage_url}\n\nМодерація: ${r.host_url}\n\nСпікер: ${r.speaker_url}\n\nГлядач: ${r.guest_url}\n\nДійсна до ${e}`,
   },
 };
@@ -522,6 +541,7 @@ Object.entries(LANGS).forEach(([k, label]) => {
   $("langs").append(b);
 });
 $("extIn").placeholder = location.origin + "/reserve/#k=…";
+document.querySelectorAll(".remname").forEach(e => e.placeholder = t.rememberName);
 
 function $(id) { return document.getElementById(id); }
 const base = location.pathname.replace(/\/+$/, "");
@@ -530,6 +550,48 @@ const show = (id, on, disp = "block") => { $(id).style.display = on ? disp : "no
 let result = null, key = "", challenge = null, durations = [72, 168, 720, 2160, 8760], defaultHours = 72, maxAheadH = 8760;
 const picked = { durNew: 0, durExt: 0 };
 const busy = (on) => ["goNew", "goOpen", "goExt", "goRotate", "goDelete"].forEach(id => $(id).disabled = on);
+
+// Rooms remembered on this device, for the box on the start page
+// (jitsi/meet/static-ffmuc/reserved-rooms.js reads the same list). An entry has
+// only the room name, the host secret, a local label and the end date. The
+// label never goes to the server.
+const saved = {
+  all() { try { return JSON.parse(localStorage.getItem("ffmuc-reserved-rooms")) || []; } catch (e) { return []; } },
+  store(a) { try { localStorage.setItem("ffmuc-reserved-rooms", JSON.stringify(a)); } catch (e) {} },
+  get(room) { return this.all().find(r => r.room === room); },
+  // Without a label, keep the saved label.
+  put(j, label) {
+    const a = this.all(), i = a.findIndex(r => r.room === j.room);
+    const r = { room: j.room, key: j.manage_url.split("#k=")[1] || "", label: label ?? (i < 0 ? "" : a[i].label), expires: j.expires };
+    if (i < 0) a.unshift(r); else a[i] = r;
+    this.store(a);
+  },
+  drop(test) { this.store(this.all().filter(r => !test(r))); },
+};
+const remName = (id) => $(id + "Name").value.trim().slice(0, 60);
+const showRem = (id, on) => { $(id).checked = on; $(id + "Name").hidden = !on; };
+["remNew", "remOpen", "remRes"].forEach(id => $(id).addEventListener("change", () => {
+  showRem(id, $(id).checked);
+  if ($(id).checked) $(id + "Name").focus();
+}));
+function syncSaved() {
+  if (!result) return;
+  if ($("remRes").checked) saved.put(result, remName("remRes"));
+  else saved.drop(r => r.room === result.room);
+}
+$("remRes").addEventListener("change", syncSaved);
+$("remResName").addEventListener("input", syncSaved);
+
+// Updates the saved room after the API answered with a room.
+function remember(j, kind) {
+  if (j.status !== "active") saved.drop(r => r.room === j.room);
+  else if (kind === "created" && $("remNew").checked) saved.put(j, remName("remNew"));
+  else if (kind === "manage" && $("remOpen").checked) saved.put(j, remName("remOpen") || undefined);
+  else if (saved.get(j.room)) saved.put(j);
+  const r = saved.get(j.room);
+  showRem("remRes", !!r);
+  $("remResName").value = r ? r.label : "";
+}
 
 function toast(msg) {
   const el = $("toast"); el.textContent = msg; el.classList.add("show");
@@ -614,6 +676,10 @@ async function api(path, body) {
   });
   const j = await r.json().catch(() => ({ error: "HTTP " + r.status }));
   if (r.ok) return j;
+  if ((r.status === 404 || r.status === 410) && body.key) {
+    const k = body.key.match(/(?:#k=|\/h\/)([^&?#\/\s]+)/);
+    saved.drop(x => x.key === (k ? k[1] : body.key.trim()));
+  }
   if (r.status === 429 || j.reason === "too_many_requests") throw new Error(t.tooMany);
   const why = Object.hasOwn(t.gone, j.reason) ? j.reason : known[j.error];
   throw new Error(t.gone[why] || j.error || "HTTP " + r.status);
@@ -645,6 +711,7 @@ function showRoom(j, kind) {
   if (j.max_ahead_h) maxAheadH = j.max_ahead_h;
   const active = j.status === "active";
   if (j.status === "deleted") kind = "deleted";
+  remember(j, kind);
   $("doneT").textContent = t[kind + "T"]; $("doneD").textContent = t[kind + "D"];
   show("doneIcon", active, "grid");
   show("migratedNote", !!j.migrated && active, "flex");
