@@ -23,7 +23,7 @@ fail2ban-service:
   service.running:
     - name: fail2ban
     - enable: true
-    - reload: true
+    # restart, not reload: a reload with a changed banaction drops the jail's actions
     - require:
       - pkg: fail2ban-pkg
 {% endif %}
