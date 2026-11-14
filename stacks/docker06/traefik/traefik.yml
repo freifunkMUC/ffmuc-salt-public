@@ -29,7 +29,7 @@ entryPoints:
   http:
     address: ":80"
     forwardedHeaders:
-      trustedIPs: ["10.8.0.0/24"]
+      trustedIPs: ["10.8.0.29/32", "10.8.0.30/32", "10.8.0.39/32", "10.8.0.40/32"] # HAProxy webfrontend03-06
     http:
       aliasHeadersStrategy: delete
       redirections:
@@ -43,7 +43,7 @@ entryPoints:
   https:
     address: ":443"
     forwardedHeaders:
-      trustedIPs: ["10.8.0.0/24"]
+      trustedIPs: ["10.8.0.29/32", "10.8.0.30/32", "10.8.0.39/32", "10.8.0.40/32"] # HAProxy webfrontend03-06
     http:
       aliasHeadersStrategy: delete
       middlewares:
