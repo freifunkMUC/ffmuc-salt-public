@@ -1,8 +1,128 @@
 # meet-reserve
 
 Signer for reserved rooms on meet.ffmuc.net. It runs behind
-`https://meet.ffmuc.net/reserve`. The source comment in `main.go` explains the
-design. `stacks/README.md` explains the deployment.
+`https://meet.ffmuc.net/reserve`. `stacks/README.md` explains the deployment.
+
+## How it works
+
+A reserved room has the name `r-…` and three roles:
+
+- **Host**: moderator. Uses the host link (`/reserve/h/…`).
+- **Speaker**: joins the main room, not a moderator. Uses the speaker link
+  (`/reserve/s/…`).
+- **Viewer**: joins as a Jitsi visitor (view only). Uses the room link
+  (`/r-…`).
+
+```mermaid
+flowchart LR
+    U[Browser or app] -- "host or speaker link" --> H[haproxy]
+    H --> MR["meet-reserve<br/>(4 signers)"]
+    MR -- "redirect to /r-…?jwt=…" --> U
+    U -- "join with token" --> P["Prosody<br/>mod_ffmuc_signed_rooms"]
+    P -- "GET /reserve/api/room/r-…" --> MR
+    MR <-- "sync (Nebula, port 8096)" --> MR2[other signers]
+```
+
+1. A user reserves a room on the reserve page. A proof of work protects this
+   step.
+2. meet-reserve keeps a small record per room: end date, deletion, link
+   generation, hashes of the link secrets. All signers share the records
+   (CRDT, port 8096).
+3. A host or speaker link gives a redirect to Jitsi with a short-lived
+   EdDSA token (`RESERVE_LINK_TTL`).
+4. Prosody checks the token and asks `/reserve/api/room/<room>` if the room is
+   still active. Only hosts and speakers join the main room. All other users
+   are visitors.
+
+Rooms from v1 (long signed names, long-lived tokens) continue to work. The
+first use of their manage or host link migrates them.
+
+## Prosody
+
+Prosody must verify the tokens. Salt does this in `jitsi/prosody/`.
+
+Needed parts:
+
+- **Module** `mod_ffmuc_signed_rooms.lua` (`jitsi/prosody/files/`). Salt
+  installs it in `/usr/local/share/ffmuc-prosody-plugins/`. This path must be
+  in `plugin_paths`.
+- **Upstream modules** from `jitsi-meet-prosody`: token authentication
+  (`mod_auth_token`), visitors (`visitors`, `visitors_component`) and
+  `room_metadata_component`. No patches are necessary.
+- **Main VirtualHost**:
+  - `authentication = "token"`, `app_id = ""`, `app_secret = ""`,
+    `allow_empty_token = true`. Users without a token can still join normal
+    rooms.
+  - `modules_enabled`: `"visitors"` and `"ffmuc_signed_rooms"`.
+  - The `ffmuc_signed_rooms_*` options (see below).
+- **Visitors component**: `auto_allow_visitor_promotion = false`. The module
+  sets auto-promotion per room. Normal rooms keep auto-promotion if
+  `ffmuc_signed_rooms_auto_promote_unsigned = true`.
+
+Salt writes all of this when the NetBox config context `jitsi` has:
+
+```yaml
+visitors:
+  enabled: true
+signed_rooms:
+  enabled: true
+  public_keys:
+    "1": "<base64 raw Ed25519 public key>"   # key id = RESERVE_KEY_ID
+```
+
+| Pillar (`jitsi.signed_rooms`) | Prosody option | Default | Meaning |
+|---|---|---|---|
+| `public_keys` | `ffmuc_signed_rooms_public_keys` | none | Key ID to public key. Without keys, Prosody refuses all reserved rooms. |
+| `lookup_url` | `ffmuc_signed_rooms_lookup_url` | `https://<public_domain>/reserve/api/room/` | Room state API. |
+| `lookup_ttl` | `ffmuc_signed_rooms_lookup_ttl` | 60 | Seconds Prosody keeps a room state. New links stop old links after this time. |
+| `lookup_grace` | `ffmuc_signed_rooms_lookup_grace` | 600 | Seconds Prosody uses an old state when meet-reserve is not available. After this time, Prosody refuses the room. |
+| `max_extension` | `ffmuc_signed_rooms_max_extension` | 2592000 | v1 rooms only. Must be equal to `RESERVE_LEGACY_MAX_EXTENSION`. |
+
+The module also uses `ffmuc_signed_rooms_focus_jid` and
+`ffmuc_signed_rooms_focus_component` (set by Salt). Prosody metrics:
+`rooms_created`, `rooms_rejected`, `tokens_accepted`, `tokens_rejected`,
+`lookups`, `lookup_failures`, `rooms_closed`.
+
+The module does these steps:
+
+- It accepts only EdDSA tokens with `iss` `ffmuc-reserve`, `aud` `jitsi`, and
+  user ID `host:<room>` or `speaker:<room>`. It refuses all other tokens.
+- It checks the room before Jicofo creates the conference and on each join.
+- Only hosts become owners. Jicofo cannot make other users owner.
+- It closes deleted rooms within about one minute.
+
+## Configuration
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `RESERVE_PRIVATE_KEY` | required | Base64 Ed25519 seed (32 bytes). Same on all signers. |
+| `RESERVE_POW_KEY` | required | Base64, 32 bytes. Same on all signers. |
+| `RESERVE_SYNC_KEY` | required | Base64, 32 bytes. Same on all signers. Must not be equal to `RESERVE_POW_KEY`. |
+| `RESERVE_KEY_ID` | `1` | Key ID (`kid`) in the token. Must match a key in `public_keys`. |
+| `RESERVE_PEERS` | empty | Sync URLs of the other signers, comma-separated. |
+| `RESERVE_DOMAIN` | `meet.ffmuc.net` | Jitsi domain (`sub` claim). |
+| `RESERVE_PUBLIC_URL` | `https://<domain>` | Public URL for links. |
+| `RESERVE_BASE_PATH` | `/reserve` | Path prefix. |
+| `RESERVE_DATA_DIR` | `/data` | Room records. |
+| `RESERVE_LISTEN` | `:8095` | Public HTTP (through haproxy). |
+| `RESERVE_SYNC_LISTEN` | `:8096` | Peer sync and admin. Nebula only. |
+| `RESERVE_METRICS_LISTEN` | `127.0.0.1:9195` | Prometheus metrics. |
+| `RESERVE_DURATIONS` | `72h,168h,720h,2160h,8760h` | Durations a user can select. |
+| `RESERVE_DEFAULT_DURATION` | `72h` | Must be in `RESERVE_DURATIONS`. |
+| `RESERVE_MAX_AHEAD` | `8760h` | Latest end date. |
+| `RESERVE_LINK_TTL` | `12h` | Token lifetime (at least 5m). |
+| `RESERVE_LEGACY_MAX_EXTENSION` | `720h` | v1 rooms only. |
+| `RESERVE_POW_DIFFICULTY` | `18` | Proof-of-work bits (0..32). |
+| `RESERVE_APPLE_TEAM_ID`, `RESERVE_ANDROID_CERT_SHA256` | empty | See [App links](#app-links). |
+
+`meet-reserve genkey` prints a new private key, the public key for Prosody
+and a random key for `RESERVE_POW_KEY` or `RESERVE_SYNC_KEY`.
+
+`meet-reserve revoke <room>` deletes a room (for abuse). Run it in a running
+signer container, for example
+`docker compose exec meet-reserve /meet-reserve revoke r-…`. It sends the
+request to the local signer on `RESERVE_SYNC_LISTEN`. The signer sends the
+deletion to all other signers.
 
 ## Join API for apps
 
