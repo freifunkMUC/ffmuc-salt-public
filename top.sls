@@ -85,5 +85,6 @@ base:
   'guardian-*.in.ffmuc.net':
     - dhcp-server.guardian
     - sflowtool
+    - iptables
   'vpn0*.in.ffmuc.net':
     - wireguard

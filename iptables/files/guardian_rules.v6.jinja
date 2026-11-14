@@ -11,4 +11,13 @@ COMMIT
 :INPUT ACCEPT
 :FORWARD ACCEPT
 :OUTPUT ACCEPT
+
+-A INPUT -i lo -j ACCEPT
+-A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A INPUT -p ipv6-icmp -j ACCEPT
+{#- BGP over IPv6 from the router on the uplink VLAN; no management over IPv6 (nebula is IPv4) #}
+-A INPUT -i {{ uplink_iface }} -p tcp -m tcp --dport 179 -j ACCEPT
+-A INPUT -p udp -m udp --dport 123 -j ACCEPT
+-A INPUT -j REJECT --reject-with icmp6-port-unreachable
+
 COMMIT

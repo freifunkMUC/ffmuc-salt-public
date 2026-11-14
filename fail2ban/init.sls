@@ -12,6 +12,8 @@ fail2ban-banaction:
         [DEFAULT]
         banaction = iptables-multiport
         banaction_allports = iptables-allports
+        # never ban the management paths (Nebula, guardian LANs)
+        ignoreip = 127.0.0.1/8 ::1 10.8.0.0/23 10.80.248.0/24
     - mode: '0644'
     - require:
       - pkg: fail2ban-pkg
