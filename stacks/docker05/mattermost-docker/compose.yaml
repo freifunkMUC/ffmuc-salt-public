@@ -53,6 +53,7 @@ services:
       MM_SQLSETTINGS_DATASOURCE: postgres://mmuser:${POSTGRES_PASSWORD}@postgres:5432/mattermost?sslmode=disable&connect_timeout=10
       MM_BLEVESETTINGS_INDEXDIR: /mattermost/bleve-indexes
       MM_SERVICESETTINGS_SITEURL: https://chat.ffmuc.net
+      MM_TEAMSETTINGS_ENABLEOPENSERVER: "false"  # sign-up only with an invite link, not for anyone who reaches the site
       # One digest per interval instead of one mail per mention.
       MM_EMAILSETTINGS_ENABLEEMAILBATCHING: "true"
     cap_drop:
