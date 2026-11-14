@@ -23,8 +23,8 @@ flowchart LR
     MR <-- "sync (Nebula, port 8096)" --> MR2[other signers]
 ```
 
-1. A user reserves a room on the reserve page. A proof of work protects this
-   step.
+1. A user reserves a room on the reserve page. A
+   [proof of work](#proof-of-work) protects this step.
 2. meet-reserve keeps a small record per room: end date, deletion, link
    generation, hashes of the link secrets. All signers share the records
    (CRDT, port 8096).
@@ -36,6 +36,40 @@ flowchart LR
 
 Rooms from v1 (long signed names, long-lived tokens) continue to work. The
 first use of their manage or host link migrates them.
+
+## Proof of work
+
+A proof of work (PoW) makes it expensive to create many rooms. It is
+necessary for `POST /reserve/api/reserve` (new room) and
+`POST /reserve/api/extend` (longer room). The other API calls do not need it.
+
+1. The client gets a challenge: `GET /reserve/api/challenge`.
+
+   ```json
+   {"challenge": "1763112000.<24 hex>.<32 hex>", "difficulty": 18,
+    "durations": [72, 168, 720, 2160, 8760], "default": 72, "max_ahead_h": 8760}
+   ```
+
+   The challenge is `<unix time>.<random>.<HMAC>`. The HMAC uses
+   `RESERVE_POW_KEY`. Thus meet-reserve does not store challenges.
+2. The client finds a `nonce` (any text, at most 32 characters) where
+   `SHA-256(challenge + ":" + nonce)` starts with `difficulty` zero bits.
+   The reserve page counts up decimal numbers in Web Workers (one per CPU
+   core, at most 8).
+   On average this takes 2^`difficulty` hashes (about 262,000 for 18).
+3. The client sends `challenge` and `nonce` in the JSON body of the POST.
+4. meet-reserve checks the HMAC, the age (at most 10 minutes), the zero bits,
+   and that nobody used the challenge before.
+
+A signer keeps used challenges only in memory. Thus haproxy sends each client
+IP to the same signer (`balance source`). haproxy also limits POST requests
+to 60 per IP and hour.
+
+Errors (HTTP 403): `pow_malformed`, `pow_bad_mac`, `pow_expired`,
+`pow_insufficient`, `pow_replay`. Get a new challenge and try again.
+`RESERVE_POW_DIFFICULTY` sets the difficulty. Each additional bit doubles the
+work. The metric `ffmuc_reserve_pow_rejected_total{reason}` counts the
+rejected requests.
 
 ## Prosody
 
