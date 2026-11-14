@@ -1,4 +1,5 @@
 {%- from 'iptables/nebula_map.jinja' import nebula_node_data_list with context %}
+{%- from 'nebula/map.jinja' import nebula with context %}
 # Managed with Salt
 
 *nat
@@ -26,6 +27,38 @@ COMMIT
 
 {#- Block tunnel in tunnel to this gateway #}
 -A INPUT -i br+ -d {{ nat_ip }} -p udp -m udp -m multiport --dports 40000:40200 -j REJECT --reject-with icmp-port-unreachable -m comment --comment "Block tunnel in tunnel"
+
+{#- INPUT: accept what the gateway serves, reject the rest (policy stays ACCEPT so a failed load does not lock us out) #}
+{%- set uplink = salt['pillar.get']('netbox:config_context:network:uplink_vlan') %}
+-A INPUT -i lo -j ACCEPT
+-A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+-A INPUT -p icmp -j ACCEPT
+{#- Management: overlay and internal VLANs (SSH, Icinga, SNMP, OSPF, pdns-recursor) #}
+-A INPUT -i {{ nebula.interface }} -j ACCEPT
+{%- for internal_vlan_if in salt['pillar.get']('netbox:config_context:network:gateway') %}
+-A INPUT -i {{ internal_vlan_if }} -j ACCEPT
+{%- endfor %}
+{#- Clients: DNS, DHCP, NTP, respondd #}
+-A INPUT -i br+ -p udp -m multiport --dports 53,67,123,1001,45124,40311 -j ACCEPT
+-A INPUT -i br+ -p tcp -m multiport --dports 53,80 -j ACCEPT -m comment --comment "DNS, node connectivity check"
+{#- VXLAN inside the WireGuard tunnels #}
+-A INPUT -i wg-+ -p udp -m udp --dport 8472 -j ACCEPT
+{#- Public: WireGuard (wgkex), Nebula, BGP to the upstream only #}
+-A INPUT -p udp -m multiport --dports 40000:40200 -j ACCEPT
+-A INPUT -p udp -m udp --dport {{ nebula.listen.port }} -j ACCEPT
+-A INPUT -i {{ uplink['interface'] }} -p tcp -m tcp --dport 179 -s {{ uplink['neighbor_v4'] }} -j ACCEPT
+{%- if salt['pillar.get']('netbox:config_context:iptables:dns_public', True) %}
+-A INPUT -i {{ uplink['interface'] }} -p udp -m udp --dport 53 -j ACCEPT
+-A INPUT -i {{ uplink['interface'] }} -p tcp -m tcp --dport 53 -j ACCEPT
+{%- endif %}
+{%- if salt['pillar.get']('netbox:config_context:iptables:ssh_public', False) %}
+-A INPUT -p tcp -m tcp --dport 22 -j ACCEPT
+{%- endif %}
+{#- meshviewer-web runs on gw04 only (top.sls) #}
+{%- if grains.id == 'gw04.in.ffmuc.net' %}
+-A INPUT -p tcp -m multiport --dports 80,443 -j ACCEPT
+{%- endif %}
+-A INPUT -j REJECT --reject-with icmp-port-unreachable
 
 -A FORWARD -i br+ -o {{ uplink_iface }} -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1240
 
