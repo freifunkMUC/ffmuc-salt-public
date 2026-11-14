@@ -170,6 +170,9 @@ services:
       - "traefik.http.routers.roundcube.rule=Host(`mail01.fnmuc.net`, `mail01-v4.fnmuc.net`, `webmail.fnmuc.net`, `webmail.mail01.fnmuc.net`, `imap.fnmuc.net`, `smtp.fnmuc.net`, `mail.ext.ffmuc.net`)"
       - "traefik.http.routers.roundcube.tls=true"
       - "traefik.http.routers.roundcube.tls.certresolver=http"
+      # one cert for all names: docker-mailserver serves the acme.json entry for mail01.fnmuc.net on 465/993
+      - "traefik.http.routers.roundcube.tls.domains[0].main=mail01.fnmuc.net"
+      - "traefik.http.routers.roundcube.tls.domains[0].sans=mail01-v4.fnmuc.net,webmail.fnmuc.net,webmail.mail01.fnmuc.net,imap.fnmuc.net,smtp.fnmuc.net,mail.ext.ffmuc.net"
       - "traefik.http.routers.roundcube.service=roundcube"
       - "traefik.http.routers.roundcube.middlewares=default@file"
       - "traefik.http.services.roundcube.loadbalancer.server.port=8000"
