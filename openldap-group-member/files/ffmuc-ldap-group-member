@@ -9,7 +9,7 @@ set -eu
 C=openldap-openldap-1
 exec 9> /run/ffmuc-ldap-group-member.lock
 flock -n 9 || { echo "another run is active, skipping"; exit 0; }
-if ! docker exec -u 0 "$C" ldapsearch -Y EXTERNAL -H ldapi://%2Frun%2Fslapd%2Fldapi -Q -LLL -b cn=Subschema -s base objectClasses 2>/dev/null \
+if ! docker exec -u 0 "$C" ldapsearch -Y EXTERNAL -H ldapi://%2Frun%2Fslapd%2Fldapi -Q -LLL -o ldif-wrap=no -b cn=Subschema -s base objectClasses 2>/dev/null \
   | grep -qi dnMemberGroup; then
   echo "class dnMemberGroup not loaded yet, nothing to do"; exit 0
 fi
