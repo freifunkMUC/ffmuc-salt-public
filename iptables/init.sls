@@ -24,6 +24,15 @@ netfilter_reload:
       - file: /etc/iptables/rules.v4
       - file: /etc/iptables/rules.v6
 
+{% if role == 'guardian' %}
+# The reload flushes the fail2ban chains
+fail2ban_after_netfilter_reload:
+  cmd.run:
+    - name: systemctl try-restart fail2ban
+    - onchanges:
+      - cmd: netfilter_reload
+{% endif %}
+
 {# Gather general information #}
 {% set own_location = salt['pillar.get']('netbox:site:name') %}
 
