@@ -53,7 +53,7 @@ services:
       start_period: 10s
 
   app:
-    image: nextcloud:35.0.3-fpm@sha256:eb37f58646a901dc7727cf448cae36daaefaba79de33b5058dab79aa4c04aefb
+    image: nextcloud:35.0.3-fpm@sha256:eaf746a8ad73b8eda91704de8d51b68d93aa2e778bcb96ee81df720abd2f076a
     restart: unless-stopped
     depends_on:
       - db
