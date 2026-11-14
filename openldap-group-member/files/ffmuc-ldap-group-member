@@ -1,0 +1,8 @@
+#!/bin/bash
+# Host wrapper for the team OpenLDAP on docker04 (salt state openldap-group-member): feeds the sync script into the
+# container (read-only root, so it goes through stdin into /dev/shm; root has no capabilities, so /run/slapd of uid 911 is not writable) and runs it as root over ldapi.
+# Usage: ffmuc-ldap-group-member [check|apply]   (default apply; systemd timer ffmuc-ldap-group-member.timer)
+set -eu
+exec docker exec -i -u 0 -e TMPDIR=/dev/shm openldap-openldap-1 sh -c '
+  d=$(mktemp -d) && trap "rm -rf $d" EXIT && cat > "$d/s" && sh "$d/s" "$@"' sh "${1:-apply}" \
+  < /usr/local/lib/ffmuc-ldap-group-member.sh

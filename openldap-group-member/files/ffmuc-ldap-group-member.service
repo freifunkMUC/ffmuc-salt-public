@@ -1,0 +1,9 @@
+[Unit]
+Description=Mirror memberUid into member (memberOf) for the team OpenLDAP groups
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+Nice=10
+ExecStart=/usr/local/sbin/ffmuc-ldap-group-member apply

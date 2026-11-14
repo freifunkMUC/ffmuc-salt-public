@@ -77,6 +77,8 @@ base:
     - github-downloader
   'docker0[4-7].in.ffmuc.net':
     - docker-user-firewall
+  'docker04.in.ffmuc.net':
+    - openldap-group-member
   'docker07.in.ffmuc.net':
     - akvorado
     - keycloak
