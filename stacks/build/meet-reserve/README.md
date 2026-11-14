@@ -87,3 +87,9 @@ All errors from `/reserve/api/*` are JSON:
 | `pow_malformed`, `pow_bad_mac`, `pow_expired`, `pow_insufficient`, `pow_replay` | 403 | The proof of work is not correct. Get a new challenge. |
 | `too_many_requests` | 429 | Too many POST requests from this IP. haproxy sends this error. |
 | `internal` | 500 | Server error. |
+
+## License
+
+meet-reserve is licensed under the GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later). See [LICENSE](LICENSE).
+
+`logo.png` and `favicon.png` are the FFMUC logo. They are not covered by this license.
