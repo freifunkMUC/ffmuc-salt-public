@@ -51,8 +51,12 @@ finish() {
   echo applied
 }
 
-search -b "ou=Groups,$base" -s one '(objectClass=posixGroup)' dn | decode |
-  awk -F'\t' '$1=="dn"{print $2}' >"$work/groups"
+# Every search goes to a file first and must succeed: a failed or empty search would otherwise look like "no members"
+# and delete every member value (sh has no pipefail).
+die() { echo "STOP: $*" >&2; exit 3; }
+search -b "ou=Groups,$base" -s one '(objectClass=posixGroup)' dn >"$work/groups.raw" || die "group search failed"
+decode <"$work/groups.raw" | awk -F'\t' '$1=="dn"{print $2}' >"$work/groups"
+[ -s "$work/groups" ] || die "no groups found"
 : >"$work/ldif"
 diff=0
 
@@ -60,7 +64,8 @@ case $mode in
 strip-member | strip-class)
   while IFS= read -r gdn; do
     [ -n "$gdn" ] || continue
-    search -b "$gdn" -s base '(objectClass=*)' objectClass member | decode >"$work/g"
+    search -b "$gdn" -s base '(objectClass=*)' objectClass member >"$work/g.raw" || die "search of a group failed"
+    decode <"$work/g.raw" >"$work/g"
     if [ "$mode" = strip-member ]; then
       n=$(awk -F'\t' '$1=="member"' "$work/g" | grep -c . || true)
       echo "group ${gdn%%,*}: member values $n"
@@ -80,13 +85,15 @@ check | apply) ;;
 esac
 
 # uid <TAB> DN of every person; a uid that occurs twice is dropped (counted as "without a person").
-search -b "ou=Users,$base" -s one '(uid=*)' uid | decode |
-  awk -F'\t' '$1=="dn"{dn=$2} $1=="uid"{print $2 "\t" dn}' >"$work/people.all"
+search -b "ou=Users,$base" -s one '(uid=*)' uid >"$work/people.raw" || die "people search failed"
+decode <"$work/people.raw" | awk -F'\t' '$1=="dn"{dn=$2} $1=="uid"{print $2 "\t" dn}' >"$work/people.all"
 awk -F'\t' '{n[$1]++; d[$1]=$2} END{for(u in n) if(n[u]==1) print u "\t" d[u]}' "$work/people.all" >"$work/people"
+[ -s "$work/people" ] || die "no persons found"
 
 while IFS= read -r gdn; do
   [ -n "$gdn" ] || continue
-  search -b "$gdn" -s base '(objectClass=*)' objectClass member memberUid | decode >"$work/g"
+  search -b "$gdn" -s base '(objectClass=*)' objectClass member memberUid >"$work/g.raw" || die "search of a group failed"
+  decode <"$work/g.raw" >"$work/g"
   gcn=${gdn%%,*}; gcn=${gcn#cn=}
   : >"$work/want"; : >"$work/cnt"
   awk -F'\t' '$1=="member"{print $2}' "$work/g" | sort -u >"$work/have"

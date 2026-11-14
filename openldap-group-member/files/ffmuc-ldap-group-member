@@ -1,8 +1,18 @@
 #!/bin/bash
 # Host wrapper for the team OpenLDAP on docker04 (salt state openldap-group-member): feeds the sync script into the
-# container (read-only root, so it goes through stdin into /dev/shm; root has no capabilities, so /run/slapd of uid 911 is not writable) and runs it as root over ldapi.
+# container (read-only root, so it goes through stdin into /dev/shm; root has no capabilities, so /run/slapd of uid 911
+# is not writable) and runs it as root over ldapi.
 # Usage: ffmuc-ldap-group-member [check|apply]   (default apply; systemd timer ffmuc-ldap-group-member.timer)
+# One run at a time (flock; a second one exits 0). Exits 0 without doing anything while the class dnMemberGroup is not
+# loaded yet (the state may be applied before infra ops/ffmuc-ldap-memberof.sh apply).
 set -eu
-exec docker exec -i -u 0 -e TMPDIR=/dev/shm openldap-openldap-1 sh -c '
+C=openldap-openldap-1
+exec 9> /run/ffmuc-ldap-group-member.lock
+flock -n 9 || { echo "another run is active, skipping"; exit 0; }
+if ! docker exec -u 0 "$C" ldapsearch -Y EXTERNAL -H ldapi://%2Frun%2Fslapd%2Fldapi -Q -LLL -b cn=Subschema -s base objectClasses 2>/dev/null \
+  | grep -qi dnMemberGroup; then
+  echo "class dnMemberGroup not loaded yet, nothing to do"; exit 0
+fi
+docker exec -i -u 0 -e TMPDIR=/dev/shm "$C" sh -c '
   d=$(mktemp -d) && trap "rm -rf $d" EXIT && cat > "$d/s" && sh "$d/s" "$@"' sh "${1:-apply}" \
   < /usr/local/lib/ffmuc-ldap-group-member.sh
