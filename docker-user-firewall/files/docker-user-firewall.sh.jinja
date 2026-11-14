@@ -1,0 +1,31 @@
+#!/bin/bash
+# Managed by Salt (docker-user-firewall/init.sls). Rebuilds the DOCKER-USER chains in one iptables-restore
+# transaction (flush and fill together); safe to run repeatedly. Mode {{ mode }}.
+# start: fill. stop: only RETURN (Docker's own rules stay, everything is reachable as before).
+# Fail-open while Docker restarts, at boot before the unit ran, and if the unit fails: chain empty or missing.
+# Rollback: systemctl disable --now docker-user-firewall
+set -eu
+CHAIN=DOCKER-USER
+MODE=${1:-start}
+
+rules() {  # stdin of ip(6)tables-restore: declaring the chain flushes it
+  echo "*filter"
+  echo ":$CHAIN - [0:0]"
+  if [ "$MODE" = start ]; then
+    echo "-A $CHAIN -m conntrack --ctstate RELATED,ESTABLISHED -j RETURN"
+    # Containers, loopback and the Nebula overlays (the Nebula firewall decides there) pass
+    for i in lo docker0 br+ nebula+; do echo "-A $CHAIN -i $i -j RETURN"; done
+    # Underlay and anything else: only these sources (none by default, see allow_sources) may open connections
+    for src in "$@"; do echo "-A $CHAIN -s $src -j RETURN"; done
+    echo "-A $CHAIN -m conntrack --ctstate NEW -m conntrack --ctstatus DNAT -m limit --limit 20/min -j LOG --log-prefix \"docker-user-drop: \""
+{%- if mode == 'enforce' %}
+    echo "-A $CHAIN -m conntrack --ctstate NEW -m conntrack --ctstatus DNAT -j DROP"
+{%- endif %}
+  fi
+  echo "-A $CHAIN -j RETURN"
+  echo "COMMIT"
+}
+
+rules{% for c in allow_sources %} {{ c }}{% endfor %} | iptables-restore --noflush -w
+# IPv6 only where Docker created the chain
+if ip6tables -w -n -L "$CHAIN" >/dev/null 2>&1; then rules | ip6tables-restore --noflush -w; fi

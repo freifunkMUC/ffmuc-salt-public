@@ -75,6 +75,8 @@ base:
     - dns-auth
     - pdns-recursor
     - github-downloader
+  'docker0[4-7].in.ffmuc.net':
+    - docker-user-firewall
   'docker07.in.ffmuc.net':
     - akvorado
     - keycloak
