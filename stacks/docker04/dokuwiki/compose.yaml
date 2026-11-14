@@ -10,6 +10,7 @@ services:
       - /srv/docker/dokuwiki/storage:/storage
       - /srv/docker/dokuwiki/ldap.conf:/etc/ldap/ldap.conf:ro
       - ./apache/mpm_prefork.conf:/etc/apache2/mods-available/mpm_prefork.conf:ro
+      - ./apache/remoteip.conf:/etc/apache2/conf-enabled/remoteip.conf:ro
     # PHP sessions: every anonymous request opens one, and on disk they piled
     # up (114k files during a scraper wave). In memory they go with a restart,
     # which signs people out once; the wiki's login cookie signs them in again.
