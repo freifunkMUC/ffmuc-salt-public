@@ -71,3 +71,14 @@ yamllint -c .yamllint .
 salt-lint -x 204,205 $(find . -name '*.sls' -o -name '*.jinja' -o -name '*.j2' -o -name '*.tmpl')
 shellcheck $(grep -rl '^#!.*sh' --include='*.sh' .)
 ```
+
+## License
+
+This repository is licensed under the GNU General Public License v3.0 or later (GPL-3.0-or-later). See [LICENSE](LICENSE).
+
+These parts have a different license:
+
+- [`stacks/build/meet-reserve/`](stacks/build/meet-reserve/) and [`jitsi/meet/static-ffmuc/`](jitsi/meet/static-ffmuc/): GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later).
+- A subdirectory with its own `LICENSE` file or license header keeps that license. Examples: [`respondd/respondd-tmpl/`](respondd/respondd-tmpl/) (AGPL-3.0), [`snmpd/ifAlias`](snmpd/ifAlias) (GPL-3.0).
+
+The FFMUC logos and branding images are not covered by these licenses.
