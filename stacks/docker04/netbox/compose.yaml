@@ -47,7 +47,7 @@ services:
   # postgres
   postgres:
     # FFMUC: keep the PostgreSQL major of the existing data directory (upstream: 18 with a new volume layout)
-    image: docker.io/postgres:18.7-alpine@sha256:75dcac3dfb1cd01ca3536910bbc84128759362f8b118bf8c55b38a94f68f3b73
+    image: docker.io/postgres:18.7-alpine@sha256:b6972e1115a4ff8eba5d7f7d19184926d1e16d7d1136ae1e1a7ebf286da0f015
     healthcheck:
       test: pg_isready -q -t 2 -d $$POSTGRES_DB -U $$POSTGRES_USER
       start_period: 20s
