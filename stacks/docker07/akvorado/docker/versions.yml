@@ -51,4 +51,4 @@ services:
   mysql:
     image: mariadb:12 # \d+
   mock-oauth2-server:
-    image: ghcr.io/navikt/mock-oauth2-server:3.0.3@sha256:876229d27fc99d7b1ab00dcd64a59a8c10826a6260b68f042558d83a0323dfb7 # \d+\.\d+\.\d+
+    image: ghcr.io/navikt/mock-oauth2-server:7.0.0@sha256:f17ff0a86fe90b3e55df46b6e8b585526d1bd8302026e7bb3c278bae0c7b77f5 # \d+\.\d+\.\d+
