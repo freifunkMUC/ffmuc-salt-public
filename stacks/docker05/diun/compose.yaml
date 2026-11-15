@@ -34,7 +34,7 @@ services:
 
   # read-only Docker API for diun: version, container list/inspect, image inspect; no POST
   socket-proxy:
-    image: lscr.io/linuxserver/socket-proxy:3.4.7-r0-ls105@sha256:823dda971e9a3951257eb251586a804199819fe1587c35faa43adc7b52a2ff16
+    image: lscr.io/linuxserver/socket-proxy:3.4.7-r0-ls106@sha256:18289eeb306e8e3b70901ffec23eafbb318d73b4514d0bd737dbfc7c5b4fe506
     restart: always
     read_only: true
     tmpfs:
