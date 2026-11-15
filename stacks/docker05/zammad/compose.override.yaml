@@ -90,7 +90,7 @@ services:
     # new directory for Postgres 18 (data in 18/docker below the mount, !override drops the base file's mount); the old ones stay as the way back
     security_opt: ["no-new-privileges:true"]
     mem_limit: 2g
-    image: postgres:18.7-alpine@sha256:75dcac3dfb1cd01ca3536910bbc84128759362f8b118bf8c55b38a94f68f3b73
+    image: postgres:18.7-alpine@sha256:b6972e1115a4ff8eba5d7f7d19184926d1e16d7d1136ae1e1a7ebf286da0f015
     user: "70:70"
     cap_drop:
       - ALL
