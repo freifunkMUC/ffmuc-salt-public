@@ -45,7 +45,7 @@ services:
 
   # for tests
   srlinux:
-    image: ghcr.io/nokia/srlinux:26.3.1@sha256:ad3d4a533674cf2e2e7321fef38806a6c66e3d56a3e8693c45fc2b4206078dd6
+    image: ghcr.io/nokia/srlinux:26.7.2@sha256:0096fe3ebcafabb7253492e2060425fe027a168e0e066766d1e85efbb0b48be8
   postgres:
     image: postgres:17 # \d+
   mysql:
