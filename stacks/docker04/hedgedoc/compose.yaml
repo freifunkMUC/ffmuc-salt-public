@@ -64,14 +64,14 @@ services:
     mem_limit: 512m
   db:
     image: mariadb:12.3.3-noble@sha256:4ebbcf100a3ba320766dfa0e1af008df12261301db6ef72798c7650f70794aed
-    command: ["--innodb-snapshot-isolation=OFF"]  # 11.8 behaviour; 12.3 defaults to ON
+    command: ["--innodb-snapshot-isolation=OFF", "--innodb-buffer-pool-size=1G"]  # snapshot: 11.8 behaviour, 12.3 defaults to ON; pool: data is ~2.2 GB, default 128M
     restart: always
     user: "999:999"
     cap_drop:
       - ALL
     security_opt:
       - no-new-privileges:true
-    mem_limit: 1g
+    mem_limit: 2g
     environment:
       - MARIADB_RANDOM_ROOT_PASSWORD=yes
       - MYSQL_DATABASE=hedgedoc
