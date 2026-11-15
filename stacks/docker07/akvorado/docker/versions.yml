@@ -25,7 +25,7 @@ services:
 
   # observability
   grafana:
-    image: grafana/grafana-oss:10.4.19@sha256:a9043254ba16fb10945cc27333963dfd08eccbb43b51f1222d831cc564e3a1f4 # \d+\.\d+\.\d+
+    image: grafana/grafana-oss:13.0.2@sha256:5dad0df181cb644a14e13617b913b261a54f7d4fd4510721dba420929f35bea2 # \d+\.\d+\.\d+
   alloy:
     image: grafana/alloy:v1.19.2@sha256:b8ec653c44235fbe910879145dac3597d66b0aaecf60bcbbe82580767771a839 # v\d+\.\d+\.\d+
   loki:
