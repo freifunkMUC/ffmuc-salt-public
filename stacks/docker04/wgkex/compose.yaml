@@ -4,6 +4,10 @@ services:
     image: ghcr.io/freifunkmuc/wgkex:v0.5.1@sha256:e37db1ee4d9652e0ba79f091ad8d7acbcf3af4d7d68378d9ff4941a1ceb5f4d2
     command: broker
     restart: unless-stopped
+    depends_on:
+      mqtt_cluster:
+        condition: service_healthy
+        restart: true
     ports:
       - "5000:5000"
     volumes:
