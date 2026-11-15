@@ -4,6 +4,10 @@
     "customManagers:dockerfileVersions"],
   "timezone": "Europe/Berlin",
   "labels": ["dependencies"],
+  "vulnerabilityAlerts": { "labels": ["security"] },
+  "docker-compose": {
+    "managerFilePatterns": ["/(^|/)(?:docker-)?compose[^/]*\\.ya?ml$/", "/^stacks/docker07/akvorado/docker/versions\\.yml$/"]
+  },
   "prConcurrentLimit": 10,
   "prHourlyLimit": 4,
   "ignorePaths": ["docker-containers/**"],
@@ -22,7 +26,8 @@
       "description": "Actions: one PR for minor, patch and digest updates",
       "matchManagers": ["github-actions"],
       "matchUpdateTypes": ["minor", "patch", "digest", "pinDigest"],
-      "groupName": "GitHub Actions"
+      "groupName": "GitHub Actions",
+      "addLabels": ["github_actions"]
     },
     {
       "description": "Actions run with read-only tokens and no secrets: minor, patch and digest updates merge on their own once the checks are green. timestamp-optional: some actions give Renovate no release timestamp",
@@ -155,7 +160,7 @@
     },
     {
       "description": "Release assets are verified by sha256 in defaults.yaml, Renovate cannot fill them in",
-      "matchPackageNames": ["krombel/nebula", "moghtech/komodo"],
+      "matchPackageNames": ["krombel/nebula", "moghtech/komodo", "rustic-rs/rustic", "lacontrevoie/keycloak-altcha"],
       "matchManagers": ["custom.regex"],
       "addLabels": ["hashes-needed"],
       "prBodyNotes": ["Add the sha256 of every release asset to `defaults.yaml` in this PR before merging, otherwise `source_hash` fails."]
@@ -190,7 +195,7 @@
       "description": "Versions in Salt states and defaults, marked with a `renovate:` comment on the line above",
       "managerFilePatterns": ["/(^|/)defaults\\.yaml$/", "/(^|/)init\\.sls$/"],
       "matchStrings": [
-        "renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)(?: extractVersion=(?<extractVersion>\\S+))?(?: versioning=(?<versioning>\\S+))?[^\\n]*\\n[^\\n]*?(?:version: |_version = ')(?<currentValue>[^'\\s]+)"
+        "renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)(?: registryUrl=(?<registryUrl>\\S+))?(?: extractVersion=(?<extractVersion>\\S+))?(?: versioning=(?<versioning>\\S+))?[^\\n]*\\n[^\\n]*?(?:version: |_(?:version|release) = ['\"])(?<currentValue>[^'\"\\s]+)"
       ]
     }
   ]

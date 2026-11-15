@@ -4,9 +4,10 @@
 # (not --optimized) picks the JAR up at the next boot. Apply this state BEFORE the stack is deployed and the flow is bound;
 # after a version bump restart the stack (Komodo) so Keycloak loads the new JAR.
 # Upstream: https://git.lacontrevoie.fr/lacontrevoie/keycloak-altcha (MIT, built against Keycloak 26.6.3). Version bump by hand:
-# new URL and sha256 (no Renovate manager for Gitea releases), then test registration on the new Keycloak before it goes live.
+# new sha256 (Renovate bumps the version, the PR must add the hash), then test registration on the new Keycloak before it goes live.
 ###
 
+{#- renovate: datasource=gitea-releases depName=lacontrevoie/keycloak-altcha registryUrl=https://git.lacontrevoie.fr #}
 {%- set altcha_version = '2.0.0' %}
 {%- set altcha_sha256 = '78ccf6b9927b8100c5dcd1f1defd35eb86adf59a518652db5e11ca30fc70d559' %}
 
