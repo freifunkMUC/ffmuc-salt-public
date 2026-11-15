@@ -8,6 +8,10 @@ in the Nebula overlay (`10.8.0.31:3001`); the public status page
 and the icons; everything else gets 403. In Kuma, give the status page the
 domain `status.ffmuc.net` (Settings of the page), so `/` serves it.
 
+The admin UI is also served by Traefik at `https://kuma.ov.ffmuc.net`
+(overlay DNS only). Optional: enable Settings > Reverse Proxy > Trust Proxy in
+Kuma so it logs real client IPs.
+
 ## Host preparation (once, by hand)
 
 `install -d -m 0750 -o 1000 -g 1000 /srv/docker/uptime-kuma/data` before the
