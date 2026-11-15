@@ -1,9 +1,11 @@
+{#- renovate: datasource=github-releases depName=Graylog2/collector-sidecar #}
+{%- set sidecar_version = '1.5.6' %}
 {% if grains.os == 'Raspbian' %}
 {#- no armhf in the graylog and elastic repos: fixed .debs, same IDs as pkg.latest below for the requisites #}
 graylog-sidecar:
   pkg.installed:
     - sources:
-      - graylog-sidecar: https://github.com/Graylog2/collector-sidecar/releases/download/1.5.6/graylog-sidecar_1.5.6-1_armv7.deb
+      - graylog-sidecar: https://github.com/Graylog2/collector-sidecar/releases/download/{{ sidecar_version }}/graylog-sidecar_{{ sidecar_version }}-1_armv7.deb
 
 filebeat:
   pkg.installed:
