@@ -293,6 +293,17 @@ remove_asterisk_monitoring:
     - watch_in:
           service: telegraf
 
+/etc/telegraf/telegraf.d/in-hedgedoc.conf:
+{#- hedgedoc runs from the docker compose stack stacks/docker04/hedgedoc #}
+{%- if salt['file.file_exists']('/srv/docker/hedgedoc/data/config.json') %}
+  file.managed:
+    - source: salt://telegraf/files/in_hedgedoc.conf
+{% else %}
+  file.absent:
+{% endif %}
+    - watch_in:
+          service: telegraf
+
 /etc/telegraf/telegraf.d/in-meet-reserve.conf:
 {%- if salt["pillar.get"]("netbox:config_context:meet_reserve:enabled", False) %}
   file.managed:
