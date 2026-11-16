@@ -1,0 +1,3 @@
+# Merged over the host's config/config.yaml (the image entrypoint rewrites that file on every start).
+db_config:
+  use_wal: true
