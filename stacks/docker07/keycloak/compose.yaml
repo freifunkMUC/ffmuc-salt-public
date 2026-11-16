@@ -15,6 +15,10 @@ services:
     security_opt:
       - no-new-privileges:true
     mem_limit: 512m
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/run/postgresql
     volumes:
       - /srv/docker/keycloak/data18:/var/lib/postgresql
     environment:
