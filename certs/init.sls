@@ -2,6 +2,10 @@
 # SSL Certificates
 #
 
+{#- Per host via NetBox config context certs: issuer (cfssl|x509), trust_v2 (bool) #}
+{%- set issuer = salt['pillar.get']('netbox:config_context:certs:issuer', 'cfssl') %}
+{%- set trust_v2 = salt['pillar.get']('netbox:config_context:certs:trust_v2', false) %}
+
 openssl:
   pkg.installed:
     - name: openssl
@@ -14,6 +18,9 @@ update_ca_certificates:
     - name: /usr/sbin/update-ca-certificates
     - onchanges:
       - file: /usr/local/share/ca-certificates/ffmuc-cacert.crt
+      {%- if trust_v2 and 'BEGIN CERTIFICATE' in salt['cp.get_file_str']('salt://certs/ffmuc-cacert-v2.pem') %}
+      - file: /usr/local/share/ca-certificates/ffmuc-cacert-v2.crt
+      {%- endif %}
 
 generate-dhparam:
   cmd.run:
@@ -37,6 +44,100 @@ generate-dhparam:
     - watch_in:
       - cmd: update_ca_certificates
 
+{% if trust_v2 and 'BEGIN CERTIFICATE' not in salt['cp.get_file_str']('salt://certs/ffmuc-cacert-v2.pem') %}
+# certs:trust_v2 is set but salt://certs/ffmuc-cacert-v2.pem is still the placeholder: no trust changes.
+ffmuc-cacert-v2-missing:
+  test.fail_without_changes:
+    - name: certs:trust_v2 needs a PEM certificate in certs/ffmuc-cacert-v2.pem
+{% elif trust_v2 %}
+# Second root (x509_v2 CA) next to the current one; placeholder until the CA exists.
+/usr/local/share/ca-certificates/ffmuc-cacert-v2.crt:
+  file.managed:
+    - source: salt://certs/ffmuc-cacert-v2.pem
+    - user: root
+    - group: root
+    - mode: "0644"
+    - watch_in:
+      - cmd: update_ca_certificates
+
+# Bundle old + new root for consumers that read a single CA file (icinga2 ca.crt).
+# Outside /etc/ssl/certs, which update-ca-certificates rehashes.
+/etc/ssl/ffmuc-ca-bundle.pem:
+  file.managed:
+    - contents: |
+        {{ salt['cp.get_file_str']('salt://certs/ffmuc-cacert.pem')|indent(8) }}
+        {{ salt['cp.get_file_str']('salt://certs/ffmuc-cacert-v2.pem')|indent(8) }}
+    - user: root
+    - group: root
+    - mode: "0644"
+{% endif %}{# trust_v2 #}
+
+{% if issuer == 'x509' %}
+#
+# Internal certificate via x509_v2 (host-generated key, signed by the CA minion)
+#
+# Key and certificate are created at staging paths and only copied to the consumer
+# paths after signing succeeded, so a failed signing leaves the current pair untouched.
+{%- set hid = grains['id'] %}
+{%- if 'BEGIN CERTIFICATE' not in (salt['cp.get_file_str']('salt://certs/ffmuc-int-v2.pem') or '') %}
+ffmuc-int-v2-missing:
+  test.fail_without_changes:
+    - name: "certs:issuer x509 needs the intermediate in certs/ffmuc-int-v2.pem"
+{%- else %}
+# Intermediate that signs the leaf, appended to the delivered certificate (peers verify against the root only).
+/etc/ssl/ffmuc-int-v2.pem:
+  file.managed:
+    - source: salt://certs/ffmuc-int-v2.pem
+    - user: root
+    - group: root
+    - mode: "0644"
+
+/etc/ssl/private/{{ hid }}.x509.key.pem:
+  x509.private_key_managed:
+    - algo: ec
+    - keysize: 256
+    - new: false
+    - user: root
+    - group: ssl-cert
+    - mode: "0440"
+    - require:
+      - pkg: ssl-cert
+
+/etc/ssl/certs/{{ hid }}.x509.cert.pem:
+  x509.certificate_managed:
+    - ca_server: {{ salt['pillar.get']('netbox:config_context:certs:ca_server', 'docker05.in.ffmuc.net') }}
+    - signing_policy: host-{{ hid }}
+    - private_key: /etc/ssl/private/{{ hid }}.x509.key.pem
+    - append_certs:
+      - /etc/ssl/ffmuc-int-v2.pem
+    - days_remaining: 30
+    - user: root
+    - group: root
+    - mode: "0644"
+    - require:
+      - x509: /etc/ssl/private/{{ hid }}.x509.key.pem
+      - file: /etc/ssl/ffmuc-int-v2.pem
+
+/etc/ssl/private/{{ hid }}.key.pem:
+  file.managed:
+    - source: /etc/ssl/private/{{ hid }}.x509.key.pem
+    - user: root
+    - group: ssl-cert
+    - mode: "0440"
+    - show_changes: False  # never print the private key
+    - require:
+      - x509: /etc/ssl/certs/{{ hid }}.x509.cert.pem
+
+/etc/ssl/certs/{{ hid }}.cert.pem:
+  file.managed:
+    - source: /etc/ssl/certs/{{ hid }}.x509.cert.pem
+    - user: root
+    - group: root
+    - mode: "0644"
+    - require:
+      - file: /etc/ssl/private/{{ hid }}.key.pem
+{%- endif %}{# intermediate present #}
+{% else %}{# issuer cfssl #}
 {%- set cert_validity = salt['cmd.run']('openssl x509 -noout -checkend 2592000 -in /etc/ssl/certs/'~ grains['id']  ~'.cert.pem') %}
 {%- if salt["network.ping"]("ca.ov.ffmuc.net", return_boolean=True, timeout=10) %}
 {% if 'Certificate will not expire' not in cert_validity %}
@@ -66,6 +167,7 @@ generate-dhparam:
       - pkg: ssl-cert
 {% endif %}{# Certificate wont expire #}
 {% endif %}{# can ping ca #}
+{% endif %}{# issuer #}
 
 {#- Default to '' rather than to the same lookup again: an unset role made
     this None, and `'...' in None` aborts the render with a TypeError. #}

@@ -183,14 +183,18 @@ icinga2-hostkey:
     - watch_in:
       - service: icinga2-service
 
+{%- set v2_bundle = salt['pillar.get']('netbox:config_context:certs:trust_v2', false) and 'BEGIN CERTIFICATE' in salt['cp.get_file_str']('salt://certs/ffmuc-cacert-v2.pem') %}
 icinga2-ca:
   file.symlink:
     - name: /var/lib/icinga2/certs/ca.crt
-    - target: /etc/ssl/certs/ffmuc-cacert.pem
+    - target: {{ '/etc/ssl/ffmuc-ca-bundle.pem' if v2_bundle else '/etc/ssl/certs/ffmuc-cacert.pem' }}
     - force: True
     - require:
       - pkg: icinga2-pkg
       - file: /var/lib/icinga2/certs
+      {%- if v2_bundle %}
+      - file: /etc/ssl/ffmuc-ca-bundle.pem
+      {%- endif %}
     - watch_in:
       - service: icinga2-service
 
