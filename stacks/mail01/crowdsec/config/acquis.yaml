@@ -1,6 +1,5 @@
 filenames:
   - /var/log/auth.log
-  - /var/log/syslog
 labels:
   type: syslog
 ---
@@ -9,3 +8,8 @@ filenames:
 labels:
   type: traefik
 ---
+# docker-mailserver logs; detection only, DMS fail2ban stays the enforcer
+filenames:
+  - /var/log/mail/mail.log
+labels:
+  type: syslog
