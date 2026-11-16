@@ -4,19 +4,7 @@
 # Images are pinned here. The other values that compose.yaml reads from
 # .env (POSTGRES_USER, NGINX_EXPOSE_PORT, ...) and the secret POSTGRES_PASS
 # come from the Komodo Stack environment.
-x-zammad-image: &zammad-image ghcr.io/zammad/zammad:7.2.2-0038@sha256:61e95f981e3124908ad08f94da79872d89d0ac60f7679b11b7cd3d6d0ebcdd7a
-
-# Zammad 7.2.x joins the change lines of webhook notifications with a
-# literal '\n' (zammad/zammad#6449, fixed for 7.3). Patch that line at
-# start; it matches nothing once the image has the fix. Remove with 7.3.
-x-webhook-newline-fix: &webhook-newline-fix
-  - sh
-  - -c
-  - |
-    f=/opt/zammad/app/services/service/template/interpolation/interpolator/webhook/track/notification.rb
-    sed -i "s/\.join('\\\\n')/.join(\"\\\\n\")/" "$$f"
-    exec /opt/zammad/bin/docker-entrypoint "$$@"
-  - zammad-entrypoint
+x-zammad-image: &zammad-image ghcr.io/zammad/zammad:7.2.3-0003@sha256:6669ad5070e8b0ae1820cbfb6c418debb6a59a1a7cf0922496dd9b1c0a2414ee
 
 x-ffmuc-app-mounts: &ffmuc-app-mounts
   - /srv/docker/zammad-backup:/var/tmp/zammad:ro
@@ -61,13 +49,11 @@ services:
   zammad-railsserver:
     <<: *hardening
     image: *zammad-image
-    entrypoint: *webhook-newline-fix
     volumes: *ffmuc-app-mounts
     mem_limit: 2g
   zammad-scheduler:
     <<: *hardening
     image: *zammad-image
-    entrypoint: *webhook-newline-fix
     volumes: *ffmuc-app-mounts
     mem_limit: 2g
   zammad-websocket:
