@@ -186,7 +186,7 @@ icinga2-hostkey:
 icinga2-ca:
   file.symlink:
     - name: /var/lib/icinga2/certs/ca.crt
-    - target: /etc/ssl/certs/ffmuc-cacert.pem
+    - target: {{ '/etc/ssl/certs/ffmuc-ca-bundle.pem' if salt['pillar.get']('netbox:config_context:certs:trust_v2', false) else '/etc/ssl/certs/ffmuc-cacert.pem' }}
     - force: True
     - require:
       - pkg: icinga2-pkg

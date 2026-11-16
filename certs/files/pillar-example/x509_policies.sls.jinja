@@ -1,0 +1,19 @@
+{#- Master-side pillar (not rendered by minions): one x509_v2 signing policy per minion. -#}
+{#- Master config: peer: {'<minion regex>': [x509.sign_remote_certificate]}; ca_server minion holds the key. -#}
+{% set hosts = salt['pillar.get']('x509_hosts', []) %}
+x509_signing_policies:
+{% for h in hosts %}
+  host-{{ h }}:
+    minions: {{ h }}
+    signing_private_key: /etc/pki/ffmuc-int.key
+    signing_cert: /etc/pki/ffmuc-int.crt
+    copypath: /etc/pki/issued
+    CN: {{ h }}
+    subjectAltName: "DNS:{{ h }}"
+    basicConstraints: "critical, CA:FALSE"
+    keyUsage: "critical, digitalSignature"
+    extendedKeyUsage: "serverAuth, clientAuth"
+    subjectKeyIdentifier: hash
+    authorityKeyIdentifier: keyid
+    days_valid: 90
+{% endfor %}

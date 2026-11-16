@@ -2,6 +2,10 @@
 # SSL Certificates
 #
 
+{#- Per host via NetBox config context certs: issuer (cfssl|x509), trust_v2 (bool) #}
+{%- set issuer = salt['pillar.get']('netbox:config_context:certs:issuer', 'cfssl') %}
+{%- set trust_v2 = salt['pillar.get']('netbox:config_context:certs:trust_v2', false) %}
+
 openssl:
   pkg.installed:
     - name: openssl
@@ -37,6 +41,55 @@ generate-dhparam:
     - watch_in:
       - cmd: update_ca_certificates
 
+{% if trust_v2 %}
+# Second root (x509_v2 CA) next to the current one; placeholder until the CA exists.
+/usr/local/share/ca-certificates/ffmuc-cacert-v2.crt:
+  file.managed:
+    - source: salt://certs/ffmuc-cacert-v2.pem
+    - user: root
+    - group: root
+    - mode: "0644"
+    - watch_in:
+      - cmd: update_ca_certificates
+
+# Bundle old + new root for consumers that read a single CA file (icinga2 ca.crt).
+/etc/ssl/certs/ffmuc-ca-bundle.pem:
+  file.managed:
+    - contents: |
+        {{ salt['cp.get_file_str']('salt://certs/ffmuc-cacert.pem')|indent(8) }}
+        {{ salt['cp.get_file_str']('salt://certs/ffmuc-cacert-v2.pem')|indent(8) }}
+    - user: root
+    - group: root
+    - mode: "0644"
+{% endif %}{# trust_v2 #}
+
+{% if issuer == 'x509' %}
+#
+# Internal certificate via x509_v2 (host-generated key, signed by the CA minion)
+#
+/etc/ssl/private/{{ grains['id'] }}.key.pem:
+  x509.private_key_managed:
+    - algo: ec
+    - keysize: 256
+    - new: false
+    - user: root
+    - group: ssl-cert
+    - mode: "0440"
+    - require:
+      - pkg: ssl-cert
+
+/etc/ssl/certs/{{ grains['id'] }}.cert.pem:
+  x509.certificate_managed:
+    - ca_server: {{ salt['pillar.get']('netbox:config_context:certs:ca_server', 'docker05.in.ffmuc.net') }}
+    - signing_policy: host-{{ grains['id'] }}
+    - private_key: /etc/ssl/private/{{ grains['id'] }}.key.pem
+    - days_remaining: 30
+    - user: root
+    - group: root
+    - mode: "0644"
+    - require:
+      - x509: /etc/ssl/private/{{ grains['id'] }}.key.pem
+{% else %}{# issuer cfssl #}
 {%- set cert_validity = salt['cmd.run']('openssl x509 -noout -checkend 2592000 -in /etc/ssl/certs/'~ grains['id']  ~'.cert.pem') %}
 {%- if salt["network.ping"]("ca.ov.ffmuc.net", return_boolean=True, timeout=10) %}
 {% if 'Certificate will not expire' not in cert_validity %}
@@ -65,6 +118,7 @@ generate-dhparam:
       - pkg: ssl-cert
 {% endif %}{# Certificate wont expire #}
 {% endif %}{# can ping ca #}
+{% endif %}{# issuer #}
 
 {#- Default to '' rather than to the same lookup again: an unset role made
     this None, and `'...' in None` aborts the render with a TypeError. #}
