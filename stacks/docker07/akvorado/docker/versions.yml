@@ -8,7 +8,7 @@ services:
   clickhouse:
     image: clickhouse/clickhouse-server:26.8 # \d+\.[38]
   clickhouse-keeper:
-    image: clickhouse/clickhouse-keeper:26.8@sha256:d1aaac927e68cfe4e97d6ca2a420b51608a2e230019e8b5bce873b60556f2522 # \d+\.[38]
+    image: clickhouse/clickhouse-keeper:26.8@sha256:d29c2baf781fbacce72e3bb09a3c135cbedb61738215b64c6282b16ba1526485 # \d+\.[38]
   traefik:
     image: traefik:v3.7@sha256:b7b1b31e6440de0b1f7c4e0f6cf0a0f3f004866761d30c025fe00c80daaf7d9c # v\d+\.\d+
   maxmind-geoipupdate:
