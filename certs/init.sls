@@ -79,6 +79,11 @@ ffmuc-cacert-v2-missing:
 # Key and certificate are created at staging paths and only copied to the consumer
 # paths after signing succeeded, so a failed signing leaves the current pair untouched.
 {%- set hid = grains['id'] %}
+{%- if 'BEGIN CERTIFICATE' not in (salt['cp.get_file_str']('salt://certs/ffmuc-int-v2.pem') or '') %}
+ffmuc-int-v2-missing:
+  test.fail_without_changes:
+    - name: "certs:issuer x509 needs the intermediate in certs/ffmuc-int-v2.pem"
+{%- else %}
 # Intermediate that signs the leaf, appended to the delivered certificate (peers verify against the root only).
 /etc/ssl/ffmuc-int-v2.pem:
   file.managed:
@@ -119,6 +124,7 @@ ffmuc-cacert-v2-missing:
     - user: root
     - group: ssl-cert
     - mode: "0440"
+    - show_changes: False  # never print the private key
     - require:
       - x509: /etc/ssl/certs/{{ hid }}.x509.cert.pem
 
@@ -130,6 +136,7 @@ ffmuc-cacert-v2-missing:
     - mode: "0644"
     - require:
       - file: /etc/ssl/private/{{ hid }}.key.pem
+{%- endif %}{# intermediate present #}
 {% else %}{# issuer cfssl #}
 {%- set cert_validity = salt['cmd.run']('openssl x509 -noout -checkend 2592000 -in /etc/ssl/certs/'~ grains['id']  ~'.cert.pem') %}
 {%- if salt["network.ping"]("ca.ov.ffmuc.net", return_boolean=True, timeout=10) %}
@@ -155,6 +162,7 @@ ffmuc-cacert-v2-missing:
     - user: root
     - group: ssl-cert
     - mode: "0440"
+    - show_changes: False  # never print the private key
     - require:
       - pkg: ssl-cert
 {% endif %}{# Certificate wont expire #}
