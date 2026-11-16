@@ -10,8 +10,9 @@
   trust it from the webfrontends (`broker.trusted_proxies`).
 - **MQTT** (EMQX cluster `mqtt_cluster` in the same stacks, `broker.ov.ffmuc.net:1883`): the workers log in as
   pillar `wgkex:mqtt:username`/`password` (empty: anonymous), the brokers as `wgkex-broker` with the Periphery secret
-  `WGKEX_MQTT_BROKER_PASSWORD` (`WGKEX__MQTT__*` env, needs wgkex with freifunkMUC/wgkex#324). EMQX still accepts
-  anonymous clients; the clients send credentials first so authentication can be switched on afterwards.
+  `WGKEX_MQTT_BROKER_PASSWORD` (`WGKEX__MQTT__*` env, needs wgkex with freifunkMUC/wgkex#324), the Parker pilot on
+  pgw01 as `parker` (set by hand in its `/etc/wgkex.yaml`). EMQX rejects anonymous clients; `emqx/acl.conf` next to
+  each `compose.yaml` allows each user only its own topics, everything else is denied (see MQTT users below).
 - Metrics: telegraf scrapes the workers on `127.0.0.1:9101` and the brokers on `127.0.0.1:5000` (measurement
   `prometheus`, tag `wgkex_role`). haproxy denies `/metrics` publicly.
 
@@ -33,3 +34,23 @@ salt 'gw0*' state.apply wgkex                     # or wait for the 18:00 highst
 3. Reboot. `/run` is cleared, so the worker comes back undrained; rebalancing moves peers back after 10 minutes.
 
 Cancel a drain without rebooting with `rm /run/wgkex/drain`.
+
+## MQTT users
+
+EMQX creates the users `wgkex-broker`, `wgkex-worker` and `parker` from the Periphery secrets
+`WGKEX_MQTT_{BROKER,WORKER,PARKER}_PASSWORD` (hex only, `openssl rand -hex 24`; the gateways' pillar
+`wgkex:mqtt:password` is the worker password). It imports them only while its user table is empty, and the table
+lives in the anonymous volume `/opt/emqx/data` that survives restarts and redeploys. To change a password:
+
+1. Set the new value in the pillar, `state.apply komodo-periphery` on docker04–07 (and the gateways' highstate).
+2. Stop the four `mqtt_cluster` containers together (`docker compose down` of the stacks, without `-v` the old
+   volumes stay as orphans), then deploy the four stacks. The new containers start with empty volumes and import the
+   users. wgkex is down meanwhile, retained messages and sessions are gone; the workers republish their data within
+   five minutes. Clients still using the old password are locked out until they get the new one.
+
+Every client needs its credentials before EMQX enforces them: the broker image must read `WGKEX__MQTT__*`
+(wgkex#324; v0.5.1 does not), the gateways need the pillar from a highstate, pgw01 its manual entry. Check on each
+node that no client is anonymous: `docker exec mqtt_cluster emqx ctl clients list | grep -c 'username=undefined'`.
+Denied publishes are dropped silently (`deny_action = ignore`, a disconnect would make clients reconnect in a loop);
+look for them with `docker exec mqtt_cluster emqx ctl broker metrics | grep authorization`.
+
