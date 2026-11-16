@@ -13,9 +13,8 @@ docker-repo-key:
 
 docker-repo:
   pkgrepo.managed:
-    - comments: "# Docker.io"
     - human_name: Docker.io repository
-    - name: "deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/docker-keyring.gpg] https://download.docker.com/linux/{{ grains.lsb_distrib_id | lower }}  {{ grains.oscodename }} stable"
+    - name: "deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/docker-keyring.gpg] https://download.docker.com/linux/{{ grains.lsb_distrib_id | lower }} {{ grains.oscodename }} stable"
     - dist: {{ grains.oscodename }}
     - file: /etc/apt/sources.list.d/docker.list
     - clean_file: True
