@@ -161,6 +161,8 @@ icinga-user:
     - require:
       - pkg: icinga2-pkg
 
+{%- set node_name = salt['cmd.run']('icinga2 variable get NodeName', python_shell=False, ignore_retcode=True).strip() %}
+{%- if not node_name or ' ' in node_name or '\n' in node_name or '/' in node_name %}{% set node_name = grains['id'] %}{% endif %}
 # Install host cert + key readable for icinga
 icinga2-hostcert:
   file.symlink:
@@ -183,6 +185,33 @@ icinga2-hostkey:
       - file: /var/lib/icinga2/certs
     - watch_in:
       - service: icinga2-service
+
+{%- if node_name != grains['id'] %}
+# NodeName is the short hostname on some hosts: link the cert under that name too, old files kept as *.bak
+icinga2-hostcert-nodename:
+  file.symlink:
+    - name: /var/lib/icinga2/certs/{{ node_name }}.crt
+    - target: /etc/ssl/certs/{{ grains['id'] }}.cert.pem
+    - force: True
+    - backupname: /var/lib/icinga2/certs/{{ node_name }}.crt.bak
+    - require:
+      - pkg: icinga2-pkg
+      - file: /var/lib/icinga2/certs
+    - watch_in:
+      - service: icinga2-service
+
+icinga2-hostkey-nodename:
+  file.symlink:
+    - name: /var/lib/icinga2/certs/{{ node_name }}.key
+    - target: /etc/ssl/private/{{ grains['id'] }}.key.pem
+    - force: True
+    - backupname: /var/lib/icinga2/certs/{{ node_name }}.key.bak
+    - require:
+      - pkg: icinga2-pkg
+      - file: /var/lib/icinga2/certs
+    - watch_in:
+      - service: icinga2-service
+{%- endif %}
 
 {%- set v2_bundle = salt['pillar.get']('netbox:config_context:certs:trust_v2', false) and 'BEGIN CERTIFICATE' in salt['cp.get_file_str']('salt://certs/ffmuc-cacert-v2.pem') %}
 icinga2-ca:
@@ -214,6 +243,10 @@ icinga2-restart-on-cert:
     - watch:
       - cmd: icinga2-hostcert-fingerprint
       - file: icinga2-ca
+      {%- if node_name != grains['id'] %}
+      - file: icinga2-hostcert-nodename
+      - file: icinga2-hostkey-nodename
+      {%- endif %}
     - require:
       - service: icinga2-service
 
