@@ -1,8 +1,12 @@
 {#- Master-side pillar (not rendered by minions): one x509_v2 signing policy per minion. -#}
-{#- Master config: peer: {'<minion regex>': [x509.sign_remote_certificate]}; ca_server minion holds the key. -#}
-{% set hosts = salt['pillar.get']('x509_hosts', []) %}
+{#- Master config, the ca_server minion holds the signing key (master uses re.match):
+      peer:
+        '.+\.ffmuc\.net$': [x509.sign_remote_certificate]
+-#}
+{#- Literal list: pillar.get('x509_hosts') is unreliable while the pillar compiles. -#}
+{% set x509_hosts = ['host01.in.ffmuc.net'] %}
 x509_signing_policies:
-{% for h in hosts %}
+{% for h in x509_hosts %}
   host-{{ h }}:
     minions: {{ h }}
     signing_private_key: /etc/pki/ffmuc-int.key
