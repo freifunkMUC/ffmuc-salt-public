@@ -327,6 +327,16 @@ remove_asterisk_monitoring:
     - watch_in:
           service: telegraf
 
+/etc/telegraf/telegraf.d/in-zfs.conf:
+{% if 'zfs' in tags %}
+  file.managed:
+    - source: salt://telegraf/files/in_zfs.conf
+{% else %}
+  file.absent:
+{% endif %}
+    - watch_in:
+          service: telegraf
+
 {% if grains.virtual == 'physical' %}
 smartmontools:
   pkg.installed:

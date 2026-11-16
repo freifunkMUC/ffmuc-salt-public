@@ -1,0 +1,24 @@
+#!/bin/bash
+# ZFS pools: health and capacity. OK without zpool or pools.
+# Usage: check_zpool [warning %] [critical %]
+W=${1:-80}
+C=${2:-90}
+command -v zpool >/dev/null || { echo "OK - no zpool"; exit 0; }
+out=$(zpool list -H -o name,health,capacity 2>&1) || { echo "UNKNOWN - $out"; exit 3; }
+[ -n "$out" ] || { echo "OK - no pools"; exit 0; }
+state=0
+msg=
+perf=
+while read -r name health cap; do
+  cap=${cap%\%}
+  s=0
+  [ "$health" = "ONLINE" ] || s=2
+  [ "$cap" -ge "$W" ] && s=$(( s > 1 ? s : 1 ))
+  [ "$cap" -ge "$C" ] && s=2
+  [ "$s" -gt "$state" ] && state=$s
+  msg+="$name $health ${cap}%, "
+  perf+="'$name'=${cap}%;$W;$C;0;100 "
+done <<< "$out"
+label=(OK WARNING CRITICAL)
+echo "${label[$state]} - ${msg%, } | $perf"
+exit "$state"
