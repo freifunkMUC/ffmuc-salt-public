@@ -327,6 +327,18 @@ remove_asterisk_monitoring:
     - watch_in:
           service: telegraf
 
+/etc/telegraf/telegraf.d/in-x509_cert.conf:
+{#- hosts with a certificate from the certs state #}
+{%- if salt['file.file_exists']('/etc/ssl/certs/' ~ grains['id'] ~ '.cert.pem') %}
+  file.managed:
+    - source: salt://telegraf/files/in_x509_cert.conf
+    - template: jinja
+{% else %}
+  file.absent:
+{% endif %}
+    - watch_in:
+          service: telegraf
+
 /etc/telegraf/telegraf.d/in-zfs.conf:
 {% if 'zfs' in tags %}
   file.managed:
