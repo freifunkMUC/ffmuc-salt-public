@@ -13,6 +13,15 @@ services:
     security_opt:
       - no-new-privileges:true
     mem_limit: 1g
+    read_only: true
+    tmpfs:
+      - /tmp
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
     networks:
       - graylog
     volumes:
@@ -86,6 +95,12 @@ services:
     mem_limit: 24g # must be consistent with deploy.resources.limits.memory
     memswap_limit: 24g # if set to same value as mem_limit, swap is disabled
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
 
     # Graylog: https://hub.docker.com/r/graylog/graylog/
     cap_drop:
