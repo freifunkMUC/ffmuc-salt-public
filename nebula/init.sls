@@ -48,6 +48,7 @@ include:
     - user: root
     - group: root
     - mode: "0640"
+    - show_changes: False  # never print the private key
 {% endif %}
 
 {% if nebula.loophole.enabled %}
