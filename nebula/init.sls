@@ -4,25 +4,43 @@
 
 {%- from "nebula/map.jinja" import nebula with context %}
 {% if nebula.enabled %}
+{%- set local_pki = nebula.pki.get('mode', 'legacy') == 'local' %}
+{%- set cert_name = 'host' if local_pki else grains['id'] %}
+{%- set ca_files = [] %}
+{%- for ca in nebula.pki.cas %}
+{%- do ca_files.append("nebula/cert/" ~ ca) %}
+{%- endfor %}
+{%- set crt_files = [] %}
+{%- for v in nebula.pki.cert_versions %}
+{%- do crt_files.append("nebula/cert/" ~ ("new/" if local_pki else "") ~ ("" if v == 1 else "v" ~ v ~ "/") ~ grains["id"] ~ ".crt") %}
+{%- endfor %}
 
 include:
   - nebula.install
+  - nebula.key
 
 /etc/nebula/ca.crt:
   file.managed:
-    - source: salt://nebula/cert/ca.crt
+    - source: salt://nebula/files/bundle.pem.jinja
+    - template: jinja
+    - context:
+        files: {{ ca_files | tojson }}
     - require:
         - file: /etc/nebula/config.yml
-        - file: /etc/nebula/{{ grains['id'] }}.crt
+        - file: /etc/nebula/{{ cert_name }}.crt
 
-/etc/nebula/{{ grains['id'] }}.crt:
+/etc/nebula/{{ cert_name }}.crt:
   file.managed:
-    - source: salt://nebula/cert/{{ grains['id'] }}.crt
+    - source: salt://nebula/files/bundle.pem.jinja
+    - template: jinja
+    - context:
+        files: {{ crt_files | tojson }}
     - makedirs: True
     - user: root
     - group: root
     - mode: "0644"
 
+{% if not local_pki %}
 /etc/nebula/{{ grains['id'] }}.key:
   file.managed:
     - source: salt://nebula/cert/{{ grains['id'] }}.key
@@ -30,6 +48,7 @@ include:
     - user: root
     - group: root
     - mode: "0640"
+{% endif %}
 
 {% if nebula.loophole.enabled %}
 generate_ssh_host_ed25519_key:
@@ -51,7 +70,8 @@ generate_ssh_host_ed25519_key:
     - group: root
     - mode: "0644"
     - require:
-        - file: /etc/nebula/{{ grains['id'] }}.crt
+        - file: /etc/nebula/{{ cert_name }}.crt
+        - file: /etc/nebula/{{ cert_name }}.key
 
 # restarting (not reloading) keeps a package upgrade from running the new binary
 # only after a second restart racing the first one
@@ -61,8 +81,8 @@ nebula-config-test:
     - onchanges:
         - file: /etc/nebula/config.yml
         - file: /etc/nebula/ca.crt
-        - file: /etc/nebula/{{ grains['id'] }}.crt
-        - file: /etc/nebula/{{ grains['id'] }}.key
+        - file: /etc/nebula/{{ cert_name }}.crt
+        - file: /etc/nebula/{{ cert_name }}.key
         - pkg: nebula-pkg
 
 nebula-service:
@@ -72,15 +92,15 @@ nebula-service:
     - require:
         - file: /etc/nebula/config.yml
         - file: /etc/nebula/ca.crt
-        - file: /etc/nebula/{{ grains['id'] }}.crt
-        - file: /etc/nebula/{{ grains['id'] }}.key
+        - file: /etc/nebula/{{ cert_name }}.crt
+        - file: /etc/nebula/{{ cert_name }}.key
         - pkg: nebula-pkg
         - cmd: nebula-config-test
     - watch:
         - file: /etc/nebula/config.yml
         - file: /etc/nebula/ca.crt
-        - file: /etc/nebula/{{ grains['id'] }}.crt
-        - file: /etc/nebula/{{ grains['id'] }}.key
+        - file: /etc/nebula/{{ cert_name }}.crt
+        - file: /etc/nebula/{{ cert_name }}.key
         - pkg: nebula-pkg
 
 {% else %}

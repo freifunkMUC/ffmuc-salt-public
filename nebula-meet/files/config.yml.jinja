@@ -1,10 +1,11 @@
 {%- from "nebula-meet/map.jinja" import nebula with context %}
 {% do nebula.lighthouses.pop("127.0.0.1", None) %}
+{%- set pki_name = 'host' if nebula.pki.get('mode', 'legacy') == 'local' else grains.id %}
 
 pki:
   ca: /etc/nebula-meet/ca.crt
-  cert: /etc/nebula-meet/{{ grains.id }}.crt
-  key: /etc/nebula-meet/{{ grains.id }}.key
+  cert: /etc/nebula-meet/{{ pki_name }}.crt
+  key: /etc/nebula-meet/{{ pki_name }}.key
 {%- if nebula.pki.initiating_version %}
   initiating_version: {{ nebula.pki.initiating_version }}
 {%- endif %}
