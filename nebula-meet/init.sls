@@ -100,6 +100,9 @@ nebula-meet-service:
       - pkg: nebula-pkg
     - watch:
         - file: /etc/nebula-meet/config.yml
+        - file: /etc/nebula-meet/ca.crt
+        - file: /etc/nebula-meet/{{ cert_name }}.crt
+        - file: /etc/nebula-meet/{{ cert_name }}.key
         - cmd: systemd-reload-nebula-meet
 
 nebula-meet-restart-on-upgrade:
