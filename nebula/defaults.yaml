@@ -19,6 +19,8 @@ nebula:
       arm64: 34c992278a6006f2b202c00c7a2605ef12d33a52c5ab2e6db9104bbf10a87f44
 
   pki:
+    # legacy: certs from the repo; keygen: host key only; local: host key + certs from cert/new/
+    mode: legacy
     cas:
       - ca.crt
     cert_versions:
