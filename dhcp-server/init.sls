@@ -19,7 +19,7 @@ netaddr-dhcp:
 {%- if use_kea %}
 {#- Pinned like pdns-recursor/dnsdist; all Kea packages must share one
     version, the hooks check the Kea version they were built for. #}
-{%- set kea_version = salt['config.get']('netbox:config_context:kea:version', '3.0.4-isc20260728182757') %}
+{%- set kea_version = salt['config.get']('netbox:config_context:kea:version', '3.0.5-isc20261026134027') %}
 {%- set vrf = 'vrf_external' in salt['grains.get']('ip_interfaces', {}) %}
 
 isc-dhcp-server:
