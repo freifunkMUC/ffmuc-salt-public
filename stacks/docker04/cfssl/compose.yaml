@@ -15,6 +15,10 @@ services:
     security_opt:
       - no-new-privileges:true
     mem_limit: 256m
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/run/postgresql
     networks:
       - default
     healthcheck:
