@@ -91,11 +91,7 @@ services:
     security_opt: ["no-new-privileges:true"]
     mem_limit: 2g
     image: postgres:18.7-alpine@sha256:b6972e1115a4ff8eba5d7f7d19184926d1e16d7d1136ae1e1a7ebf286da0f015
-    user: "70:70"
-    read_only: true
-    tmpfs:
-      - /tmp
-      - /var/run/postgresql
+    user: "70:70"  # no read_only: compose cannot place upstream's inline `configs:` (initdb) into a read-only container
     cap_drop:
       - ALL
     volumes: !override
