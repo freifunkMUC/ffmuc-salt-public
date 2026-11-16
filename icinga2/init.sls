@@ -199,14 +199,22 @@ icinga2-ca:
     - watch_in:
       - service: icinga2-service
 
-# reload icinga2 when the host cert behind the symlink gets renewed
+# the host cert behind the symlink gets renewed
 icinga2-hostcert-fingerprint:
   cmd.run:
     - name: openssl x509 -noout -fingerprint -sha256 -in /etc/ssl/certs/{{ grains['id'] }}.cert.pem > /var/lib/icinga2/hostcert.fingerprint
     - unless: openssl x509 -noout -fingerprint -sha256 -in /etc/ssl/certs/{{ grains['id'] }}.cert.pem | cmp -s - /var/lib/icinga2/hostcert.fingerprint
     - require:
       - file: icinga2-hostcert
-    - watch_in:
+
+# a reload keeps the old certificate on the ApiListener: restart when the host cert or the CA changes
+icinga2-restart-on-cert:
+  service.running:
+    - name: icinga2
+    - watch:
+      - cmd: icinga2-hostcert-fingerprint
+      - file: icinga2-ca
+    - require:
       - service: icinga2-service
 
 # Install and activate Icinga2 features
