@@ -84,7 +84,7 @@ apparmor-reload:
     - source: salt://dns-auth/db.resolver.arpa
     - user: bind
     - group: bind
-    - mode: "0775"
+    - mode: "0644"
     - replace: True
     - require:
       - file: /etc/bind/zones
@@ -96,7 +96,7 @@ apparmor-reload:
     - source: salt://dns-auth/db.in.ffmuc.net
     - user: bind
     - group: bind
-    - mode: "0775"
+    - mode: "0644"
     - replace: False
     - require:
       - file: /etc/bind/zones
@@ -108,7 +108,7 @@ apparmor-reload:
     - source: salt://dns-auth/db.ov.ffmuc.net
     - user: bind
     - group: bind
-    - mode: "0775"
+    - mode: "0644"
     - replace: False
     - require:
       - file: /etc/bind/zones
@@ -120,7 +120,7 @@ apparmor-reload:
     - source: salt://dns-auth/db.ext.ffmuc.net
     - user: bind
     - group: bind
-    - mode: "0775"
+    - mode: "0644"
     - replace: False
     - require:
       - file: /etc/bind/zones
@@ -132,7 +132,7 @@ apparmor-reload:
     - source: salt://dns-auth/db.80.10.in-addr.arpa
     - user: bind
     - group: bind
-    - mode: "0775"
+    - mode: "0644"
     - replace: False
     - require:
       - file: /etc/bind/zones
@@ -144,7 +144,7 @@ apparmor-reload:
     - source: salt://dns-auth/db.1.0.a.0.8.0.6.0.1.0.0.2.ip6.arpa
     - user: bind
     - group: bind
-    - mode: "0775"
+    - mode: "0644"
     - replace: False
     - require:
       - file: /etc/bind/zones
