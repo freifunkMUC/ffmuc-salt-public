@@ -45,15 +45,16 @@ services:
     entrypoint: ["cfssl", "serve"]
     command: ["-address", "0.0.0.0", "-ca", "/data/ca.pem", "-ca-key", "/data/ca-key.pem", "-port", "8080", "-config", "/config/ca_root_config.json", "-db-config", "/config/db_config.json"]
     restart: on-failure
-    ports:
-      - 8080:8080
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.cfssl-secure.entrypoints=https"
-      - "traefik.http.routers.cfssl-secure.rule=Host(`ca.ov.ffmuc.net`)"
+      - "traefik.http.routers.cfssl-secure.rule=Host(`ca.ov.ffmuc.net`) && (Path(`/api/v1/cfssl/newcert`) || Path(`/api/v1/cfssl/info`))"
       - "traefik.http.routers.cfssl-secure.tls=true"
       - "traefik.http.routers.cfssl-secure.tls.certresolver=http"
       - "traefik.http.routers.cfssl-secure.service=cfssl"
+      # Minions reach the CA over the overlay only
+      - "traefik.http.routers.cfssl-secure.middlewares=cfssl-overlay"
+      - "traefik.http.middlewares.cfssl-overlay.ipallowlist.sourcerange=10.8.0.0/23"
       - "traefik.http.services.cfssl.loadbalancer.server.port=8080"
       - "traefik.docker.network=proxy"
     networks:
