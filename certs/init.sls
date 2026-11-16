@@ -61,6 +61,7 @@ generate-dhparam:
     - user: root
     - group: ssl-cert
     - mode: "0440"
+    - show_changes: False  # never print the private key
     - require:
       - pkg: ssl-cert
 {% endif %}{# Certificate wont expire #}
