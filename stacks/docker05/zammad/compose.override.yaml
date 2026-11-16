@@ -92,6 +92,10 @@ services:
     mem_limit: 2g
     image: postgres:18.7-alpine@sha256:b6972e1115a4ff8eba5d7f7d19184926d1e16d7d1136ae1e1a7ebf286da0f015
     user: "70:70"
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/run/postgresql
     cap_drop:
       - ALL
     volumes: !override
@@ -100,5 +104,11 @@ services:
     <<: *hardening
     mem_limit: 4g
     image: elasticsearch:9.5.5@sha256:b7b0f24e9b5e90656ffe69804b3a48907499ab2b9cd67f02b7af3aff1b026a89
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
     volumes:
       - /srv/docker/elasticsearch9-zammad/data:/usr/share/elasticsearch/data
