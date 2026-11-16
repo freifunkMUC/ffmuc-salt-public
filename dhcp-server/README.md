@@ -23,7 +23,7 @@ radvd sends the IPv6 anycast addresses as RDNSS in the same order.
 ## Kea
 
 - **Packages:** `isc-kea-dhcp4-server` and `isc-kea-hooks`, pinned to
-  `3.0.4-isc20260728182757` (exact, same build on every distro). Override the version via `netbox:config_context:kea:version`;
+  `3.0.5-isc20261026134027` (exact, same build on every distro). Override the version via `netbox:config_context:kea:version`;
   all Kea packages must share one version.
 - **Config check:** the config is rendered to `/etc/kea/kea-dhcp4.conf` and
   checked with `kea-dhcp4 -t` before it is written (`check_cmd`). The check
