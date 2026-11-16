@@ -20,7 +20,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.error-pages.priority=10"
       - "traefik.http.routers.error-pages.entrypoints=https"
-      - "traefik.http.routers.error-pages.rule=HostRegexp(`{host:.+}`)"
+      - "traefik.http.routers.error-pages.rule=HostRegexp(`.+`)"
       - "traefik.http.routers.error-pages.tls=true"
       - "traefik.http.routers.error-pages.tls.certresolver=http"
       - "traefik.http.routers.error-pages.middlewares=default@file"

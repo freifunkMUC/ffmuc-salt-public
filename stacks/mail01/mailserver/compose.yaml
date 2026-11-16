@@ -118,7 +118,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.autodiscover.entrypoints=https"
-      - "traefik.http.routers.autodiscover.rule=Host(`autoconfig.fnmuc.net`, `autodiscover.fnmuc.net`)"
+      - "traefik.http.routers.autodiscover.rule=Host(`autoconfig.fnmuc.net`) || Host(`autodiscover.fnmuc.net`)"
       - "traefik.http.routers.autodiscover.tls=true"
       - "traefik.http.routers.autodiscover.tls.certresolver=http"
       - "traefik.http.routers.autodiscover.service=autodiscover"
@@ -167,7 +167,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.roundcube.entrypoints=https"
-      - "traefik.http.routers.roundcube.rule=Host(`mail01.fnmuc.net`, `mail01-v4.fnmuc.net`, `webmail.fnmuc.net`, `webmail.mail01.fnmuc.net`, `imap.fnmuc.net`, `smtp.fnmuc.net`, `mail.ext.ffmuc.net`)"
+      - "traefik.http.routers.roundcube.rule=Host(`mail01.fnmuc.net`) || Host(`mail01-v4.fnmuc.net`) || Host(`webmail.fnmuc.net`) || Host(`webmail.mail01.fnmuc.net`) || Host(`imap.fnmuc.net`) || Host(`smtp.fnmuc.net`) || Host(`mail.ext.ffmuc.net`)"
       - "traefik.http.routers.roundcube.tls=true"
       - "traefik.http.routers.roundcube.tls.certresolver=http"
       # one cert for all names: docker-mailserver serves the acme.json entry for mail01.fnmuc.net on 465/993
