@@ -5,7 +5,7 @@ labels:
   type: syslog
 ---
 filenames:
-  - /var/log/crowdsec/traefik/*.log
+  - /var/log/crowdsec/traefik/access.log
 labels:
   type: traefik
 ---
