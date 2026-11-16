@@ -16,6 +16,7 @@ nebula-host-keygen:
         - {{ dir }}/host.pub
     - require:
         - file: nebula-key-dir
+        - pkg: nebula-pkg
 
 {#- content is never managed, only the mode #}
 {{ dir }}/host.key:
