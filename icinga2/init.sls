@@ -14,6 +14,7 @@
 
 include:
   - apt
+  - certs
   - sudo
 
 {%- if grains.os == 'Raspbian' %}
