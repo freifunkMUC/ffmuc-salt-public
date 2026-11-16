@@ -3,8 +3,6 @@
 # script /opt/containers/traefik/update-dns.sh comes from the Salt state certs,
 # as on the docker hosts), for names under ov.ffmuc.net that Let's Encrypt
 # cannot reach over HTTP. "http" and "cloudflare" as before.
-core:
-  defaultRuleSyntax: v2
 api:
   dashboard: true
 ping: {}
@@ -30,7 +28,7 @@ global:
   sendanonymoususage: false
 providers:
   docker:
-    endpoint: "unix:///var/run/docker.sock"
+    endpoint: "tcp://socket-proxy:2375"
     exposedByDefault: false
     network: "proxy"
   file:
