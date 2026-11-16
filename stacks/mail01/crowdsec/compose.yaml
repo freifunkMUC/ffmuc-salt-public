@@ -1,4 +1,4 @@
-# crowdsec for Traefik on mail01 (project "crowdsec", /opt/containers/crowdsec)
+# crowdsec for Traefik and the mail logs on mail01 (project "crowdsec", /opt/containers/crowdsec)
 # and Traefik's forward-auth bouncer. The bouncer fails closed: while crowdsec
 # or the bouncer is down, every site behind Traefik answers 403. Never stop
 # this project without a plan to start it again.
@@ -24,7 +24,7 @@ services:
       - 127.0.0.1:8080:8080
     environment:
       PGID: "1000"
-      COLLECTIONS: "crowdsecurity/traefik crowdsecurity/http-cve crowdsecurity/whitelist-good-actors"
+      COLLECTIONS: "crowdsecurity/traefik crowdsecurity/postfix crowdsecurity/dovecot crowdsecurity/http-cve crowdsecurity/whitelist-good-actors"
     healthcheck:
       test: ["CMD", "cscli", "lapi", "status"]
       interval: 30s
@@ -44,6 +44,7 @@ services:
       - /opt/containers/crowdsec/data:/var/lib/crowdsec/data
       - /var/log/auth.log:/var/log/auth.log:ro
       - /var/log/crowdsec:/var/log/crowdsec:ro
+      - /opt/containers/mailserver/logs:/var/log/mail:ro
     networks:
       - proxy
     hostname: crowdsec
