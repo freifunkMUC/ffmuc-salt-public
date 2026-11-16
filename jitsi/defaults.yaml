@@ -54,6 +54,15 @@ jitsi:
       net.core.wmem_max: 10485760
       net.core.wmem_default: 1048576
       net.core.netdev_max_backlog: 100000
+    # ice4j host candidates: interfaces that are never advertised to clients.
+    # Private ranges (Nebula overlay, VLAN) are unreachable for clients and only
+    # make them try TURN relay permissions to private peers. Names that do not
+    # exist on a host are ignored. [] disables the filter.
+    ice_blocked_interfaces:
+      - nebula1
+      - vlan101
+      - vlan102
+      - docker0
     octo:
       enabled: false
       interface: tun0 # or "ip_addr: 127.0.0.1"

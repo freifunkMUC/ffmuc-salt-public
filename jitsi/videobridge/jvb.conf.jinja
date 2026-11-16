@@ -76,3 +76,14 @@ videobridge {
         tls = true
     }
 }
+{%- if jitsi.videobridge.ice_blocked_interfaces %}
+ice4j {
+    harvest {
+        blocked-interfaces = [
+{%- for iface in jitsi.videobridge.ice_blocked_interfaces %}
+            "{{ iface }}"{{ "," if not loop.last }}
+{%- endfor %}
+        ]
+    }
+}
+{%- endif %}
