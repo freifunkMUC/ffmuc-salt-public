@@ -161,7 +161,8 @@ icinga-user:
     - require:
       - pkg: icinga2-pkg
 
-{%- set node_name = salt['cmd.run']('icinga2 variable get NodeName', python_shell=False, ignore_retcode=True).strip() %}
+{#- Before the first install there is no icinga2 binary and cmd.run would abort the render. #}
+{%- set node_name = salt['cmd.run']('icinga2 variable get NodeName', python_shell=False, ignore_retcode=True).strip() if salt['cmd.which']('icinga2') else '' %}
 {%- if not node_name or ' ' in node_name or '\n' in node_name or '/' in node_name %}{% set node_name = grains['id'] %}{% endif %}
 # Install host cert + key readable for icinga
 icinga2-hostcert:
