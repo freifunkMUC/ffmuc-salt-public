@@ -74,7 +74,9 @@ def _query(url, header_dict, **kwargs):
             header_dict=header_dict,
             decode=True,
             # query() takes its timeouts from opts, not from a keyword
-            opts=dict(__opts__, http_connect_timeout=10.0, http_request_timeout=TIMEOUT),
+            opts=dict(
+                __opts__, http_connect_timeout=10.0, http_request_timeout=TIMEOUT
+            ),
             **kwargs,
         )
         status = result.get("status")
@@ -148,7 +150,6 @@ def ext_pillar(minion_id, pillar, *args, **kwargs):
             id=search_results["dict"]["results"][0]["id"],
         )
         device_results = _query(device_url, header_dict=headers)
-
 
     ret["netbox"] = device_results["dict"]
     site_id = 0
