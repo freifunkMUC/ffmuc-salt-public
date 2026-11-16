@@ -6,6 +6,15 @@ services:
       komodo.skip: ""
     command: --quiet --wiredTigerCacheSizeGB 0.25
     restart: unless-stopped
+    user: "999:999"
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 1g
     environment:
       - MONGO_INITDB_ROOT_USERNAME=komodo
       - MONGO_INITDB_ROOT_PASSWORD=${KOMODO_DATABASE_PASSWORD}

@@ -208,6 +208,10 @@ services:
     security_opt:
       - no-new-privileges:true
     mem_limit: 512m
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/run/postgresql
 
   mta-sts:
     # Unprivileged nginx: listens on 8080, pid and cache in /tmp.

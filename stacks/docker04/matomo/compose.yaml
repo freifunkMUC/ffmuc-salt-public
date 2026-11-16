@@ -24,6 +24,10 @@ services:
     cap_drop: [ALL]
     security_opt: ["no-new-privileges:true"]
     mem_limit: 1536m
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /run/mysqld
     volumes:
       - /srv/docker/matomo/database:/var/lib/mysql
     environment:

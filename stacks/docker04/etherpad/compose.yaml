@@ -57,4 +57,8 @@ services:
     security_opt:
       - no-new-privileges:true
     mem_limit: 1g
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /run/mysqld
     cpus: 2

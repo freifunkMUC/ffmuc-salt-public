@@ -58,6 +58,9 @@ services:
       - ALL
     security_opt:
       - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
     # command: --wiredTigerCacheSizeGB 2.5 # Container memory limit - 0.5G
     volumes:
       - /srv/docker/unifi/database:/data/db

@@ -61,6 +61,10 @@ services:
     security_opt:
       - no-new-privileges:true
     mem_limit: 512m
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/run/postgresql
     env_file: env/postgres.env
     volumes:
       - netbox-postgres18-data:/var/lib/postgresql

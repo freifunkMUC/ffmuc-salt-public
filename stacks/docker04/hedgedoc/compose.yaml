@@ -72,6 +72,10 @@ services:
     security_opt:
       - no-new-privileges:true
     mem_limit: 2g
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /run/mysqld
     environment:
       - MARIADB_RANDOM_ROOT_PASSWORD=yes
       - MYSQL_DATABASE=hedgedoc
