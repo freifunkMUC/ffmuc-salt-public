@@ -45,11 +45,31 @@ docker-systemd-ordering:
         Wants=nebula.service
         After=nebula.service
 
+{#- live-restore keeps containers running across a dockerd upgrade, but the new docker.socket is a new inode:
+   containers that bind-mount it (socket proxies, crowdsec) then fail until restarted. #}
+docker-socket-remount-script:
+  file.managed:
+    - name: /usr/local/sbin/docker-socket-remount
+    - source: salt://docker/files/docker-socket-remount.sh
+    - mode: "0755"
+
+docker-systemd-socket-remount:
+  file.managed:
+    - name: /etc/systemd/system/docker.service.d/ffmuc-socket-remount.conf
+    - makedirs: True
+    - contents: |
+        # Managed by Salt (docker/init.sls)
+        [Service]
+        ExecStartPost=-/usr/local/sbin/docker-socket-remount
+    - require:
+      - file: docker-socket-remount-script
+
 docker-systemd-daemon-reload:
   module.run:
     - service.systemctl_reload: []
     - onchanges:
       - file: docker-systemd-ordering
+      - file: docker-systemd-socket-remount
 
 {# limit log-file-size #}
 /etc/docker/daemon.json:
