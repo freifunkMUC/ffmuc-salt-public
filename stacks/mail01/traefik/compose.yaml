@@ -4,11 +4,20 @@
 # dynamic_conf.yml and acme.json (certificates, also read by the mailserver)
 # stay on the host. The dashboard is Nebula only (traefik-mail01.ov.ffmuc.net)
 # behind the Keycloak realm noc login, as on docker04-07.
+# Docker API only through the read-only socket-proxy, no socket mount in Traefik.
+# Deploy order: socket-proxy first (compose up -d socket-proxy), then recreate mailserver and
+# maintenance (their v3 rules also parse under v2), then traefik last (drops defaultRuleSyntax v2).
 services:
   traefik:
     image: traefik:v3.7.19@sha256:aa942a00bce033c909bf1f7e861d93761be4b31a035f10d2410d33e38a8f41cf
     container_name: traefik
     restart: unless-stopped
+    depends_on:
+      socket-proxy:
+        condition: service_healthy
+    # Not read_only and no cap_drop: the ov DNS-01 exec script installs bind-tools with apk on first use.
+    mem_limit: 384m
+    pids_limit: 512
     healthcheck:
       test: ["CMD", "traefik", "healthcheck", "--ping"]
       interval: 30s
@@ -19,13 +28,13 @@ services:
       - no-new-privileges:true
     networks:
       - proxy
+      - socket-proxy
     ports:
       - 80:80
       - 443:443/tcp
       - 443:443/udp
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./traefik.yml:/traefik.yml:ro
       # DNS-01 for resolver ov, written by the Salt state certs (0700, holds the update key)
       - /opt/containers/traefik/update-dns.sh:/tmp/update-dns.sh:ro
@@ -54,6 +63,36 @@ services:
       - "providers.file.filename=/dynamic_conf.yml"
       - "traefik.docker.network=proxy"
 
+  # Read-only Docker API for the docker provider: version, ping, containers, events; no POST.
+  socket-proxy:
+    image: lscr.io/linuxserver/socket-proxy:3.4.7-r0-ls104@sha256:4e5e59efd3338205561c54262581992036e5a36ccca97d487b1d4ec41f9adc58
+    container_name: traefik-socket-proxy
+    restart: unless-stopped
+    read_only: true
+    mem_limit: 64m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:2375/_ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    tmpfs:
+      - /run
+    environment:
+      CONTAINERS: "1"
+      EVENTS: "1"
+      PING: "1"
+      VERSION: "1"
+      POST: "0"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - socket-proxy
+
 networks:
   default:
     driver: bridge
@@ -67,3 +106,5 @@ networks:
     name: proxy
     driver: bridge
     attachable: true
+  socket-proxy:
+    internal: true
