@@ -8,6 +8,10 @@
   `ghcr.io/freifunkmuc/wgkex`, same tag as the workers; Renovate bumps both in one PR). Their config `/srv/docker/wgkex/config/broker/wgkex.yaml` is **not** managed by
   Salt. Requests reach them through haproxy (`broker_backend`), which overwrites `X-Forwarded-For`, so the brokers
   trust it from the webfrontends (`broker.trusted_proxies`).
+- **MQTT** (EMQX cluster `mqtt_cluster` in the same stacks, `broker.ov.ffmuc.net:1883`): the workers log in as
+  pillar `wgkex:mqtt:username`/`password` (empty: anonymous), the brokers as `wgkex-broker` with the Periphery secret
+  `WGKEX_MQTT_BROKER_PASSWORD` (`WGKEX__MQTT__*` env, needs wgkex with freifunkMUC/wgkex#324). EMQX still accepts
+  anonymous clients; the clients send credentials first so authentication can be switched on afterwards.
 - Metrics: telegraf scrapes the workers on `127.0.0.1:9101` and the brokers on `127.0.0.1:5000` (measurement
   `prometheus`, tag `wgkex_role`). haproxy denies `/metrics` publicly.
 

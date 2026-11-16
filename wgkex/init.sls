@@ -36,6 +36,10 @@ python3-virtualenv:
   file.managed:
     - source: salt://wgkex/wgkex.yaml.jinja
     - template: jinja
+    - user: root
+    - group: wgkex
+    - mode: "0640"
+    - show_changes: False
 
 wgkex-service:
   service.running:
