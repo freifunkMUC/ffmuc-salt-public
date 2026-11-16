@@ -139,8 +139,10 @@ ffmuc-int-v2-missing:
 {%- endif %}{# intermediate present #}
 {% else %}{# issuer cfssl #}
 {%- set cert_validity = salt['cmd.run']('openssl x509 -noout -checkend 2592000 -in /etc/ssl/certs/'~ grains['id']  ~'.cert.pem') %}
+{#- A certificate from the x509 issuer is replaced at once, so switching back to cfssl is a rollback #}
+{%- set cert_issuer = salt['cmd.run']('openssl x509 -noout -issuer -in /etc/ssl/certs/'~ grains['id']  ~'.cert.pem') %}
 {%- if salt["network.ping"]("ca.ov.ffmuc.net", return_boolean=True, timeout=10) %}
-{% if 'Certificate will not expire' not in cert_validity %}
+{% if 'Certificate will not expire' not in cert_validity or 'FFMUC Internal CA' in cert_issuer %}
 {%- set cert_bundle = salt['cfssl_certs.request_cert']('https://ca.ov.ffmuc.net', grains['id']) %}
 #
 # Internal certificate from FFMUC CA
