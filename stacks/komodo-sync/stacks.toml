@@ -221,6 +221,7 @@ run_directory = "stacks/docker04/wgkex"
 file_paths = ["compose.yaml"]
 environment = """
 EMQX_NODE__COOKIE = [[WGKEX_EMQX_NODE_COOKIE]]
+WGKEX_MQTT_BROKER_PASSWORD = [[WGKEX_MQTT_BROKER_PASSWORD]]
 """
 
 [[stack]]
@@ -374,6 +375,7 @@ run_directory = "stacks/docker06/wgkex"
 file_paths = ["compose.yaml"]
 environment = """
 EMQX_NODE__COOKIE = [[WGKEX_EMQX_NODE_COOKIE]]
+WGKEX_MQTT_BROKER_PASSWORD = [[WGKEX_MQTT_BROKER_PASSWORD]]
 """
 
 [[stack]]
@@ -525,6 +527,7 @@ run_directory = "stacks/docker05/wgkex"
 file_paths = ["compose.yaml"]
 environment = """
 EMQX_NODE__COOKIE = [[WGKEX_EMQX_NODE_COOKIE]]
+WGKEX_MQTT_BROKER_PASSWORD = [[WGKEX_MQTT_BROKER_PASSWORD]]
 """
 
 [[stack]]
@@ -709,6 +712,7 @@ run_directory = "stacks/docker07/wgkex"
 file_paths = ["compose.yaml"]
 environment = """
 EMQX_NODE__COOKIE = [[WGKEX_EMQX_NODE_COOKIE]]
+WGKEX_MQTT_BROKER_PASSWORD = [[WGKEX_MQTT_BROKER_PASSWORD]]
 """
 
 [[stack]]

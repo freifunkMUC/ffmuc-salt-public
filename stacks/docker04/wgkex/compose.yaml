@@ -4,6 +4,10 @@ services:
     image: ghcr.io/freifunkmuc/wgkex:v0.5.1@sha256:e37db1ee4d9652e0ba79f091ad8d7acbcf3af4d7d68378d9ff4941a1ceb5f4d2
     command: broker
     restart: unless-stopped
+    depends_on:
+      mqtt_cluster:
+        condition: service_healthy
+        restart: true
     ports:
       - "5000:5000"
     volumes:
@@ -14,8 +18,9 @@ services:
       WGKEX_DEBUG: DEBUG
       MQTT_BROKER_URL: mqtt
       MQTT_BROKER_PORT: "1883"
-      MQTT_USERNAME: ""
-      MQTT_PASSWORD: ""
+      # wgkex >= #324 reads these over /etc/wgkex.yaml; older images ignore them.
+      WGKEX__MQTT__USERNAME: wgkex-broker
+      WGKEX__MQTT__PASSWORD: ${WGKEX_MQTT_BROKER_PASSWORD:?}
       MQTT_KEEPALIVE: "5"
       MQTT_TLS: "False"
     healthcheck:
