@@ -11,6 +11,9 @@
 {%- for node in nebula_node_data_list %}
 -A PREROUTING -d {{ nat_ip }} -p udp -m udp --dport {{ node.nebula_port }} -j DNAT --to-destination {{ node.minion_address }} -m comment --comment "{{ node.hostname }}"
 {%- endfor %}{# node #}
+{%- for node in nebula_meet_data_list %}
+-A PREROUTING -d {{ nat_ip }} -p udp -m udp --dport {{ node.nebula_port }} -j DNAT --to-destination {{ node.minion_address }} -m comment --comment "{{ node.hostname }} nebula-meet"
+{%- endfor %}{# node #}
 {%- for node in nebula_node_data_list %}
 -A POSTROUTING -s {{ node.minion_address }} -p udp -m udp --sport {{ node.nebula_port }} -j SNAT --to-source {{ nat_ip }}:{{ node.nebula_port }} -m comment --comment "{{ node.hostname }}"
 {%- endfor %}{# node #}
@@ -44,6 +47,9 @@ COMMIT
 {#- Allow nebula traffic from Freifunk Netz to internal network #}
 {%- for node in nebula_node_data_list %}
 -A FORWARD -o {{ internal_vlan_if }} -d {{ node.minion_address }} -p udp -m udp --dport {{ node.nebula_port }} -j ACCEPT -m comment --comment "{{ node.hostname }}"
+{%- endfor %}{# node #}
+{%- for node in nebula_meet_data_list %}
+-A FORWARD -o {{ internal_vlan_if }} -d {{ node.minion_address }} -p udp -m udp --dport {{ node.nebula_port }} -j ACCEPT -m comment --comment "{{ node.hostname }} nebula-meet"
 {%- endfor %}{# node #}
 {#- Block all other traffic to internal network #}
 -A FORWARD -i br+ -o {{ internal_vlan_if }} -j REJECT --reject-with icmp-port-unreachable
