@@ -1,0 +1,90 @@
+---
+
+domains:
+  - ffmuc_augsburg
+  - ffmuc_freising
+  - ffmuc_gauting
+  - ffmuc_muc_cty
+  - ffmuc_muc_nord
+  - ffmuc_muc_ost
+  - ffmuc_muc_sued
+  - ffmuc_muc_west
+  - ffmuc_uml_nord
+  - ffmuc_uml_ost
+  - ffmuc_uml_sued
+  - ffmuc_uml_west
+  - ffmuc_ulm
+  - ffmuc_welt
+  - ffmuc_dlg
+  - ffdon_mitte
+  - ffdon_nordwest
+  - ffdon_sued
+  - ffwert_city
+  - ffwert_events
+  - ffbachtal_bachtal
+domain_prefixes:
+  - ffmuc_
+  - ffdon_
+  - ffwert_
+  - ffbachtal_
+
+# [broker] The dict of workers mapping their hostname to their respective weight for weighted peer distribution
+workers:
+  gw04.in.ffmuc.net:
+    weight: 25
+  gw05:
+    weight: 25
+  gw06:
+    weight: 25
+  gw07:
+    weight: 25
+
+mqtt:
+  broker_url: mqtt_cluster
+  username:
+  password:
+  tls: False
+  broker_port: 1883
+  keepalive: 20
+broker_listen:
+  host: 0.0.0.0
+  port: 5000
+logging_config:
+  formatters:
+    standard:
+      format: '%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s'
+  handlers:
+    console:
+      class: logging.StreamHandler
+      formatter: standard
+  root:
+    handlers:
+      - console
+    level: DEBUG
+  version: 1
+# Load balancing (wgkex >= 9f53ff0, #294); all values are the upstream defaults.
+# Active rebalancing must also be enabled on the workers (salt: wgkex/wgkex.yaml.jinja).
+load_balancing:
+  # Count the other brokers' pending assignments (4 brokers behind haproxy, wgkex >= caf959c)
+  share_pending_assignments: true
+  pending_assignment_ttl: 300
+  pending_assignment_settle_time: 60
+  rebalancing:
+    enabled: true
+    interval: 60
+    tolerance: 0.1
+    min_excess_peers: 10
+    stable_time: 600
+# wgkex >= caf959c: haproxy on the webfrontends overwrites X-Forwarded-For with the client address,
+# trust it only from them (vlan100x + nebula addresses) for the per-client rate limit
+broker:
+  trusted_proxies:
+    - 10.80.248.36/32
+    - 10.80.248.37/32
+    - 10.80.248.73/32
+    - 10.80.248.74/32
+    - 10.8.0.29/32
+    - 10.8.0.30/32
+    - 10.8.0.39/32
+    - 10.8.0.40/32
+log_level: INFO
