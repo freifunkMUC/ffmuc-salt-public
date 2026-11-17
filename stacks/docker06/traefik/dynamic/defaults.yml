@@ -5,6 +5,8 @@ tls:
     # Mozilla "intermediate": TLS 1.2 and 1.3. The list is for TLS 1.2; Go fixes the 1.3 suites.
     default:
       minVersion: VersionTLS12
+      # Reject clients without SNI or with an unknown name instead of serving the default certificate.
+      sniStrict: true
       cipherSuites:
         - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
         - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
