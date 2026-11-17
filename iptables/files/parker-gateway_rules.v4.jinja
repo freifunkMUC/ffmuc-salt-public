@@ -20,7 +20,8 @@ COMMIT
 {%- set wireguard_port = salt['pillar.get']('netbox:config_context:wireguard:port') %}
 -A INPUT -i jool -d {{ nat_ip }} -p udp -m udp --dport {{ wireguard_port }} -j REJECT --reject-with icmp-port-unreachable -m comment --comment "Block tunnel in tunnel"
 
-{#- Jool fragments incoming IPv4 packets so they result in 1280 byte IPv6 packets -> MSS = 1280 - 40 B (IPv6 header) - 8 B (IPv6 Fragment header) - 20 B (TCP header) #}
+{#- Keep translated TCP packets at 1280 B IPv6, the minimum IPv6 MTU: MSS = 1280 - 40 B (IPv6 header) - 8 B (Fragment header) - 20 B (TCP header).
+    Jool fragments only above lowest-ipv6-mtu (parker/plat), because the node CLAT drops IPv6 fragments. #}
 -A FORWARD -i jool -o {{ uplink_iface }} -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1212
 
 {#- Block tunnel in tunnel to other gateways #}

@@ -120,11 +120,25 @@ systemd-networkd-reload:
 # Rename interfaces to corresponding vlans based on mac address
 {%- set interfaces = salt['pillar.get']('netbox:interfaces') %}
 
-{# In case of Parker, add crosslink interfaces #}
+{# In case of Parker, add crosslink interfaces to the other pgws of the same site (iBGP, see parker/bird2) #}
 {% if 'parker-gateway' in role %}
+{%- set own_location = salt['pillar.get']('netbox:site:name') %}
 
 {% for node,_ in salt['mine.get']('netbox:role:name:parker-gateway', 'minion_id', tgt_type='pillar').items() | sort %}
-{%- if grains['id'] not in node %}{# Skip, don't create peer for the host we are configuring #}
+{% set node_short = node | regex_replace('in\.ffmuc\.net','') %}
+{%- if grains['id'] not in node and salt['mine.get'](node, 'minion_location', tgt_type='glob').get(node) != own_location %}
+{# No crosslink between sites: remove an old one #}
+{%- for ext in ['netdev', 'network'] %}
+/etc/systemd/network/30-wg-bb-{{ node_short }}.{{ ext }}:
+  file.absent:
+    - watch_in:
+      - cmd: systemd-networkd-reload
+{%- endfor %}
+delete-wg-bb-{{ node_short }}:
+  cmd.run:
+    - name: ip link delete "wg-bb-{{ node_short }}"
+    - onlyif: ip link show "wg-bb-{{ node_short }}"
+{%- elif grains['id'] not in node %}
 
 {%- set peer_wireguard_public_key = salt['mine.get'](node,'minion_wireguard_public', tgt_type='glob')[node] %}
 
@@ -139,7 +153,6 @@ systemd-networkd-reload:
 {%- set peer_link_local = salt['wireguard_v6.generate'](peer_wireguard_public_key) %}
 {%- set peer_endpoint = (node | regex_replace('in\.ffmuc\.net','ext.ffmuc.net')) + ":" + (peer_port | string) %}
 
-{% set node_short = node | regex_replace('in\.ffmuc\.net','') %}
  {# TODO ipaddresses #}
 {% set iface = {
   "wg-bb-" + node_short: {
@@ -151,7 +164,7 @@ systemd-networkd-reload:
     "peer_endpoint": peer_endpoint,
 } } %}
 {%- do interfaces.update(iface) %}
-{%- endif %}{# if grains['id'] not in node #}
+{%- endif %}{# other pgw of the same site #}
 {% endfor %}{# for node,_ #}
 {%- endif %}{# if parker-gateway in role #}
 

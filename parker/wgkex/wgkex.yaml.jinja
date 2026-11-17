@@ -1,4 +1,6 @@
 ---
+# wgkex worker of a pgw. The Parker broker is the classic wgkex broker
+# (stacks/docker0*/wgkex/wgkex.yaml on main).
 
 parker:
   enabled: True
@@ -21,36 +23,31 @@ parker:
       netbox_additional_data:
         tags:
           - slug: node-prefix
-
-broker_signing_key: '{{ salt['pillar.get']('netbox:config_context:parker:wgkex:nodeconfig_key') }}'
+  # [worker] Route a node /63 only on the pgw with a fresh handshake (active pgw)
+  route_gate:
+    handshake_max_age: 180
+    interval: 1
 
 # Not needed for parker
 domains: []
 domain_prefixes:
   - 'ffmuc_'
 
-workers:
-  pgw01:
-    weight: 100
-    pop: muc01
-
-sticky_worker_tolerance: 15
+# [worker] Keep the peers of nodes that use another pgw of the site (standby).
+# The worker routes a node only after a fresh handshake, so old peers do no harm.
+cleanup:
+  parker_stale_timeout: 864000
 
 # [worker] The external hostname of this worker
 externalName: {{ grains['id'] | regex_replace('in\.ffmuc\.net','ext.ffmuc.net') }}
 
-# [broker] netbox connection details
-# Note: you can restrict the user for wgkex to "IPAM > Prefix" object types
-netbox:
-  # URL for your NetBox instance, without the "/api" path
-  url: https://nb-parker.ov.ffmuc.net
-  api_key: {{ salt['pillar.get']('netbox:config_context:parker:wgkex:netbox_token') }}
-
-# [broker, worker] MQTT connection informations
+# MQTT connection. EMQX needs a login: same user as the classic workers.
+{%- set mqtt_username = salt['pillar.get']('wgkex:mqtt:username', '') %}
+{%- set mqtt_password = salt['pillar.get']('wgkex:mqtt:password', '') %}
 mqtt:
   broker_url: broker.ov.ffmuc.net
-  username:
-  password:
+  username:{% if mqtt_username %} {{ mqtt_username | yaml_dquote }}{% endif %}
+  password:{% if mqtt_password %} {{ mqtt_password | yaml_dquote }}{% endif %}
   tls: False
   broker_port: 1883
   keepalive: 20

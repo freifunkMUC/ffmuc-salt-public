@@ -57,9 +57,16 @@ python3-virtualenv:
     - require:
       - git: /srv/wgkex/wgkex-git
 
+{#- The Parker broker is the classic wgkex broker (stacks/docker0*/wgkex on main), not on the pgw #}
+wgkex-service-broker:
+  service.dead:
+    - name: wgkex-broker
+    - enable: False
+
 /etc/systemd/system/wgkex-broker.service:
-  file.managed:
-    - source: salt://parker/wgkex/wgkex-broker.service
+  file.absent:
+    - require:
+      - service: wgkex-service-broker
 
 /etc/systemd/system/wgkex-worker.service:
   file.managed:
@@ -71,16 +78,6 @@ python3-virtualenv:
     - source: salt://parker/wgkex/wgkex.yaml.jinja
     - template: jinja
 
-wgkex-service-broker:
-  service.running:
-    - name: wgkex-broker
-    - enable: True
-    - require:
-        - file: /etc/wgkex.yaml
-        - git: /srv/wgkex/wgkex-git
-    - watch:
-        - file: /etc/wgkex.yaml
-        - git: /srv/wgkex/wgkex-git
 wgkex-service-worker:
   service.running:
     - name: wgkex-worker
