@@ -221,7 +221,7 @@ newServer({address="127.0.0.1:553", name="local-auth", pool="auth"}){# bind #}
 {%- endif %}{# authoritative #}
 
 -- only zones that bind hosts (dns-auth/init.sls); the rest of ffmuc.net and the externally hosted domains go to the recursors
-addAction({'in.ffmuc.net', 'ov.ffmuc.net', 'ext.ffmuc.net', 'int.meet.ffmuc.net'}, PoolAction("auth"), {name="Redirect-Auth"})
+addAction({'in.ffmuc.net', 'ov.ffmuc.net', 'ext.ffmuc.net', 'in.meet.ffmuc.net'}, PoolAction("auth"), {name="Redirect-Auth"})
 addAction(AndRule({OpcodeRule(DNSOpcode.Notify), NotRule(makeRule("213.160.72.212"))}), RCodeAction(DNSRCode.REFUSED))
 addAction({'freifunk.net'}, PoolAction("auth"), {name="Redirect-Auth-freifunk.net"})
 addAction({'resolver.arpa'}, PoolAction("auth"), {name="Redirect-resolver.arpa"})
