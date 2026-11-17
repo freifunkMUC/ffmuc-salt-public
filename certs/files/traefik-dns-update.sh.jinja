@@ -9,6 +9,11 @@
 #   update-dns.sh cleanup <fqdn> <token> <keyauth>
 # where <fqdn> is e.g. _acme-challenge.flow.ov.ffmuc.net
 
+# Fallback for hosts still on the plain image; remove once every Traefik uses local/traefik-nsupdate.
+if [ ! -f /usr/bin/nsupdate ]; then
+    apk update && apk add bind-tools
+fi
+
 ACTION="$1"
 FQDN="$2"
 TOKEN="$3"
