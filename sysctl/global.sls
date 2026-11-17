@@ -112,3 +112,12 @@ net.ipv4.tcp_congestion_control:
   sysctl.present:
     - value: bbr
     - config: /etc/sysctl.d/10-bbr-congestion.conf
+
+{%- if grains.get('virtual') == 'container' %}
+# unprivileged containers: systemd's default 0-2147483647 exceeds the gid map,
+# leaving 65534 and no unprivileged ICMP sockets (icinga ping checks fail)
+net.ipv4.ping_group_range:
+  sysctl.present:
+    - value: 0 65535
+    - config: /etc/sysctl.d/10-global.conf
+{%- endif %}
