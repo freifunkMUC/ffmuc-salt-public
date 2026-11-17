@@ -71,6 +71,8 @@ services:
       # Redis; the old redis.config.php in the data volume reads REDIS_PASSWORD
       - REDIS_HOST=redis
       - REDIS_PASSWORD=${REDIS_PASSWORD}
+      # the image entrypoint writes the PHP session handler (redis-session.ini) from REDIS_HOST_PASSWORD
+      - REDIS_HOST_PASSWORD=${REDIS_PASSWORD}
       - NC_default_phone_region=DE
     volumes:
       - /srv/docker/nextcloud/data:/var/www/html
