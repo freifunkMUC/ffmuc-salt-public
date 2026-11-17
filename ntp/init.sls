@@ -1,8 +1,8 @@
 #
 # NTP
 #
-{#- Debian 13 has no ntp package: ntpsec, with its own config path #}
-{%- set ntpsec = grains.os == 'Debian' and grains.osmajorrelease >= 13 %}
+{#- Debian 13 and Ubuntu 26.04 have no ntp package: ntpsec, with its own config path #}
+{%- set ntpsec = (grains.os == 'Debian' and grains.osmajorrelease >= 13) or (grains.os == 'Ubuntu' and grains.osmajorrelease >= 26) %}
 
 ntp:
   pkg.installed:

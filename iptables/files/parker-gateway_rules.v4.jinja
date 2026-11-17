@@ -27,9 +27,13 @@ COMMIT
 {#- Block tunnel in tunnel to other gateways #}
 {%- for node,_ in salt['mine.get']('netbox:role:name:parker-gateway', 'minion_id', tgt_type='pillar').items() | sort if
 grains.id not in node %}
-{%- set external_address = salt['mine.get'](node,'minion_external_ip', tgt_type='glob')[node][0].split('/')[0] %}
+{%- set external_addresses = salt['mine.get'](node,'minion_external_ip', tgt_type='glob').get(node) or [] %}
+{%- if external_addresses %}
 {#- TODO create mine function for port to get correct port for each node in case they are different #}
--A FORWARD -i jool -d {{ external_address }} -p udp -m udp --dport {{ wireguard_port }} -j REJECT --reject-with icmp-port-unreachable -m comment --comment "Block tunnel in tunnel"
+-A FORWARD -i jool -d {{ external_addresses[0].split('/')[0] }} -p udp -m udp --dport {{ wireguard_port }} -j REJECT --reject-with icmp-port-unreachable -m comment --comment "Block tunnel in tunnel"
+{%- else %}
+# {{ node }}: no minion_external_ip in the Salt mine, no tunnel in tunnel rule. Refresh: salt {{ node }} mine.update
+{%- endif %}
 {%- endfor %}
 
 -A FORWARD -i jool -o nebula0 -j REJECT --reject-with icmp-port-unreachable

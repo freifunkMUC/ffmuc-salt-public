@@ -5,7 +5,15 @@
 :OUTPUT ACCEPT
 :POSTROUTING ACCEPT
 
-{% set own_external_address6 = salt['mine.get'](grains.id,'minion_external_ip6', tgt_type='glob')[grains.id][0].split('/')[0] %}
+{#- The own public address is on dummy0 (local grains, not the mine: a new pgw has no mine data yet) #}
+{%- set own_external_addresses6 = [] %}
+{%- for address in salt['grains.get']('ip6_interfaces:dummy0', []) if not address.lower().startswith('fe80') %}
+{%- do own_external_addresses6.append(address) %}
+{%- endfor %}
+{%- if not own_external_addresses6 %}
+{{- raise('No global IPv6 address on dummy0 of ' ~ grains.id ~ '. Check the dummy0 IPv6 address in NetBox and systemd-networkd.') }}
+{%- endif %}
+{%- set own_external_address6 = own_external_addresses6[0] %}
 {% set own_internal_address6 = salt['grains.get']('ip6_interfaces:' + uplink_iface + ':0') %}
 {#- TODO after client networks (& Jool netns IPv6 address) are properly routed to pgw VM, remove NAT rule
 -A POSTROUTING -s {{ own_external_address6 }} -o {{ uplink_iface }} -j RETURN

@@ -7,17 +7,24 @@
 
 dnsdist-repo-key:
   cmd.run:
-    - name: "/usr/lib/apt/apt-helper download-file https://repo.powerdns.com/FD380FBB-pub.asc /tmp/FD380FBB-pub.asc && mv /tmp/FD380FBB-pub.asc /etc/apt/trusted.gpg.d/FD380FBB.asc"
+    - name: "mkdir -p /etc/apt/keyrings && /usr/lib/apt/apt-helper download-file https://repo.powerdns.com/FD380FBB-pub.asc /tmp/FD380FBB-pub.asc && mv /tmp/FD380FBB-pub.asc /etc/apt/keyrings/powerdns.asc"
     # NOTE: no 'creates' guard: PowerDNS periodically re-signs the FD380FBB key to
     # extend its expiry. Always re-fetch so an expired key (EXPKEYSIG) is refreshed.
 
 dnsdist-repo:
   pkgrepo.managed:
-    - name: deb [arch={{ grains.osarch }}] https://repo.powerdns.com/{{ grains.lsb_distrib_id | lower }} {{ grains.oscodename }}-dnsdist-21 main
+    - name: deb [arch={{ grains.osarch }} signed-by=/etc/apt/keyrings/powerdns.asc] https://repo.powerdns.com/{{ grains.lsb_distrib_id | lower }} {{ grains.oscodename }}-dnsdist-21 main
     - file: /etc/apt/sources.list.d/dnsdist.list
     - clean_file: True
     - require:
       - cmd: dnsdist-repo-key
+
+{#- Old global trust of the key (apt-key era); the repo uses signed-by now #}
+dnsdist-repo-legacy-key:
+  file.absent:
+    - name: /etc/apt/trusted.gpg.d/FD380FBB.asc
+    - require:
+      - pkgrepo: dnsdist-repo
 
 {#- repo.powerdns.com only serves the latest build: bump on each release; an override has to be a 2.1 build #}
 {%- set pdns_suffix = '1pdns.' ~ (grains.os | lower) ~ (grains.osrelease if grains.os == 'Ubuntu' else grains.osmajorrelease | string) %}

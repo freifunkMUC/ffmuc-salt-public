@@ -194,6 +194,9 @@ protocol ospf v2 {
 }
 {%- elif role == 'parker-gateway' %}
 {%- set parker_range = ns.additional_v6_prefix %}
+{%- if not parker_range %}
+{{- raise('No network.additional_v6_prefix (the Parker /50 of the site) in the NetBox config context of ' ~ grains.id ~ '. bird needs it for the parker_range routes.') }}
+{%- endif %}
 {%- set own_location = salt['pillar.get']('netbox:site:name') %}
 {%- set own_link_local = salt['wireguard_v6.generate'](salt['pillar.get']('netbox:config_context:wireguard:public_key')) %}
 # The Parker range of this site. The wgkex worker adds a /63 route into
