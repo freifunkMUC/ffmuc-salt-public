@@ -1,3 +1,6 @@
+include:
+  - systemd-networkd.netplan
+
 {#- Default to '' rather than to the same lookup again: an unset role made
     this None, and `'...' in None` aborts the render with a TypeError. #}
 {%- set role = salt['pillar.get']('netbox:role:name', '') or '' %}
@@ -115,18 +118,6 @@ vxlan-fdb-fill.service:
 
 {% endif %}{# 'nextgen-gateway' in role #}
 
-{% if grains.os == 'Ubuntu' %}
-disable_netplan:
-  file.managed:
-    - name: /etc/netplan/01-netcfg.yaml
-    - source: salt://systemd-networkd/files/netplan.conf
-
-disable_netplan_generator:
-  file.symlink:
-    - name: /usr/lib/systemd/system-generators/netplan
-    - target: /dev/null
-    - force: True
-{% endif %}
 
 systemd-networkd:
     service.running:
