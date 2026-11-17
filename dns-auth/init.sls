@@ -128,10 +128,10 @@ apparmor-reload:
     - watch_in:
       - cmd: rndc-reload
 
-{%- if 'int.meet.ffmuc.net' in zones %}
-/etc/bind/zones/db.int.meet.ffmuc.net:
+{%- if 'in.meet.ffmuc.net' in zones %}
+/etc/bind/zones/db.in.meet.ffmuc.net:
   file.managed:
-    - source: salt://dns-auth/db.int.meet.ffmuc.net
+    - source: salt://dns-auth/db.in.meet.ffmuc.net
     - user: bind
     - group: bind
     - mode: "0644"
@@ -214,14 +214,14 @@ dns-key:
 
 # Create DNS records for each node
 {% for node_id in nodes %}
-  {#- Jitsi hosts: nebula-meet address as <host>.int.meet.ffmuc.net (colibri-ws proxy in jitsi/nginx) #}
-  {%- if 'int.meet.ffmuc.net' in zones and node_id.endswith('.meet.ffmuc.net') %}
+  {#- Jitsi hosts: nebula-meet address as <host>.in.meet.ffmuc.net (colibri-ws proxy in jitsi/nginx, replaces the hand-made int.meet records) #}
+  {%- if 'in.meet.ffmuc.net' in zones and node_id.endswith('.meet.ffmuc.net') %}
   {%- set meet_address = salt['mine.get'](node_id, 'minion_meet_overlay_address', tgt_type='glob').get(node_id) %}
   {%- if meet_address is string and meet_address %}
 record-A-meet-overlay-{{ node_id }}:
   ddns.present:
-    - name: {{ node_id.split('.')[0] }}.int.meet.ffmuc.net.
-    - zone: int.meet.ffmuc.net
+    - name: {{ node_id.split('.')[0] }}.in.meet.ffmuc.net.
+    - zone: in.meet.ffmuc.net
     - ttl: 60
     - data: {{ meet_address | regex_replace('/\d+$','') }}
     - rdtype: A
