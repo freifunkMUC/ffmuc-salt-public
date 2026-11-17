@@ -22,9 +22,12 @@ user-{{ user }}:
     - require:
       - group: group-{{ user }}
 
+{#- python3-venv gives ensurepip (Ubuntu 26.04 does not install it) #}
 polld-python3-virtualenv:
   pkg.installed:
-    - name: python3-virtualenv
+    - pkgs:
+      - python3-virtualenv
+      - python3-venv
 
 /srv/polld:
   file.directory:
@@ -45,6 +48,12 @@ polld-python3-virtualenv:
     - require:
       - file: /srv/polld
 
+{#- A venv without pip (ensurepip failed) blocks virtualenv.managed: remove it #}
+/srv/polld/polld-git/venv-without-pip:
+  file.absent:
+    - name: /srv/polld/polld-git/venv
+    - unless: test -x /srv/polld/polld-git/venv/bin/pip
+
 /srv/polld/polld-git/venv:
   virtualenv.managed:
     - name: /srv/polld/polld-git/venv
@@ -52,6 +61,8 @@ polld-python3-virtualenv:
     - user: polld
     - runas: polld  {# workaround for https://github.com/saltstack/salt/issues/59088 #}
     - require:
+      - pkg: polld-python3-virtualenv
+      - file: /srv/polld/polld-git/venv-without-pip
       - git: /srv/polld/polld-git
 
 /etc/systemd/system/polld.service:

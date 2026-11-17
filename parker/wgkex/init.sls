@@ -25,8 +25,12 @@ user-{{ user }}:
     - require:
       - group: group-{{ user }}
 
+{#- python3-venv gives ensurepip (Ubuntu 26.04 does not install it) #}
 python3-virtualenv:
-  pkg.installed
+  pkg.installed:
+    - pkgs:
+      - python3-virtualenv
+      - python3-venv
 
 /srv/wgkex:
   file.directory:
@@ -47,6 +51,12 @@ python3-virtualenv:
     - require:
       - file: /srv/wgkex
 
+{#- A venv without pip (ensurepip failed) blocks virtualenv.managed: remove it #}
+/srv/wgkex/wgkex-git/venv-without-pip:
+  file.absent:
+    - name: /srv/wgkex/wgkex-git/venv
+    - unless: test -x /srv/wgkex/wgkex-git/venv/bin/pip
+
 /srv/wgkex/wgkex-git/venv:
   virtualenv.managed:
     - name: /srv/wgkex/wgkex-git/venv
@@ -54,6 +64,8 @@ python3-virtualenv:
     - user: wgkex
     - runas: wgkex  {# workaround for https://github.com/saltstack/salt/issues/59088 #}
     - require:
+      - pkg: python3-virtualenv
+      - file: /srv/wgkex/wgkex-git/venv-without-pip
       - git: /srv/wgkex/wgkex-git
 
 {#- The Parker broker is the classic wgkex broker (stacks/docker0*/wgkex on main), not on the pgw #}

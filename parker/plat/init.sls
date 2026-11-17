@@ -36,17 +36,25 @@ jool-script:
         nat64_pool4: {{ nat64_pool4 }}
         nat64_pool4_address: {{ nat64_pool4.split('/')[0] }}
 
+{#- jool-tools ships its own jool.service (Jool in the init namespace, without setup-jool.sh).
+    Load our unit before the start, or systemd starts the packaged one. #}
 jool-unit:
   file.managed:
     - source: salt://parker/plat/jool.service
     - name: /etc/systemd/system/jool.service
     - mode: "0644"
 
+jool-daemon-reload:
+  module.run:
+    - service.systemctl_reload: []
+    - onchanges:
+      - file: jool-unit
+
+{#- No reload: the oneshot unit has no ExecReload. A restart rebuilds the namespace. #}
 jool-service:
   service.running:
     - name: jool
     - enable: True
-    - reload: True
     - watch:
       - file: jool-config
       - file: jool-script
@@ -56,3 +64,4 @@ jool-service:
       - file: jool-config
       - file: jool-script
       - file: jool-unit
+      - module: jool-daemon-reload
