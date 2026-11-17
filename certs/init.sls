@@ -563,10 +563,12 @@ muenchen.freifunk.net-wildcard-cert:
         -d "donau-ries.freifunk.net" -d "*.donau-ries.freifunk.net"
         -d "augsburg.freifunk.net" -d "*.augsburg.freifunk.net"
         -d "map.ffdon.net"
+        -d "map.freifunk-donau-ries.de"
     - unless: >
         test -f /etc/letsencrypt/live/muenchen.freifunk.net/fullchain.pem &&
         openssl x509 -noout -checkend 2592000 -in /etc/letsencrypt/live/muenchen.freifunk.net/fullchain.pem &&
-        openssl x509 -noout -ext subjectAltName -in /etc/letsencrypt/live/muenchen.freifunk.net/fullchain.pem | grep -qE 'DNS:map\.ffdon\.net(,|$)'
+        openssl x509 -noout -ext subjectAltName -in /etc/letsencrypt/live/muenchen.freifunk.net/fullchain.pem | grep -qE 'DNS:map\.ffdon\.net(,|$)' &&
+        openssl x509 -noout -ext subjectAltName -in /etc/letsencrypt/live/muenchen.freifunk.net/fullchain.pem | grep -qE 'DNS:map\.freifunk-donau-ries\.de(,|$)'
     - require:
         - pip: certbot-venv-packages
         - file: update-dns.sh
