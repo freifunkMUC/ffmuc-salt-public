@@ -118,11 +118,11 @@ guardian-pxe-ubuntu-kernel:
 {%- set ca = [] %}
 {%- for f in nebula.pki.cas %}{% do ca.append(salt['cp.get_file_str']('salt://nebula/cert/' ~ f) | trim) %}{% endfor %}
 {%- set nebula_boot = {
-	'version': nebula.version,
-	'sha256': nebula.packages[nebula.version]['amd64'],
-	'ca': ca | join('\n') ~ '\n',
-	'lighthouses': nebula.lighthouses,
-	'interface': nebula.interface,
+  'version': nebula.version,
+  'sha256': nebula.packages[nebula.version]['amd64'],
+  'ca': ca | join('\n') ~ '\n',
+  'lighthouses': nebula.lighthouses,
+  'interface': nebula.interface,
 } %}
 
 {%- for host in pxe.install_hosts | sort %}
