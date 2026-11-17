@@ -24,7 +24,20 @@
 {%- endif %}
 {%- do ethernets.update({iface.name: eth}) %}
 {%- endfor %}
-{%- set storage = {'name': 'lvm', 'sizing-policy': 'all', 'match': {'size': 'largest'} } %}
+{#- Same layout as the other VMs: vda (8 MiB) holds only GRUB, sda is a whole-disk
+    LVM PV (no partition table), so the root can grow online with pvresize and lvextend -r. #}
+{%- set storage = [
+	{'type': 'disk', 'id': 'disk-vda', 'path': '/dev/vda', 'ptable': 'msdos', 'wipe': 'superblock-recursive', 'grub_device': True, 'preserve': False},
+	{'type': 'partition', 'id': 'part-vda1', 'device': 'disk-vda', 'number': 1, 'size': '6M', 'flag': 'boot', 'preserve': False},
+	{'type': 'disk', 'id': 'disk-sda', 'path': '/dev/sda', 'wipe': 'superblock-recursive', 'preserve': False},
+	{'type': 'lvm_volgroup', 'id': 'vg0', 'name': 'vg_ubuntu', 'devices': ['disk-sda'], 'preserve': False},
+	{'type': 'lvm_partition', 'id': 'lv-swap', 'volgroup': 'vg0', 'name': 'lv_swap', 'size': '1G', 'preserve': False},
+	{'type': 'lvm_partition', 'id': 'lv-root', 'volgroup': 'vg0', 'name': 'lv_root', 'preserve': False},
+	{'type': 'format', 'id': 'fs-swap', 'volume': 'lv-swap', 'fstype': 'swap', 'preserve': False},
+	{'type': 'format', 'id': 'fs-root', 'volume': 'lv-root', 'fstype': 'ext4', 'preserve': False},
+	{'type': 'mount', 'id': 'mnt-swap', 'device': 'fs-swap', 'path': 'none'},
+	{'type': 'mount', 'id': 'mnt-root', 'device': 'fs-root', 'path': '/'},
+] %}
 {%- set salt_list = 'deb [arch=amd64 signed-by=/etc/apt/keyrings/salt-archive-keyring.asc] https://packages.broadcom.com/artifactory/saltproject-deb/ stable main' %}
 {%- set config = {
 	'autoinstall': {
@@ -35,7 +48,7 @@
 		'timezone': 'Europe/Berlin',
 		'refresh-installer': {'update': False},
 		'network': {'version': 2, 'ethernets': ethernets},
-		'storage': {'layout': storage},
+		'storage': {'swap': {'size': 0}, 'config': storage},
 		'ssh': {'install-server': True, 'allow-pw': False},
 		'packages': ['qemu-guest-agent'],
 		'late-commands': [

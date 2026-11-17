@@ -177,6 +177,15 @@ class PxeTemplateTest(unittest.TestCase):
         self.assertIn("127.0.1.1 vm1.example.test vm1/", cmds)
         self.assertIn('GRUB_CMDLINE_LINUX="console=tty0 console=ttyS0,115200"', cmds)
         self.assertEqual(ai["shutdown"], "reboot")
+        # vda: msdos + GRUB only; sda: whole-disk PV, no partition table
+        st = {c["id"]: c for c in ai["storage"]["config"]}
+        self.assertNotIn("layout", ai["storage"])
+        self.assertEqual(st["disk-vda"]["ptable"], "msdos")
+        self.assertTrue(st["disk-vda"]["grub_device"])
+        self.assertNotIn("ptable", st["disk-sda"])
+        self.assertEqual(st["vg0"]["devices"], ["disk-sda"])
+        self.assertEqual(st["mnt-root"]["path"], "/")
+        self.assertFalse(any(c.get("path") == "/boot" for c in ai["storage"]["config"]))
         ud = ai["user-data"]
         self.assertEqual(ud["fqdn"], "vm1.example.test")
         self.assertEqual(ud["write_files"][0]["path"], "/root/.ssh/authorized_keys")

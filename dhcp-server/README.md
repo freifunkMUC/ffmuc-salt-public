@@ -152,12 +152,21 @@ Turn it on in the config context `dhcp_guardian` (Kea must be enabled):
   MAC. It installs `salt-minion` (same version as `salt-minion/init.sls`)
   with `id` = FQDN and `startup_states: highstate`, and the admin SSH keys
   for root. It contains no secrets.
+- **Disks:** the same layout as the other VMs. `vda` (8 MiB): msdos label,
+  one boot partition, GRUB. `sda`: the whole disk is an LVM PV with no
+  partition table, VG `vg_ubuntu` with `lv_swap` (1G) and `lv_root` (ext4,
+  `/`, also `/boot`). You can grow `sda` online with `pvresize` and
+  `lvextend -r`, with no partition changes.
 - **iptables:** udp/69 and tcp/80 from the mgmt network.
 - **Known effect:** Kea uses a raw socket on `eth0`. If another VLAN reaches
   the guardian port, Kea also answers DHCP from that VLAN with a mgmt pool
   address (seen for an uplink MAC of a new VM). This is harmless for the
   install, but fix the switch or bridge port if you see it.
 
-After the install, remove the host from `install_hosts` and run a highstate
-on the guardian. The state removes its files, so the next PXE boot shows the
-menu and does not install again.
+Keep the VM boot order `vda` = 1, `sda` = 2, network = 3. On the first boot
+`vda` is empty, so the VM boots from the network. Remove the host from
+`install_hosts` and run a highstate on the guardian **as soon as the
+installer has fetched its user-data** (`/autoinstall/<host>/user-data` in
+`/var/log/nginx/pxe.access.log`). The state removes the host files. If the
+files stay, a PXE boot before GRUB is on `vda` installs the VM again, in a
+loop.
