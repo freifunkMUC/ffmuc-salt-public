@@ -134,6 +134,8 @@ bcrypt hash), put the reference in single quotes: `NAME = '[[NAME]]'`.
 | `mail01/traefik` | none. `data/traefik.yml`, `dynamic_conf.yml` (dashboard basic auth hash) and `acme.json` stay on the host |
 | `mail01/maintenance` | none |
 
+Not mounted yet, git mirrors of the host files (host copy is authoritative until the compose mounts it): `docker04/dokuwiki/ldap.conf`, `docker05/salt-master/master.d/x509-peer.conf`, `docker05/cryptpad/customize/`, `docker05/cryptpad/onlyoffice-conf/`.
+
 ### Taking a project over
 
 One project at a time:
