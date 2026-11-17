@@ -6,9 +6,9 @@
   "bridge": "br-{{ site }}",
   {%- endif %}
   {%- if 'nextgen-gateway' in salt['pillar.get']('netbox:role:name') %}
-  "mesh-vpn": [ "fastd-{{ site }}", "vx-{{ site }}", "wg-{{ site }}" ],
+  "mesh-vpn": [ "vx-{{ site }}", "wg-{{ site }}" ],
   {%-else %}
-  "mesh-vpn": [ "fastd-{{ site }}" ],
+  "mesh-vpn": [],
   {%- endif %}
   {%- if 'VIE01' in salt['pillar.get']('netbox:site:name') %}
   "wan": "vlan101",
