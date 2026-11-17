@@ -214,28 +214,6 @@ dns-key:
 
 # Create DNS records for each node
 {% for node_id in nodes %}
-  {#- Jitsi hosts: nebula-meet address as <host>.in.meet.ffmuc.net (colibri-ws proxy in jitsi/nginx, replaces the hand-made int.meet records) #}
-  {%- if 'in.meet.ffmuc.net' in zones and node_id.endswith('.meet.ffmuc.net') %}
-  {%- set meet_address = salt['mine.get'](node_id, 'minion_meet_overlay_address', tgt_type='glob').get(node_id) %}
-  {%- if meet_address is string and meet_address %}
-record-A-meet-overlay-{{ node_id }}:
-  ddns.present:
-    - name: {{ node_id.split('.')[0] }}.in.meet.ffmuc.net.
-    - zone: in.meet.ffmuc.net
-    - ttl: 60
-    - data: {{ meet_address | regex_replace('/\d+$','') }}
-    - rdtype: A
-    - nameserver: 127.0.0.1
-    - port: {{ listening_port }}
-    - keyfile: /etc/bind/salt-master.key
-    - keyalgorithm: hmac-sha512
-    - replace_on_change: True
-    - require:
-      - pip: dnspython
-      - file: dns-key
-      - cmd: rndc-reload
-  {%- endif %}
-  {%- endif %}
   {%- if 'meet.ffmuc.net' not in node_id and 'lighthouse' not in node_id %}
   {%- set node = node_id | regex_search('(^\w+(-)?(\w+)?(\d+)?)') %}
   {%- set address = salt['mine.get'](node_id,'minion_address', tgt_type='glob')[node_id] %}
@@ -385,6 +363,31 @@ record-AAAA-external-{{ node_id }}:
   {%- endif %}
   {%- endif %}
 {%- endfor %}{# for node_id in nodes #}
+
+{#- Jitsi hosts: nebula-meet address as <host>.in.meet.ffmuc.net (colibri-ws proxy in jitsi/nginx, replaces the
+    hand-made int.meet records). Straight from the mine: the meet hosts are not in `nodes` (platform ubuntu-noble). #}
+{%- if 'in.meet.ffmuc.net' in zones %}
+{%- for node_id, meet_address in salt['mine.get']('*.meet.ffmuc.net', 'minion_meet_overlay_address', tgt_type='glob') | dictsort %}
+{%- if meet_address is string and meet_address %}
+record-A-meet-overlay-{{ node_id }}:
+  ddns.present:
+    - name: {{ node_id.split('.')[0] }}.in.meet.ffmuc.net.
+    - zone: in.meet.ffmuc.net
+    - ttl: 60
+    - data: {{ meet_address | regex_replace('/\d+$','') }}
+    - rdtype: A
+    - nameserver: 127.0.0.1
+    - port: {{ listening_port }}
+    - keyfile: /etc/bind/salt-master.key
+    - keyalgorithm: hmac-sha512
+    - replace_on_change: True
+    - require:
+      - pip: dnspython
+      - file: dns-key
+      - cmd: rndc-reload
+{%- endif %}
+{%- endfor %}
+{%- endif %}
 
 # Create CNAMES as defined in netbox:config_context:dns_zones:cnames or netbox:services (cnames field needs to be set to true)
 {% set services = salt['pillar.get']('netbox:services') %}
