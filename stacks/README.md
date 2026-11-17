@@ -131,8 +131,10 @@ bcrypt hash), put the reference in single quotes: `NAME = '[[NAME]]'`.
 | `docker07/element-web` | none; `config.json` is public anyway |
 | `mail01/mailserver` | `MAILSERVER_ROUNDCUBEMAIL_DB_PASSWORD`, `MAILSERVER_POSTGRES_PASSWORD`, `MAILSERVER_ROUNDCUBEMAIL_DES_KEY` (Roundcube's database login, the Postgres password and the key that encrypts the IMAP password in the session). Data, `state/`, `logs/`, `certs/` (mail_crypt key pair), `database/` and the mutable part of `config/` (accounts, aliases, quotas, DKIM keys) stay on the host in `/opt/containers/mailserver`; the files in this directory are mounted over them |
 | `mail01/crowdsec` | `CROWDSEC_TRAEFIK_BOUNCER_KEY` (compose variable `TRAEFIK_BOUNCER_KEY`, the bouncer's API key, must equal the key registered in crowdsec). `config/config.yaml`, the `*_api_credentials.yaml`, the hub and `data/` stay on the host |
-| `mail01/traefik` | none. `data/traefik.yml`, `dynamic_conf.yml` (dashboard basic auth hash) and `acme.json` stay on the host |
+| `mail01/traefik` | none. `traefik.yml` and `dynamic_conf.yml` in git (the unused `traefikAuth` basic auth was dropped, the dashboard uses `noc-auth`); `acme.json` stays on the host |
 | `mail01/maintenance` | none |
+
+Not mounted yet, git mirrors of the host files (host copy is authoritative until the compose mounts it): `docker04/dokuwiki/ldap.conf`, `docker05/salt-master/master.d/x509-peer.conf`, `docker05/cryptpad/customize/`, `docker05/cryptpad/onlyoffice-conf/`.
 
 ### Taking a project over
 

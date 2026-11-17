@@ -1,8 +1,8 @@
 # Traefik of mail01 (project "traefik", /opt/containers/traefik). It owns the
 # Docker network "proxy" that crowdsec, maintenance and mailserver join as
-# external; keep it first when everything is recreated. traefik.yml is in git;
-# dynamic_conf.yml and acme.json (certificates, also read by the mailserver)
-# stay on the host. The dashboard is Nebula only (traefik-mail01.ov.ffmuc.net)
+# external; keep it first when everything is recreated. traefik.yml and
+# dynamic_conf.yml are in git (file changes need a restart: single-file mount);
+# acme.json (certificates, also read by the mailserver) stays on the host. The dashboard is Nebula only (traefik-mail01.ov.ffmuc.net)
 # behind the Keycloak realm noc login, as on docker04-07.
 # Docker API only through the read-only socket-proxy, no socket mount in Traefik.
 # Deploy order: socket-proxy first (compose up -d socket-proxy), then recreate mailserver and
@@ -39,7 +39,7 @@ services:
       # DNS-01 for resolver ov, written by the Salt state certs (0700, holds the update key)
       - /opt/containers/traefik/update-dns.sh:/tmp/update-dns.sh:ro
       - /opt/containers/traefik/data/acme.json:/acme.json
-      - /opt/containers/traefik/data/dynamic_conf.yml:/dynamic_conf.yml
+      - ./dynamic_conf.yml:/dynamic_conf.yml:ro
       - /var/log/crowdsec/traefik/:/var/log/traefik/
     environment:
       - EXEC_PATH=/tmp/update-dns.sh
