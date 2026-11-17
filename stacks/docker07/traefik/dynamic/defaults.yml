@@ -17,13 +17,13 @@ tls:
 
 http:
   middlewares:
-    # On the https entry point (traefik.yml). Traefik overwrites these headers in every response,
-    # also a backend's own value: before adding a host, check that no backend sends a stricter HSTS
-    # (includeSubDomains/preload). HSTS without includeSubDomains (names below must be able to stay
-    # on plain HTTP), nosniff. No Referrer-Policy (the browser default is the same, backends set
-    # stricter ones) and no frame restriction (Jitsi, Collabora and others are embedded by other
-    # sites).
+    # On the https entry point (traefik.yml), overwrites these headers in every response.
+    # No Referrer-Policy, no CSP, no browserXssFilter.
     security-headers:
       headers:
-        stsSeconds: 31536000
         contentTypeNosniff: true
+        forceSTSHeader: true
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        customFrameOptionsValue: SAMEORIGIN
