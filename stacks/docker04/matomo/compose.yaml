@@ -41,7 +41,7 @@ services:
 
   # Replaces the code in the volume with the image's; keeps the mount points of the host files.
   matomo-install:
-    image: matomo:5.14.2-fpm-alpine@sha256:43f4c619873154350c8a8cdf6dd4dcf046cdf827a8a931241e61cf6a94566c9e
+    image: matomo:5.14.2-fpm-alpine@sha256:a34ad7c91d9b8cb694bcb8c6b069c9a110bcd74be1d233c293ec1313e2525b5c
     user: "82:82"
     restart: "no"
     cap_drop: [ALL]
@@ -61,7 +61,7 @@ services:
 
   # Migrates the database after a new version, does nothing otherwise.
   matomo-update:
-    image: matomo:5.14.2-fpm-alpine@sha256:43f4c619873154350c8a8cdf6dd4dcf046cdf827a8a931241e61cf6a94566c9e
+    image: matomo:5.14.2-fpm-alpine@sha256:a34ad7c91d9b8cb694bcb8c6b069c9a110bcd74be1d233c293ec1313e2525b5c
     user: "82:82"
     restart: "no"
     cap_drop: [ALL]
@@ -80,7 +80,7 @@ services:
     command: ["php", "console", "core:update", "--yes", "--no-interaction"]
 
   matomo-app:
-    image: matomo:5.14.2-fpm-alpine@sha256:43f4c619873154350c8a8cdf6dd4dcf046cdf827a8a931241e61cf6a94566c9e
+    image: matomo:5.14.2-fpm-alpine@sha256:a34ad7c91d9b8cb694bcb8c6b069c9a110bcd74be1d233c293ec1313e2525b5c
     user: "82:82"
     restart: always
     cap_drop: [ALL]
@@ -100,7 +100,7 @@ services:
       - /var/www/html/tmp:uid=82,gid=82
 
   matomo-cron:
-    image: matomo:5.14.2-fpm-alpine@sha256:43f4c619873154350c8a8cdf6dd4dcf046cdf827a8a931241e61cf6a94566c9e
+    image: matomo:5.14.2-fpm-alpine@sha256:a34ad7c91d9b8cb694bcb8c6b069c9a110bcd74be1d233c293ec1313e2525b5c
     user: "82:82"
     restart: unless-stopped
     cap_drop: [ALL]
