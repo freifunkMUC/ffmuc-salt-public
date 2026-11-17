@@ -5,7 +5,7 @@
 {%- set tags = salt['mine.get'](node_id,'minion_tags')[node_id] %}
 {%- set location = salt['mine.get'](node_id,'minion_location', tgt_type='glob')[node_id] %}
 {%- set overlay_address = salt['mine.get'](node_id,'minion_overlay_address', tgt_type='glob')[node_id] %}
-{%- set minion_external_address6 = salt['mine.get'](node_id,'minion_external_ip6', tgt_type='glob')[node_id] %}
+{%- set external6 = salt['mine.get'](node_id,'minion_external_ip6', tgt_type='glob').get(node_id) or [] %}
 {%- import_yaml 'icinga2/known_down.yaml' as known_down %}
 {%- set down_ok = (known_down or {}).get(node_id, {}) %}
 
@@ -47,9 +47,9 @@ object Host "{{ node_id }}" {
 	{%- endif %}
 	{%- endif %}
 
-	{%- if minion_external_address6 %}
+	{%- if external6 %}
 	# Used to determine whether a host has IPv6
-	vars.external_address_6 = "{{ minion_external_address6 }}"
+	vars.external_address_6 = "{{ external6[0].split('/')[0] }}"
 	{%- endif %}
 
 	vars.os = "Linux"
