@@ -36,11 +36,7 @@ python3-virtualenv:
 /srv/wgkex/wgkex-git:
   git.latest:
     - name: https://github.com/freifunkMUC/wgkex.git
-    {% if 'nextgen-gateway' in role  %}
-    - rev: main
-    {% elif 'parker-gateway' in role %}
-    - rev: parker
-    {% endif %}
+    - rev: main  {# Parker is in wgkex main since wgkex#323 #}
     - target: /srv/wgkex/wgkex-git
     - user: wgkex
     - force_reset: True
