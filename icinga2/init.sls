@@ -95,8 +95,10 @@ monitoring-plugin-pkgs:
   pkg.installed:
     - pkgs:
       - monitoring-plugins
-      {#- renamed in Debian 13 #}
-      - {{ 'monitoring-plugins-contrib' if grains.os == 'Debian' and grains.osmajorrelease >= 13 else 'nagios-plugins-contrib' }}
+      {#- renamed in Debian 13 and Ubuntu 26.04 #}
+      {%- set contrib_renamed = (grains.os == 'Debian' and grains.osmajorrelease >= 13)
+                                or (grains.os == 'Ubuntu' and grains.osmajorrelease >= 26) %}
+      - {{ 'monitoring-plugins-contrib' if contrib_renamed else 'nagios-plugins-contrib' }}
       - libyaml-syck-perl
       - libmonitoring-plugin-perl
       - lsof
