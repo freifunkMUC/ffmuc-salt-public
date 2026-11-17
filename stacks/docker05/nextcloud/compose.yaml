@@ -94,7 +94,7 @@ services:
       - SETUID
     security_opt:
       - no-new-privileges:true
-    mem_limit: 2g
+    mem_limit: 4g
 
   web:
     # Unprivileged nginx: listens on 8080, pid and temp files in /tmp.
