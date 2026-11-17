@@ -12,7 +12,6 @@ services:
       socket-proxy:
         condition: service_healthy
     # Not read_only and no cap_drop: the DNS-01 exec script installs bind-tools with apk on first use.
-    pids_limit: 512
     security_opt:
       - no-new-privileges:true
     networks:
@@ -48,6 +47,7 @@ services:
       resources:
         limits:
           memory: 512M
+          pids: 512
     logging:
       driver: json-file
       options:
