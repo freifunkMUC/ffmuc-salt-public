@@ -119,7 +119,7 @@ firewall:
     group: webfrontend
 {%- endif %}
 {%- if role == "parker-gateway" %}
-    # Interim Parker map: map-parker.ffmuc.net on the webfrontends reads /map/ (nginx/domains/map-parker.ffmuc.net.conf)
+    # Interim Parker map: haproxy on the webfrontends sends map-parker.ffmuc.net to /map/ (haproxy map_parker_backend)
   - port: 80
     proto: tcp
     group: webfrontend
