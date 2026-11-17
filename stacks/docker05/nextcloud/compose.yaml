@@ -68,6 +68,10 @@ services:
       - MYSQL_USER=nextcloud
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
       - MYSQL_HOST=db
+      # Redis for file locking and the distributed cache (image's redis.config.php)
+      - REDIS_HOST=redis
+      - REDIS_HOST_PASSWORD=${REDIS_PASSWORD}
+      - NC_default_phone_region=DE
     volumes:
       - /srv/docker/nextcloud/data:/var/www/html
       - ./config/zz-docker.conf:/usr/local/etc/php-fpm.d/zz-docker.conf
