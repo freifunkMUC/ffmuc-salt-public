@@ -216,7 +216,8 @@
         }
     ],
     "dataPath": [
-        "data/"
+        "data/muc01/",
+        "data/vie01/"
     ],
     "siteName": "Freifunk München (Parker)",
     "mapLayers": [
