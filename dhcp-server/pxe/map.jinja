@@ -18,6 +18,7 @@
 	'enabled': True,
 	'address': _s['next_server'],
 	'subnet': _s['subnet'],
+	'boot_file': _s.get('boot_file', 'netboot.xyz.kpxe'),
 	'routers': _s.get('routers'),
 	'dns': _s.get('dns'),
 	'interfaces': _cfg.get('interfaces', []),

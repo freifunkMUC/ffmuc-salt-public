@@ -139,8 +139,10 @@ Turn it on in the config context `dhcp_guardian` (Kea must be enabled):
   `/srv/pxe`. It serves `boot.ipxe`, the Ubuntu ISO with its kernel and
   initrd (about 3 GB, downloaded once and checked), the per-host iPXE files
   and the autoinstall data.
-- **Kea:** clients that send option 77 `iPXE` (for example the QEMU NIC ROM)
-  get `http://<pxe>/boot.ipxe`. Other clients keep `boot_file` over TFTP.
+- **Kea:** two client classes set the boot file; the subnet does not.
+  Class `ipxe` (option 77 starts with `iPXE`, for example the QEMU NIC ROM)
+  gets `http://<pxe>/boot.ipxe`. Class `legacy-pxe` (all others) gets
+  `boot_file` (default `netboot.xyz.kpxe`) over TFTP.
 - **boot.ipxe:** loads `/ipxe/<mac>.ipxe`. If the file does not exist, it
   loads the netboot.xyz menu.
 - **Per host:** for each VM in `install_hosts` the state reads the VM from
@@ -151,6 +153,10 @@ Turn it on in the config context `dhcp_guardian` (Kea must be enabled):
   with `id` = FQDN and `startup_states: highstate`, and the admin SSH keys
   for root. It contains no secrets.
 - **iptables:** udp/69 and tcp/80 from the mgmt network.
+- **Known effect:** Kea uses a raw socket on `eth0`. If another VLAN reaches
+  the guardian port, Kea also answers DHCP from that VLAN with a mgmt pool
+  address (seen for an uplink MAC of a new VM). This is harmless for the
+  install, but fix the switch or bridge port if you see it.
 
 After the install, remove the host from `install_hosts` and run a highstate
 on the guardian. The state removes its files, so the next PXE boot shows the

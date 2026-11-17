@@ -99,18 +99,27 @@ class PxeTemplateTest(unittest.TestCase):
             c["Dhcp4"]["client-classes"],
             [
                 {
-                    "name": "iPXE",
-                    "test": "option[77].hex == 'iPXE'",
+                    "name": "ipxe",
+                    "test": "substring(option[77].hex,0,4) == 'iPXE'",
                     "boot-file-name": "http://192.0.2.33/boot.ipxe",
-                }
+                },
+                {
+                    "name": "legacy-pxe",
+                    "test": "not member('ipxe')",
+                    "next-server": "192.0.2.33",
+                    "boot-file-name": "netboot.xyz.kpxe",
+                },
             ],
         )
-        # legacy PXE keeps the TFTP boot file
-        self.assertEqual(c["Dhcp4"]["subnet4"][1]["boot-file-name"], "netboot.xyz.kpxe")
+        # the classes set the boot file, not the subnet
+        self.assertNotIn("boot-file-name", c["Dhcp4"]["subnet4"][1])
         off = json.loads(
             render("dhcp-server/kea-dhcp4-guardian.conf.jinja", dict(CTX, pxe={}))
         )
         self.assertEqual(off["Dhcp4"]["client-classes"], [])
+        self.assertEqual(
+            off["Dhcp4"]["subnet4"][1]["boot-file-name"], "netboot.xyz.kpxe"
+        )
 
     def test_ipxe(self):
         pxe = pxe_map(CTX)
@@ -129,7 +138,7 @@ class PxeTemplateTest(unittest.TestCase):
         self.assertIn(
             "ds=nocloud-net;s=http://192.0.2.33/autoinstall/vm1.example.test/", host
         )
-        self.assertIn("console=ttyS0,115200", host)
+        self.assertIn("console=tty0 console=ttyS0,115200\n", host)
 
     def user_data(self, vm):
         out = render(
@@ -164,6 +173,10 @@ class PxeTemplateTest(unittest.TestCase):
         self.assertIn("'vm1.example.test' 'saltmaster.in.ffmuc.net'", cmds)
         self.assertIn("startup_states: highstate", cmds)
         self.assertIn("salt-minion=3008.5 salt-common=3008.5", cmds)
+        self.assertIn("tcp_keepalive_idle: 30", cmds)
+        self.assertIn("127.0.1.1 vm1.example.test vm1/", cmds)
+        self.assertIn('GRUB_CMDLINE_LINUX="console=tty0 console=ttyS0,115200"', cmds)
+        self.assertEqual(ai["shutdown"], "reboot")
         ud = ai["user-data"]
         self.assertEqual(ud["fqdn"], "vm1.example.test")
         self.assertEqual(ud["write_files"][0]["path"], "/root/.ssh/authorized_keys")

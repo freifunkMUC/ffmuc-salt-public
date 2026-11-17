@@ -2,6 +2,6 @@
 # Managed with Salt. Unattended install of {{ host }}.
 # Remove the host from dhcp_guardian.pxe.install_hosts after the install.
 set base {{ pxe.url }}/ubuntu/{{ pxe.release }}
-kernel ${base}/vmlinuz initrd=initrd ip=dhcp url=${base}/{{ pxe.iso }} autoinstall ds=nocloud-net;s={{ pxe.url }}/autoinstall/{{ host }}/ console=ttyS0,115200 ---
+kernel ${base}/vmlinuz initrd=initrd ip=dhcp url=${base}/{{ pxe.iso }} autoinstall ds=nocloud-net;s={{ pxe.url }}/autoinstall/{{ host }}/ console=tty0 console=ttyS0,115200
 initrd ${base}/initrd
 boot
