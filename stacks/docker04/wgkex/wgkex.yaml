@@ -127,11 +127,11 @@ parker:
     muc01:
       tunnel_id: 1
       netbox_filter:
-        prefix: 2001:678:e68:4000::/50
+        prefix: 2001:678:ed0:4000::/50
     vie01:
       tunnel_id: 3
       netbox_filter:
-        prefix: 2001:678:ed0:4000::/50
+        prefix: 2001:678:e68:4000::/50
   # In-memory IPAM: NetBox is not on the request path. The snapshot is used
   # when NetBox is down at broker start.
   ipam_cache:
