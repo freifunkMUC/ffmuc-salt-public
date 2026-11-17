@@ -4,8 +4,11 @@
   pools and reservations come from the device's NetBox config context
   `dhcp_guardian` (see README). Kea 2.2 from Raspbian bookworm: `output_options`
   with underscore, singular `control-socket`, no hooks (so no ping check).
+  With PXE on, two client classes set the boot file (not the subnet):
+  iPXE clients get boot.ipxe over HTTP, all others the TFTP boot file.
 #}
 {%- set cfg = salt['config.get']('netbox:config_context:dhcp_guardian', {}) %}
+{%- from 'dhcp-server/pxe/map.jinja' import pxe with context %}
 {%- set subnets = [] %}
 {%- for s in cfg.get('subnets', []) %}
 {%- set options = [] %}
@@ -18,7 +21,7 @@
 	'option-data': options,
 } %}
 {%- if s.get('next_server') %}{% do subnet.update({'next-server': s['next_server']}) %}{% endif %}
-{%- if s.get('boot_file') %}{% do subnet.update({'boot-file-name': s['boot_file']}) %}{% endif %}
+{%- if s.get('boot_file') and not pxe.enabled %}{% do subnet.update({'boot-file-name': s['boot_file']}) %}{% endif %}
 {%- set reservations = [] %}
 {%- for r in s.get('reservations', []) %}
 {%- set res = {'hw-address': r['mac'], 'ip-address': r['ip']} %}
@@ -40,6 +43,10 @@
 		'max-valid-lifetime': cfg.get('max_valid_lifetime', 3600),
 		'option-data': global_options,
 		'subnet4': subnets,
+		'client-classes': [
+			{'name': 'ipxe', 'test': "substring(option[77].hex,0,4) == 'iPXE'", 'boot-file-name': pxe.url ~ '/boot.ipxe'},
+			{'name': 'legacy-pxe', 'test': "not member('ipxe')", 'next-server': pxe.address, 'boot-file-name': pxe.boot_file},
+		] if pxe.enabled else [],
 		'loggers': [
 			{
 				'name': 'kea-dhcp4',

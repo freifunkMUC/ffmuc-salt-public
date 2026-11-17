@@ -1,0 +1,66 @@
+---
+# wgkex worker of a pgw. The Parker broker is the classic wgkex broker
+# (stacks/docker0*/wgkex/wgkex.yaml on main).
+
+parker:
+  enabled: True
+  ipam: netbox
+  464xlat: True
+  prefixes:
+    ipv4:
+      clat_subnet: 10.80.96.0/22
+    ipv6:
+      length: 63
+      # A mapping of filters for Netbox to find the parent prefix to allocate node prefixes from if 464xlat=False.
+      # Needs to match one and only one IPv6 prefix.
+      # Prefix is loaded only once on startup, so if you want to switch the prefix, you need to restart wgkex.
+      # E.g. {id: 9999} or {prefix: '10.80.0.0/16'} or {description: Freifunk, role: NodePrefixes} or {cf_my_custom_field: 'Some Value'}
+      # See https://demo.netbox.dev/api/schema/swagger-ui/#/ipam/ipam_prefixes_list and https://netboxlabs.com/docs/netbox/reference/filtering/ for filtering syntax
+      netbox_filter:
+        role: freifunk-net
+      # Optionally specify additional NetBox data to add to new prefixes, like tags or a role.
+      # See the POST request body scheme at https://demo.netbox.dev/api/schema/swagger-ui/#/ipam/ipam_prefixes_available_prefixes_create for supported fields.
+      netbox_additional_data:
+        tags:
+          - slug: node-prefix
+  # [worker] Route a node /63 only on the pgw with a fresh handshake (active pgw)
+  route_gate:
+    handshake_max_age: 180
+    interval: 1
+
+# Not needed for parker
+domains: []
+domain_prefixes:
+  - 'ffmuc_'
+
+# [worker] Keep the peers of nodes that use another pgw of the site (standby).
+# The worker routes a node only after a fresh handshake, so old peers do no harm.
+cleanup:
+  parker_stale_timeout: 864000
+
+# [worker] The external hostname of this worker
+externalName: {{ grains['id'] | regex_replace('in\.ffmuc\.net','ext.ffmuc.net') }}
+
+# MQTT connection. EMQX needs a login: same user as the classic workers.
+{%- set mqtt_username = salt['pillar.get']('wgkex:mqtt:username', '') %}
+{%- set mqtt_password = salt['pillar.get']('wgkex:mqtt:password', '') %}
+mqtt:
+  broker_url: broker.ov.ffmuc.net
+  username:{% if mqtt_username %} {{ mqtt_username | yaml_dquote }}{% endif %}
+  password:{% if mqtt_password %} {{ mqtt_password | yaml_dquote }}{% endif %}
+  tls: False
+  broker_port: 1883
+  keepalive: 20
+logging_config:
+  formatters:
+    standard:
+      format: '%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s'
+  handlers:
+    console:
+      class: logging.StreamHandler
+      formatter: standard
+  root:
+    handlers:
+      - console
+    level: INFO
+  version: 1

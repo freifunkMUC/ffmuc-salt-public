@@ -1,7 +1,7 @@
 ---
 services:
   broker:
-    image: ghcr.io/freifunkmuc/wgkex:v0.5.2@sha256:481877d633e19bc0c18f2af1f0e500a0e569690d034bd9e9c3f79f54817edb42
+    image: ghcr.io/freifunkmuc/wgkex:v0.6.1@sha256:4745e3f9e4bd83b3e9df992e6158cd96fdedc5c7c2a71daa99ae4d5b347632e6
     command: broker
     restart: unless-stopped
     depends_on:
@@ -12,6 +12,7 @@ services:
       - "5000:5000"
     volumes:
       - ./wgkex.yaml:/etc/wgkex.yaml:ro
+      - ipam-snapshot:/var/lib/wgkex
     environment:
       WGKEX_DOMAINS: "ffmuc_freising, ffmuc_gauting, ffmuc_muc_cty, ffmuc_muc_nord, ffmuc_muc_ost, ffmuc_muc_sued, ffmuc_muc_west, ffmuc_uml_nord, ffmuc_uml_ost, ffmuc_uml_sued, ffmuc_uml_west, ffmuc_welt, ffmuc_ffdon_test"
       WGKEX_DOMAIN_PREFIXES: "ffmuc_, ffdon_, ffwert_"
@@ -21,6 +22,9 @@ services:
       # wgkex >= #324 reads these over /etc/wgkex.yaml; older images ignore them.
       WGKEX__MQTT__USERNAME: wgkex-broker
       WGKEX__MQTT__PASSWORD: ${WGKEX_MQTT_BROKER_PASSWORD:?}
+      # Parker: signing key of the node config and NetBox token (Periphery secrets)
+      WGKEX__BROKER_SIGNING_KEY: ${WGKEX_PARKER_SIGNING_KEY:?}
+      WGKEX__NETBOX__API_KEY: ${WGKEX_PARKER_NETBOX_TOKEN:?}
       MQTT_KEEPALIVE: "5"
       MQTT_TLS: "False"
     healthcheck:
@@ -84,3 +88,6 @@ services:
     security_opt:
       - no-new-privileges:true
     mem_limit: 1g
+
+volumes:
+  ipam-snapshot:

@@ -29,15 +29,30 @@ domain_prefixes:
   - ffbachtal_
 
 # [broker] The dict of workers mapping their hostname to their respective weight for weighted peer distribution
+# The id is the Parker tunnel id of a pgw (the digits of its name, it must not change).
+# The classic gateways do not use it, but all ids must be unique.
+# pop is the Parker site of a pgw (parker.sites). The key is the hostname of the pgw.
 workers:
   gw04.in.ffmuc.net:
+    id: 104
     weight: 25
   gw05:
+    id: 105
     weight: 25
   gw06:
+    id: 106
     weight: 25
   gw07:
+    id: 107
     weight: 25
+  pgw01:
+    id: 1
+    weight: 25
+    pop: muc01
+  pgw03:
+    id: 3
+    weight: 25
+    pop: vie01
 
 mqtt:
   broker_url: mqtt_cluster
@@ -65,6 +80,8 @@ logging_config:
 # Load balancing (wgkex >= 9f53ff0, #294); all values are the upstream defaults.
 # Active rebalancing must also be enabled on the workers (salt: wgkex/wgkex.yaml.jinja).
 load_balancing:
+  # Stable name of this broker: it marks the NetBox prefixes that this broker reserves (Parker IPAM)
+  broker_id: docker05
   # Count the other brokers' pending assignments (4 brokers behind haproxy, wgkex >= caf959c)
   share_pending_assignments: true
   pending_assignment_ttl: 300
@@ -88,3 +105,39 @@ broker:
     - 10.8.0.39/32
     - 10.8.0.40/32
 log_level: INFO
+
+# Parker (wgkex >= #323): signed node config on /config and /api/v3/.
+# Secrets from the stack environment: WGKEX__BROKER_SIGNING_KEY, WGKEX__NETBOX__API_KEY.
+parker:
+  enabled: true
+  ipam: netbox
+  464xlat: true
+  prefixes:
+    ipv4:
+      clat_subnet: 10.80.96.0/22
+    ipv6:
+      length: 63
+      netbox_additional_data:
+        tags:
+          - slug: node-prefix
+  # One site per PoP. Each site has its own /50 ("FF Pool Parker") and node tunnel.
+  # The broker spreads the nodes over the sites by weight (default 1), up to the
+  # optional capacity (max nodes). A preferred site of a node is used if it has capacity.
+  sites:
+    muc01:
+      tunnel_id: 1
+      netbox_filter:
+        prefix: 2001:678:ed0:4000::/50
+    vie01:
+      tunnel_id: 3
+      netbox_filter:
+        prefix: 2001:678:e68:4000::/50
+  # In-memory IPAM: NetBox is not on the request path. The snapshot is used
+  # when NetBox is down at broker start.
+  ipam_cache:
+    snapshot_dir: /var/lib/wgkex
+    sync_interval: 60
+    reserve: 32
+# Parker NetBox (stack docker04/netbox-parker): the site /50s and the node /63s. polld on the pgws reads the same.
+netbox:
+  url: https://nb-parker.ov.ffmuc.net

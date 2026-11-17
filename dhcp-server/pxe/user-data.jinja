@@ -1,0 +1,113 @@
+{#-
+  Ubuntu autoinstall for one host. Input: `host` (FQDN), `vm` (from
+  netbox_vms.get_vm_install_data), `pxe` (map.jinja), `salt_version`, `keys`,
+  `nebula` (package, CA, lighthouses of the guardian).
+  Only the mgmt interface gets an address. Salt does the rest on first boot
+  (the other interfaces, users). No secrets in this file: it is readable from
+  the mgmt network. The host makes its own Nebula key in the install; the key
+  never leaves the host. Nebula and salt-minion start only when the operator
+  puts the signed /etc/nebula/host.crt in place (see README).
+#}
+{%- set nebula_deb = '/var/cache/nebula/nebula_' ~ nebula.version ~ '_amd64.deb' %}
+{%- set nebula_url = 'https://github.com/krombel/nebula/releases/download/v' ~ nebula.version ~ '/nebula-linux-amd64.deb' %}
+{%- set nebula_cfg %}{% include 'dhcp-server/pxe/nebula-config.yml.jinja' %}{% endset %}
+{%- set boot_files = [
+	('/etc/nebula/ca.crt', '0644', nebula.ca),
+	('/etc/nebula/config.yml', '0644', nebula_cfg | trim ~ '\n'),
+	('/etc/systemd/system/nebula.service.d/wait-for-cert.conf', '0644', '[Unit]\nConditionPathExists=/etc/nebula/host.crt\n'),
+	('/etc/systemd/system/salt-minion.service.d/nebula.conf', '0644', '[Unit]\nWants=nebula.service\nAfter=nebula.service\nConditionPathExists=/etc/nebula/host.crt\n'),
+	('/etc/systemd/system/nebula-cert.path', '0644', '[Unit]\nDescription=Start Nebula and salt-minion when the host cert is in place\n\n[Path]\nPathExists=/etc/nebula/host.crt\nUnit=salt-minion.service\n\n[Install]\nWantedBy=multi-user.target\n'),
+] %}
+{#- Nebula before salt-minion: package (pinned sha256), own key pair, CA,
+    bootstrap config and the systemd units that wait for the cert. #}
+{%- set nebula_cmds = [
+	'mkdir -p /target/var/cache/nebula /target/etc/nebula /target/etc/systemd/system/nebula.service.d /target/etc/systemd/system/salt-minion.service.d',
+	'curl -fsSL -o /target' ~ nebula_deb ~ ' ' ~ nebula_url,
+	"echo '" ~ nebula.sha256 ~ "  /target" ~ nebula_deb ~ "' | sha256sum -c --quiet",
+	'curtin in-target --target=/target -- dpkg -i ' ~ nebula_deb,
+	'curtin in-target --target=/target -- nebula-cert keygen -curve 25519 -out-key /etc/nebula/host.key -out-pub /etc/nebula/host.pub',
+	'chmod 0600 /target/etc/nebula/host.key',
+	'chmod 0644 /target/etc/nebula/host.pub',
+] %}
+{%- for path, mode, content in boot_files %}
+{%- do nebula_cmds.append("echo '" ~ (content | base64_encode) ~ "' | base64 -d > /target" ~ path ~ " && chmod " ~ mode ~ " /target" ~ path) %}
+{%- endfor %}
+{%- do nebula_cmds.append('curtin in-target --target=/target -- systemctl enable nebula.service nebula-cert.path') %}
+{%- set mgmt_ip = vm.primary_ip4 %}
+{%- if not mgmt_ip or not salt['network.ip_in_subnet'](mgmt_ip.split('/')[0], pxe.subnet) %}
+{{- raise('pxe: primary IPv4 of ' ~ host ~ ' (' ~ mgmt_ip ~ ') is not in ' ~ pxe.subnet) }}
+{%- endif %}
+{%- set ethernets = {} %}
+{%- for iface in vm.interfaces if iface.mac %}
+{%- set eth = {'match': {'macaddress': iface.mac}, 'set-name': iface.name, 'dhcp4': False, 'dhcp6': False} %}
+{%- if mgmt_ip in iface.addresses %}
+{%- do eth.update({'addresses': [mgmt_ip]}) %}
+{%- if pxe.routers %}{% do eth.update({'routes': [{'to': 'default', 'via': pxe.routers.split(',')[0] | trim}]}) %}{% endif %}
+{%- if pxe.dns %}
+{%- set nameservers = {'addresses': pxe.dns.split(',') | map('trim') | list} %}
+{%- do eth.update({'nameservers': nameservers}) %}
+{%- endif %}
+{%- else %}
+{%- do eth.update({'optional': True, 'link-local': []}) %}
+{%- endif %}
+{%- do ethernets.update({iface.name: eth}) %}
+{%- endfor %}
+{#- Same layout as the other VMs: vda (8 MiB) holds only GRUB, sda is a whole-disk
+    LVM PV (no partition table), so the root can grow online with pvresize and lvextend -r. #}
+{%- set storage = [
+	{'type': 'disk', 'id': 'disk-vda', 'path': '/dev/vda', 'ptable': 'msdos', 'wipe': 'superblock-recursive', 'grub_device': True, 'preserve': False},
+	{'type': 'partition', 'id': 'part-vda1', 'device': 'disk-vda', 'number': 1, 'size': '6M', 'flag': 'boot', 'preserve': False},
+	{'type': 'disk', 'id': 'disk-sda', 'path': '/dev/sda', 'wipe': 'superblock-recursive', 'preserve': False},
+	{'type': 'lvm_volgroup', 'id': 'vg0', 'name': 'vg_ubuntu', 'devices': ['disk-sda'], 'preserve': False},
+	{'type': 'lvm_partition', 'id': 'lv-swap', 'volgroup': 'vg0', 'name': 'lv_swap', 'size': '1G', 'preserve': False},
+	{'type': 'lvm_partition', 'id': 'lv-root', 'volgroup': 'vg0', 'name': 'lv_root', 'preserve': False},
+	{'type': 'format', 'id': 'fs-swap', 'volume': 'lv-swap', 'fstype': 'swap', 'preserve': False},
+	{'type': 'format', 'id': 'fs-root', 'volume': 'lv-root', 'fstype': 'ext4', 'preserve': False},
+	{'type': 'mount', 'id': 'mnt-swap', 'device': 'fs-swap', 'path': 'none'},
+	{'type': 'mount', 'id': 'mnt-root', 'device': 'fs-root', 'path': '/'},
+] %}
+{%- set salt_list = 'deb [arch=amd64 signed-by=/etc/apt/keyrings/salt-archive-keyring.asc] https://packages.broadcom.com/artifactory/saltproject-deb/ stable main' %}
+{%- set config = {
+	'autoinstall': {
+		'version': 1,
+		'interactive-sections': [],
+		'locale': 'en_US.UTF-8',
+		'keyboard': {'layout': 'de'},
+		'timezone': 'Europe/Berlin',
+		'refresh-installer': {'update': False},
+		'network': {'version': 2, 'ethernets': ethernets},
+		'storage': {'swap': {'size': 0}, 'config': storage},
+		'ssh': {'install-server': True, 'allow-pw': False},
+		'packages': ['qemu-guest-agent'],
+		'late-commands': [
+			'mkdir -p /target/etc/salt/minion.d /target/etc/apt/keyrings /target/etc/apt/preferences.d',
+			"printf 'id: %s\\nmaster: %s\\nstartup_states: highstate\\n' '" ~ host ~ "' '" ~ pxe.salt_master ~ "' > /target/etc/salt/minion.d/ffmuc.conf",
+			"printf 'tcp_keepalive: True\\ntcp_keepalive_idle: 30\\ntcp_keepalive_intvl: 10\\ntcp_keepalive_cnt: 3\\n' > /target/etc/salt/minion.d/tcp-keepalive.conf",
+			"sed -i 's/^127.0.1.1.*/127.0.1.1 " ~ host ~ " " ~ host.split('.')[0] ~ "/' /target/etc/hosts",
+			"sed -i 's/^GRUB_CMDLINE_LINUX=.*/GRUB_CMDLINE_LINUX=\"console=tty0 console=ttyS0,115200\"/' /target/etc/default/grub",
+			'curtin in-target --target=/target -- update-grub',
+			'curl -fsSL https://packages.broadcom.com/artifactory/api/security/keypair/SaltProjectKey/public -o /target/etc/apt/keyrings/salt-archive-keyring.asc',
+			"echo '" ~ salt_list ~ "' > /target/etc/apt/sources.list.d/saltstack.list",
+			"printf 'Package: salt-*\\nPin: version " ~ salt_version ~ "\\nPin-Priority: 1001\\n' > /target/etc/apt/preferences.d/salt-pin-1001",
+			'curtin in-target --target=/target -- apt-get update',
+			'curtin in-target --target=/target -- env DEBIAN_FRONTEND=noninteractive apt-get install -y salt-minion=' ~ salt_version ~ ' salt-common=' ~ salt_version,
+			'curtin in-target --target=/target -- systemctl enable salt-minion',
+		] + nebula_cmds,
+		'shutdown': 'reboot',
+		'user-data': {
+			'hostname': host.split('.')[0],
+			'fqdn': host,
+			'prefer_fqdn_over_hostname': True,
+			'disable_root': False,
+			'ssh_pwauth': False,
+			'users': [],
+			'write_files': [{
+				'path': '/root/.ssh/authorized_keys',
+				'permissions': '0600',
+				'content': keys,
+			}],
+		},
+	},
+} -%}
+#cloud-config
+{{ config | tojson(indent=2) }}

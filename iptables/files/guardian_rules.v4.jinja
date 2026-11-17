@@ -1,4 +1,5 @@
 {%- from 'iptables/nebula_map.jinja' import nebula_node_data_list, nebula_meet_data_list with context %}
+{%- from 'dhcp-server/pxe/map.jinja' import pxe with context %}
 # Managed with Salt
 
 *nat
@@ -61,6 +62,11 @@ COMMIT
 -A INPUT -p udp -m udp --dport {{ own_nebula_port }} -j ACCEPT
 -A INPUT -p udp -m udp --dport 123 -j ACCEPT
 -A INPUT -i eth0 -p udp -m udp --dport 67 -j ACCEPT
+{%- if pxe.enabled %}
+{#- PXE: TFTP and HTTP from the mgmt network only #}
+-A INPUT -s {{ pxe.subnet }} -i eth0 -p udp -m udp --dport 69 -j ACCEPT
+-A INPUT -s {{ pxe.subnet }} -i eth0 -p tcp -m tcp --dport 80 -j ACCEPT
+{%- endif %}
 -A INPUT -j REJECT --reject-with icmp-port-unreachable
 
 COMMIT

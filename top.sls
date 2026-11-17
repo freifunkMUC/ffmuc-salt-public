@@ -85,10 +85,14 @@ base:
     - keycloak
   'gw04.in.ffmuc.net':
     - meshviewer-web
+  # Parker gateways (states only with the NetBox role parker-gateway)
+  'pgw*.in.ffmuc.net':
+    - parker
   'mail01.in.ffmuc.net':
     - mailqueue
   'guardian-*.in.ffmuc.net':
     - dhcp-server.guardian
+    - dhcp-server.guardian_pxe
     - sflowtool
     - iptables
   'vpn0*.in.ffmuc.net':

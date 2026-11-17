@@ -1,0 +1,21 @@
+[Unit]
+Description=Polld - Layer 3 repondd polling daemon
+Documentation=https://github.com/freifunkMUC/polld
+After=network-online.target
+
+[Service]
+User=polld
+WorkingDirectory=/srv/polld/polld-git
+ExecStart=/srv/polld/polld-git/venv/bin/python3 polld.py
+Restart=on-failure
+
+# Enable Logging
+SyslogIdentifier=polld
+
+# allow sending and listening for respondd traffic
+# TODO might not be needed
+CapabilityBoundingSet=CAP_NET_ADMIN
+AmbientCapabilities=CAP_NET_ADMIN
+
+[Install]
+WantedBy=multi-user.target

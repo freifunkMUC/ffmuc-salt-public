@@ -1,0 +1,276 @@
+{%- set role = salt['pillar.get']('netbox:role:name') %}
+{%- set interfaces = salt['pillar.get']('netbox:interfaces') %}
+{%- set uplink_vlan = salt['pillar.get']('netbox:config_context:network:uplink_vlan') %}
+{%- set prefixes_v4 = [] %}
+{%- set prefixes_v6 = [] %}
+{%- set ns = namespace() %}
+log syslog all;
+
+protocol device {
+}
+
+protocol direct {
+        ipv4;                   # Connect to default IPv4 table
+        ipv6;                   # ... and to default IPv6 table
+}
+{%- if role in ['nextgen-gateway', 'parker-gateway', 'roadwarrior', 'freifunk-transit'] %}
+{%- for iface in interfaces|sort %}
+{%- if 'br' in iface %}
+{%- for ipaddress in interfaces[iface]['ipaddresses'] %}
+{%- if ipaddress['family']['value'] == 6 %}
+{%- do prefixes_v6.append(salt['network.calc_net'](ipaddress['address'])) %}
+{%- endif %}{# ipaddress['family']['value'] == 6 #}
+{%- endfor %}{# ipaddress in interfaces[iface]['ipaddresses'] #}
+{%- endif %}{# 'br' in iface #}
+{%- endfor %}{# iface in interfaces #}
+{%- set nat66 = salt['pillar.get']('netbox:config_context:network:nat66_pool') %}
+{%- set ns.additional_v6_prefix = salt['pillar.get']('netbox:config_context:network:additional_v6_prefix') %}
+{%- if nat66 %}
+protocol static {
+        ipv6;
+        route {{ nat66 }} blackhole;
+}
+{%- do prefixes_v6.append(nat66) %}
+{%- endif %}{# nat66 #}
+{%- if ns.additional_v6_prefix | default(false) %}
+{%- do prefixes_v6.append(ns.additional_v6_prefix) %}
+{%- endif %}{# additional_v6_prefix #}
+{%- set ns.nat64_pool4 = salt['pillar.get']('netbox:config_context:network:nat64_ipv4', '') %}
+{%- set ns.nat64_ipv6 = salt['pillar.get']('netbox:config_context:network:nat64_ipv6', '') %}
+{%- if role == 'parker-gateway' and (ns.nat64_pool4 or ns.nat64_ipv6) %}
+{%- if ns.nat64_pool4 and '/' not in ns.nat64_pool4 %}{% set ns.nat64_pool4 = ns.nat64_pool4 ~ '/32' %}{% endif %}
+# Public Jool addresses of this pgw. setup-jool.sh routes them into the Jool
+# namespace. These routes are only for eBGP, not for the kernel.
+protocol static parker_nat64 {
+        ipv4;
+        {%- if ns.nat64_pool4 %}
+        route {{ ns.nat64_pool4 }} blackhole;
+        {%- do prefixes_v4.append(ns.nat64_pool4) %}
+        {%- endif %}
+}
+protocol static parker_nat64_v6 {
+        ipv6;
+        {%- if ns.nat64_ipv6 %}
+        route {{ ns.nat64_ipv6 }}/128 blackhole;
+        {%- do prefixes_v6.append(ns.nat64_ipv6 ~ '/128') %}
+        {%- endif %}
+}
+{%- endif %}{# public Jool addresses #}
+{%- endif -%}{# role in ['nextgen-gateway', 'parker-gateway', 'roadwarrior', 'freifunk-transit'] #}
+
+{#- Fetch public IP addresses to advertise #}
+{%- for iface in interfaces|sort %}
+{%- if 'dummy' in iface %}
+{%- for ipaddress in interfaces[iface]['ipaddresses']%}
+{%- if ipaddress['family']['value'] == 4 %}
+{%- if iface == 'dummy0' %}
+{%- set ns.dummy0_ipv4 = ipaddress['address'].split('/')[0] %}
+{%- endif %}{# iface == 'dummy0' #}
+{%- do prefixes_v4.append(ipaddress['address']) %}
+{%- else %}{# ipaddress is v6 #}
+{%- if iface == 'dummy0' %}
+{%- set ns.dummy0_ipv6 = ipaddress['address'].split('/')[0] %}
+{%- endif %}{# iface == 'dummy0' #}
+{%- do prefixes_v6.append(ipaddress['address']) %}
+{%- endif %}{# ipaddress is v4 #}
+{%- endfor %}{# ipaddress in interfaces[iface] #}
+{%- endif %}{# 'dummy' in iface #}
+{%- endfor %}{# iface in interfaces #}
+
+protocol kernel {
+        ipv4 {                  # Connect protocol to IPv4 table by channel
+              import all;       # Import to table, default is import all
+              export filter {
+                        if proto = "parker_nat64" then reject;
+                        if net ~ [ 0.0.0.0/0 ] then {
+                            krt_prefsrc = {{ ns.dummy0_ipv4 }};
+                            accept;
+                        }
+                        };
+        };
+}
+
+protocol kernel {
+        {%- if role == 'parker-gateway' %}
+        learn;
+        {%- endif %}
+        ipv6 {
+                {%- if role == 'parker-gateway' %}
+                import filter {
+                        if ifname = "wg-nodes" then {
+                                accept;
+                        }
+                       reject;
+                };
+                {%- else %}
+                import all;
+                {%- endif %}
+                export filter {
+                        {%- if role == 'parker-gateway' %}
+                        if proto = "parker_nat64_v6" then reject;
+                        {%- endif %}
+                        if net ~ [ ::/0 ] then {
+                                krt_prefsrc = {{ ns.dummy0_ipv6 }};
+                                {%- if role == 'webserver-external' %}
+                                krt_mtu = 1280;
+                                {%- endif %}
+                                accept;
+                        }
+                };
+        };
+}
+
+filter DEFAULT {
+  if net ~ [ 0.0.0.0/0 ] then {
+    accept;
+  }
+  reject;
+}
+
+filter DEFAULT6 {
+  if net ~ [ ::/0 ] then {
+    accept;
+  }
+  reject;
+}
+
+{%- for iface in interfaces|sort %}
+{%- if iface == uplink_vlan['interface'] %}
+filter EXTERNAL_OUT {
+  if net ~ {{ prefixes_v4 | string | regex_replace('\'','') }} then {
+    accept;
+  }
+  reject;
+}
+
+filter EXTERNAL6_OUT {
+  if net ~ {{ prefixes_v6 | string | regex_replace('\'','') }} then {
+    accept;
+  }
+  reject;
+}
+{%- for ipaddress in interfaces[iface]['ipaddresses'] %}
+{%- if ipaddress['family']['value'] == 4 %}
+router id {{ ipaddress['address'].split('/')[0] }};
+protocol bgp {{ iface }}_v4 {
+        description "Uplink";
+        local {{ ipaddress['address'].split('/')[0] }} as {{ uplink_vlan['local_asn'] }};
+        neighbor {{ uplink_vlan['neighbor_v4'] }} as {{ uplink_vlan['remote_asn'] }};
+        ipv4 {
+                import filter DEFAULT;
+                export filter EXTERNAL_OUT;
+        };
+}
+{%- else %}{# if ipaddress['family']['value'] == 4 #}
+protocol bgp {{ iface }}_v6 {
+        local {{ ipaddress['address'].split('/')[0] }} as {{ uplink_vlan['local_asn'] }};
+        neighbor {{ uplink_vlan['neighbor_v6'] }} as {{ uplink_vlan['remote_asn'] }};
+        ipv6 {
+                import filter DEFAULT6;
+                export filter EXTERNAL6_OUT;
+        };
+}
+{%- endif %}{# if ipaddress['family']['value'] == 4 #}
+{%- endfor %}{# ipaddress in interfaces[iface]['ipaddresses'] #}
+{%- endif %}{# iface == uplink_vlan['interface'] #}
+{%- endfor %}{# iface in interfaces #}
+
+{%- if role == 'nextgen-gateway' %}
+# If we are a Gateway we announced OSPF default routes
+protocol ospf v2 {
+        area 0 {
+                {%- for iface in salt['pillar.get']('netbox:config_context:network:gateway') %}
+                interface "{{ iface }}" {
+                        type broadcast;		# Detected by default
+                        cost 10;		# Interface metric
+                        hello 5;		# Default hello perid 10 is too long
+                };
+                {%- endfor %}
+        };
+        ipv4 {
+                import none;
+                export filter DEFAULT;
+        };
+}
+{%- elif role == 'parker-gateway' %}
+{%- set parker_range = ns.additional_v6_prefix %}
+{%- set own_location = salt['pillar.get']('netbox:site:name') %}
+{%- set own_link_local = salt['wireguard_v6.generate'](salt['pillar.get']('netbox:config_context:wireguard:public_key')) %}
+# The Parker range of this site. The wgkex worker adds a /63 route into
+# wg-nodes for each node with a fresh handshake. Not used /63s are unreachable.
+protocol static parker_range {
+        ipv6;
+        route {{ parker_range }} unreachable;
+}
+
+# Node /63s: send our own (from wg-nodes) to the other pgws of this site
+filter PARKER_IBGP_OUT {
+        if net ~ [ {{ parker_range }}{63,63} ] && ifname = "wg-nodes" then {
+                accept;
+        }
+        reject;
+}
+
+# Node /63s from the other pgws of this site. A local route on wg-nodes
+# (preference 10) wins over a route from iBGP.
+filter PARKER_IBGP_IN {
+        if net ~ [ {{ parker_range }}{63,63} ] then {
+                preference = 5;
+                accept;
+        }
+        reject;
+}
+
+protocol bfd parker_bfd {
+        interface "wg-bb-*" {
+                interval 300 ms;
+                multiplier 3;
+        };
+}
+
+# iBGP between the pgws of the same site only, over the wg-bb crosslinks.
+# All VMs of a site use the same private ASN. No routes between sites.
+{%- for node,_ in salt['mine.get']('netbox:role:name:parker-gateway', 'minion_id', tgt_type='pillar').items() | sort
+      if grains['id'] not in node and salt['mine.get'](node, 'minion_location', tgt_type='glob').get(node) == own_location %}
+{%- set node_short = node | regex_replace('in\.ffmuc\.net','') %}
+{%- set peer_name = node_short | regex_replace('\.$', '') %}
+{%- set peer_link_local = salt['wireguard_v6.generate'](salt['mine.get'](node, 'minion_wireguard_public', tgt_type='glob')[node]) %}
+protocol bgp ibgp_{{ peer_name | regex_replace('[^A-Za-z0-9]', '_') }} {
+        description "iBGP to {{ peer_name }} (same site)";
+        local {{ own_link_local }} as {{ uplink_vlan['local_asn'] }};
+        neighbor {{ peer_link_local }} as {{ uplink_vlan['local_asn'] }};
+        interface "wg-bb-{{ node_short }}";
+        direct;
+        bfd on;
+        ipv6 {
+                next hop self;
+                import filter PARKER_IBGP_IN;
+                export filter PARKER_IBGP_OUT;
+        };
+}
+{%- endfor %}
+{%- elif 'dummy0' not in interfaces and 'dummy1' not in interfaces %}
+# We aren't a gateway so we want a default route via OSPF
+protocol kernel {
+        ipv4 {                  # Connect protocol to IPv4 table by channel
+              import none;       # Import to table, default is import all
+              export filter DEFAULT;
+        };
+}
+
+protocol ospf v2 {
+        area 0 {
+                {%- for iface in salt['pillar.get']('netbox:config_context:network:gateway') %}
+                interface "{{ iface }}" {
+                        type broadcast;		# Detected by default
+                        cost 100;		# Interface metric
+                        hello 5;		# Default hello perid 10 is too long
+                };
+        };
+        {%- endfor %}
+        ipv4 {
+                import filter DEFAULT;
+                export none;
+        };
+}
+{%- endif %}

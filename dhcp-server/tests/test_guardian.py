@@ -46,10 +46,11 @@ host a {
 
 
 def render(ctx):
-    env = jinja2.Environment(extensions=["jinja2.ext.do"])
-    tpl = env.from_string(
-        open(os.path.join(SRC, "kea-dhcp4-guardian.conf.jinja")).read()
+    env = jinja2.Environment(
+        loader=jinja2.FileSystemLoader(os.path.dirname(SRC)),
+        extensions=["jinja2.ext.do"],
     )
+    tpl = env.get_template("dhcp-server/kea-dhcp4-guardian.conf.jinja")
     salt = {
         "config.get": lambda key, default=None: ctx.get(key.split(":")[-1], default)
     }

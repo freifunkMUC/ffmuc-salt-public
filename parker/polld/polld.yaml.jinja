@@ -1,0 +1,57 @@
+# Address and port of YANIC (as a list: [IPv6, Port])
+yanic:
+  host: '::1'
+  port: 11001
+
+# List of respondd topics to query
+respondd_topics:
+  - nodeinfo
+  - statistics
+  - neighbours
+  - wireguard
+
+# The node info source to use (to load list of IP addresses of VPN-connected nodes).
+# Must contain the configuration for one (and only one) of etcd, netbox or jsonfile.
+node_list:
+  # jsonfile:
+  #   # Expects a JSON file with a 'nodes' key that is a list of objects, where each object has an 'address6' string item.
+  #   path: './polld.json'
+
+  netbox:
+    # A mapping of filters for Netbox to find the allocated node prefixes.
+    # If you're using wgkex, should match the "netbox_additional_data" configuration setting.
+    # E.g. {role: NodePrefixes} or {cf_my_custom_field: 'Some Value', tag: [ node-prefix, another-tag ]}
+    # See https://demo.netbox.dev/api/schema/swagger-ui/#/ipam/ipam_prefixes_list and https://netboxlabs.com/docs/netbox/reference/filtering/ for filtering syntax
+    filter:
+      tag:
+        - node-prefix
+
+    # URL for your NetBox instance, without the "/api" path
+    url: https://nb-parker.ov.ffmuc.net
+    api_key: {{ netbox_token }}
+
+# InfluxDB configuration
+influx:
+  enabled: false # true to enable InfluxDB
+  connection_type: 'socket' # "socket" or "http"
+  endpoint: '/run/influxdb/influxdb.sock' # For "http" e.g. "http://localhost:8086"
+  database: 'ffbs' # Name of the database
+  username: '' # Optional, only for http
+  password: '' # Optional, only for http
+
+# Logging configuration
+logging:
+  formatters:
+    standard:
+      format: '%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s'
+  handlers:
+    console:
+      class: logging.StreamHandler
+      formatter: standard
+  root:
+    handlers:
+      - console
+    # polld supports the following additional custom log levels:
+    #   - DEBUG2: prints events for individual nodes (like HTTP & repondd polling results). Extremely verbose, only use when really needed.
+    level: INFO
+  version: 1
