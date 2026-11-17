@@ -36,22 +36,30 @@ include:
       - pkg: icinga2-pkg
 {%- else %}
 icinga2-repo-key:
-  cmd.run:
-    - name: "curl -fsSL https://packages.icinga.com/icinga.key | gpg --batch --yes --dearmor -o /usr/share/keyrings/icinga2-keyring.gpg.tmp && mv /usr/share/keyrings/icinga2-keyring.gpg.tmp /usr/share/keyrings/icinga2-keyring.gpg"
-    # NOTE: no 'creates' guard: Icinga rotates the signing key. Always re-fetch so a
-    # stale keyring (NO_PUBKEY) is refreshed to the current icinga.key.
+  file.managed:
+    - name: /usr/share/keyrings/icinga2-keyring.asc
+    - source: https://packages.icinga.com/icinga.key
+    # follows Icinga key rotations; re-downloads only when the ETag changes
+    - skip_verify: True
+    - use_etag: True
+    - mode: "0644"
+
+/usr/share/keyrings/icinga2-keyring.gpg:
+  file.absent:
+    - require:
+      - pkgrepo: icinga2-repo
 
 icinga2-repo:
   pkgrepo.managed:
     {% if grains.osfullname in 'Ubuntu' %}
-    - name: deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/icinga2-keyring.gpg] https://packages.icinga.com/{{ grains.lsb_distrib_id | lower }} icinga-{{ grains.oscodename }} main
+    - name: deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/icinga2-keyring.asc] https://packages.icinga.com/{{ grains.lsb_distrib_id | lower }} icinga-{{ grains.oscodename }} main
     {% else %}
-    - name: deb [signed-by=/usr/share/keyrings/icinga2-keyring.gpg] https://packages.icinga.com/debian icinga-{{ grains.oscodename }} main
+    - name: deb [signed-by=/usr/share/keyrings/icinga2-keyring.asc] https://packages.icinga.com/debian icinga-{{ grains.oscodename }} main
     {% endif %}
     - file: /etc/apt/sources.list.d/icinga2.list
     - clean_file: True
     - require:
-      - cmd: icinga2-repo-key
+      - file: icinga2-repo-key
 {%- endif %}
 
 # Install icinga2 package
