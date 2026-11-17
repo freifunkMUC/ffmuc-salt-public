@@ -74,6 +74,7 @@ polld-python3-virtualenv:
     - source: salt://parker/polld/polld.yaml.jinja
     - template: jinja
     - context:
+        # Read token of the main NetBox (ipam.prefix view), NetBox context "parker".
         netbox_token: {{ salt['pillar.get']('netbox:config_context:parker:polld:netbox_token') }}
 
 polld-service:

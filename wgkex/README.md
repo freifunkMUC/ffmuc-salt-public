@@ -14,6 +14,16 @@
   (`parker/wgkex`, pgw01 and pgw03) also as `wgkex:mqtt` (the worker user). The master pillar file with
   `wgkex:mqtt` must target the pgws too, not only `gw0[4-7]`. The user `parker` is only for the old pgw01 pilot. EMQX rejects anonymous clients; `emqx/acl.conf` next to
   each `compose.yaml` allows each user only its own topics, everything else is denied (see MQTT users below).
+- **Parker IPAM** is in the main NetBox `nb.ov.ffmuc.net` (the brokers write it, polld on the pgws reads it):
+  - one /50 per site (`parker.sites.<pop>.netbox_filter.prefix` in the stack `wgkex.yaml`), status `container`,
+    no tag. It must exist exactly once (no copy in another VRF), or the broker logs
+    "Could not uniquely identify parent IPv6 prefix".
+  - the tag `node-prefix` must exist. The broker makes the node /63s in the /50 with this tag. A reserved /63
+    has the description `{"reserved_by": "<broker_id>", "created_by": "wgkex"}`, an assigned /63 has the
+    public key of the node. Do not make or change them by hand.
+  - tokens: the brokers use the Periphery secret `WGKEX_PARKER_NETBOX_TOKEN` (`ipam.prefix` view, add,
+    change, delete; `extras.tag` view). polld uses the NetBox context key `parker.polld.netbox_token`
+    (`ipam.prefix` view).
 - Metrics: telegraf scrapes the workers on `127.0.0.1:9101` and the brokers on `127.0.0.1:5000` (measurement
   `prometheus`, tag `wgkex_role`). haproxy denies `/metrics` publicly.
 

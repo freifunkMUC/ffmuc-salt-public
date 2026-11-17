@@ -138,6 +138,7 @@ parker:
     snapshot_dir: /var/lib/wgkex
     sync_interval: 60
     reserve: 32
-# Parker NetBox (stack docker04/netbox-parker): the site /50s and the node /63s. polld on the pgws reads the same.
+# Main NetBox: the site /50s (parker.sites.*.netbox_filter) and the node /63s
+# (tag node-prefix, reserved blocks have reserved_by=<broker_id>). polld on the pgws reads the same.
 netbox:
-  url: https://nb-parker.ov.ffmuc.net
+  url: https://nb.ov.ffmuc.net

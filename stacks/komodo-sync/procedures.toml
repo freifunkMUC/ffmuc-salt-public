@@ -156,7 +156,6 @@ executions = [
   { execution.type = "DeployStackIfChanged", execution.params.stack = "docker04-hedgedoc" },
   { execution.type = "DeployStackIfChanged", execution.params.stack = "docker04-matomo" },
   { execution.type = "DeployStackIfChanged", execution.params.stack = "docker04-netbox" },
-  { execution.type = "DeployStackIfChanged", execution.params.stack = "docker04-netbox-parker" },
   { execution.type = "DeployStackIfChanged", execution.params.stack = "docker04-uptime-kuma" },
 ]
 
