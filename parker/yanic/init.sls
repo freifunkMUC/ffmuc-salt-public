@@ -39,7 +39,7 @@ user-{{ user }}:
 yanic:
   pkg.installed:
     - sources:
-      - yanic: https://apt.ffmuc.net/yanic_1.5.2-2_amd64.deb
+      - yanic: https://apt.ffmuc.net/yanic_2.1.1%2Bbatmanv4-2_amd64.deb
   service.running:
     - enable: True
     - require:
@@ -47,6 +47,7 @@ yanic:
       - file: /etc/systemd/system/yanic.service
     - watch:
       - file: /etc/yanic.conf
+      - file: /etc/systemd/system/yanic.service
       - pkg: yanic
 
 # copy systemd yanic.service
