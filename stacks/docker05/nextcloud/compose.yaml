@@ -3,14 +3,14 @@ services:
   db:
     image: mariadb:12.3.3-noble@sha256:4ebbcf100a3ba320766dfa0e1af008df12261301db6ef72798c7650f70794aed
     # log file and tmp tables per serverinfo DatabaseChecks; DB is ~31 MB, default buffer pool suffices
-    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW --innodb_read_only_compressed=OFF --innodb_log_file_size=256M --tmp_table_size=64M --max_heap_table_size=64M
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW --innodb_read_only_compressed=OFF --innodb_log_file_size=256M --tmp_table_size=64M --max_heap_table_size=64M --innodb_buffer_pool_size=512M
     restart: unless-stopped
     user: "999:999"
     cap_drop:
       - ALL
     security_opt:
       - no-new-privileges:true
-    mem_limit: 1g
+    mem_limit: 2g
     read_only: true
     tmpfs:
       - /tmp
