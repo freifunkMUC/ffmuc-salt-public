@@ -2,13 +2,14 @@
 
 # Script to nsupdate all our authoritative servers for Traefik ACME DNS-01 challenges.
 # Used by Traefik's lego exec DNS provider.
-# Requires bind-tools (nsupdate) installed.
+# Needs nsupdate (bind-tools), baked into the image local/traefik-nsupdate.
 
 # lego exec provider calls this script as:
 #   update-dns.sh present <fqdn> <token> <keyauth>
 #   update-dns.sh cleanup <fqdn> <token> <keyauth>
 # where <fqdn> is e.g. _acme-challenge.flow.ov.ffmuc.net
 
+# Fallback for hosts still on the plain image; remove once every Traefik uses local/traefik-nsupdate.
 if [ ! -f /usr/bin/nsupdate ]; then
     apk update && apk add bind-tools
 fi

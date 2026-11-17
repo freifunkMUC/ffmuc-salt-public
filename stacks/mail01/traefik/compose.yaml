@@ -9,13 +9,22 @@
 # maintenance (their v3 rules also parse under v2), then traefik last (drops defaultRuleSyntax v2).
 services:
   traefik:
-    image: traefik:v3.7.19@sha256:aa942a00bce033c909bf1f7e861d93761be4b31a035f10d2410d33e38a8f41cf
+    # Traefik with nsupdate for the DNS-01 hook; source in stacks/build/traefik-nsupdate, built on deploy.
+    build: ../../build/traefik-nsupdate
+    image: local/traefik-nsupdate:v3.7.19
+    pull_policy: build
     container_name: traefik
     restart: unless-stopped
     depends_on:
       socket-proxy:
         condition: service_healthy
-    # Not read_only and no cap_drop: the ov DNS-01 exec script installs bind-tools with apk on first use.
+    read_only: true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    tmpfs:
+      - /tmp
     mem_limit: 384m
     pids_limit: 512
     healthcheck:
@@ -37,12 +46,12 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - ./traefik.yml:/traefik.yml:ro
       # DNS-01 for resolver ov, written by the Salt state certs (0700, holds the update key)
-      - /opt/containers/traefik/update-dns.sh:/tmp/update-dns.sh:ro
+      - /opt/containers/traefik/update-dns.sh:/update-dns.sh:ro
       - /opt/containers/traefik/data/acme.json:/acme.json
       - ./dynamic_conf.yml:/dynamic_conf.yml:ro
       - /var/log/crowdsec/traefik/:/var/log/traefik/
     environment:
-      - EXEC_PATH=/tmp/update-dns.sh
+      - EXEC_PATH=/update-dns.sh
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.traefik.entrypoints=https"

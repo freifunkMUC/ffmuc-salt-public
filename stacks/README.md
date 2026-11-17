@@ -102,7 +102,7 @@ bcrypt hash), put the reference in single quotes: `NAME = '[[NAME]]'`.
 | `docker05/cryptpad` | none; `/srv/docker/cryptpad/data/config.js` and `infra.js` stay on the host |
 | `docker05/salt-master` | none |
 | `docker07/bgpalerter` | none; `/srv/docker/bgpalerter/volume/config.yml` stays on the host |
-| `docker0{4,5,6,7}/traefik` | none; the dashboards are behind oauth2-proxy (`noc-auth`). `traefik.yml`, `acme.json` and `update-dns.sh` (Salt state `certs`) stay on the host |
+| `docker0{4,5,6,7}/traefik` | none; the dashboards are behind oauth2-proxy (`noc-auth`). `traefik.yml`, `acme.json` and `update-dns.sh` (Salt state `certs`) stay on the host; the image is built from `build/traefik-nsupdate` (Traefik + nsupdate), read-only root |
 | `docker0{4,5,6,7}/wgkex` | `WGKEX_EMQX_NODE_COOKIE` (`EMQX_NODE__COOKIE`, same on all hosts), `WGKEX_MQTT_BROKER_PASSWORD`, `WGKEX_MQTT_WORKER_PASSWORD`, `WGKEX_MQTT_PARKER_PASSWORD` (EMQX users, same on all hosts, see `wgkex/README.md`). `config/broker/wgkex.yaml` stays on the host (the Salt state `telegraf` reads it too) |
 | `docker04/conferencemapper` | none |
 | `docker04/excalidraw-backend` | none |
