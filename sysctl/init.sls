@@ -19,6 +19,15 @@ net.ipv6.conf.all.forwarding:
     - value: 1
     - config: /etc/sysctl.d/21-forwarding.conf
 
+{%- else %}
+
+# unprivileged containers: systemd's default 0-2147483647 exceeds the gid map,
+# leaving 65534 and no unprivileged ICMP sockets (icinga ping checks fail)
+net.ipv4.ping_group_range:
+  sysctl.present:
+    - value: 0 65535
+    - config: /etc/sysctl.d/10-ping-group.conf
+
 {%- endif %}
 
 {# Remove old files #}
