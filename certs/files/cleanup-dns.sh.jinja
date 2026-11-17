@@ -9,7 +9,7 @@
 HOST="_acme-challenge"
 
 {#- Names in zones we do not serve: _acme-challenge.<name> is a CNAME into one of ours. #}
-{%- set acme_aliases = {'map.ffdon.net': 'donau-ries.freifunk.net'} %}
+{%- set acme_aliases = {'map.ffdon.net': 'donau-ries.freifunk.net', 'map.freifunk-donau-ries.de': 'donau-ries.freifunk.net'} %}
 ZONE="${CERTBOT_DOMAIN}"
 RECORD="${HOST}.${CERTBOT_DOMAIN}"
 case "${CERTBOT_DOMAIN}" in
