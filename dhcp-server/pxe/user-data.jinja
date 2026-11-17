@@ -80,7 +80,8 @@
 		'ssh': {'install-server': True, 'allow-pw': False},
 		'packages': ['qemu-guest-agent'],
 		'late-commands': [
-			'mkdir -p /target/etc/salt/minion.d /target/etc/apt/keyrings /target/etc/apt/preferences.d',
+			'mkdir -p /target/etc/salt/minion.d /target/etc/apt/keyrings /target/etc/apt/preferences.d /target/etc/systemd/networkd.conf.d',
+			"printf '[Network]\\nManageForeignRoutes=no\\nManageForeignRoutingPolicyRules=no\\n' > /target/etc/systemd/networkd.conf.d/10-ffmuc.conf",
 			"printf 'id: %s\\nmaster: %s\\nstartup_states: highstate\\n' '" ~ host ~ "' '" ~ pxe.salt_master ~ "' > /target/etc/salt/minion.d/ffmuc.conf",
 			"printf 'tcp_keepalive: True\\ntcp_keepalive_idle: 30\\ntcp_keepalive_intvl: 10\\ntcp_keepalive_cnt: 3\\n' > /target/etc/salt/minion.d/tcp-keepalive.conf",
 			"sed -i 's/^127.0.1.1.*/127.0.1.1 " ~ host ~ " " ~ host.split('.')[0] ~ "/' /target/etc/hosts",

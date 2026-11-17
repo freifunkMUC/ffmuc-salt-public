@@ -188,6 +188,13 @@ class PxeTemplateTest(unittest.TestCase):
         self.assertIn("tcp_keepalive_idle: 30", cmds)
         self.assertIn("127.0.1.1 vm1.example.test vm1/", cmds)
         self.assertIn('GRUB_CMDLINE_LINUX="console=tty0 console=ttyS0,115200"', cmds)
+        # networkd reads this only at start: it must be there before the
+        # first boot, or a networkd reload removes the BIRD routes
+        self.assertIn(
+            "ManageForeignRoutes=no\\nManageForeignRoutingPolicyRules=no\\n'"
+            " > /target/etc/systemd/networkd.conf.d/10-ffmuc.conf",
+            cmds,
+        )
         self.assertEqual(ai["shutdown"], "reboot")
         # vda: msdos + GRUB only; sda: whole-disk PV, no partition table
         st = {c["id"]: c for c in ai["storage"]["config"]}
