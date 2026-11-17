@@ -11,6 +11,9 @@
 {%- for node in nebula_node_data_list %}
 -A PREROUTING -d {{ nat_ip }} -p udp -m udp --dport {{ node.nebula_port }} -j DNAT --to-destination {{ node.minion_address }} -m comment --comment "{{ node.hostname }}"
 {%- endfor %}{# node #}
+{%- for node in nebula_meet_data_list %}
+-A PREROUTING -d {{ nat_ip }} -p udp -m udp --dport {{ node.nebula_port }} -j DNAT --to-destination {{ node.minion_address }} -m comment --comment "{{ node.hostname }} nebula-meet"
+{%- endfor %}{# node #}
 
 {%- if own_location == "MUC01" %}
 -A PREROUTING -d {{ nat_ip }} -p tcp -m tcp --dport 52210 -j DNAT --to-destination 10.80.248.86:22 -m comment --comment "Fallback SSH for ft04"
