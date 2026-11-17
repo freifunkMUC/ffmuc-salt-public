@@ -1,4 +1,4 @@
-{%- from 'iptables/nebula_map.jinja' import nebula_node_data_list with context %}
+{%- from 'iptables/nebula_map.jinja' import nebula_node_data_list, nebula_meet_data_list with context %}
 # Managed with Salt
 
 *nat
@@ -18,6 +18,9 @@
 
 {%- for node in nebula_node_data_list %}
 -A POSTROUTING -s {{ node.minion_address }} -p udp -m udp --sport {{ node.nebula_port }} -j SNAT --to-source {{ nat_ip }}:{{ node.nebula_port }} -m comment --comment "{{ node.hostname }}"
+{%- endfor %}{# node #}
+{%- for node in nebula_meet_data_list %}
+-A POSTROUTING -s {{ node.minion_address }} -p udp -m udp --sport {{ node.nebula_port }} -j SNAT --to-source {{ nat_ip }}:{{ node.nebula_port }} -m comment --comment "{{ node.hostname }} nebula-meet"
 {%- endfor %}{# node #}
 
 {%- if own_location == "MUC01" %}
