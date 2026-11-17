@@ -5,8 +5,8 @@
 - **Workers** run on the gateways (`nextgen-gateway` role) and are managed by this formula: git checkout of the release tag `wgkex_version` in `init.sls` (pillar `wgkex:rev` overrides it, e.g. to test a branch)
   in `/srv/wgkex/wgkex`, config `/etc/wgkex.yaml` from `wgkex.yaml.jinja`.
 - **Brokers** run on docker04–07 as Komodo stacks `docker04-wgkex` … `docker07-wgkex` (`stacks/docker0X/wgkex/compose.yaml`, image
-  `ghcr.io/freifunkmuc/wgkex`, same tag as the workers; Renovate bumps both in one PR). Their config `/srv/docker/wgkex/config/broker/wgkex.yaml` is **not** managed by
-  Salt. Requests reach them through haproxy (`broker_backend`), which overwrites `X-Forwarded-For`, so the brokers
+  `ghcr.io/freifunkmuc/wgkex`, same tag as the workers; Renovate bumps both in one PR). Their config is `stacks/docker0X/wgkex/wgkex.yaml` (in git, mounted read-only; no secrets, MQTT login via `WGKEX__MQTT__*` env).
+  Requests reach them through haproxy (`broker_backend`), which overwrites `X-Forwarded-For`, so the brokers
   trust it from the webfrontends (`broker.trusted_proxies`).
 - **MQTT** (EMQX cluster `mqtt_cluster` in the same stacks, `broker.ov.ffmuc.net:1883`): the workers log in as
   pillar `wgkex:mqtt:username`/`password` (empty: anonymous), the brokers as `wgkex-broker` with the Periphery secret
