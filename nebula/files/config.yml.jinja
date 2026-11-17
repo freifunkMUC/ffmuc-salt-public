@@ -118,6 +118,12 @@ firewall:
     proto: tcp
     group: webfrontend
 {%- endif %}
+{%- if role == "parker-gateway" %}
+    # Interim Parker map: map-parker.ffmuc.net on the webfrontends reads /map/ (nginx/domains/map-parker.ffmuc.net.conf)
+  - port: 80
+    proto: tcp
+    group: webfrontend
+{%- endif %}
     # HTTPS
   - port: 443
     proto: tcp
