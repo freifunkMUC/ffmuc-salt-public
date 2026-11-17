@@ -1,8 +1,7 @@
 ---
 services:
   broker:
-    # Parker needs the first release with wgkex#323. Replace this tag before deploy.
-    image: ghcr.io/freifunkmuc/wgkex:v0.5.2@sha256:481877d633e19bc0c18f2af1f0e500a0e569690d034bd9e9c3f79f54817edb42
+    image: ghcr.io/freifunkmuc/wgkex:v0.6.0@sha256:dbd7830962c57094a73536d67217fdfff0dbd81430d26ca9ef5e4ced1e341d8d
     command: broker
     restart: unless-stopped
     depends_on:

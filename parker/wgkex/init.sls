@@ -3,6 +3,9 @@
 {%- if 'nextgen-gateway' in role or 'parker-gateway' in role %}
 
 {% set user = "wgkex" %}
+{#- Worker release; keep it equal to wgkex/init.sls and the broker image (stacks/docker0[4-7]/wgkex). #}
+{# renovate: datasource=github-releases depName=freifunkMUC/wgkex #}
+{% set wgkex_version = 'v0.6.0' %}
 
 # Create Groups
 group-{{ user }}:
@@ -36,7 +39,7 @@ python3-virtualenv:
 /srv/wgkex/wgkex-git:
   git.latest:
     - name: https://github.com/freifunkMUC/wgkex.git
-    - rev: main  {# Parker is in wgkex main since wgkex#323 #}
+    - rev: {{ salt['pillar.get']('wgkex:rev', wgkex_version) }}
     - target: /srv/wgkex/wgkex-git
     - user: wgkex
     - force_reset: True
