@@ -5,11 +5,14 @@
 # /srv/docker/traefik/logs (rotated by the logrotate state, not shipped to Graylog).
 services:
   traefik:
-    image: traefik:v3.7.18@sha256:9c437ac4f09ce6f4980a8544902d3475fdf70a1a7c578729581d2535dfa7d635
+    image: traefik:v3.7.19@sha256:aa942a00bce033c909bf1f7e861d93761be4b31a035f10d2410d33e38a8f41cf
     container_name: traefik
     restart: unless-stopped
     depends_on:
-      - socket-proxy
+      socket-proxy:
+        condition: service_healthy
+    # Not read_only and no cap_drop: the DNS-01 exec script installs bind-tools with apk on first use.
+    pids_limit: 512
     security_opt:
       - no-new-privileges:true
     networks:
@@ -57,6 +60,10 @@ services:
     image: lscr.io/linuxserver/socket-proxy:3.4.7-r0-ls106@sha256:18289eeb306e8e3b70901ffec23eafbb318d73b4514d0bd737dbfc7c5b4fe506
     restart: unless-stopped
     read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     tmpfs:
       - /run
     networks:
