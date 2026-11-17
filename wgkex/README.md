@@ -10,8 +10,9 @@
   trust it from the webfrontends (`broker.trusted_proxies`).
 - **MQTT** (EMQX cluster `mqtt_cluster` in the same stacks, `broker.ov.ffmuc.net:1883`): the workers log in as
   pillar `wgkex:mqtt:username`/`password` (empty: anonymous), the brokers as `wgkex-broker` with the Periphery secret
-  `WGKEX_MQTT_BROKER_PASSWORD` (`WGKEX__MQTT__*` env, needs wgkex with freifunkMUC/wgkex#324), the Parker pilot on
-  pgw01 as `parker` (set by hand in its `/etc/wgkex.yaml`). EMQX rejects anonymous clients; `emqx/acl.conf` next to
+  `WGKEX_MQTT_BROKER_PASSWORD` (`WGKEX__MQTT__*` env, needs wgkex with freifunkMUC/wgkex#324), the Parker gateways
+  (`parker/wgkex`, pgw01 and pgw03) also as `wgkex:mqtt` (the worker user). The master pillar file with
+  `wgkex:mqtt` must target the pgws too, not only `gw0[4-7]`. The user `parker` is only for the old pgw01 pilot. EMQX rejects anonymous clients; `emqx/acl.conf` next to
   each `compose.yaml` allows each user only its own topics, everything else is denied (see MQTT users below).
 - Metrics: telegraf scrapes the workers on `127.0.0.1:9101` and the brokers on `127.0.0.1:5000` (measurement
   `prometheus`, tag `wgkex_role`). haproxy denies `/metrics` publicly.
@@ -49,7 +50,7 @@ lives in the anonymous volume `/opt/emqx/data` that survives restarts and redepl
    five minutes. Clients still using the old password are locked out until they get the new one.
 
 Every client needs its credentials before EMQX enforces them: the broker image must read `WGKEX__MQTT__*`
-(wgkex#324; v0.5.1 does not), the gateways need the pillar from a highstate, pgw01 its manual entry. Check on each
+(wgkex#324; v0.5.1 does not), the gateways and the pgws need the pillar from a highstate. Check on each
 node that no client is anonymous: `docker exec mqtt_cluster emqx ctl clients list | grep -c 'username=undefined'`.
 Denied publishes are dropped silently (`deny_action = ignore`, a disconnect would make clients reconnect in a loop);
 look for them with `docker exec mqtt_cluster emqx ctl broker metrics | grep authorization`.
