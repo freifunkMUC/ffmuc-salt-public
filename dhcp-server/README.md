@@ -101,3 +101,57 @@ NetBox config context `dhcp_guardian` (shape: `dhcpd_to_context.py`):
 (contains MAC addresses: paste only into NetBox; `--summary` prints counts).
 Leases are not migrated (lease time 1800 s, clients renew within 15-30 min).
 Pool statistics (`kea-pool-stats`) are not set up on the guardians.
+
+## Guardian PXE and unattended install (`guardian_pxe.sls`)
+
+The guardians boot machines in their mgmt network over PXE. A host in the
+install list gets Ubuntu without questions, with a salt-minion. Salt then
+does the rest on first boot (Nebula, interfaces, users).
+
+```mermaid
+flowchart LR
+  VM[New VM] -- DHCP --> K[Kea on guardian]
+  K -- legacy PXE: netboot.xyz.kpxe --> T[TFTP]
+  K -- iPXE: boot.ipxe --> H[HTTP]
+  H -- MAC file exists --> I[Ubuntu autoinstall]
+  H -- no MAC file --> T
+  I -- salt-minion, highstate --> M[salt master]
+```
+
+Turn it on in the config context `dhcp_guardian` (Kea must be enabled):
+
+```
+"pxe": {
+  "enabled": true,
+  "netbox_token": "<read-only token>",
+  "install_hosts": ["<vm fqdn>"],
+  "ubuntu_release": "26.04.1",           (optional)
+  "ubuntu_iso_sha256": "<sha256>",       (optional, required with a new release)
+  "salt_master": "saltmaster.in.ffmuc.net" (optional)
+}
+```
+
+- **PXE server address and network:** `next_server` and `subnet` of the first
+  Kea subnet with a `next_server`. No other address is configured.
+- **TFTP:** `tftpd-hpa` on the PXE address serves `netboot.xyz.kpxe`
+  (checked with sha256). `nf_conntrack_tftp` is loaded.
+- **HTTP:** nginx on the PXE address, only for the mgmt network. Root
+  `/srv/pxe`. It serves `boot.ipxe`, the Ubuntu ISO with its kernel and
+  initrd (about 3 GB, downloaded once and checked), the per-host iPXE files
+  and the autoinstall data.
+- **Kea:** clients that send option 77 `iPXE` (for example the QEMU NIC ROM)
+  get `http://<pxe>/boot.ipxe`. Other clients keep `boot_file` over TFTP.
+- **boot.ipxe:** loads `/ipxe/<mac>.ipxe`. If the file does not exist, it
+  loads the netboot.xyz menu.
+- **Per host:** for each VM in `install_hosts` the state reads the VM from
+  NetBox (`netbox_vms.get_vm_install_data`). The MAC of the interface with
+  the primary IPv4 names the iPXE file. The user-data sets this interface
+  static (router and DNS from the Kea subnet) and names all interfaces by
+  MAC. It installs `salt-minion` (same version as `salt-minion/init.sls`)
+  with `id` = FQDN and `startup_states: highstate`, and the admin SSH keys
+  for root. It contains no secrets.
+- **iptables:** udp/69 and tcp/80 from the mgmt network.
+
+After the install, remove the host from `install_hosts` and run a highstate
+on the guardian. The state removes its files, so the next PXE boot shows the
+menu and does not install again.

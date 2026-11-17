@@ -92,6 +92,7 @@ base:
     - mailqueue
   'guardian-*.in.ffmuc.net':
     - dhcp-server.guardian
+    - dhcp-server.guardian_pxe
     - sflowtool
     - iptables
   'vpn0*.in.ffmuc.net':

@@ -1,0 +1,6 @@
+#!ipxe
+# Managed with Salt. Hosts with a file in /ipxe/ get an unattended install,
+# all other hosts get the netboot.xyz menu.
+chain --autofree {{ pxe.url }}/ipxe/${mac:hexhyp}.ipxe || goto menu
+:menu
+chain --autofree tftp://{{ pxe.address }}/netboot.xyz.kpxe || shell

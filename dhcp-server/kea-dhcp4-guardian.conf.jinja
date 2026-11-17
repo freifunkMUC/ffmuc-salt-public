@@ -6,6 +6,7 @@
   with underscore, singular `control-socket`, no hooks (so no ping check).
 #}
 {%- set cfg = salt['config.get']('netbox:config_context:dhcp_guardian', {}) %}
+{%- from 'dhcp-server/pxe/map.jinja' import pxe with context %}
 {%- set subnets = [] %}
 {%- for s in cfg.get('subnets', []) %}
 {%- set options = [] %}
@@ -40,6 +41,9 @@
 		'max-valid-lifetime': cfg.get('max_valid_lifetime', 3600),
 		'option-data': global_options,
 		'subnet4': subnets,
+		'client-classes': [
+			{'name': 'iPXE', 'test': "option[77].hex == 'iPXE'", 'boot-file-name': pxe.url ~ '/boot.ipxe'},
+		] if pxe.enabled else [],
 		'loggers': [
 			{
 				'name': 'kea-dhcp4',

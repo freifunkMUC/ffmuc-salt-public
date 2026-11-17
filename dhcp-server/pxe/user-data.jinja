@@ -1,0 +1,66 @@
+{#-
+  Ubuntu autoinstall for one host. Input: `host` (FQDN), `vm` (from
+  netbox_vms.get_vm_install_data), `pxe` (map.jinja), `salt_version`, `keys`.
+  Only the mgmt interface gets an address. Salt does the rest on first boot
+  (Nebula, the other interfaces, users). No secrets in this file: it is
+  readable from the mgmt network.
+#}
+{%- set mgmt_ip = vm.primary_ip4 %}
+{%- if not mgmt_ip or not salt['network.ip_in_subnet'](mgmt_ip.split('/')[0], pxe.subnet) %}
+{{- raise('pxe: primary IPv4 of ' ~ host ~ ' (' ~ mgmt_ip ~ ') is not in ' ~ pxe.subnet) }}
+{%- endif %}
+{%- set ethernets = {} %}
+{%- for iface in vm.interfaces if iface.mac %}
+{%- set eth = {'match': {'macaddress': iface.mac}, 'set-name': iface.name, 'dhcp4': False, 'dhcp6': False} %}
+{%- if mgmt_ip in iface.addresses %}
+{%- do eth.update({'addresses': [mgmt_ip]}) %}
+{%- if pxe.routers %}{% do eth.update({'routes': [{'to': 'default', 'via': pxe.routers.split(',')[0] | trim}]}) %}{% endif %}
+{%- if pxe.dns %}
+{%- set nameservers = {'addresses': pxe.dns.split(',') | map('trim') | list} %}
+{%- do eth.update({'nameservers': nameservers}) %}
+{%- endif %}
+{%- else %}
+{%- do eth.update({'optional': True, 'link-local': []}) %}
+{%- endif %}
+{%- do ethernets.update({iface.name: eth}) %}
+{%- endfor %}
+{%- set storage = {'name': 'lvm', 'sizing-policy': 'all', 'match': {'size': 'largest'} } %}
+{%- set salt_list = 'deb [arch=amd64 signed-by=/etc/apt/keyrings/salt-archive-keyring.asc] https://packages.broadcom.com/artifactory/saltproject-deb/ stable main' %}
+{%- set config = {
+	'autoinstall': {
+		'version': 1,
+		'interactive-sections': [],
+		'locale': 'en_US.UTF-8',
+		'keyboard': {'layout': 'us'},
+		'refresh-installer': {'update': False},
+		'source': {'id': 'ubuntu-server-minimal'},
+		'network': {'version': 2, 'ethernets': ethernets},
+		'storage': {'layout': storage},
+		'ssh': {'install-server': True, 'allow-pw': False},
+		'late-commands': [
+			'mkdir -p /target/etc/salt/minion.d /target/etc/apt/keyrings /target/etc/apt/preferences.d',
+			"printf 'id: %s\\nmaster: %s\\nstartup_states: highstate\\n' '" ~ host ~ "' '" ~ pxe.salt_master ~ "' > /target/etc/salt/minion.d/ffmuc.conf",
+			'curl -fsSL https://packages.broadcom.com/artifactory/api/security/keypair/SaltProjectKey/public -o /target/etc/apt/keyrings/salt-archive-keyring.asc',
+			"echo '" ~ salt_list ~ "' > /target/etc/apt/sources.list.d/saltstack.list",
+			"printf 'Package: salt-*\\nPin: version " ~ salt_version ~ "\\nPin-Priority: 1001\\n' > /target/etc/apt/preferences.d/salt-pin-1001",
+			'curtin in-target --target=/target -- apt-get update',
+			'curtin in-target --target=/target -- env DEBIAN_FRONTEND=noninteractive apt-get install -y salt-minion=' ~ salt_version ~ ' salt-common=' ~ salt_version,
+			'curtin in-target --target=/target -- systemctl enable salt-minion',
+		],
+		'user-data': {
+			'hostname': host.split('.')[0],
+			'fqdn': host,
+			'prefer_fqdn_over_hostname': True,
+			'disable_root': False,
+			'ssh_pwauth': False,
+			'users': [],
+			'write_files': [{
+				'path': '/root/.ssh/authorized_keys',
+				'permissions': '0600',
+				'content': keys,
+			}],
+		},
+	},
+} -%}
+#cloud-config
+{{ config | tojson(indent=2) }}
