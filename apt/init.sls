@@ -13,6 +13,15 @@
       - salt://apt/sources.list.{{ grains.os }}.{{ grains.oscodename }}.{{ site_slug }}
       - salt://apt/sources.list.{{ grains.os }}.{{ grains.oscodename }}
 
+{% if (grains.os == 'Ubuntu' and grains.osmajorrelease >= 24) or (grains.os == 'Debian' and grains.osmajorrelease >= 13) %}
+# legacy file would duplicate the deb822 sources
+/etc/apt/sources.list:
+  file.managed:
+    - contents: "# managed by Salt: see sources.list.d/{{ grains.os|lower }}.sources"
+    - require:
+      - file: /etc/apt/sources.list.d/{{ grains.os|lower }}.sources
+{% endif %}
+
 /etc/apt/sources.list.d/repo_saltstack_com_apt_debian_9_amd64_latest.list:
   file.absent
 
