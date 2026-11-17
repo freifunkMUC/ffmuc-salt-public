@@ -14,8 +14,8 @@ meshviewer-directory:
 meshviewer-code:
   archive.extracted:
     - name: /srv/www/{{ domain }}/meshviewer
-    - source: https://github.com/freifunk/meshviewer/releases/download/v12.6.0/meshviewer-build.zip
-    - source_hash: sha256=6e8720e33e3c497b0bc16aa36345931cbbc3b2865b92d543ecced1c0811fab95
+    - source: https://github.com/freifunk/meshviewer/releases/download/v14.0.0/meshviewer-build.zip
+    - source_hash: sha256=aaeac5d0389c2e89ef0c511fac79c5b8d5cebe4ff76547e11ef47a5680d7e15b
     - use_etag: True
     - user: www-data
     - group: www-data

@@ -169,50 +169,70 @@
         }
     },
     "cacheBreaker": "22967a527",
+    "grafana": {
+        "url": "/grafana",
+        "orgId": 1
+    },
     "nodeInfos": [
         {
-            "name": "Clients (24 Stunden)",
-            "image": "https://stats.ffmuc.net/render/d-solo/hRIn3dRWk/mesh-nodes?orgId=1&panelId=2&var-nodeid={NODE_ID}&width=450&height=300&theme=light&from=now-24h",
-            "href": "https://stats.ffmuc.net/d/hRIn3dRWk/mesh-nodes?orgId=1&var-nodeid={NODE_ID}",
-            "title": "Clients - Knoten {NODE_ID}"
-        },
-        {
-            "name": "Traffic (24 Stunden)",
-            "image": "https://stats.ffmuc.net/render/d-solo/hRIn3dRWk/mesh-nodes?panelId=6&var-nodeid={NODE_ID}&width=450&height=400&theme=light&from=now-24h",
-            "href": "https://stats.ffmuc.net/d/hRIn3dRWk/mesh-nodes?orgId=1&var-nodeid={NODE_ID}",
-            "title": "Traffic - Knoten {NODE_ID}"
-        },
-        {
-            "name": "Clients (7 Tage)",
-            "image": "https://stats.ffmuc.net/render/d-solo/hRIn3dRWk/mesh-nodes?panelId=2&var-nodeid={NODE_ID}&width=450&height=300&theme=light&from=now-7d",
-            "href": "https://stats.ffmuc.net/d/hRIn3dRWk/mesh-nodes?orgId=1&var-nodeid={NODE_ID}",
-            "title": "Clients - Knoten {NODE_ID}"
-        },
-        {
-            "name": "Traffic (7 Tage)",
-            "image": "https://stats.ffmuc.net/render/d-solo/hRIn3dRWk/mesh-nodes?panelId=6&var-nodeid={NODE_ID}&width=450&height=400&theme=light&from=now-7d",
-            "href": "https://stats.ffmuc.net/d/hRIn3dRWk/mesh-nodes?orgId=1&var-nodeid={NODE_ID}",
-            "title": "Traffic - Knoten {NODE_ID}"
-        },
-        {
-            "name": "Uptime (7 Tage)",
-            "image": "https://stats.ffmuc.net/render/d-solo/hRIn3dRWk/mesh-nodes?panelId=8&var-nodeid={NODE_ID}&width=450&height=400&theme=light&from=now-7d",
-            "href": "https://stats.ffmuc.net/d/hRIn3dRWk/mesh-nodes?orgId=1&var-nodeid={NODE_ID}",
-            "title": "Traffic - Knoten {NODE_ID}"
+            "name": "Grafana",
+            "title": "Statistiken für Knoten {NODE_ID} in Grafana öffnen",
+            "href": "https://stats.ffmuc.net/d/hRIn3dRWk/mesh-nodes?orgId=1&var-nodeid={NODE_ID}"
         }
     ],
-    "globalInfos": [
+    "nodeCharts": [
         {
             "name": "Clients",
-            "title": "Clients pro Segment",
-            "href": "https://stats.ffmuc.net",
-            "image": "https://stats.ffmuc.net/render/d-solo/kUoZ2DRWz/network-overview?panelId=6&orgId=1&theme=light&width=500&height=500"
+            "href": "https://stats.ffmuc.net/d/hRIn3dRWk/mesh-nodes?orgId=1&var-nodeid=$node&from=$from&to=$to",
+            "datasourceUid": "000000005",
+            "datasourceType": "influxdb",
+            "query": "SELECT mean(\"clients.total\") AS \"Clients\" FROM \"node\" WHERE (\"nodeid\" =~ /^$node$/) AND $timeFilter GROUP BY time($interval) fill(null)",
+            "format": ".0f",
+            "from": "now-7d",
+            "to": "now-1m",
+            "maxDataPoints": 300,
+            "series": [
+                {
+                    "name": "Clients",
+                    "color": "#73BF69"
+                }
+            ]
         },
         {
             "name": "Traffic",
-            "title": "Traffic pro Server",
-            "href": "https://stats.ffmuc.net",
-            "image": "https://stats.ffmuc.net/render/d-solo/kUoZ2DRWz/network-overview?panelId=7&orgId=1&theme=light&width=500&height=500"
+            "href": "https://stats.ffmuc.net/d/hRIn3dRWk/mesh-nodes?orgId=1&var-nodeid=$node&from=$from&to=$to",
+            "datasourceUid": "000000005",
+            "datasourceType": "influxdb",
+            "query": "SELECT non_negative_derivative(mean(\"traffic.rx.bytes\"), 1s) * 8 AS \"RX\", non_negative_derivative(mean(\"traffic.tx.bytes\"), 1s) * 8 AS \"TX\" FROM \"node\" WHERE (\"nodeid\" =~ /^$node$/) AND $timeFilter GROUP BY time($interval) fill(none)",
+            "format": ".2~s",
+            "unitSuffix": "bit/s",
+            "from": "now-7d",
+            "to": "now-1m",
+            "maxDataPoints": 300,
+            "series": [
+                {
+                    "name": "RX",
+                    "color": "#73BF69"
+                },
+                {
+                    "name": "TX",
+                    "color": "#F2495C",
+                    "negate": true
+                }
+            ]
+        }
+    ],
+    "globalCharts": [
+        {
+            "name": "Clients pro Segment",
+            "datasourceUid": "000000005",
+            "datasourceType": "influxdb",
+            "query": "SELECT mean(\"clients.total\") FROM \"global_site_domain\" WHERE $timeFilter GROUP BY time($interval), \"domain\" fill(null)",
+            "alias": "$tag_domain",
+            "format": ".0f",
+            "from": "now-7d",
+            "to": "now-1m",
+            "maxDataPoints": 300
         }
     ],
     "dataPath": [
