@@ -21,6 +21,7 @@ entryPoints:
     http:
       middlewares:
         - crowdsec-bouncer@file
+        - default-security-headers@file
     http3:
       advertisedPort: '443'
 global:
