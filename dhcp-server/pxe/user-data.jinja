@@ -1,10 +1,38 @@
 {#-
   Ubuntu autoinstall for one host. Input: `host` (FQDN), `vm` (from
-  netbox_vms.get_vm_install_data), `pxe` (map.jinja), `salt_version`, `keys`.
+  netbox_vms.get_vm_install_data), `pxe` (map.jinja), `salt_version`, `keys`,
+  `nebula` (package, CA, lighthouses of the guardian).
   Only the mgmt interface gets an address. Salt does the rest on first boot
-  (Nebula, the other interfaces, users). No secrets in this file: it is
-  readable from the mgmt network.
+  (the other interfaces, users). No secrets in this file: it is readable from
+  the mgmt network. The host makes its own Nebula key in the install; the key
+  never leaves the host. Nebula and salt-minion start only when the operator
+  puts the signed /etc/nebula/host.crt in place (see README).
 #}
+{%- set nebula_deb = '/var/cache/nebula/nebula_' ~ nebula.version ~ '_amd64.deb' %}
+{%- set nebula_url = 'https://github.com/krombel/nebula/releases/download/v' ~ nebula.version ~ '/nebula-linux-amd64.deb' %}
+{%- set nebula_cfg %}{% include 'dhcp-server/pxe/nebula-config.yml.jinja' %}{% endset %}
+{%- set boot_files = [
+	('/etc/nebula/ca.crt', '0644', nebula.ca),
+	('/etc/nebula/config.yml', '0644', nebula_cfg | trim ~ '\n'),
+	('/etc/systemd/system/nebula.service.d/wait-for-cert.conf', '0644', '[Unit]\nConditionPathExists=/etc/nebula/host.crt\n'),
+	('/etc/systemd/system/salt-minion.service.d/nebula.conf', '0644', '[Unit]\nWants=nebula.service\nAfter=nebula.service\nConditionPathExists=/etc/nebula/host.crt\n'),
+	('/etc/systemd/system/nebula-cert.path', '0644', '[Unit]\nDescription=Start Nebula and salt-minion when the host cert is in place\n\n[Path]\nPathExists=/etc/nebula/host.crt\nUnit=salt-minion.service\n\n[Install]\nWantedBy=multi-user.target\n'),
+] %}
+{#- Nebula before salt-minion: package (pinned sha256), own key pair, CA,
+    bootstrap config and the systemd units that wait for the cert. #}
+{%- set nebula_cmds = [
+	'mkdir -p /target/var/cache/nebula /target/etc/nebula /target/etc/systemd/system/nebula.service.d /target/etc/systemd/system/salt-minion.service.d',
+	'curl -fsSL -o /target' ~ nebula_deb ~ ' ' ~ nebula_url,
+	"echo '" ~ nebula.sha256 ~ "  /target" ~ nebula_deb ~ "' | sha256sum -c --quiet",
+	'curtin in-target --target=/target -- dpkg -i ' ~ nebula_deb,
+	'curtin in-target --target=/target -- nebula-cert keygen -curve 25519 -out-key /etc/nebula/host.key -out-pub /etc/nebula/host.pub',
+	'chmod 0600 /target/etc/nebula/host.key',
+	'chmod 0644 /target/etc/nebula/host.pub',
+] %}
+{%- for path, mode, content in boot_files %}
+{%- do nebula_cmds.append("echo '" ~ (content | base64_encode) ~ "' | base64 -d > /target" ~ path ~ " && chmod " ~ mode ~ " /target" ~ path) %}
+{%- endfor %}
+{%- do nebula_cmds.append('curtin in-target --target=/target -- systemctl enable nebula.service nebula-cert.path') %}
 {%- set mgmt_ip = vm.primary_ip4 %}
 {%- if not mgmt_ip or not salt['network.ip_in_subnet'](mgmt_ip.split('/')[0], pxe.subnet) %}
 {{- raise('pxe: primary IPv4 of ' ~ host ~ ' (' ~ mgmt_ip ~ ') is not in ' ~ pxe.subnet) }}
@@ -64,7 +92,7 @@
 			'curtin in-target --target=/target -- apt-get update',
 			'curtin in-target --target=/target -- env DEBIAN_FRONTEND=noninteractive apt-get install -y salt-minion=' ~ salt_version ~ ' salt-common=' ~ salt_version,
 			'curtin in-target --target=/target -- systemctl enable salt-minion',
-		],
+		] + nebula_cmds,
 		'shutdown': 'reboot',
 		'user-data': {
 			'hostname': host.split('.')[0],

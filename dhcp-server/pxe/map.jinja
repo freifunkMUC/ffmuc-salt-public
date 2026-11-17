@@ -3,7 +3,8 @@
   config context `dhcp_guardian` (the Kea data). PXE is on only if Kea is
   enabled and `dhcp_guardian.pxe.enabled` is true. The PXE server address
   and network are the `next_server` and `subnet` of the first Kea subnet
-  that has a `next_server`.
+  that has a `next_server`. `salt_master` is the Nebula address of the
+  master (docker05): the minions reach the master only over Nebula.
 #}
 {%- set _cfg = salt['config.get']('netbox:config_context:dhcp_guardian', none) %}
 {%- set pxe = {'enabled': False} %}
@@ -26,7 +27,7 @@
 	'iso': 'ubuntu-' ~ _release ~ '-live-server-amd64.iso',
 	'iso_sha256': _p.get('ubuntu_iso_sha256', 'cc8a95cde20f6ced61a322420de00f10cc3c90ced545daa46cb9c1a117f1d927'),
 	'install_hosts': _p.get('install_hosts', []),
-	'salt_master': _p.get('salt_master', 'saltmaster.in.ffmuc.net'),
+	'salt_master': _p.get('salt_master', '10.8.0.34'),
 	'root': '/srv/pxe',
 }) %}
 {%- do pxe.update({'url': 'http://' ~ pxe.address}) %}

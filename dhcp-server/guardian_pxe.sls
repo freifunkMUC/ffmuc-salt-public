@@ -7,6 +7,7 @@
 #
 {%- from 'dhcp-server/pxe/map.jinja' import pxe with context %}
 {%- from 'salt-minion/init.sls' import salt_version with context %}
+{%- from 'nebula/map.jinja' import nebula with context %}
 {%- if pxe.enabled %}
 {%- set ubuntu_dir = pxe.root ~ '/ubuntu/' ~ pxe.release %}
 
@@ -109,6 +110,20 @@ guardian-pxe-ubuntu-kernel:
 {%- for admin in admins | sort %}{% do keys.append('environment="SSH_USER=' ~ admin ~ '" ' ~ admins[admin]) %}{% endfor %}
 {%- set netbox_api = salt['pillar.get']('netbox:config_context:netbox:api_url') %}
 {%- set netbox_token = salt['config.get']('netbox:config_context:dhcp_guardian:pxe:netbox_token') %}
+{#- Nebula for the new host: the package, the CA and the lighthouses of the
+    guardian (public data only). The host makes its own key in the install. #}
+{%- if pxe.install_hosts and not (nebula.enabled and nebula.lighthouses) %}
+{{ raise('pxe: the guardian has no Nebula config, so a new host cannot reach the salt master') }}
+{%- endif %}
+{%- set ca = [] %}
+{%- for f in nebula.pki.cas %}{% do ca.append(salt['cp.get_file_str']('salt://nebula/cert/' ~ f) | trim) %}{% endfor %}
+{%- set nebula_boot = {
+	'version': nebula.version,
+	'sha256': nebula.packages[nebula.version]['amd64'],
+	'ca': ca | join('\n') ~ '\n',
+	'lighthouses': nebula.lighthouses,
+	'interface': nebula.interface,
+} %}
 
 {%- for host in pxe.install_hosts | sort %}
 {%- set vm = salt['netbox_vms.get_vm_install_data'](netbox_api, netbox_token, host) %}
@@ -140,6 +155,7 @@ guardian-pxe-ubuntu-kernel:
         host: {{ host }}
         vm: {{ vm | json }}
         salt_version: "{{ salt_version }}"
+        nebula: {{ nebula_boot | json }}
         keys: {{ (keys | join('\n') ~ '\n') | json }}
     - require_in:
       - file: {{ pxe.root }}/autoinstall

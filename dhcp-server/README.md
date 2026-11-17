@@ -105,8 +105,10 @@ Pool statistics (`kea-pool-stats`) are not set up on the guardians.
 ## Guardian PXE and unattended install (`guardian_pxe.sls`)
 
 The guardians boot machines in their mgmt network over PXE. A host in the
-install list gets Ubuntu without questions, with a salt-minion. Salt then
-does the rest on first boot (Nebula, interfaces, users).
+install list gets Ubuntu without questions, with Nebula and a salt-minion.
+The minion reaches the master only over Nebula. The host makes its own
+Nebula key. After the operator puts the signed cert on the host, Nebula and
+the minion start, and the first highstate does the rest.
 
 ```mermaid
 flowchart LR
@@ -115,7 +117,9 @@ flowchart LR
   K -- iPXE: boot.ipxe --> H[HTTP]
   H -- MAC file exists --> I[Ubuntu autoinstall]
   H -- no MAC file --> T
-  I -- salt-minion, highstate --> M[salt master]
+  I -- host.pub --> O[Operator signs cert on master]
+  O -- host.crt over SSH --> I
+  I -- Nebula, salt-minion, highstate --> M[salt master 10.8.0.34]
 ```
 
 Turn it on in the config context `dhcp_guardian` (Kea must be enabled):
@@ -127,7 +131,7 @@ Turn it on in the config context `dhcp_guardian` (Kea must be enabled):
   "install_hosts": ["<vm fqdn>"],
   "ubuntu_release": "26.04.1",           (optional)
   "ubuntu_iso_sha256": "<sha256>",       (optional, required with a new release)
-  "salt_master": "saltmaster.in.ffmuc.net" (optional)
+  "salt_master": "10.8.0.34"              (optional, Nebula IP of the master)
 }
 ```
 
@@ -150,8 +154,18 @@ Turn it on in the config context `dhcp_guardian` (Kea must be enabled):
   the primary IPv4 names the iPXE file. The user-data sets this interface
   static (router and DNS from the Kea subnet) and names all interfaces by
   MAC. It installs `salt-minion` (same version as `salt-minion/init.sls`)
-  with `id` = FQDN and `startup_states: highstate`, and the admin SSH keys
-  for root. It contains no secrets.
+  with `id` = FQDN, `master` = `salt_master` and `startup_states: highstate`,
+  and the admin SSH keys for root. It contains no secrets.
+- **Nebula bootstrap:** the installer installs the Nebula package (version
+  and sha256 from the guardian's `nebula` config, the same package as
+  `nebula/install.sls`) and runs `nebula-cert keygen` on the new host. The
+  private key `/etc/nebula/host.key` never leaves the host. The user-data
+  also writes the CA, a minimal `config.yml` (the guardian's lighthouses,
+  inbound ICMP and SSH only) and systemd units: `nebula` and `salt-minion`
+  start only when `/etc/nebula/host.crt` exists (`nebula-cert.path` starts
+  them when the file appears). This matches `nebula.pki.mode: local`; the
+  first highstate replaces the config. The guardian must be a Nebula member,
+  else the state stops with an error.
 - **Disks:** the same layout as the other VMs. `vda` (8 MiB): msdos label,
   one boot partition, GRUB. `sda`: the whole disk is an LVM PV with no
   partition table, VG `vg_ubuntu` with `lv_swap` (1G) and `lv_root` (ext4,
@@ -170,3 +184,22 @@ installer has fetched its user-data** (`/autoinstall/<host>/user-data` in
 `/var/log/nginx/pxe.access.log`). The state removes the host files. If the
 files stay, a PXE boot before GRUB is on `vda` installs the VM again, in a
 loop.
+
+After the first boot, sign the Nebula cert and accept the minion:
+
+1. In NetBox, set `nebula.pki.mode: local` in the local config context of
+   the VM (before the first highstate).
+2. Read the public key over SSH on mgmt:
+   `ssh root@<mgmt ip> cat /etc/nebula/host.pub > <id>.pub`.
+3. On the master, sign it with the Nebula IP from NetBox (`nebula0`):
+   `nebula-cert sign -ca-crt ca.crt -ca-key ca.key -in-pub <id>.pub -name <id> -ip <nebula ip>/23 -out-crt nebula/cert/new/<id>.crt`.
+4. Copy the cert to the host and move it in place in one step:
+   `scp <id>.crt root@<mgmt ip>:/etc/nebula/host.crt.tmp && ssh root@<mgmt ip> mv /etc/nebula/host.crt.tmp /etc/nebula/host.crt`.
+5. Nebula and the minion start. Compare
+   `ssh root@<mgmt ip> salt-call --local key.finger` with
+   `salt-key -f <id>`, then `salt-key -a <id>`. Do not use autosign.
+
+Only public data goes over the PXE HTTP (CA cert, lighthouses, host
+files). The installer downloads the Nebula package from GitHub and checks
+its sha256. Residual risk: the mgmt network can read the user-data and the
+CA cert; they contain no secret.

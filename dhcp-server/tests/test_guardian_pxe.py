@@ -3,6 +3,7 @@
 Synthetic data only. Run: python3 -m unittest discover -s dhcp-server/tests
 """
 
+import base64
 import importlib.util
 import ipaddress
 import json
@@ -44,6 +45,15 @@ VM = {
 }
 
 
+NEBULA = {
+    "version": "1.8.2-2",
+    "sha256": "43237bbc52f3db30262e8432ff89673cf26d8a5da6fa9d3e718920877ca44696",
+    "ca": "-----BEGIN NEBULA CERTIFICATE-----\nAAAA\n-----END NEBULA CERTIFICATE-----\n",
+    "lighthouses": {"10.8.0.1": ["198.51.100.1:4242"]},
+    "interface": "nebula0",
+}
+
+
 class Raised(Exception):
     pass
 
@@ -57,6 +67,7 @@ def render(path, ctx, **extra):
         loader=jinja2.FileSystemLoader(ROOT), extensions=["jinja2.ext.do"]
     )
     env.globals["raise"] = _raise
+    env.filters["base64_encode"] = lambda v: base64.b64encode(v.encode()).decode()
     salt = {
         "config.get": lambda key, default=None: (
             ctx if key.endswith(":dhcp_guardian") else default
@@ -148,6 +159,7 @@ class PxeTemplateTest(unittest.TestCase):
             host="vm1.example.test",
             vm=vm,
             salt_version="3008.5",
+            nebula=NEBULA,
             keys='environment="SSH_USER=a" ssh-ed25519 AAAA a\n',
         )
         first, body = out.split("\n", 1)
@@ -170,7 +182,7 @@ class PxeTemplateTest(unittest.TestCase):
         self.assertNotIn("addresses", eth["uplink"])
         self.assertTrue(eth["uplink"]["optional"])
         cmds = "\n".join(ai["late-commands"])
-        self.assertIn("'vm1.example.test' 'saltmaster.in.ffmuc.net'", cmds)
+        self.assertIn("'vm1.example.test' '10.8.0.34'", cmds)
         self.assertIn("startup_states: highstate", cmds)
         self.assertIn("salt-minion=3008.5 salt-common=3008.5", cmds)
         self.assertIn("tcp_keepalive_idle: 30", cmds)
@@ -190,6 +202,40 @@ class PxeTemplateTest(unittest.TestCase):
         self.assertEqual(ud["fqdn"], "vm1.example.test")
         self.assertEqual(ud["write_files"][0]["path"], "/root/.ssh/authorized_keys")
         self.assertFalse(ai["ssh"]["allow-pw"])
+
+    def test_user_data_nebula(self):
+        out_cmds = self.user_data(VM)["late-commands"]
+        cmds = "\n".join(out_cmds)
+        # nebula comes after salt-minion is installed, but salt-minion waits for the cert
+        self.assertIn(
+            "/var/cache/nebula/nebula_1.8.2-2_amd64.deb https://github.com/krombel/nebula/releases/download/v1.8.2-2/nebula-linux-amd64.deb",
+            cmds,
+        )
+        self.assertIn("echo '43237bbc", cmds)
+        self.assertIn(
+            "nebula-cert keygen -curve 25519 -out-key /etc/nebula/host.key", cmds
+        )
+        self.assertIn("chmod 0600 /target/etc/nebula/host.key", cmds)
+        self.assertNotIn("PRIVATE KEY", cmds)
+        self.assertIn("systemctl enable nebula.service nebula-cert.path", cmds)
+        files = {}
+        for c in out_cmds:
+            if c.startswith("echo '") and "| base64 -d > /target" in c:
+                b64 = c.split("'")[1]
+                path = c.split("> /target", 1)[1].split(" ", 1)[0]
+                files[path] = base64.b64decode(b64).decode()
+        self.assertEqual(files["/etc/nebula/ca.crt"], NEBULA["ca"])
+        cfg = files["/etc/nebula/config.yml"]
+        self.assertIn("  key: /etc/nebula/host.key", cfg)
+        self.assertIn('"10.8.0.1": ["198.51.100.1:4242"]', cfg)
+        self.assertIn("dev: nebula0", cfg)
+        minion = files["/etc/systemd/system/salt-minion.service.d/nebula.conf"]
+        self.assertIn("After=nebula.service", minion)
+        self.assertIn("ConditionPathExists=/etc/nebula/host.crt", minion)
+        self.assertNotIn("Requires=", minion)
+        self.assertIn(
+            "Unit=salt-minion.service", files["/etc/systemd/system/nebula-cert.path"]
+        )
 
     def test_user_data_wrong_subnet(self):
         with self.assertRaises(Raised):
