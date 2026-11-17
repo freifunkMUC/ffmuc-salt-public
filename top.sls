@@ -81,6 +81,7 @@ base:
     - openldap-group-member
   'docker07.in.ffmuc.net':
     - akvorado
+    - bgpalerter
     - keycloak
   'gw04.in.ffmuc.net':
     - meshviewer-web
