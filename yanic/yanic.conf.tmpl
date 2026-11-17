@@ -23,6 +23,15 @@ domains             = [{% for site, domains in sites.items() %}{% for domain in 
 ifname = "br-{{ domain }}"
 port = 45124
 {% endfor %}
+{%- if salt['grains.get']('ip_interfaces:nebula0') %}
+# Parker gateways send their respondd data here (parker/yanic, database.connection.respondd).
+# ip_address "::": nebula0 has only IPv4, and yanic needs an IPv6 socket.
+[[respondd.interfaces]]
+ifname          = "nebula0"
+ip_address      = "::"
+send_no_request = true
+port            = 11001
+{% endif %}
 
 # A little build-in webserver, which statically serves a directory.
 # This is useful for testing purposes or for a little standalone installation.
