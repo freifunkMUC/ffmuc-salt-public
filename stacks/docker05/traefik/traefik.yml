@@ -48,6 +48,8 @@ entryPoints:
       aliasHeadersStrategy: delete
       middlewares:
         - security-headers@file
+    http3:
+      advertisedPort: 443
   # internal: ping for the healthcheck, not published
   traefik:
     address: ":8080"

@@ -113,9 +113,6 @@ firewall:
   - port: 80
     proto: tcp
     host: any
-  - port: 443
-    proto: udp
-    host: any
     # haproxy peers: meet room stick table (haproxy/haproxy.cfg, peers meet)
   - port: 10001
     proto: tcp
@@ -124,6 +121,9 @@ firewall:
     # HTTPS
   - port: 443
     proto: tcp
+    host: any
+  - port: 443
+    proto: udp
     host: any
   - port: 445
     proto: tcp
