@@ -124,6 +124,14 @@ firewall:
     proto: tcp
     group: webfrontend
 {%- endif %}
+{%- if "yanic" in tags and role != "parker-gateway" %}
+    # Parker gateways send respondd data to the production yanic (yanic/yanic.conf.tmpl)
+  {%- for forwarder in salt["pillar.get"]("netbox:config_context:yanic:parker_forwarders", ["pgw01.in.ffmuc.net", "pgw03.in.ffmuc.net"]) %}
+  - port: 11001
+    proto: udp
+    host: {{ forwarder }}
+  {%- endfor %}
+{%- endif %}
     # HTTPS
   - port: 443
     proto: tcp

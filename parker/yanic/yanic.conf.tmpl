@@ -1,5 +1,6 @@
 {% set sites = salt['pillar.get']('netbox:config_context:sites') -%}
 {% set influxdb = salt['pillar.get']('netbox:config_context:yanic:influxdb', {}) -%}
+{% set receiver = salt['pillar.get']('netbox:config_context:yanic:parker_receiver', 'gw04.ov.ffmuc.net:11001') -%}
 ###
 # yanic config (salt managed)
 ###
@@ -108,3 +109,11 @@ insecure_skip_verify = {{ influxdb.insecure_skip_verify | default(false) | lower
 [[database.connection.logging]]
 enable   = false
 path     = "/var/log/yanic.log" #}
+
+# InfluxDB stays off here, so the stats are written only once (by the production yanic).
+# Send all respondd data to the production yanic over Nebula. It shows the nodes on
+# map.ffmuc.net and writes them to InfluxDB (Grafana).
+[[database.connection.respondd]]
+enable  = true
+type    = "udp"
+address = "{{ receiver }}"
