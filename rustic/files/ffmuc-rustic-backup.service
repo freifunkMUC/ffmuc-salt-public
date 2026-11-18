@@ -5,6 +5,8 @@ Description=FFMuc rustic Backup
 Type=oneshot
 Nice=19
 IOSchedulingClass=idle
+# a stalled backend request can hang rustic forever and block the next run
+TimeoutStartSec=20h
 ExecStart=/usr/local/bin/rustic backup
 ExecStart=/usr/local/bin/rustic forget
 ExecStartPost=/usr/bin/touch /var/lib/ffmuc-rustic-last-success
