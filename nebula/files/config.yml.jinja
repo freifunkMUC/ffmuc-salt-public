@@ -123,6 +123,12 @@ firewall:
   - port: 80
     proto: tcp
     group: webfrontend
+    # parker-respondd: the yanic of the other pgws polls this pgw (parker/yanic/yanic.conf.tmpl)
+  {%- for pgw in salt["mine.get"]("netbox:role:name:parker-gateway", "minion_id", tgt_type="pillar") | sort if pgw != grains["id"] %}
+  - port: 1001
+    proto: udp
+    host: {{ pgw }}
+  {%- endfor %}
 {%- endif %}
 {%- if "yanic" in tags and role != "parker-gateway" %}
     # Parker gateways send respondd data to the production yanic (yanic/yanic.conf.tmpl)

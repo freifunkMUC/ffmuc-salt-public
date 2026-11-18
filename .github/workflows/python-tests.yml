@@ -28,3 +28,5 @@ jobs:
         run: python3 -m unittest discover -s dhcp-server/tests -v
       - name: certs
         run: python3 -m unittest discover -s certs/tests -v
+      - name: parker-respondd
+        run: python3 -m unittest discover -s parker/respondd/tests -v
