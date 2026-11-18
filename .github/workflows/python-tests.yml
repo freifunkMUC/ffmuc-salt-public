@@ -30,3 +30,5 @@ jobs:
         run: python3 -m unittest discover -s certs/tests -v
       - name: parker-respondd
         run: python3 -m unittest discover -s parker/respondd/tests -v
+      - name: telegraf
+        run: python3 -m unittest discover -s telegraf/tests -v

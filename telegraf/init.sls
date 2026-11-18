@@ -317,8 +317,47 @@ remove_asterisk_monitoring:
     - watch_in:
           service: telegraf
 
+{#- Parker gateway: BIRD and WireGuard counts, read only (sudo allows only the exact commands) #}
+/usr/local/bin/parker_gateway_stats:
+{%- if 'parker-gateway' in role %}
+  file.managed:
+    - source: salt://telegraf/files/parker_gateway_stats.py
+    - mode: "0755"
+{% else %}
+  file.absent:
+{% endif %}
+    - watch_in:
+          service: telegraf
+
+/etc/sudoers.d/telegraf_parker_gateway:
+{%- if 'parker-gateway' in role %}
+  file.managed:
+    - contents: |
+        telegraf    ALL=(root) NOPASSWD: /usr/sbin/birdc -r show protocols all
+        telegraf    ALL=(root) NOPASSWD: /usr/sbin/birdc -r show bfd sessions
+        telegraf    ALL=(root) NOPASSWD: /usr/bin/wg show wg-nodes latest-handshakes
+    - mode: "0440"
+    - user: root
+    - check_cmd: /usr/sbin/visudo -c -f
+{% else %}
+  file.absent:
+{% endif %}
+
+/etc/telegraf/telegraf.d/in-parker-gateway.conf:
+{%- if 'parker-gateway' in role %}
+  file.managed:
+    - source: salt://telegraf/files/in_parker_gateway.conf
+    - require:
+      - file: /usr/local/bin/parker_gateway_stats
+      - file: /etc/sudoers.d/telegraf_parker_gateway
+{% else %}
+  file.absent:
+{% endif %}
+    - watch_in:
+          service: telegraf
+
 /etc/telegraf/telegraf.d/in-wgkex-worker.conf:
-{%- if 'nextgen-gateway' in role %}
+{%- if 'nextgen-gateway' in role or 'parker-gateway' in role %}
   file.managed:
     - source: salt://telegraf/files/in_wgkex-worker.conf
 {% else %}
