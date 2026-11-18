@@ -5,7 +5,7 @@
 {% set user = "wgkex" %}
 {#- Worker release; keep it equal to wgkex/init.sls and the broker image (stacks/docker0[4-7]/wgkex). #}
 {# renovate: datasource=github-releases depName=freifunkMUC/wgkex #}
-{% set wgkex_version = 'v0.6.1' %}
+{% set wgkex_version = 'v0.6.2' %}
 
 # Create Groups
 group-{{ user }}:

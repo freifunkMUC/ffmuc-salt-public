@@ -153,6 +153,9 @@ parker:
     snapshot_dir: /var/lib/wgkex
     sync_interval: 60
     reserve: 32
+    # Delete the NetBox prefixes of nodes not seen for 90 days. One broker only.
+    reclaim_days: 90
+    reclaim_dry_run: true
 # Main NetBox: the site /50s (parker.sites.*.netbox_filter) and the node /63s
 # (tag node-prefix, reserved blocks have reserved_by=<broker_id>). polld on the pgws reads the same.
 netbox:
