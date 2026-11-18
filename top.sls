@@ -41,6 +41,7 @@ base:
     - kvm
     - ntp
     - snmpd
+    - trivy
   'icinga-vie01.in.ffmuc.net':
     - nebula-meet
   '*.meet.ffmuc.net':
