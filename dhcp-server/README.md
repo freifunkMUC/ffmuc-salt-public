@@ -93,7 +93,11 @@ NetBox config context `dhcp_guardian` (shape: `dhcpd_to_context.py`):
 - key absent: the state does nothing (`dhcpd.conf` stays as it is)
 - `enabled: true`: package, config (`kea-dhcp4 -t` as `check_cmd`), then
   isc-dhcp-server stopped and disabled, then Kea started. If the config test
-  fails, dhcpd keeps serving.
+  fails, dhcpd keeps serving. The test file is in `/etc/kea`, because the
+  AppArmor profile of `kea-dhcp4` on Debian blocks reads in `/tmp`.
+- Kea does not see static addresses. Each static address in the `pool`
+  range needs a reservation (MAC of the host), else Kea gives the address
+  to a second client. Better: keep static addresses out of the pool.
 - `enabled: false`: rollback, Kea stopped and disabled, isc-dhcp-server
   running again. isc-dhcp-server and its `dhcpd.conf` are never removed.
 
