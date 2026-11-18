@@ -53,6 +53,7 @@ dnsdist:
   file.managed:
     - source: salt://dnsdist/dnsdist.conf.j2
     - template: jinja
+    - show_changes: False
     - require:
         - pkg: dnsdist
 
@@ -77,6 +78,7 @@ dnsdist:
     - user: 1000
     - group: 1000
     - mode: "0644"
+    - show_changes: False
     - require_in:
       - service: dnsdist
 

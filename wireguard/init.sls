@@ -106,6 +106,7 @@ generate-clientkey-{{ interface }}:
         - name: /etc/wireguard/{{ interface }}.conf
         - source: salt://wireguard/wg.jinja2
         - template: jinja
+        - show_changes: False
         - defaults:
             interface: {{ interface }}
             interfaces: {{ interfaces }}

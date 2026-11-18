@@ -12,6 +12,7 @@ coturn:
   file.managed:
     - source: salt://jitsi/turn/turnserver.conf.jinja
     - template: jinja
+    - show_changes: False
     - require:
       - pkg: coturn
     - watch_in:

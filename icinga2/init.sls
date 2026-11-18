@@ -475,6 +475,7 @@ Cleanup /etc/icinga2/zones.d/master/ffmuc-conf.d/hosts/generated/:
     - user: root
     - group: root
     - template: jinja
+    - show_changes: False
     - watch_in:
       - service: icinga2-service
 

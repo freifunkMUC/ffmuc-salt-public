@@ -319,6 +319,7 @@ dns_gcore_credentials:
     - makedirs: True
     - mode: "0600"
     - template: jinja
+    - show_changes: False
     - defaults:
         gcore_token: {{ gcore_token }}
 
@@ -481,6 +482,7 @@ dns_cloudflare_credentials:
     - makedirs: True
     - mode: "0600"
     - template: jinja
+    - show_changes: False
     - defaults:
         cloudflare_token: {{ cloudflare_token }}
 
@@ -539,6 +541,7 @@ update-dns.sh:
     - makedirs: True
     - mode: "0700"
     - template: jinja
+    - show_changes: False
 
 cleanup-dns.sh:
   file.managed:
@@ -547,6 +550,7 @@ cleanup-dns.sh:
     - makedirs: True
     - mode: "0700"
     - template: jinja
+    - show_changes: False
 
 # Salt's acme module doesn't support any DNS plugin besides Cloudflare, not even manual. Thus use cmd.run.
 # TODO add 'unless' condition which checks whether cert needs renewal.

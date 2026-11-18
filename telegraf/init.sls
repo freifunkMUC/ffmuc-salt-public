@@ -147,6 +147,7 @@ remove_asterisk_monitoring:
   file.managed:
     - source: salt://telegraf/files/in_dnsdist.conf
     - template: jinja
+    - show_changes: False
 {% else %}
   file.absent:
 {% endif %}
@@ -435,6 +436,7 @@ remove_smart_monitoring:
   file.managed:
     - source: salt://telegraf/files/out_influxdb.conf
     - template: jinja
+    - show_changes: False
     - require_in:
         - service: telegraf
     - watch_in:

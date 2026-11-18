@@ -180,6 +180,7 @@ systemd-networkd-reload:
     - user: root
     - group: systemd-network
     - mode: "0640"
+    - show_changes: False
     - watch_in:
       - cmd: systemd-networkd-reload
 {% set id = 30 %}
