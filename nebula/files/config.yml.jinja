@@ -283,6 +283,9 @@ firewall:
     host: gw04.in.ffmuc.net
   - port: 636
     proto: tcp
+    host: nms.in.ffmuc.net  # LibreNMS binds only at login
+  - port: 636
+    proto: tcp
     cidr: 10.8.1.245/32  # admin roadwarrior, direct Nebula host
   - port: 80
     proto: tcp
