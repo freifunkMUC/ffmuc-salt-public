@@ -67,6 +67,7 @@ apparmor-reload:
   file.managed:
     - source: salt://dns-auth/named.conf.local
     - template: jinja
+    - show_changes: False
     - require:
       - pkg: bind9
     - watch_in:
@@ -205,6 +206,7 @@ dns-key:
     - name: /etc/bind/salt-master.key
     - source: salt://dns-auth/salt-master.key
     - template: jinja
+    - show_changes: False
     - user: bind
     - group: bind
     - mode: "0600"

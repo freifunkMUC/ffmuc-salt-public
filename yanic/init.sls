@@ -48,6 +48,7 @@ yanic:
   file.managed:
     - source: salt://yanic/yanic.conf.tmpl
     - template: jinja
+    - show_changes: False
     - require:
       - file: /srv/yanic
       - file: /srv/yanic-internal

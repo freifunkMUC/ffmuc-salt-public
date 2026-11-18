@@ -127,6 +127,7 @@ remove-temporary-files:
   file.managed:
     - source: salt://jitsi/prosody/prosody.cfg.lua.jinja
     - template: jinja
+    - show_changes: False
 
 /etc/prosody/conf.d/{{ jitsi.public_domain }}.cfg.lua:
   file.managed:
@@ -221,6 +222,7 @@ prosody-v-daemon-reload:
     - user: root
     - group: prosody
     - mode: "0640"
+    - show_changes: False
     - context:
         vnode: {{ i }}
     - require:

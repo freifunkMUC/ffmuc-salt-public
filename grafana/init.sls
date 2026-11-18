@@ -49,6 +49,7 @@ grafana:
   file.managed:
     - source: salt://grafana/grafana.ini.tmpl
     - template: jinja
+    - show_changes: False
     - require:
       - pkg: grafana
 

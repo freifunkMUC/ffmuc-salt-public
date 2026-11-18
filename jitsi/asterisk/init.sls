@@ -19,6 +19,7 @@ asterisk:
   file.managed:
     - source: salt://jitsi/asterisk/sip.conf.jinja
     - template: jinja
+    - show_changes: False
 
 /etc/asterisk/extensions.conf:
   file.managed:

@@ -14,6 +14,7 @@
     file.managed:
         - source: salt://wireguard/export/wg.jinja2
         - template: jinja
+        - show_changes: False
         - defaults:
             network_id: {{ network_id }}
           client_name: {{ client_name }}

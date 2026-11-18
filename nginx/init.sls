@@ -254,6 +254,7 @@ nginx-systemd-daemon-reload:
       - user: deploy-ffmuc
       - group: deploy-ffmuc
       - mode: '0600'
+      - show_changes: False
 
 /srv/www/ffmuc.net/.ssh/id_ed25519.pub:
     file.managed:

@@ -65,6 +65,7 @@ compose-file-{{ container }}:
     - user: root
     - group: root
     - mode: "0600"
+    - show_changes: False
     {%- if 'credentials' in containers[container] %}
     - context:
         credentials: {{ containers[container]['credentials'] }}

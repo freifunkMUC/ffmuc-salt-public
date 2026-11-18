@@ -26,6 +26,7 @@ snmpd:
 /etc/snmp/snmpd.conf:
   file.managed:
     - template: jinja
+    - show_changes: False
     - source: salt://snmpd/snmpd.conf
     - require:
       - pkg: snmpd
