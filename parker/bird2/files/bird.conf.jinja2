@@ -108,6 +108,14 @@ protocol kernel {
                 export filter {
                         {%- if role == 'parker-gateway' %}
                         if proto = "parker_nat64_v6" then reject;
+                        # Node /63s of the other pgw of this site (iBGP). Without them,
+                        # the kernel sends this traffic back to the upstream (loop).
+                        # Metric 2048 is higher than the wg-nodes route of wgkex (1024),
+                        # so a local node route wins at once and both routes can exist.
+                        if source = RTS_BGP && net ~ [ {{ ns.additional_v6_prefix }}{63,63} ] then {
+                                krt_metric = 2048;
+                                accept;
+                        }
                         {%- endif %}
                         if net ~ [ ::/0 ] then {
                                 krt_prefsrc = {{ ns.dummy0_ipv6 }};
