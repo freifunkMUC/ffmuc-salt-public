@@ -5,6 +5,9 @@
 #
 {% if 'dnsdist' in salt['pillar.get']('netbox:tag_list', []) %}
 
+include:
+  - sysctl.buffers
+
 dnsdist-repo-key:
   cmd.run:
     - name: "mkdir -p /etc/apt/keyrings && /usr/lib/apt/apt-helper download-file https://repo.powerdns.com/FD380FBB-pub.asc /tmp/FD380FBB-pub.asc && mv /tmp/FD380FBB-pub.asc /etc/apt/keyrings/powerdns.asc"
@@ -41,6 +44,7 @@ dnsdist:
       - file: /etc/dnsdist/dnsdist.conf
       - file: /var/lib/dnsdist
       - file: dnsdist-service-override
+      - sls: sysctl.buffers
     - watch:
       - file: dnsdist-service-override
       - file: /etc/dnsdist/dnsdist.conf
@@ -91,20 +95,12 @@ add_dnsdist_group_ssl-cert:
       - ssl-cert
 {% endif %}{# if 'webfrontend' #}
 
-# Larger socket buffers/backlogs: with kernel defaults (208 KB) UDP bursts overflow the receive buffers
-# (RcvbufErrors) of dnsdist and nebula. The defaults only apply to sockets opened after the change.
-# Same values as the long-standing manual tuning on the gateways.
+# Socket buffers and netdev backlog: see sysctl.buffers (shared with the Parker gateways).
+# TCP listen tuning for the DNS frontends. Same values as the long-standing manual tuning on the gateways.
 {%- for key, value in {
-  'net.core.rmem_default': 31457280,
-  'net.core.rmem_max': 33554432,
-  'net.core.wmem_default': 31457280,
-  'net.core.wmem_max': 33554432,
   'net.core.somaxconn': 65535,
-  'net.core.netdev_max_backlog': 65536,
   'net.ipv4.tcp_rmem': '8192 87380 33554432',
   'net.ipv4.tcp_wmem': '8192 65536 33554432',
-  'net.ipv4.udp_rmem_min': 16384,
-  'net.ipv4.udp_wmem_min': 16384,
 }.items() %}
 dnsdist-sysctl-{{ key }}:
   sysctl.present:

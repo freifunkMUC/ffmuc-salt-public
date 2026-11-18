@@ -6,6 +6,7 @@
 
 include:
   - sysctl.global
+  - sysctl.buffers
 
 #
 # Activate IP Unicast Routing
