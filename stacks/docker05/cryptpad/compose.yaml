@@ -34,9 +34,9 @@ services:
       - /srv/docker/cryptpad/data/files:/cryptpad/datastore
       - /srv/docker/cryptpad/onlyoffice-dist:/cryptpad/www/common/onlyoffice/dist
       - /srv/docker/cryptpad/onlyoffice-conf:/cryptpad/onlyoffice-conf
-      # config.js and infra.js stay on the host
+      # config.js is rendered by the Salt state cryptpad (admin keys from pillar)
       - /srv/docker/cryptpad/data/config.js:/cryptpad/config/config.js
-      - /srv/docker/cryptpad/data/infra.js:/cryptpad/config/infra.js
+      - ./infra.js:/cryptpad/config/infra.js:ro
     ports:
       - "8011:3000"
       # Since 2026.10 the websocket is served on the main port (formerly 3003);

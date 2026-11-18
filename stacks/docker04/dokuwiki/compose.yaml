@@ -8,7 +8,7 @@ services:
       - "8084:8080"
     volumes:
       - /srv/docker/dokuwiki/storage:/storage
-      - /srv/docker/dokuwiki/ldap.conf:/etc/ldap/ldap.conf:ro
+      - ./ldap.conf:/etc/ldap/ldap.conf:ro
       - ./apache/mpm_prefork.conf:/etc/apache2/mods-available/mpm_prefork.conf:ro
       - ./apache/remoteip.conf:/etc/apache2/conf-enabled/remoteip.conf:ro
     # PHP sessions: every anonymous request opens one, and on disk they piled
