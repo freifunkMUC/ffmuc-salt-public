@@ -6,7 +6,7 @@
 
 # Interface setup plan:
 # wg-nodes: node peers
-# wg-<bb-gw0X>: crosslink/backbone between gateways, with default routes as AllowedIPs with OSPF running on top
+# vlan100x (mgmt): iBGP and BFD to the other pgws of the site, on a fixed link-local (parker/bird2)
 #
 {%- set role = salt['pillar.get']('netbox:role:name') %}
 

@@ -111,55 +111,6 @@ systemd-networkd-reload:
 # Rename interfaces to corresponding vlans based on mac address
 {%- set interfaces = salt['pillar.get']('netbox:interfaces') %}
 
-{# In case of Parker, add crosslink interfaces to the other pgws of the same site (iBGP, see parker/bird2) #}
-{% if 'parker-gateway' in role %}
-{%- set own_location = salt['pillar.get']('netbox:site:name') %}
-
-{% for node,_ in salt['mine.get']('netbox:role:name:parker-gateway', 'minion_id', tgt_type='pillar').items() | sort %}
-{% set node_short = node | regex_replace('in\.ffmuc\.net','') %}
-{%- if grains['id'] not in node and salt['mine.get'](node, 'minion_location', tgt_type='glob').get(node) != own_location %}
-{# No crosslink between sites: remove an old one #}
-{%- for ext in ['netdev', 'network'] %}
-/etc/systemd/network/30-wg-bb-{{ node_short }}.{{ ext }}:
-  file.absent:
-    - watch_in:
-      - cmd: systemd-networkd-reload
-{%- endfor %}
-delete-wg-bb-{{ node_short }}:
-  cmd.run:
-    - name: ip link delete "wg-bb-{{ node_short }}"
-    - onlyif: ip link show "wg-bb-{{ node_short }}"
-{%- elif grains['id'] not in node %}
-
-{%- set peer_wireguard_public_key = salt['mine.get'](node,'minion_wireguard_public', tgt_type='glob')[node] %}
-
-{%- set port_config = salt['pillar.get']('netbox:config_context:parker:backbone:wg_ports') %}
-{# Port concept: each gateway gets assigned one port.
-    This port will be used as the listen port on all other gateways on the interface connecting with this gateway.
-    This means that "this" gateway uses the port of the respective peer as listen address on each interface.
-    And as endpoint port for the single peer on each interface this gateway uses "its own" port. #}
-{%- set listen_port = port_config[node] %}{# as _local_ listen port we take a port specified under the peer #}
-{%- set peer_port = port_config[grains['id']] %}{# as _remote_ port we take the port specified for our own #}
-
-{%- set peer_link_local = salt['wireguard_v6.generate'](peer_wireguard_public_key) %}
-{%- set peer_endpoint = (node | regex_replace('in\.ffmuc\.net','ext.ffmuc.net')) + ":" + (peer_port | string) %}
-
- {# TODO ipaddresses #}
-{% set iface = {
-  "wg-bb-" + node_short: {
-    "description": "Crosslink to " + node_short,
-    "ipaddresses": [],
-    "listen_port": listen_port,
-    "peer_public_key": peer_wireguard_public_key,
-    "peer_link_local": peer_link_local,
-    "peer_endpoint": peer_endpoint,
-} } %}
-{%- do interfaces.update(iface) %}
-{%- endif %}{# other pgw of the same site #}
-{% endfor %}{# for node,_ #}
-{%- endif %}{# if parker-gateway in role #}
-
-
 {%- set gateway = salt['pillar.get']('netbox:config_context:network:gateway') %}
 {% for iface in interfaces |sort %}
 {% if "nebula" not in iface %}
@@ -202,13 +153,6 @@ delete-wg-bb-{{ node_short }}:
     - template: jinja
       interface: {{ iface }}
       desc: "{{ interfaces[iface]['description'] }}"
-      {% if 'parker-gateway' in role and 'wg-bb-' in iface %}
-      ipaddresses:  {{ interfaces[iface]['ipaddresses'] }}
-      listen_port: {{ interfaces[iface]['listen_port'] }}
-      peer_public_key: {{ interfaces[iface]['peer_public_key'] }}
-      peer_link_local: {{ interfaces[iface]['peer_link_local'] }}
-      peer_endpoint: {{ interfaces[iface]['peer_endpoint'] }}
-      {% endif %}
       kind: "wireguard"
     - user: systemd-network
     - group: systemd-network
