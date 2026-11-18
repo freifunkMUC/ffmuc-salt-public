@@ -60,6 +60,7 @@ backup-config:
     - source: salt://rustic/files/rustic.toml.j2
     - makedirs: True
     - mode: "0600"
+    - show_changes: False
     - template: jinja
     - require:
       #- archive: install_rustic
