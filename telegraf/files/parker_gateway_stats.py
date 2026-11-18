@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""BIRD and WireGuard stats of a Parker gateway for telegraf (inputs.exec, influx line protocol).
+"""BIRD, WireGuard and Jool NAT64 stats of a Parker gateway for telegraf (inputs.exec, influx line protocol).
 
 Read only: the commands below are the only ones that sudo allows for telegraf
 (see /etc/sudoers.d/telegraf_parker_gateway). birdc runs in restricted mode (-r),
@@ -16,6 +16,16 @@ Output (aggregates only, no node keys, prefixes or addresses):
   parker_xpgw_traffic,direction=<uplink_to_partner|partner_to_nodes> bytes=,packets=
       node traffic between the pgws of a site, from the nftables counters of
       parker/xpgw-counters (cumulative, reset when the table is loaded again)
+  jool_daemon up=0|1i
+  jool_stats received6=,received4=,success=,bib_entries=,sessions=,
+      icmp4err_success=,icmp6err_success=        NAT64 (Jool) packet counters
+  jool_drop,reason=<JSTAT name without JSTAT_> packets=
+      one line per non-zero drop counter of `jool stats display`
+  jool_protocol,protocol=<tcp|udp|icmp> sessions=,bib=,pool4_ports=
+      sessions and BIB entries (one pool4 port each), and the pool4 size
+
+Jool runs in the network namespace jool (parker/plat). The script only counts the
+lines of the session and BIB tables. It never prints client addresses or ports.
 
 The BFD neighbors are the other gateways of the site (router addresses, not nodes).
 """
@@ -31,6 +41,17 @@ WG = "/usr/bin/wg"
 WG_INTERFACE = "wg-nodes"
 NFT = "/usr/sbin/nft"
 XPGW_COUNTERS = ("uplink_to_partner", "partner_to_nodes")
+JOOL = ["/usr/sbin/ip", "netns", "exec", "jool", "/usr/bin/jool", "-i", "default"]
+JOOL_PROTOCOLS = ("tcp", "udp", "icmp")
+JOOL_STATS = {
+    "JSTAT_RECEIVED6": "received6",
+    "JSTAT_RECEIVED4": "received4",
+    "JSTAT_SUCCESS": "success",
+    "JSTAT_BIB_ENTRIES": "bib_entries",
+    "JSTAT_SESSIONS": "sessions",
+    "JSTAT_ICMP6ERR_SUCCESS": "icmp6err_success",
+    "JSTAT_ICMP4ERR_SUCCESS": "icmp4err_success",
+}
 
 TIME_TOKEN = re.compile(r"^[0-9][0-9:.T+-]*$")
 ROUTES_RE = re.compile(r"(\d+) (imported|filtered|exported|preferred)")
@@ -213,6 +234,100 @@ def xpgw_lines(nft_json):
     return sorted(lines)
 
 
+def parse_jool_stats(output):
+    """Parses `jool stats display --all --csv` into {name: value}."""
+    stats = {}
+    for line in output.splitlines():
+        fields = line.strip().split(",")
+        if len(fields) != 2 or not fields[0].startswith("JSTAT"):
+            continue
+        try:
+            stats[fields[0]] = int(fields[1])
+        except ValueError:
+            continue
+    return stats
+
+
+def pool4_ports(output):
+    """Sums the port ranges of `jool pool4 display --csv` (one protocol)."""
+    total = 0
+    for line in output.splitlines():
+        fields = line.strip().split(",")
+        if len(fields) < 5:
+            continue
+        try:
+            total += int(fields[4]) - int(fields[3]) + 1
+        except ValueError:
+            continue
+    return total
+
+
+def count_rows(output):
+    return sum(1 for line in output.splitlines() if line.strip())
+
+
+def jool_lines(stats_out, tables):
+    """tables: {protocol: (session_out, bib_out, pool4_out)}, each None if it fails."""
+    if stats_out is None:
+        return ["jool_daemon up=0i"]
+    stats = parse_jool_stats(stats_out)
+    lines = ["jool_daemon up=1i"]
+    fields = ",".join(
+        f"{field}={stats[name]}i" for name, field in JOOL_STATS.items() if name in stats
+    )
+    if fields:
+        lines.append(f"jool_stats {fields}")
+    for name, value in sorted(stats.items()):
+        if value == 0 or name in JOOL_STATS or name.startswith("JSTAT_JOOLD_"):
+            continue
+        # JSTAT_PKT_TOO_BIG -> PKT_TOO_BIG, JSTAT64_TTL -> 64_TTL
+        reason = name.removeprefix("JSTAT").removeprefix("_")
+        lines.append(f"jool_drop,reason={escape_tag(reason)} packets={value}i")
+    for proto in JOOL_PROTOCOLS:
+        session_out, bib_out, pool4_out = tables.get(proto, (None, None, None))
+        values = []
+        if session_out is not None:
+            values.append(f"sessions={count_rows(session_out)}i")
+        if bib_out is not None:
+            values.append(f"bib={count_rows(bib_out)}i")
+        if pool4_out is not None:
+            values.append(f"pool4_ports={pool4_ports(pool4_out)}i")
+        if values:
+            lines.append(f"jool_protocol,protocol={proto} {','.join(values)}")
+    return lines
+
+
+def jool_tables():
+    tables = {}
+    for proto in JOOL_PROTOCOLS:
+        tables[proto] = (
+            run(
+                [
+                    *JOOL,
+                    "session",
+                    "display",
+                    f"--{proto}",
+                    "--numeric",
+                    "--csv",
+                    "--no-headers",
+                ]
+            ),
+            run(
+                [
+                    *JOOL,
+                    "bib",
+                    "display",
+                    f"--{proto}",
+                    "--numeric",
+                    "--csv",
+                    "--no-headers",
+                ]
+            ),
+            run([*JOOL, "pool4", "display", f"--{proto}", "--csv", "--no-headers"]),
+        )
+    return tables
+
+
 def main():
     lines = bird_lines(
         run([BIRDC, "-r", "show", "protocols", "all"]),
@@ -224,6 +339,8 @@ def main():
     lines += xpgw_lines(
         run([NFT, "-j", "list", "counters", "table", "inet", "parker_stats"])
     )
+    stats_out = run([*JOOL, "stats", "display", "--all", "--csv"])
+    lines += jool_lines(stats_out, jool_tables() if stats_out is not None else {})
     sys.stdout.write("".join(line + "\n" for line in lines))
     return 0
 
