@@ -15,8 +15,11 @@ COMMIT
 -A INPUT -i lo -j ACCEPT
 -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 -A INPUT -p ipv6-icmp -j ACCEPT
-{#- BGP over IPv6 from the router on the uplink VLAN; no management over IPv6 (nebula is IPv4) #}
+{#- BGP over IPv6 from the router on the uplink VLAN; management only over the nebula overlay #}
 -A INPUT -i {{ uplink_iface }} -p tcp -m tcp --dport 179 -j ACCEPT
+{#- Own nebula port (underlay over the internal IPv6 prefix), derived like in guardian_rules.v4.jinja #}
+{%- set overlay_split = salt['mine.get'](grains.id, 'minion_overlay_address', tgt_type='glob')[grains.id].split('/')[0].split('.') %}
+-A INPUT -p udp -m udp --dport {{ 20000 + overlay_split[2] | int * 256 + overlay_split[3] | int }} -j ACCEPT
 -A INPUT -p udp -m udp --dport 123 -j ACCEPT
 -A INPUT -j REJECT --reject-with icmp6-port-unreachable
 

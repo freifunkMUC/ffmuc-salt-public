@@ -59,7 +59,7 @@ sshd:
 {%- set local_prefixes = salt['pillar.get']("netbox:site:prefixes") %}
 preferred_ranges:
 {%- for prefix in local_prefixes %}
-  {%- if prefix.status.value == "active" and prefix.family.value == 4 and prefix.role and prefix.role.slug == "pop-internal" %}
+  {%- if prefix.status.value == "active" and prefix.role and prefix.role.slug == "pop-internal" %}
   - "{{ prefix.prefix }}"
   {%- endif %}
 {%- endfor %}
