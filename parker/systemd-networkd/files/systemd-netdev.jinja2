@@ -15,8 +15,6 @@ Kind={{ kind }}
 {%- set sites_config = salt['pillar.get']('netbox:config_context:site_config') %}
 {%- set site = interface | regex_replace('wg-', '')%}
 {%- set wireguard_port = sites_config[site]['wireguard_port'] %}
-{%- elif 'parker-gateway' in role and 'wg-bb-' in interface %}
-{%- set wireguard_port = listen_port %}
 {%- else %}
 {%- set wireguard_port = salt['pillar.get']('netbox:config_context:wireguard:port') %}
 {%- endif %}{# 'nextgen-gateway' in role #}
@@ -42,15 +40,7 @@ Endpoint={{ node | regex_replace('in\.ffmuc\.net','ext.ffmuc.net') }}:{{ wiregua
 {%- endfor %}{# node,bla in salt['mine.get']('netbox:role:name:nextgen-gateway', 'minion_id', tgt_type='pillar').items()
 | sort #}
 
-{%- elif 'parker-gateway' in role %}
-
-{%- if 'wg-bb-' in interface %}{# cross links / backbone between gateways #}
-[WireGuardPeer]
-PublicKey={{ peer_public_key }}
-AllowedIPs={{ peer_link_local }}/128, ::/0
-Endpoint={{ peer_endpoint }}
-{%- endif %}{# 'wg-bb-' in interface #}
-{%- endif %}{# 'parker-gateway' in role #}
+{%- endif %}{# 'nextgen-gateway' in role #}
 {%- endif %}{# kind == "wireguard" #}
 
 {%- if kind == "vxlan" %}

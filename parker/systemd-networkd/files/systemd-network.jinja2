@@ -23,6 +23,15 @@ DNS=185.150.99.255
 DNS=2001:678:e68:f000::
 DNS=2001:678:ed0:f000::
 
+{%- set primary_ip4 = salt['pillar.get']('netbox:primary_ip4:address', '') %}
+{%- if 'parker-gateway' in role and primary_ip4 in ipaddresses | map(attribute='address') | list %}
+# Fixed link-local for iBGP and BFD between the pgws of a site (parker/bird2).
+# No DAD: BIRD binds BFD to it at start and does not retry.
+[Address]
+Address=fe80::{{ primary_ip4.split('/')[0].split('.')[-1] }}/64
+DuplicateAddressDetection=none
+{%- endif %}
+
 {%- if interface in gateway %}
 # We install the route provided for the site with a low metric
 {%- for default_gw in gateway[interface] %}

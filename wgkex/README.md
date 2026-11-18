@@ -11,7 +11,7 @@
 - **MQTT** (EMQX cluster `mqtt_cluster` in the same stacks, `broker.ov.ffmuc.net:1883`): the workers log in as
   pillar `wgkex:mqtt:username`/`password` (empty: anonymous), the brokers as `wgkex-broker` with the Periphery secret
   `WGKEX_MQTT_BROKER_PASSWORD` (`WGKEX__MQTT__*` env, needs wgkex with freifunkMUC/wgkex#324), the Parker gateways
-  (`parker/wgkex`, pgw01 and pgw03) also as `wgkex:mqtt` (the worker user). The master pillar file with
+  (`parker/wgkex`, pgw01-pgw04) also as `wgkex:mqtt` (the worker user). The master pillar file with
   `wgkex:mqtt` must target the pgws too, not only `gw0[4-7]`. The user `parker` is only for the old pgw01 pilot. EMQX rejects anonymous clients; `emqx/acl.conf` next to
   each `compose.yaml` allows each user only its own topics, everything else is denied (see MQTT users below).
 - **Parker IPAM** is in the main NetBox `nb.ov.ffmuc.net` (the brokers write it, polld on the pgws reads it):

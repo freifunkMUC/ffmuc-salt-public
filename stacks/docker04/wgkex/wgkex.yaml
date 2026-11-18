@@ -49,8 +49,16 @@ workers:
     id: 1
     weight: 25
     pop: muc01
+  pgw02:
+    id: 2
+    weight: 25
+    pop: muc01
   pgw03:
     id: 3
+    weight: 25
+    pop: vie01
+  pgw04:
+    id: 4
     weight: 25
     pop: vie01
 
@@ -124,8 +132,10 @@ parker:
   # The broker spreads the nodes over the sites by weight (default 1), up to the
   # optional capacity (max nodes). A preferred site of a node is used if it has capacity.
   # dns64: the DNS64 resolver of the site (pdns-recursor on the pgw, dummy0).
-  # Each site has one pgw for now. With more pgws per site, use a site anycast
-  # DNS64 address. The anycast resolvers 2001:678:{ed0,e68}:f000:: do no DNS64.
+  # It is the first pgw of the site (pgw01, pgw03). The nodes of pgw02 and pgw04
+  # use it too, so it is a single point of failure for DNS64 of the site. Replace it
+  # with a site anycast DNS64 address. The anycast resolvers 2001:678:{ed0,e68}:f000::
+  # do no DNS64.
   sites:
     muc01:
       tunnel_id: 1
