@@ -20,6 +20,7 @@ include:
   - .wgkex
   - .nginx
   - .yanic
+  - .respondd
   - .polld
   - .meshviewer
 {% endif %}

@@ -24,6 +24,36 @@ ip_address      = "::1"
 send_no_request = true
 port            = 11001
 
+# The pgw itself: parker-respondd on [::1]:1001 (parker/respondd).
+# yanic sends its request to "multicast_address", here a unicast address.
+[[respondd.interfaces]]
+ifname            = "lo"
+ip_address        = "::1"
+multicast_address = "::1"
+
+# The other pgws: their parker-respondd on their Nebula address (Nebula firewall: only pgws).
+# ip_address "::": nebula0 has only IPv4, and yanic needs an IPv6 socket.
+{%- if salt['grains.get']('ip4_interfaces:nebula0') %}
+{%- for node, _ in salt['mine.get']('netbox:role:name:parker-gateway', 'minion_id', tgt_type='pillar').items() | sort if node != grains['id'] %}
+{%- set overlay_address = salt['mine.get'](node, 'minion_overlay_address', tgt_type='glob').get(node) %}
+{%- if overlay_address and overlay_address is string %}
+[[respondd.interfaces]]
+ifname            = "nebula0"
+ip_address        = "::"
+multicast_address = "{{ overlay_address.split('/')[0] }}" # {{ node }}
+{%- endif %}
+{%- endfor %}
+{%- endif %}
+
+# Number of WireGuard peers of a pgw (parker-respondd), in meshviewer.json "custom_fields"
+[[respondd.custom_field]]
+name = "wireguard_peers"
+path = "statistics.wireguard.peers"
+
+[[respondd.custom_field]]
+name = "wireguard_active_peers"
+path = "statistics.wireguard.active_peers"
+
 
 # A little build-in webserver, which statically serves a directory.
 # This is useful for testing purposes or for a little standalone installation.
