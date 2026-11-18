@@ -1,0 +1,17 @@
+#!/bin/bash
+# Age of the newest file in the Tuwunel backup directory (tuwunel state, nightly SIGUSR2). Runs via sudo.
+# Usage: check_tuwunel_backup [warning hours] [critical hours]
+D=/srv/docker/tuwunel/backups
+W=${1:-26}
+C=${2:-50}
+[ -d "$D" ] || { echo "CRITICAL - $D missing"; exit 2; }
+newest=$(find "$D" -type f -printf '%T@\n' | sort -n | tail -1)
+[ -n "$newest" ] || { echo "CRITICAL - no backup in $D"; exit 2; }
+age=$(( ($(date +%s) - ${newest%.*}) / 3600 ))
+if [ "$age" -ge "$C" ]; then st=2
+elif [ "$age" -ge "$W" ]; then st=1
+else st=0
+fi
+label=(OK WARNING CRITICAL)
+echo "${label[$st]} - newest backup ${age}h old"
+exit $st
