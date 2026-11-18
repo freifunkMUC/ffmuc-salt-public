@@ -79,6 +79,8 @@ base:
     - docker-user-firewall
   'docker04.in.ffmuc.net':
     - openldap-group-member
+  'docker05.in.ffmuc.net':
+    - cryptpad
   'docker07.in.ffmuc.net':
     - akvorado
     - bgpalerter

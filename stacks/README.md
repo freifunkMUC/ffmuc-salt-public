@@ -92,14 +92,14 @@ bcrypt hash), put the reference in single quotes: `NAME = '[[NAME]]'`.
 |---|---|
 | `docker04/etherpad` | `ETHERPAD_ADMIN_PASSWORD`, `ETHERPAD_DB_PASS`, `ETHERPAD_MYSQL_ROOT_PASSWORD` from `/srv/docker/etherpad/.env`; the other keys there are plain settings (now literal in `compose.yaml`) or unused |
 | `docker04/hedgedoc` | `HEDGEDOC_DB_PASS` (also the MariaDB user password), `HEDGEDOC_CMD_OAUTH2_CLIENT_SECRET`, `HEDGEDOC_CMD_SESSION_SECRET`, from `/srv/docker/hedgedoc/docker-compose.yaml` |
-| `docker04/dokuwiki` | none; `/srv/docker/dokuwiki/ldap.conf` stays on the host |
+| `docker04/dokuwiki` | none; `ldap.conf` is in git |
 | `docker04/whitebophir` | none |
 | `docker0{4,5,6,7}/diun` | `DIUN_SLACK_WEBHOOK_URL` (`webhookURL` from `/srv/docker/diun/diun.yml`) |
 | `docker07/libretranslate` | none |
 | `docker0{5,7}/speedtest` | none |
 | `docker0{4,6}/packetyeeter-analyzer` | none |
 | `docker0{4,5,6,7}/meet-reserve` | `MEET_RESERVE_PRIVATE_KEY`, `MEET_RESERVE_POW_KEY`, `MEET_RESERVE_SYNC_KEY` (`RESERVE_*` from `/srv/docker/meet-reserve/.env`, same on all hosts) |
-| `docker05/cryptpad` | none; `/srv/docker/cryptpad/data/config.js` and `infra.js` stay on the host |
+| `docker05/cryptpad` | `/srv/docker/cryptpad/data/config.js` (admin keys from pillar `cryptpad:admin_keys_lines`, rendered by state `cryptpad` from `cryptpad/config.js.j2`); `infra.js` is in git |
 | `docker05/salt-master` | none |
 | `docker07/bgpalerter` | none; `/srv/docker/bgpalerter/volume/config.yml` stays on the host |
 | `docker0{4,5,6,7}/traefik` | none; the dashboards are behind oauth2-proxy (`noc-auth`). `traefik.yml`, `acme.json` and `update-dns.sh` (Salt state `certs`) stay on the host; the image is built from `build/traefik-nsupdate` (Traefik + nsupdate), read-only root |
@@ -134,7 +134,7 @@ bcrypt hash), put the reference in single quotes: `NAME = '[[NAME]]'`.
 | `mail01/traefik` | none. `traefik.yml` and `dynamic_conf.yml` in git (the unused `traefikAuth` basic auth was dropped, the dashboard uses `noc-auth`); `acme.json` stays on the host |
 | `mail01/maintenance` | none |
 
-Not mounted yet, git mirrors of the host files (host copy is authoritative until the compose mounts it): `docker04/dokuwiki/ldap.conf`, `docker05/salt-master/master.d/x509-peer.conf`, `docker05/cryptpad/customize/`, `docker05/cryptpad/onlyoffice-conf/`.
+Not mounted yet, git mirrors of the host files (host copy is authoritative until the compose mounts it): `docker05/salt-master/master.d/x509-peer.conf`, `docker05/cryptpad/customize/`, `docker05/cryptpad/onlyoffice-conf/`.
 
 ### Taking a project over
 
