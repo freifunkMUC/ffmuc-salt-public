@@ -32,7 +32,7 @@ services:
   # Please take a look at the README at the top of this repo or the regular docs for more info.
   # Graylog Data Node: https://hub.docker.com/r/graylog/graylog-datanode
   datanode:
-    image: graylog/graylog-datanode:7.2.2@sha256:ff18490cf7c7ef3ea6c7caa0cb5915aec576061f96b899da4deab3c7aed56585
+    image: graylog/graylog-datanode:7.2.2@sha256:8aef39788a1ce22cb2c221ceaaedc65721ae41cab38464d7c17815f55943b7a6
     hostname: "datanode"
     environment:
       GRAYLOG_DATANODE_NODE_ID_FILE: "/var/lib/graylog-datanode/node-id"
@@ -114,7 +114,7 @@ services:
       - no-new-privileges:true
   graylog:
     hostname: "server"
-    image: graylog/graylog:7.2.2@sha256:d4cf618fa0b1d44f639e5fe37c77a1b332f74ae69bd6d77f2b9b94bb2f2e067d
+    image: graylog/graylog:7.2.2@sha256:ab6bff1cb38d3aeee5273d71af76a453fcd2884035d417c0b2012551818f21dc
     depends_on:
       mongodb:
         condition: "service_started"
