@@ -1,0 +1,10 @@
+[Unit]
+Description=Remove stale mod_smacks h records every hour
+
+[Timer]
+OnBootSec=10min
+OnUnitActiveSec=1h
+Unit=prosody-smacks-h-cleanup.service
+
+[Install]
+WantedBy=timers.target

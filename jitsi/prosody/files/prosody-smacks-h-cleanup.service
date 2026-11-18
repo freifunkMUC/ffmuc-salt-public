@@ -1,0 +1,7 @@
+[Unit]
+Description=Remove stale mod_smacks h records of anonymous Prosody users
+
+[Service]
+Type=oneshot
+User=prosody
+ExecStart=/usr/bin/find /var/lib -mindepth 4 -maxdepth 4 -path /var/lib/prosody*/*/smacks_h/* -type f -mmin +60 -delete
