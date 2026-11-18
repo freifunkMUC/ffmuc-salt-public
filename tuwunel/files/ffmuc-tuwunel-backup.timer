@@ -1,0 +1,9 @@
+[Unit]
+Description=Tuwunel online database backup every night
+
+[Timer]
+OnCalendar=*-*-* 02:00:00
+Unit=ffmuc-tuwunel-backup.service
+
+[Install]
+WantedBy=timers.target
