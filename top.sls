@@ -60,6 +60,7 @@ base:
     - jitsi.jigasi
     - jitsi.vosk
   'gw*':
+    - nginx.gateway
     - dhcp-server
     - knot-resolver.remove
     - pdns-recursor

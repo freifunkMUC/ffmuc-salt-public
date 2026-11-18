@@ -5,8 +5,8 @@
                  'meshviewer-ffwert.json', 'meshviewer-freising.json', 'meshviewer-ulm.json',
                  'nodes.json', 'nodes.geojson', 'nodelist.json'] %}
 
-libnginx-mod-http-fancyindex:
-  pkg.installed
+include:
+  - nginx.gateway
 
 /etc/nginx/sites-available/{{ fqdn }}:
   file.managed:
@@ -15,11 +15,17 @@ libnginx-mod-http-fancyindex:
     - context:
         fqdn: {{ fqdn }}
         in_name: {{ grains['id'] }}
+    - require:
+      - pkg: nginx-pkg
+    - onchanges_in:
+      - cmd: nginx-gateway-configtest
 
 /etc/nginx/sites-enabled/{{ fqdn }}:
   file.symlink:
     - target: /etc/nginx/sites-available/{{ fqdn }}
     - force: True
+    - onchanges_in:
+      - cmd: nginx-gateway-configtest
 
 /srv/www/{{ fqdn }}/ffdon:
   file.directory:
@@ -34,18 +40,3 @@ libnginx-mod-http-fancyindex:
 /srv/www/{{ fqdn }}/ffdon/meshviewer.json:
   file.symlink:
     - target: ../../../yanic/meshviewer-ffdon.json
-
-meshviewer-web-nginx-test:
-  cmd.run:
-    - name: nginx -t
-    - onchanges:
-      - pkg: libnginx-mod-http-fancyindex
-      - file: /etc/nginx/sites-available/{{ fqdn }}
-      - file: /etc/nginx/sites-enabled/{{ fqdn }}
-
-meshviewer-web-nginx:
-  service.running:
-    - name: nginx
-    - reload: True
-    - watch:
-      - cmd: meshviewer-web-nginx-test

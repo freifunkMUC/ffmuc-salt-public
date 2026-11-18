@@ -16,31 +16,15 @@
 {% set sslListen = ('127.0.0.1:' ~ sslPort) if behind_haproxy else (sslPort | string) %}
 {% set sslListen6 = ('[::1]:' ~ sslPort) if behind_haproxy else ('[::]:' ~ sslPort) %}
 
-nginx-repo-key:
-  cmd.run:
-    - name: "curl -fsSL https://nginx.org/keys/nginx_signing.key | gpg --batch --yes --dearmor -o /usr/share/keyrings/nginx-archive-keyring.gpg.tmp && mv /usr/share/keyrings/nginx-archive-keyring.gpg.tmp /usr/share/keyrings/nginx-archive-keyring.gpg"
-    - creates: /usr/share/keyrings/nginx-archive-keyring.gpg
+include:
+  - nginx.pkg
 
-/etc/apt/sources.list.d/nginx.list:
-  pkgrepo.managed:
-    - name: deb [signed-by=/usr/share/keyrings/nginx-archive-keyring.gpg] http://nginx.org/packages/{{ grains.os | lower }} {{ grains.oscodename }} nginx
-    - file: /etc/apt/sources.list.d/nginx.list
-    - clean_file: True
-    - require:
-      - cmd: nginx-repo-key
-
-{%- set nginx_pkg_version = salt['config.get']('netbox:config_context:nginx:version', '1.30.7-1~' ~ grains.oscodename) %}
 nginx:
-  pkg.installed:
-    - name: nginx
-    - version: '{{ nginx_pkg_version }}'
-    - require:
-      - pkgrepo: /etc/apt/sources.list.d/nginx.list
   service.running:
     - enable: TRUE
     - reload: TRUE
     - require:
-      - pkg: nginx
+      - pkg: nginx-pkg
     - watch:
       - cmd: nginx-configtest
 
@@ -93,7 +77,7 @@ nginx-systemd-daemon-reload:
     - source: salt://nginx/files/nginx.conf.jinja
     - template: jinja
     - require:
-      - pkg: nginx
+      - pkg: nginx-pkg
     - watch_in:
       - cmd: nginx-configtest
 
@@ -162,7 +146,7 @@ nginx-systemd-daemon-reload:
         sslListen6: "{{ sslListen6 }}"
     - template: jinja
     - require:
-      - pkg: nginx
+      - pkg: nginx-pkg
     - watch_in:
       - cmd: nginx-configtest
 
@@ -208,7 +192,7 @@ nginx-systemd-daemon-reload:
     - source: salt://nginx/files/{{ stream }}_stream.conf
     - makedirs: True
     - require:
-      - pkg: nginx
+      - pkg: nginx-pkg
     - watch_in:
       - cmd: nginx-configtest
 {% endfor %}{# stream #}
@@ -220,7 +204,7 @@ nginx-systemd-daemon-reload:
     - makedirs: True
     - template: jinja
     - require:
-      - pkg: nginx
+      - pkg: nginx-pkg
     - require_in:
       - service: nginx
 {% endfor %}{# config #}
@@ -231,7 +215,7 @@ nginx-systemd-daemon-reload:
     - makedirs: True
     - template: jinja
     - require:
-      - pkg: nginx
+      - pkg: nginx-pkg
     - require_in:
       - service: nginx
 
