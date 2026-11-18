@@ -19,6 +19,7 @@ nagios  ALL=NOPASSWD:	/usr/local/sbin/dhcpd-pool
 nagios	ALL=NOPASSWD:	/usr/lib/nagios/plugins/check_mailq
 
 nagios	ALL=NOPASSWD:	/usr/local/share/monitoring-plugins/check_ffmuc_dumps
+nagios	ALL=NOPASSWD:	/usr/local/share/monitoring-plugins/check_tuwunel_backup
 
 # Zammad search index: docker exec into the Zammad containers
 nagios	ALL=NOPASSWD:	/usr/local/share/monitoring-plugins/check_zammad_index

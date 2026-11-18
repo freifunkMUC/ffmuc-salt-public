@@ -61,6 +61,8 @@ nothing until the host has the NetBox tag `icinga2_client`.
 - `ffmuc_rustic` (`plugins/check_ffmuc_rustic`): CRITICAL when `ffmuc-rustic-backup.service` is failed or the last
   successful run (`/var/lib/ffmuc-rustic-last-success`, touched by the unit after `backup` and `forget`) is older than
   54 h, WARNING after 30 h. Hosts with the NetBox tag `backup`. `ffmuc_dumps` stays as it is.
+- `tuwunel_backup` (`plugins/check_tuwunel_backup`): age of the newest backup in `/srv/docker/tuwunel/backups`
+  (nightly `ffmuc-tuwunel-backup.timer`); WARNING after 26 h, CRITICAL after 50 h. Runs on docker07 through sudo; `docker07.in.ffmuc.net` only.
 - `ffmuc_trivy` (`plugins/check_ffmuc_trivy`): result of the weekly Trivy image scan (`trivy` state, NetBox config context
   `trivy.enabled`, off by default). WARNING on a fixable CRITICAL, more than half of the scans failing or a report older than 9 days. Docker hosts.
 - `zammad_index` (`plugins/check_zammad_index`): tickets, users and organizations in the Zammad database minus the

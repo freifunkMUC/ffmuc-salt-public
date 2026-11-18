@@ -1,0 +1,17 @@
+#!/bin/bash
+# Age of the newest finished Tuwunel backup (meta/ entry, written last) (tuwunel state, nightly SIGUSR2). Runs via sudo.
+# Usage: check_tuwunel_backup [warning hours] [critical hours]
+D=/srv/docker/tuwunel/backups
+W=${1:-26}
+C=${2:-50}
+[ -d "$D/meta" ] || { echo "CRITICAL - no backup in $D"; exit 2; }
+newest=$(find "$D/meta" -type f -printf '%T@\n' 2>/dev/null | sort -n | tail -1; exit "${PIPESTATUS[0]}") || { echo "UNKNOWN - cannot read $D/meta"; exit 3; }
+[ -n "$newest" ] || { echo "CRITICAL - no backup in $D"; exit 2; }
+age=$(( ($(date +%s) - ${newest%.*}) / 3600 ))
+if [ "$age" -ge "$C" ]; then st=2
+elif [ "$age" -ge "$W" ]; then st=1
+else st=0
+fi
+label=(OK WARNING CRITICAL)
+echo "${label[$st]} - newest backup ${age}h old|age=${age}h;$W;$C"
+exit $st
