@@ -7,7 +7,8 @@
   'pages': ['https://stats.ffmuc.net', 'https://ffmuc.net'],
 } %}
 {%- if site.get('latitude') and site.get('longitude') %}
-{%- do nodeinfo.update({'location': {'latitude': site.latitude | float, 'longitude': site.longitude | float}}) %}
+{%- set location = {'latitude': site.latitude | float, 'longitude': site.longitude | float} %}
+{%- do nodeinfo.update({'location': location}) %}
 {%- endif %}
 {{ {
   'hostname': grains['id'] | regex_replace('in\.ffmuc\.net', 'ext.ffmuc.net'),
