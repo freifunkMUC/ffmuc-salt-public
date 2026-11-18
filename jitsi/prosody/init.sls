@@ -324,4 +324,27 @@ stale-prosody-modules:
     - watch_in:
       - service: prosody
 
+
+{#- mod_smacks keeps one smacks_h file per user and prunes it only on that user's next login;
+    random guest usernames never return (jicofo03 ran out of inodes, 18.11.2026). #}
+{%- for unit in ["service", "timer"] %}
+/etc/systemd/system/prosody-smacks-h-cleanup.{{ unit }}:
+  file.managed:
+    - source: salt://jitsi/prosody/files/prosody-smacks-h-cleanup.{{ unit }}
+{%- endfor %}
+
+systemd-reload-prosody-smacks-h-cleanup:
+  cmd.run:
+    - name: systemctl --system daemon-reload
+    - onchanges:
+      - file: /etc/systemd/system/prosody-smacks-h-cleanup.service
+      - file: /etc/systemd/system/prosody-smacks-h-cleanup.timer
+
+prosody-smacks-h-cleanup-timer:
+  service.running:
+    - name: prosody-smacks-h-cleanup.timer
+    - enable: True
+    - require:
+      - cmd: systemd-reload-prosody-smacks-h-cleanup
+
 {% endif %}{# if jitsi.prosody.enabled #}
