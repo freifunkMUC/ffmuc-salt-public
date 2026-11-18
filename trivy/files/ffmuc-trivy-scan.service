@@ -7,6 +7,6 @@ Type=oneshot
 Nice=19
 IOSchedulingClass=idle
 CPUSchedulingPolicy=idle
-MemoryMax=1500M
+MemoryMax=2G
 TimeoutStartSec=3h
 ExecStart=/usr/local/sbin/ffmuc-trivy-scan.sh

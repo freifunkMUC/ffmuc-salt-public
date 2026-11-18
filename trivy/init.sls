@@ -15,6 +15,7 @@ trivy-release:
     - source: https://github.com/aquasecurity/trivy/releases/download/v{{ trivy_version }}/trivy_{{ trivy_version }}_Linux-{{ arch }}.tar.gz
     - source_hash: https://github.com/aquasecurity/trivy/releases/download/v{{ trivy_version }}/trivy_{{ trivy_version }}_checksums.txt
     - enforce_toplevel: False
+    - if_missing: /usr/local/lib/trivy-{{ trivy_version }}/trivy
     - user: root
     - group: root
 
