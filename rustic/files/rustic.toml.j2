@@ -25,6 +25,13 @@ host = "{{ grains.id }}"
 exclude-if-present = [".nobackup", "CACHEDIR.TAG"] # Default: not set
 {#- mastodon-data is on external filesystem in /srv/docker. if this is true it wont be backed up #}
 one-file-system = false
+{#- Docker internals (image layers, container logs, build cache) are recreatable; named volumes in /var/lib/docker/volumes stay in. #}
+{%- set excludes = ['/var/lib/docker/overlay2', '/var/lib/docker/image', '/var/lib/docker/containers', '/var/lib/docker/buildkit', '/var/lib/docker/tmp'] + salt['config.get']('netbox:config_context:backup:excludes', []) %}
+globs = [
+{%- for path in excludes %}
+    "!{{ path }}",
+{%- endfor %}
+]
 {%- if salt['config.get']('netbox:config_context:backup:dump_commands', {}) or salt['config.get']('netbox:config_context:backup:dump_dirs', {}) %}
 
 [backup.hooks]
