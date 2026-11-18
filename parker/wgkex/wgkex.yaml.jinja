@@ -38,6 +38,12 @@ domain_prefixes:
 cleanup:
   parker_stale_timeout: 864000
 
+# [worker] Prometheus metrics (queue depth, peer operations, evictions), scraped by telegraf.
+# Listens on localhost only.
+metrics:
+  worker_port: 9101
+  worker_host: 127.0.0.1
+
 # [worker] The external hostname of this worker
 externalName: {{ grains['id'] | regex_replace('in\.ffmuc\.net','ext.ffmuc.net') }}
 
