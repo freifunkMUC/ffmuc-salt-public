@@ -4,6 +4,12 @@ This is the salt repo for Freifunk Munich
 ## Dependencies
 This repo makes heavy use of Netbox based ext-pillar information especially config_contexts, services and ip information
 
+Netbox is a hard dependency at *render* time: `_modules/site_prefixes.py`,
+`_modules/extra_dns_entries.py` and `_modules/cfssl_certs.py` are called from
+Jinja while states are being rendered. They fail closed - if Netbox cannot be
+reached the render aborts and the highstate goes red, rather than quietly
+producing a config with no prefixes or no DNS records.
+
 ## Sample config_context
 ```
 {
@@ -30,16 +36,6 @@ This repo makes heavy use of Netbox based ext-pillar information especially conf
                 "/srv/docker/openldap/config",
                 "/srv/docker/openldap/certs"
             ]
-        },
-        "zammad": {
-            "container_dir": "/srv/docker/zammad-docker-compose",
-            "git": "https://github.com/zammad/zammad-docker-compose.git",
-            "mounts": [
-                "/srv/docker/zammad-backup",
-                "/srv/docker/zammad-data",
-                "/srv/docker/elasticsearch-zammad/data",
-                "/srv/docker/postgresql-zammad/data"
-            ]
         }
     },
     "roles": [
@@ -64,3 +60,25 @@ This repo makes heavy use of Netbox based ext-pillar information especially conf
     "user_home": {}
 }
 ```
+
+## Linting
+
+CI runs `black`, `yamllint`, `salt-lint` and `shellcheck`. To run them locally:
+
+```
+black --check --diff .
+yamllint -c .yamllint .
+salt-lint -x 204,205 $(find . -name '*.sls' -o -name '*.jinja' -o -name '*.j2' -o -name '*.tmpl')
+shellcheck $(grep -rl '^#!.*sh' --include='*.sh' .)
+```
+
+## License
+
+This repository is licensed under the GNU General Public License v3.0 or later (GPL-3.0-or-later). See [LICENSE](LICENSE).
+
+These parts have a different license:
+
+- [`stacks/build/meet-reserve/`](stacks/build/meet-reserve/) and [`jitsi/meet/static-ffmuc/`](jitsi/meet/static-ffmuc/): GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later).
+- A subdirectory with its own `LICENSE` file or license header keeps that license. Examples: [`respondd/respondd-tmpl/`](respondd/respondd-tmpl/) (AGPL-3.0), [`snmpd/ifAlias`](snmpd/ifAlias) (GPL-3.0).
+
+The FFMUC logos and branding images are not covered by these licenses.

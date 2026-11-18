@@ -1,0 +1,104 @@
+#!/usr/bin/python3
+#
+# Icinga plugin: CRITICAL when a BGP protocol in BIRD 2 is not Established.
+#
+# Reads the summary of `birdc show protocols` (via sudo, see icinga2.sudoers).
+# Protocols disabled in the bird config (state "down" without info) count as OK.
+# Sessions matching --ignore (fnmatch pattern, repeatable) are reported but OK.
+# The "down for more than N minutes" part is done by Icinga (retry_interval and
+# max_check_attempts in the service), not here.
+#
+# Why not check_bird2_bgp (BarbarossaTM/icinga2-plugins): it classifies sessions
+# by a single local ASN, but the transit hosts use AS212567 towards partners
+# and a private site ASN towards the site router (whose neighbor AS is 212567),
+# and it returns OK when birdc prints nothing (e.g. sudo refused).
+#
+
+import argparse
+import fnmatch
+import re
+import subprocess
+import sys
+
+OK, WARNING, CRITICAL, UNKNOWN = 0, 1, 2, 3
+TIME_TOKEN = re.compile(r"^[0-9][0-9:.T+-]*$")
+STATUS = {OK: "OK", WARNING: "WARNING", CRITICAL: "CRITICAL", UNKNOWN: "UNKNOWN"}
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Check BGP sessions in BIRD 2")
+    parser.add_argument("--birdc", default="/usr/sbin/birdc", help="path to birdc")
+    parser.add_argument(
+        "--ignore",
+        action="append",
+        default=[],
+        metavar="PATTERN",
+        help="protocol name (fnmatch pattern) that is OK to be down; repeatable",
+    )
+    return parser.parse_args()
+
+
+def read_protocols(birdc):
+    cmd = ["/usr/bin/sudo", "-n", birdc, "show", "protocols"]
+    try:
+        proc = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=20, check=False
+        )
+    except (OSError, subprocess.SubprocessError) as err:
+        return None, f"{' '.join(cmd)} failed: {err}"
+    if proc.returncode != 0 or "BIRD" not in proc.stdout:
+        msg = (proc.stderr or proc.stdout).strip().splitlines()
+        return None, f"{' '.join(cmd)} failed: {msg[-1] if msg else proc.returncode}"
+    return proc.stdout, None
+
+
+def main():
+    args = parse_args()
+    output, error = read_protocols(args.birdc)
+    if error:
+        print(f"UNKNOWN - {error}")
+        return UNKNOWN
+
+    established, disabled, down, ignored = [], [], [], []
+    for line in output.splitlines():
+        # Name Proto Table State Since Info
+        fields = line.split()
+        if len(fields) < 5 or fields[1] != "BGP":
+            continue
+        name, state, rest = fields[0], fields[3], fields[4:]
+        # Drop the "Since" column (one or more date/time tokens, by timeformat)
+        while rest and TIME_TOKEN.match(rest[0]):
+            rest = rest[1:]
+        info = " ".join(rest)
+        if state == "up" and info.startswith("Established"):
+            established.append(name)
+        elif state == "down" and not info:
+            disabled.append(name)
+        elif any(fnmatch.fnmatchcase(name, pattern) for pattern in args.ignore):
+            ignored.append(f"{name} ({info or state})")
+        else:
+            down.append(f"{name} ({info or state})")
+
+    total = len(established) + len(disabled) + len(down) + len(ignored)
+    if total == 0:
+        print("UNKNOWN - no BGP protocols found in bird")
+        return UNKNOWN
+
+    code = CRITICAL if down else OK
+    text = f"{len(established)}/{total} BGP sessions established"
+    if down:
+        text += f"; not established: {', '.join(down)}"
+    if ignored:
+        text += f"; down but ignored: {', '.join(ignored)}"
+    if disabled:
+        text += f"; disabled: {', '.join(disabled)}"
+    perfdata = (
+        f"established={len(established)} down={len(down)} "
+        f"ignored={len(ignored)} disabled={len(disabled)}"
+    )
+    print(f"{STATUS[code]} - {text} | {perfdata}")
+    return code
+
+
+if __name__ == "__main__":
+    sys.exit(main())

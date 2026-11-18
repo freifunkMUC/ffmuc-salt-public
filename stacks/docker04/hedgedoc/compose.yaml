@@ -1,0 +1,92 @@
+---
+services:
+  hedgedoc:
+    # node2shell (CVE-2026-111497): upstream still ships a vulnerable Node, see Dockerfile
+    build: .
+    image: local/hedgedoc:1.12.0-ls208-node26.13.1
+    pull_policy: build
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Berlin
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_USER=hedgedoc
+      - DB_PASS=${HEDGEDOC_DB_PASSWORD}
+      - DB_NAME=hedgedoc
+      - CMD_DOMAIN=hedgedoc.ffmuc.net
+      - CMD_URL_ADDPORT=false
+      - CMD_PROTOCOL_USESSL=true
+      - CMD_PORT=3000
+      - CMD_HSTS_ENABLE=true
+      - CMD_ALLOW_ORIGIN=['hedgedoc.ffmuc.net']
+      - CMD_ALLOW_EMAIL_REGISTER=false
+      - CMD_ALLOW_EMAIL_SIGNIN=false
+      - CMD_RATE_LIMIT_NEW_NOTES=0
+      - CMD_OAUTH2_USER_PROFILE_URL=https://keycloak.ffmuc.net/realms/ffmuc/protocol/openid-connect/userinfo
+      - CMD_OAUTH2_USER_PROFILE_USERNAME_ATTR=preferred_username
+      - CMD_OAUTH2_USER_PROFILE_DISPLAY_NAME_ATTR=name
+      - CMD_OAUTH2_USER_PROFILE_EMAIL_ATTR=email
+      - CMD_OAUTH2_TOKEN_URL=https://keycloak.ffmuc.net/realms/ffmuc/protocol/openid-connect/token
+      - CMD_OAUTH2_AUTHORIZATION_URL=https://keycloak.ffmuc.net/realms/ffmuc/protocol/openid-connect/auth
+      - CMD_OAUTH2_CLIENT_ID=hedgedoc
+      - CMD_OAUTH2_CLIENT_SECRET=${HEDGEDOC_OAUTH2_CLIENT_SECRET}
+      - CMD_OAUTH2_PROVIDERNAME=Keycloak
+      - CMD_OAUTH2_SCOPE=openid email profile
+      - CMD_SESSION_SECRET=${HEDGEDOC_SESSION_SECRET}
+    volumes:
+      - /srv/docker/hedgedoc/data:/config
+      - ./public-docs/imprint.md:/app/hedgedoc/public/docs/imprint.md:ro
+      - ./public-docs/privacy.md:/app/hedgedoc/public/docs/privacy.md:ro
+      - ./public-docs/terms-of-use.md:/app/hedgedoc/public/docs/terms-of-use.md:ro
+    ports:
+      - "0.0.0.0:8085:3000"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3000/_health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 1m
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - KILL
+      - SETGID
+      - SETUID
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
+  db:
+    image: mariadb:12.3.3-noble@sha256:4ebbcf100a3ba320766dfa0e1af008df12261301db6ef72798c7650f70794aed
+    command: ["--innodb-snapshot-isolation=OFF", "--innodb-buffer-pool-size=1G"]  # snapshot: 11.8 behaviour, 12.3 defaults to ON; pool: data is ~2.2 GB, default 128M
+    restart: always
+    user: "999:999"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 2g
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /run/mysqld
+    environment:
+      - MARIADB_RANDOM_ROOT_PASSWORD=yes
+      - MYSQL_DATABASE=hedgedoc
+      - MYSQL_USER=hedgedoc
+      - MYSQL_PASSWORD=${HEDGEDOC_DB_PASSWORD}
+      - MARIADB_AUTO_UPGRADE=1
+    volumes:
+      - /srv/docker/hedgedoc/database:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 1m

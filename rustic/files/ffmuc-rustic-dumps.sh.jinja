@@ -1,0 +1,22 @@
+#!/bin/bash
+# Managed by Salt (rustic): dumps from NetBox backup.dump_commands into /var/lib/ffmuc-dumps, rustic run-before hook.
+# A failing dump keeps its last good file and makes the script exit 1 (rustic only warns); Icinga checks the age.
+set -uo pipefail
+umask 077
+D=/var/lib/ffmuc-dumps
+mkdir -p "$D"
+rc=0
+: > "$D/.names"
+{%- for name, command in salt['config.get']('netbox:config_context:backup:dump_commands', {}).items() %}
+
+# {{ name }}
+echo "{{ name }}" >> "$D/.names"
+if ( {{ command }} ) > "$D/{{ name }}.tmp"; then
+  mv "$D/{{ name }}.tmp" "$D/{{ name }}"
+else
+  echo "dump {{ name }} failed" >&2
+  rm -f "$D/{{ name }}.tmp"
+  rc=1
+fi
+{%- endfor %}
+exit $rc

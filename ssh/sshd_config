@@ -97,6 +97,8 @@ X11Forwarding yes
 PrintMotd no
 #PrintLastLog yes
 #TCPKeepAlive yes
+# Required: ssh/authorized_keys.tmpl sets environment="SSH_USER=..." per
+# admin key, and ssh/sshrc logs it to attribute root logins (6ac45df).
 PermitUserEnvironment yes
 #Compression delayed
 #ClientAliveInterval 0

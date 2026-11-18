@@ -1,5 +1,6 @@
 {% set sites = salt['pillar.get']('netbox:config_context:sites') -%}
 {% set influxdb = salt['pillar.get']('netbox:config_context:yanic:influxdb', {}) -%}
+{% set no_owner = salt['pillar.get']('netbox:config_context:yanic:no_owner', False) -%}
 ###
 # yanic config (salt managed)
 ###
@@ -22,6 +23,15 @@ domains             = [{% for site, domains in sites.items() %}{% for domain in 
 ifname = "br-{{ domain }}"
 port = 45124
 {% endfor %}
+{%- if salt['grains.get']('ip_interfaces:nebula0') %}
+# Parker gateways send their respondd data here (parker/yanic, database.connection.respondd).
+# ip_address "::": nebula0 has only IPv4, and yanic needs an IPv6 socket.
+[[respondd.interfaces]]
+ifname          = "nebula0"
+ip_address      = "::"
+send_no_request = true
+port            = 11001
+{% endif %}
 
 # A little build-in webserver, which statically serves a directory.
 # This is useful for testing purposes or for a little standalone installation.
@@ -42,16 +52,30 @@ save_interval = "30s"
 # Set node to offline if not seen within this period
 offline_after = "10m"
 
+# no_owner (NetBox config context yanic.no_owner, default off): contact details stay out of the public files;
+# admins can look them up in state_path.
 # definition for the new more compressed meshviewer.json
 [[nodes.output.meshviewer-ffrgb]]
 enable   = true
 path = "/srv/yanic/meshviewer.json"
+
+[nodes.output.meshviewer-ffrgb.filter]
+no_owner = {{ 'true' if no_owner else 'false' }}
+
+# internal copy with owner contacts, outside the web root (directory 0750 yanic, read over SSH by admins)
+[[nodes.output.meshviewer-ffrgb]]
+enable = true
+path = "/srv/yanic-internal/meshviewer.json"
+
+[nodes.output.meshviewer-ffrgb.filter]
+no_owner = false
 
 [[nodes.output.meshviewer-ffrgb]]
 enable = true
 path = "/srv/yanic/meshviewer-ffdon.json"
 
 [nodes.output.meshviewer-ffrgb.filter]
+no_owner = {{ 'true' if no_owner else 'false' }}
 domain_as_site = true
 sites = [{% for domain in sites["ffdon"] %}"ffdon_{{ domain }}", {% endfor %}]
 
@@ -60,6 +84,7 @@ enable = true
 path = "/srv/yanic/meshviewer-ffwert.json"
 
 [nodes.output.meshviewer-ffrgb.filter]
+no_owner = {{ 'true' if no_owner else 'false' }}
 domain_as_site = true
 sites = [{% for domain in sites["ffwert"] %}"ffwert_{{ domain }}", {% endfor %}]
 
@@ -68,6 +93,7 @@ enable = true
 path = "/srv/yanic/meshviewer-augsburg.json"
 
 [nodes.output.meshviewer-ffrgb.filter]
+no_owner = {{ 'true' if no_owner else 'false' }}
 domain_as_site = true
 sites = ["ffmuc_augsburg"]
 
@@ -76,6 +102,7 @@ enable = true
 path = "/srv/yanic/meshviewer-freising.json"
 
 [nodes.output.meshviewer-ffrgb.filter]
+no_owner = {{ 'true' if no_owner else 'false' }}
 domain_as_site = true
 sites = ["ffmuc_freising"]
 
@@ -84,6 +111,7 @@ enable = true
 path = "/srv/yanic/meshviewer-ulm.json"
 
 [nodes.output.meshviewer-ffrgb.filter]
+no_owner = {{ 'true' if no_owner else 'false' }}
 domain_as_site = true
 sites = ["ffmuc_ulm"]
 
@@ -92,6 +120,7 @@ enable = true
 path = "/srv/yanic/meshviewer-dlg.json"
 
 [nodes.output.meshviewer-ffrgb.filter]
+no_owner = {{ 'true' if no_owner else 'false' }}
 domain_as_site = true
 sites = ["ffmuc_dlg"]
 
@@ -102,9 +131,15 @@ version    = 2
 nodes_path = "/srv/yanic/nodes.json"
 graph_path = "/srv/yanic/graph.json"
 
+[nodes.output.meshviewer.filter]
+no_owner = {{ 'true' if no_owner else 'false' }}
+
 [[nodes.output.geojson]]
 enable   = true
 path = "/srv/yanic/nodes.geojson"
+
+[nodes.output.geojson.filter]
+no_owner = {{ 'true' if no_owner else 'false' }}
 
 [[nodes.output.nodelist]]
 enable   = true
@@ -134,7 +169,3 @@ database = "{{ influxdb.database }}"
 username = "{{ influxdb.username }}"
 password = "{{ influxdb.password }}"
 insecure_skip_verify = {{ influxdb.insecure_skip_verify | default(false) | lower }}
-
-[[database.connection.logging]]
-enable   = false
-path     = "/var/log/yanic.log"

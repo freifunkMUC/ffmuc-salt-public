@@ -6,7 +6,7 @@ iptables_pkgs:
       - iptables-persistent
       - netfilter-persistent
 
-{% if role in ('nextgen-gateway', 'guardian') %}
+{% if role in ('nextgen-gateway', 'guardian', 'parker-gateway') %}
 
 netfilter_service:
   service.enabled:
@@ -23,6 +23,26 @@ netfilter_reload:
     - onchanges:
       - file: /etc/iptables/rules.v4
       - file: /etc/iptables/rules.v6
+
+{% if role == 'guardian' %}
+# The reload flushes the fail2ban chains; stop it before so actionstop does not log errors
+fail2ban_before_netfilter_reload:
+  cmd.run:
+    - name: systemctl stop fail2ban
+    - onlyif: systemctl is-active --quiet fail2ban
+    - onchanges:
+      - file: /etc/iptables/rules.v4
+      - file: /etc/iptables/rules.v6
+    - require_in:
+      - cmd: netfilter_reload
+
+fail2ban_after_netfilter_reload:
+  cmd.run:
+    - name: systemctl start fail2ban
+    - onlyif: systemctl is-enabled --quiet fail2ban
+    - onchanges:
+      - cmd: netfilter_reload
+{% endif %}
 
 {# Gather general information #}
 {% set own_location = salt['pillar.get']('netbox:site:name') %}

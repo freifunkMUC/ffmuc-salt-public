@@ -1,0 +1,683 @@
+/* FFMUC branding on top of the upstream jitsi-meet-web css/all.css.
+   Colours follow https://wiki.freifunk.net/Freifunk-Styles: magenta for
+   small accents only, yellow as highlight, blue only in spots. */
+:root {
+    --ff-magenta: #dc0067;
+    --ff-magenta-dark: #b30054;
+    --ff-yellow: #ffb400;
+    --ff-blue: #009ee0;
+    --ff-ink: #16181d;
+    --ff-muted: #5b6270;
+    --ff-bg: #f4f5f7;
+    --ff-line: #e4e6ea;
+}
+
+a,
+.as-link {
+    color: var(--ff-magenta);
+}
+
+button {
+    background-color: var(--ff-magenta);
+}
+
+.watermark,
+.welcome .welcome-watermark .watermark.leftwatermark {
+    width: 186px;
+    height: 74px;
+}
+
+.videocontainer > span.audioindicator span.audiodot-top::after,
+.videocontainer > span.audioindicator span.audiodot-middle::after,
+.videocontainer > span.audioindicator span.audiodot-bottom::after {
+    background: var(--ff-magenta);
+}
+
+.meetings-list .button {
+    background: var(--ff-magenta);
+}
+
+.meetings-list .delete-meeting > svg {
+    fill: var(--ff-magenta);
+}
+
+/* ---------- welcome page ---------- */
+
+.welcome {
+    background-color: var(--ff-bg);
+    justify-content: flex-start;
+}
+
+.welcome .header {
+    background-image:
+        linear-gradient(180deg, rgba(10, 12, 16, 0.25) 0%, rgba(10, 12, 16, 0.35) 55%, rgba(10, 12, 16, 0.75) 100%),
+        url(../../images/welcome-background.webp);
+    background-position: center 40%;
+    padding: 1rem 1rem 3.5rem;
+}
+
+.welcome .header .header-text-title {
+    font-size: 3rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    text-shadow: 0 2px 16px rgba(0, 0, 0, 0.35);
+}
+
+.welcome .header .header-text-title::after {
+    content: "";
+    display: block;
+    width: 56px;
+    height: 4px;
+    margin: 14px auto 0;
+    border-radius: 2px;
+    background: var(--ff-yellow);
+}
+
+.welcome .header .header-text-subtitle {
+    font-weight: 500;
+    opacity: 0.95;
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.4);
+}
+
+.welcome .header #enter_room {
+    max-width: 560px;
+}
+
+.welcome .header #enter_room .join-meeting-container {
+    padding: 6px;
+    border-radius: 14px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+}
+
+.welcome .header #enter_room .enter-room-input-container .enter-room-input {
+    font-size: 1rem;
+    border-radius: 10px;
+}
+
+.welcome .header #enter_room .enter-room-input::placeholder {
+    color: #8a94a6;
+    opacity: 1;
+}
+
+.welcome .welcome-page-button {
+    background: var(--ff-magenta);
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 16px 24px;
+}
+
+.welcome .welcome-page-button:hover {
+    background-color: var(--ff-magenta-dark);
+}
+
+.welcome .welcome-page-settings {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    backdrop-filter: blur(6px);
+}
+
+.welcome .welcome-cards-container {
+    padding: 0;
+    margin-top: -2rem;
+    position: relative;
+    z-index: 3;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.welcome .welcome-tabs:has(.meetings-list-empty) {
+    display: none;
+}
+
+.welcome .welcome-card-column {
+    width: 100%;
+    max-width: 792px;
+    margin: 0 auto;
+    padding: 0 16px;
+    box-sizing: border-box;
+}
+
+
+.welcome .welcome-card-column > div {
+    margin-bottom: 20px;
+}
+
+.welcome .welcome-card,
+.welcome .welcome-card--blue,
+.welcome .welcome-card--dark {
+    background: #fff;
+    color: var(--ff-ink);
+    border: 1px solid var(--ff-line);
+    border-radius: 18px;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 24px rgba(16, 24, 40, 0.06);
+    overflow: hidden;
+}
+
+.welcome .welcome-tabs {
+    border-top: 4px solid var(--ff-blue);
+}
+
+.welcome .tab-container .tab-content {
+    height: auto;
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+.welcome .tab-container .tab-buttons,
+.welcome .tab-container .tab-buttons [role="tab"] {
+    background-color: var(--ff-bg);
+    color: var(--ff-muted);
+}
+
+.welcome .tab-container .tab-buttons [role="tab"][aria-selected="true"] {
+    background-color: #fff;
+    color: var(--ff-ink);
+    font-weight: 600;
+}
+
+.meetings-list .item {
+    border-radius: 10px;
+}
+
+/* keep long (e.g. reserved r-...) room names on one line */
+.meetings-list .item .left-column {
+    flex: 0 0 7.5rem;
+}
+
+.meetings-list .item .left-column .title {
+    white-space: nowrap;
+}
+
+.meetings-list .item .right-column {
+    min-width: 0;
+    padding-right: 48px;
+}
+
+.meetings-list .item .right-column .title {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    word-break: normal;
+}
+
+/* our info card (welcomePageAdditionalCard.html) */
+.welcome .welcome-card-text {
+    padding: 32px;
+}
+
+.ffm-card h2 {
+    margin: 0 0 4px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--ff-ink);
+}
+
+.ffm-card .ffm-lead {
+    margin: 0 0 24px;
+    color: var(--ff-muted);
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.ffm-steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin: 0 0 24px;
+    padding: 0;
+    list-style: none;
+    counter-reset: ffm-step;
+}
+
+.ffm-steps li {
+    counter-increment: ffm-step;
+    padding: 18px 16px 16px;
+    border-radius: 14px;
+    background: var(--ff-bg);
+    font-size: 0.9rem;
+    line-height: 1.45;
+    color: var(--ff-ink);
+}
+
+.ffm-steps li::before {
+    content: counter(ffm-step);
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    margin-bottom: 10px;
+    border-radius: 50%;
+    background: var(--ff-yellow);
+    color: var(--ff-ink);
+    font-weight: 700;
+}
+
+.ffm-steps li b {
+    display: block;
+    margin-bottom: 2px;
+}
+
+.ffm-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 0 24px;
+    padding: 0;
+    list-style: none;
+}
+
+.ffm-chips li {
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--ff-line);
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--ff-ink);
+}
+
+.ffm-chips li::before {
+    content: "✓";
+    margin-right: 6px;
+    font-weight: 700;
+    color: var(--ff-magenta);
+}
+
+/* reserved rooms box and donation banner (reserved-rooms.js) */
+.ffm-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    height: 40px;
+    margin: 0;
+    padding: 0 16px;
+    border: 1.5px solid var(--ff-magenta);
+    border-radius: 10px;
+    background: var(--ff-magenta);
+    color: #fff !important;
+    font-family: inherit;
+    font-size: 0.9rem !important;
+    font-weight: 600;
+    line-height: 1;
+    text-decoration: none !important;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.ffm-btn:hover {
+    background: var(--ff-magenta-dark);
+    border-color: var(--ff-magenta-dark);
+}
+
+.ffm-btn.ffm-outline {
+    background: #fff;
+    color: var(--ff-magenta) !important;
+}
+
+.ffm-btn.ffm-outline:hover {
+    background: #fdeef6;
+}
+
+.ffm-rooms-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 4px;
+}
+
+.ffm-card .ffm-rooms-head h2 {
+    flex: 1;
+    margin: 0;
+}
+
+/* both header buttons have the same size */
+.ffm-rooms-actions {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 8px;
+}
+
+.ffm-rooms-actions .ffm-btn {
+    min-width: 160px;
+}
+
+.ffm-rooms-add {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 0 16px;
+}
+
+.ffm-rooms-add input {
+    flex: 1 1 200px;
+    min-width: 0;
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid var(--ff-line);
+    border-radius: 10px;
+    font: inherit;
+    font-size: 0.9rem;
+}
+
+.ffm-rooms-add input[name="name"] {
+    flex: 0 1 220px;
+}
+
+.ffm-rooms-err {
+    width: 100%;
+    color: #b91c1c;
+    font-size: 0.85rem;
+}
+
+.ffm-rooms-err:empty {
+    display: none;
+}
+
+.ffm-rooms-note {
+    margin: 0 0 12px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: #fff7e6;
+    border: 1px solid #ffe2a3;
+    color: var(--ff-ink);
+    font-size: 0.85rem;
+}
+
+.ffm-rooms-list {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ffm-rooms-list li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 14px;
+    background: var(--ff-bg);
+}
+
+.ffm-rooms-name {
+    flex: 1;
+    min-width: 0;
+}
+
+.ffm-rooms-name button {
+    display: block;
+    max-width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--ff-ink);
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: text;
+}
+
+.ffm-rooms-name small {
+    color: var(--ff-muted);
+    font-size: 0.82rem;
+}
+
+.ffm-rooms-soon {
+    color: #b45309;
+    font-weight: 600;
+}
+
+/* fixed widths, so that the buttons of all rows align */
+.ffm-rooms-join {
+    width: 210px;
+}
+
+.ffm-rooms-manage {
+    width: 120px;
+}
+
+.ffm-rooms-x {
+    flex: none;
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 8px;
+    background: none;
+    color: var(--ff-muted);
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.ffm-rooms-x:hover {
+    background: var(--ff-line);
+}
+
+.ffm-rooms-small {
+    margin: 12px 0 0;
+    color: var(--ff-muted);
+    font-size: 0.85rem;
+}
+
+.ffm-donate {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-sizing: border-box;
+    /* Same outer width as .welcome-card: 100% plus its 1px border. */
+    width: calc(100% + 2px);
+    padding: 20px 24px;
+    border-radius: 18px;
+    background: linear-gradient(100deg, #e2007a, #ff5fa8);
+    color: #fff;
+}
+
+.ffm-donate-icon {
+    font-size: 28px;
+}
+
+.ffm-donate p {
+    flex: 1;
+    margin: 0;
+    font-size: 0.92rem;
+    line-height: 1.45;
+}
+
+.ffm-donate a {
+    flex: none;
+    padding: 10px 18px;
+    border-radius: 10px;
+    background: #fff;
+    color: #e2007a !important;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-decoration: none !important;
+}
+
+/* Jitsi's recent rooms list: show its screen-reader heading as a title */
+.welcome .welcome-tabs h2.sr-only {
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    margin: 16px 20px 2px !important;
+    overflow: visible !important;
+    clip: auto !important;
+    clip-path: none !important;
+    white-space: normal !important;
+    font-size: 0 !important;
+    color: var(--ff-ink);
+}
+
+.welcome .welcome-tabs h2.sr-only::before {
+    content: "Recently used rooms";
+    display: block;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.welcome .welcome-tabs h2.sr-only::after {
+    content: "Normal rooms you opened in this browser. Anyone with the name can join.";
+    display: block;
+    margin-top: 2px;
+    color: var(--ff-muted);
+    font-size: 0.8rem;
+    font-weight: 400;
+}
+
+html[lang|="de"] .welcome .welcome-tabs h2.sr-only::before {
+    content: "Zuletzt genutzte Räume";
+}
+
+html[lang|="de"] .welcome .welcome-tabs h2.sr-only::after {
+    content: "Normale Räume, die du in diesem Browser geöffnet hast. Jede Person mit dem Namen kann beitreten.";
+}
+
+.ffm-more {
+    display: inline-block;
+    margin-top: 20px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.ffm-more:hover {
+    text-decoration: underline;
+}
+
+/* footer (welcomePageAdditionalContent.html + upstream mobile row) */
+.welcome .welcome-page-content .welcome-footer,
+.welcome footer.welcome-footer {
+    background: var(--ff-ink);
+    margin-top: 0;
+}
+
+.welcome .welcome-page-content {
+    margin-top: auto;
+    padding-top: 40px;
+}
+
+.ffm-footer {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 32px 16px 8px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    color: #c9ccd3;
+    font-size: 0.875rem;
+    line-height: 1.6;
+}
+
+.ffm-footer .ffm-heart {
+    margin: 0 6px 0 4px;
+}
+
+.ffm-footer b {
+    color: #fff;
+}
+
+.ffm-footer a {
+    color: var(--ff-yellow);
+    text-decoration: none;
+}
+
+.ffm-footer a:hover {
+    text-decoration: underline;
+}
+
+.ffm-apps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.ffm-apps a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: 1px solid #3a3d45;
+    color: #fff;
+    font-weight: 500;
+}
+
+.ffm-apps a:hover {
+    border-color: var(--ff-yellow);
+    text-decoration: none;
+}
+
+.ffm-apps a::before {
+    content: "↓";
+    color: var(--ff-yellow);
+    font-weight: 700;
+}
+
+.welcome .welcome-footer-row-block {
+    border-bottom: 0;
+}
+
+.welcome .welcome-footer--row-1 {
+    padding: 16px 0 32px;
+}
+
+.welcome .welcome-footer-row-1-text {
+    color: #c9ccd3;
+}
+
+@media only screen and (max-width: 640px) {
+    .welcome .header .header-text-title {
+        font-size: 2.25rem;
+    }
+
+    .ffm-steps {
+        grid-template-columns: 1fr;
+    }
+
+    .ffm-rooms-actions,
+    .ffm-rooms-actions .ffm-btn {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .ffm-rooms-list li,
+    .ffm-donate {
+        flex-wrap: wrap;
+    }
+
+    .ffm-donate p {
+        flex-basis: 70%;
+    }
+
+    .ffm-rooms-name {
+        flex-basis: 100%;
+    }
+
+    .ffm-rooms-join,
+    .ffm-rooms-manage {
+        flex: 1;
+        width: auto;
+    }
+
+    .welcome .welcome-card-text {
+        padding: 24px 20px;
+    }
+}
+
+/* Welcome page language switch: Jitsi sets <html lang> to the UI language */
+html[lang|="de"] .ffm-en,
+html:not([lang|="de"]) .ffm-de { display: none !important; }

@@ -1,0 +1,29 @@
+---
+# Defaults for every router of this Traefik (file provider, watched: changes apply live).
+tls:
+  options:
+    # Mozilla "intermediate": TLS 1.2 and 1.3. The list is for TLS 1.2; Go fixes the 1.3 suites.
+    default:
+      minVersion: VersionTLS12
+      # Reject clients without SNI or with an unknown name instead of serving the default certificate.
+      sniStrict: true
+      cipherSuites:
+        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+        - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
+        - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
+
+http:
+  middlewares:
+    # On the https entry point (traefik.yml), overwrites these headers in every response.
+    # No Referrer-Policy, no CSP, no browserXssFilter.
+    security-headers:
+      headers:
+        contentTypeNosniff: true
+        forceSTSHeader: true
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        customFrameOptionsValue: SAMEORIGIN

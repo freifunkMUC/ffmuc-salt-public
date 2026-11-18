@@ -1,0 +1,23 @@
+# Managed by Salt (parker/respondd)
+[Unit]
+Description=parker-respondd (respondd answers of this pgw, for yanic)
+Wants=network-online.target
+After=network-online.target nebula.service
+
+[Service]
+Type=simple
+DynamicUser=yes
+ExecStart=/usr/bin/python3 /usr/local/bin/parker-respondd.py /etc/parker-respondd.json
+# The Nebula address may not be up yet at boot: retry
+Restart=always
+RestartSec=10
+# CAP_NET_ADMIN: "wg show" reads the peers over netlink; CAP_NET_BIND_SERVICE: port 1001
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE
+AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=multi-user.target

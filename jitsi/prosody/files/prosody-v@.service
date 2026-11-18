@@ -1,0 +1,46 @@
+# Managed by SaltStack, based on jitsi-meet resources/extra-large-conference/prosody-v@.service
+[Unit]
+### see man systemd.unit
+Description=Prosody v%i (visitor node v%i) Jitsi XMPP Server
+Documentation=https://prosody.im/doc
+
+Requires=network-online.target
+After=network-online.target network.target mariadb.service mysql.service postgresql.service
+Before=biboumi.service
+
+[Service]
+### see man systemd.service
+Type=simple
+
+# Start by executing the main executable
+# Note: -F option requires Prosody 0.11.5 or later
+ExecStart=/usr/bin/prosody --config /etc/prosody-v%i/prosody.cfg.lua -F
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-abnormal
+
+### see man systemd.exec
+User=prosody
+Group=prosody
+UMask=0027
+
+RuntimeDirectory=prosody-v%i
+ConfigurationDirectory=prosody-v%i
+StateDirectory=prosody-v%i
+StateDirectoryMode=0750
+LogsDirectory=prosody-v%i
+WorkingDirectory=~
+
+# Set stdin to /dev/null since Prosody does not need it
+StandardInput=null
+
+# Direct stdout/-err to journald for use with log = "*stdout"
+StandardOutput=journal
+StandardError=inherit
+
+LimitNOFILE=65000:65000
+
+[Install]
+### see man systemd.unit
+WantedBy=multi-user.target
+
+# vim: filetype=systemd

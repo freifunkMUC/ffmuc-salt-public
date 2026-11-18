@@ -1,0 +1,65 @@
+#!/usr/bin/python3
+#
+# Writes the state of the mail queue to a file for Icinga (check_ffmuc_mailqueue).
+# Runs as root from ffmuc-mailqueue.timer: docker access stays with root, the
+# file is readable by the nagios group.
+#
+# Only counts and ages are written, never addresses or subjects.
+# On any error the old file is left alone, so the check turns UNKNOWN when it
+# is older than its limit.
+#
+
+import json
+import os
+import subprocess
+import sys
+import tempfile
+import time
+
+CONTAINER = "mailserver-mailserver-1"
+OUTPUT = "/var/lib/icinga2/mailqueue.state"
+
+
+def main():
+    out = sys.argv[1] if len(sys.argv) > 1 else OUTPUT
+    try:
+        proc = subprocess.run(
+            ["/usr/bin/docker", "exec", CONTAINER, "postqueue", "-j"],
+            capture_output=True, text=True, timeout=60, check=True,
+        )
+    except (OSError, subprocess.SubprocessError):
+        print("postqueue failed", file=sys.stderr)
+        return 1
+
+    now = int(time.time())
+    total = 0
+    deferred = 0
+    oldest = 0
+    for line in proc.stdout.splitlines():
+        if not line.strip():
+            continue
+        try:
+            msg = json.loads(line)
+        except ValueError:
+            continue
+        total += 1
+        if msg.get("queue_name") == "deferred":
+            deferred += 1
+            oldest = max(oldest, now - int(msg.get("arrival_time", now)))
+
+    content = (
+        f"timestamp={now}\n"
+        f"messages={total}\n"
+        f"deferred={deferred}\n"
+        f"oldest_deferred_seconds={oldest}\n"
+    )
+    fd, tmp = tempfile.mkstemp(dir=os.path.dirname(out), prefix=".mailqueue.")
+    with os.fdopen(fd, "w") as fh:
+        fh.write(content)
+    os.chmod(tmp, 0o644)
+    os.replace(tmp, out)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

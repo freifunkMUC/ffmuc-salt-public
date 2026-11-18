@@ -1,0 +1,39 @@
+#!/bin/bash
+# Zammad: tickets, users and organizations in the database vs. the Elasticsearch indices. Runs via sudo on the Docker host.
+# Usage: check_zammad_index [warn missing] [crit missing] [grace minutes]
+W=${1:-5}
+C=${2:-20}
+G=${3:-15}
+P=zammad-docker-compose-zammad-postgresql-1
+E=zammad-docker-compose-zammad-elasticsearch-1
+st=0
+out=()
+perf=()
+# object type: label, table, index, perfdata prefix
+for spec in "tickets:tickets:ticket:tickets" "users:users:user:users" "organizations:organizations:organization:orgs"; do
+  IFS=: read -r label table index pre <<<"$spec"
+  # rows changed within the grace window may not be indexed yet, so they are not counted
+  db=$(docker exec -e G="$G" "$P" sh -c "psql -U \"\$POSTGRES_USER\" -d \"\${POSTGRES_DB:-zammad_production}\" -At -c \"select count(*) from $table where updated_at < now() - make_interval(mins => \$G)\"" 2>/dev/null)
+  es=$(docker exec "$E" curl -s "localhost:9200/zammad_production_$index/_count?filter_path=count" 2>/dev/null | sed -n 's/.*"count":\([0-9]*\).*/\1/p')
+  if ! [[ $db =~ ^[0-9]+$ && $es =~ ^[0-9]+$ ]]; then
+    echo "UNKNOWN - cannot read $label counts"
+    exit 3
+  fi
+  # the index also holds rows changed within the grace window, so only a shortfall counts
+  d=$((db - es))
+  [ "$d" -lt 0 ] && d=0
+  if [ "$d" -ge "$C" ]; then
+    st=2
+  elif [ "$d" -ge "$W" ] && [ "$st" -lt 1 ]; then
+    st=1
+  fi
+  out+=("$label $d missing ($es/$db)")
+  perf+=("${pre}_db=$db ${pre}_es=$es ${pre}_missing=$d;$W;$C;0")
+done
+case $st in
+  0) l=OK ;;
+  1) l=WARNING ;;
+  *) l=CRITICAL ;;
+esac
+echo "$l - ${out[*]} | ${perf[*]}"
+exit $st

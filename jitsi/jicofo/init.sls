@@ -9,8 +9,10 @@ jicofo:
   pkg.installed:
     - version: {{ jitsi.jicofo.version }}
     - hold: True
+    - update_holds: True
     - require:
       - pkgrepo: jitsi-repo
+      - cmd: jitsi-java17
   service.running:
     - enable: True
     #- reload: True
@@ -23,11 +25,13 @@ jicofo:
   file.managed:
     - source: salt://jitsi/jicofo/config.jinja
     - template: jinja
+    - show_changes: False
 
 /etc/jitsi/jicofo/jicofo.conf:
   file.managed:
     - source: salt://jitsi/jicofo/jicofo.conf.jinja
     - template: jinja
+    - show_changes: False
 
 /etc/jitsi/jicofo/sip-communicator.properties:
   file.managed:

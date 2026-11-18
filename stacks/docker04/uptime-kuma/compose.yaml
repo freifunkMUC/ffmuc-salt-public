@@ -1,0 +1,44 @@
+services:
+  uptime-kuma:
+    image: louislam/uptime-kuma:2.5.11-rootless@sha256:d213a1d2b6a7d7c00afbcb936b53f585afea3e1620432b3a161b68bfffa13dac
+    restart: unless-stopped
+    init: true
+    # rootless image runs as uid 1000; /srv/docker/uptime-kuma/data must be owned by 1000:1000
+    user: "1000:1000"
+    environment:
+      TZ: Europe/Berlin
+    volumes:
+      - /srv/docker/uptime-kuma/data:/app/data
+    ports:
+      - "10.8.0.31:3001:3001"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.uptime-kuma-secure.entrypoints=https"
+      - "traefik.http.routers.uptime-kuma-secure.rule=Host(`kuma.ov.ffmuc.net`)"
+      - "traefik.http.routers.uptime-kuma-secure.tls=true"
+      - "traefik.http.routers.uptime-kuma-secure.tls.certresolver=http"
+      - "traefik.http.routers.uptime-kuma-secure.service=uptime-kuma"
+      - "traefik.http.services.uptime-kuma.loadbalancer.server.port=3001"
+      - "traefik.docker.network=proxy"
+    networks:
+      - default
+      - proxy
+    healthcheck:
+      test: ["CMD", "node", "extra/healthcheck.js"]
+      interval: 60s
+      timeout: 30s
+      retries: 3
+      start_period: 180s
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
+    cpus: 1
+
+networks:
+  proxy:
+    external: true

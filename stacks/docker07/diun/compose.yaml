@@ -1,0 +1,62 @@
+---
+services:
+  diun:
+    image: crazymax/diun:4.33.1@sha256:8cc638b4c54e8a0c47898a51b20dae73037ad43310168b5da543a311dc668f77
+    hostname: docker07-diun
+    restart: always
+    depends_on:
+      - socket-proxy
+    networks:
+      - default
+      - socket-proxy
+    volumes:
+      - /srv/docker/diun/data:/data
+    environment:
+      - DIUN_PROVIDERS_DOCKER_ENDPOINT=tcp://socket-proxy:2375
+      - TZ=Europe/Berlin
+      - LOG_LEVEL=info
+      - LOG_JSON=false
+      - DIUN_WATCH_WORKERS=20
+      - DIUN_WATCH_SCHEDULE=42 3 * * *
+      - DIUN_PROVIDERS_DOCKER=true
+      - DIUN_PROVIDERS_DOCKER_WATCHSTOPPED=true
+      - DIUN_PROVIDERS_DOCKER_WATCHBYDEFAULT=true
+      - DIUN_NOTIF_SLACK_WEBHOOKURL=${DIUN_SLACK_WEBHOOK_URL}
+      - DIUN_NOTIF_SLACK_RENDERFIELDS=false
+      - >-
+        DIUN_NOTIF_SLACK_TEMPLATEBODY={{ .Meta.Hostname }}: `{{ .Entry.Image }}`
+        {{ if (eq .Entry.Status "new") }}newly added{{ else }}updated{{ end }}.
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 128m
+
+  # read-only Docker API for diun: version, container list/inspect, image inspect; no POST
+  socket-proxy:
+    image: lscr.io/linuxserver/socket-proxy:3.4.7-r0-ls106@sha256:18289eeb306e8e3b70901ffec23eafbb318d73b4514d0bd737dbfc7c5b4fe506
+    restart: always
+    read_only: true
+    tmpfs:
+      - /run
+    networks:
+      - socket-proxy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - CONTAINERS=1
+      - IMAGES=1
+      - VERSION=1
+      - POST=0
+      - EVENTS=0
+      - PING=1
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:2375/_ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+networks:
+  socket-proxy:
+    internal: true

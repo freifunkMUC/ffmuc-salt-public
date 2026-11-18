@@ -1,0 +1,48 @@
+---
+services:
+  cryptpad:
+    image: cryptpad/cryptpad:version-2026.10.0@sha256:61a12565a532a046996e47b3180a8ac9855d86c262dc98a1bb8d1107557bfe3a
+    restart: unless-stopped
+    hostname: cryptpad
+    # Runs as uid 4001 on port 3000, no capabilities needed
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    mem_limit: 3g
+    pids_limit: 512
+    # Each start runs install-office.sh and npm run build
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://localhost:3000/"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 300s
+    environment:
+      - CPAD_MAIN_DOMAIN=https://cryptpad.ffmuc.net
+      - CPAD_SANDBOX_DOMAIN=https://cryptpad-sb.ffmuc.net
+      - CPAD_CONF=/cryptpad/config/config.js
+      - CPAD_INSTALL_ONLYOFFICE=yes
+    volumes:
+      - /srv/docker/cryptpad/data/blob:/cryptpad/blob
+      - /srv/docker/cryptpad/data/block:/cryptpad/block
+      - /srv/docker/cryptpad/customize:/cryptpad/customize
+      - /srv/docker/cryptpad/data/data:/cryptpad/data
+      - /srv/docker/cryptpad/data/files:/cryptpad/datastore
+      - /srv/docker/cryptpad/onlyoffice-dist:/cryptpad/www/common/onlyoffice/dist
+      - /srv/docker/cryptpad/onlyoffice-conf:/cryptpad/onlyoffice-conf
+      # config.js and infra.js stay on the host
+      - /srv/docker/cryptpad/data/config.js:/cryptpad/config/config.js
+      - /srv/docker/cryptpad/data/infra.js:/cryptpad/config/infra.js
+    ports:
+      - "8011:3000"
+      # Since 2026.10 the websocket is served on the main port (formerly 3003);
+      # 8012 stays so the webfrontend nginx config does not need to change.
+      - "8012:3000"
+    ulimits:
+      nofile:
+        soft: 1000000
+        hard: 1000000

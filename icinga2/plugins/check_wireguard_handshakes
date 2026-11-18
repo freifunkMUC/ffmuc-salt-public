@@ -1,0 +1,114 @@
+#!/usr/bin/python3
+#
+# Icinga plugin: CRITICAL when a WireGuard peer had no handshake for too long.
+#
+# Reads `wg show all latest-handshakes` (via sudo, see icinga2.sudoers) and
+# checks every peer on the interfaces matching --interface (regex). A peer that
+# never completed a handshake counts as stale, too: the dead transit tunnels
+# found in October 2026 had no endpoint on our side (the partner initiates), so
+# filtering on peers with an endpoint would have hidden them.
+# Interfaces matching --ignore (fnmatch pattern, repeatable) are reported but OK.
+# With traffic or a keepalive WireGuard re-handshakes every 2 minutes, so the
+# default limit of 600 s only trips for tunnels that are really dead.
+#
+
+import argparse
+import fnmatch
+import re
+import subprocess
+import sys
+import time
+
+OK, WARNING, CRITICAL, UNKNOWN = 0, 1, 2, 3
+STATUS = {OK: "OK", WARNING: "WARNING", CRITICAL: "CRITICAL", UNKNOWN: "UNKNOWN"}
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Check WireGuard handshake age")
+    parser.add_argument("--wg", default="/usr/bin/wg", help="path to wg")
+    parser.add_argument(
+        "--interface",
+        default=".*",
+        metavar="REGEX",
+        help="only check interfaces matching this regex (default: all)",
+    )
+    parser.add_argument(
+        "--max-age",
+        type=int,
+        default=600,
+        metavar="SECONDS",
+        help="CRITICAL when the latest handshake is older (default: 600)",
+    )
+    parser.add_argument(
+        "--ignore",
+        action="append",
+        default=[],
+        metavar="PATTERN",
+        help="interface (fnmatch pattern) that is OK to be down; repeatable",
+    )
+    return parser.parse_args()
+
+
+def describe(age):
+    return "never" if age is None else f"{age}s ago"
+
+
+def main():
+    args = parse_args()
+    cmd = ["/usr/bin/sudo", "-n", args.wg, "show", "all", "latest-handshakes"]
+    try:
+        proc = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=20, check=False
+        )
+    except (OSError, subprocess.SubprocessError) as err:
+        print(f"UNKNOWN - {' '.join(cmd)} failed: {err}")
+        return UNKNOWN
+    if proc.returncode != 0:
+        msg = proc.stderr.strip().splitlines()
+        print(
+            f"UNKNOWN - {' '.join(cmd)} failed: {msg[-1] if msg else proc.returncode}"
+        )
+        return UNKNOWN
+
+    include = re.compile(args.interface)
+    now = int(time.time())
+    peers = {}
+    for line in proc.stdout.splitlines():
+        # interface <TAB> public key <TAB> unix time of the latest handshake (0 = never)
+        fields = line.split()
+        if len(fields) != 3 or not include.search(fields[0]):
+            continue
+        iface, _, stamp = fields
+        age = None if int(stamp) == 0 else max(now - int(stamp), 0)
+        peers.setdefault(iface, []).append(age)
+
+    if not peers:
+        print("OK - no WireGuard peers on matching interfaces | peers=0 stale=0")
+        return OK
+
+    stale, ignored, fresh = [], [], 0
+    for iface, ages in sorted(peers.items()):
+        old = [age for age in ages if age is None or age > args.max_age]
+        fresh += len(ages) - len(old)
+        if not old:
+            continue
+        text = f"{iface} ({len(old)}/{len(ages)} peers, {describe(old[0])})"
+        if any(fnmatch.fnmatchcase(iface, pattern) for pattern in args.ignore):
+            ignored.append(text)
+        else:
+            stale.append(text)
+
+    total = sum(len(ages) for ages in peers.values())
+    code = CRITICAL if stale else OK
+    text = f"{fresh}/{total} peers with a handshake in the last {args.max_age}s"
+    if stale:
+        text += f"; stale: {', '.join(stale)}"
+    if ignored:
+        text += f"; stale but ignored: {', '.join(ignored)}"
+    perfdata = f"peers={total} stale={total - fresh}"
+    print(f"{STATUS[code]} - {text} | {perfdata}")
+    return code
+
+
+if __name__ == "__main__":
+    sys.exit(main())

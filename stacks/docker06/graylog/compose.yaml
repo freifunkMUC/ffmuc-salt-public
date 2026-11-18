@@ -1,0 +1,188 @@
+---
+# For DataNode setup, graylog starts with a preflight UI, this is a change from just using OpenSearch/Elasticsearch.
+# Please take a look at the README at the top of this repo or the regular docs for more info.
+
+services:
+  # MongoDB: https://hub.docker.com/_/mongo/
+  mongodb:
+    image: mongo:8.0.34-noble@sha256:3c64937121b9437095921c4bb2569911084c05f7b88e4a263d62a8959d2b2399
+    restart: unless-stopped
+    user: "999:999"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 1g
+    read_only: true
+    tmpfs:
+      - /tmp
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - graylog
+    volumes:
+      - "/srv/docker/graylog/mongo-data:/data/db"
+      - "/srv/docker/graylog/mongodb_config:/data/configdb"
+
+  # For DataNode setup, graylog starts with a preflight UI, this is a change from just using OpenSearch/Elasticsearch.
+  # Please take a look at the README at the top of this repo or the regular docs for more info.
+  # Graylog Data Node: https://hub.docker.com/r/graylog/graylog-datanode
+  datanode:
+    image: graylog/graylog-datanode:7.2.2@sha256:ff18490cf7c7ef3ea6c7caa0cb5915aec576061f96b899da4deab3c7aed56585
+    hostname: "datanode"
+    environment:
+      GRAYLOG_DATANODE_NODE_ID_FILE: "/var/lib/graylog-datanode/node-id"
+      # GRAYLOG_DATANODE_PASSWORD_SECRET and GRAYLOG_PASSWORD_SECRET MUST be the same value
+      GRAYLOG_DATANODE_PASSWORD_SECRET: "${GRAYLOG_PASSWORD_SECRET:?Please configure GRAYLOG_PASSWORD_SECRET in the .env file}"
+      GRAYLOG_DATANODE_MONGODB_URI: "mongodb://mongodb:27017/graylog"
+      GRAYLOG_DATANODE_JAVA_OPTS: "-Xms4g -Xmx4g"
+      # CVE-2026-114938 (Java4Shell) stopgap. _JAVA_OPTIONS reaches the data node JVM and the
+      # OpenSearch JVM that it starts (the data node sets OPENSEARCH_JAVA_OPTS itself and
+      # OpenSearch drops JAVA_TOOL_OPTIONS). Remove when the image ships a fixed JDK.
+      _JAVA_OPTIONS: "-XX:-UseBASE64Intrinsics"
+    ulimits:
+      memlock:
+        hard: -1
+        soft: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    deploy:
+      resources:
+        limits:
+          memory: 8g
+    mem_limit: 8g # must be consistent with deploy.resources.limits.memory
+    memswap_limit: 8g # if set to same value as mem_limit, swap is disabled
+    networks:
+      graylog:
+      opensearch:
+        aliases:
+          - opensearch.graylog
+    volumes:
+      - "/srv/docker/graylog/graylog-datanode:/var/lib/graylog-datanode"
+    restart: unless-stopped
+
+  opensearch:
+    image: public.ecr.aws/opensearchproject/opensearch:3.7.0@sha256:44ba7ea58a319adf61c33ab16873f9ef5dbb30b291a832d375172f0b2d24e3c9
+    volumes:
+      - /srv/docker/graylog/opensearch-data:/usr/share/opensearch/data:z
+    environment:
+      - http.host=0.0.0.0
+      - transport.host=localhost
+      - network.host=0.0.0.0
+      # -XX:-UseBASE64Intrinsics: CVE-2026-114938 (Java4Shell) stopgap, remove when the image ships a fixed JDK
+      - "OPENSEARCH_JAVA_OPTS=-Dlog4j2.formatMsgNoLookups=true -Xms16g -Xmx16g -XX:-UseBASE64Intrinsics"
+      - bootstrap_memory_lock=true
+      - "OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_INITIAL_ADMIN_PASSWORD}"
+      - discovery.type=single-node
+      - DISABLE_INSTALL_DEMO_CONFIG=true
+      - DISABLE_PERFORMANCE_ANALYZER_AGENT_CLI=true
+      - action.auto_create_index=false
+      - plugins.security.ssl.http.enabled=false
+      - plugins.security.disabled=true
+    networks:
+      graylog:
+      opensearch:
+        aliases:
+          - opensearch.graylog
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    deploy:
+      resources:
+        limits:
+          memory: 24g
+    mem_limit: 24g # must be consistent with deploy.resources.limits.memory
+    memswap_limit: 24g # if set to same value as mem_limit, swap is disabled
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+    # Graylog: https://hub.docker.com/r/graylog/graylog/
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+  graylog:
+    hostname: "server"
+    image: graylog/graylog:7.2.2@sha256:d4cf618fa0b1d44f639e5fe37c77a1b332f74ae69bd6d77f2b9b94bb2f2e067d
+    depends_on:
+      mongodb:
+        condition: "service_started"
+      datanode:
+        condition: "service_started"
+    entrypoint: "/usr/bin/tini --  /docker-entrypoint.sh"
+    environment:
+      GRAYLOG_NODE_ID_FILE: "/usr/share/graylog/data/data/node-id"
+      # GRAYLOG_DATANODE_PASSWORD_SECRET and GRAYLOG_PASSWORD_SECRET MUST be the same value
+      GRAYLOG_PASSWORD_SECRET: "${GRAYLOG_PASSWORD_SECRET:?Please configure GRAYLOG_PASSWORD_SECRET in the .env file}"
+      GRAYLOG_ROOT_PASSWORD_SHA2: "${GRAYLOG_ROOT_PASSWORD_SHA2:?Please configure GRAYLOG_ROOT_PASSWORD_SHA2 in the .env file}"
+      # appended to the image defaults; -XX:-UseBASE64Intrinsics: CVE-2026-114938 (Java4Shell) stopgap,
+      # remove when the image ships a fixed JDK
+      GRAYLOG_SERVER_JAVA_OPTS: "-Xms3g -Xmx3g -XX:-UseBASE64Intrinsics"
+      GRAYLOG_HTTP_BIND_ADDRESS: "0.0.0.0:9000"
+      GRAYLOG_HTTP_EXTERNAL_URI: "https://log.ov.ffmuc.net/"
+      GRAYLOG_TRUSTED_PROXIES: "172.23.0.0/16" # Traefik on the external proxy network, for X-Forwarded-For
+      GRAYLOG_MESSAGE_JOURNAL_MAX_SIZE: "12gb"
+      GRAYLOG_TIMEZONE: "Europe/Berlin"
+      GRAYLOG_MONGODB_URI: "mongodb://mongodb:27017/graylog"
+      GRAYLOG_ELASTICSEARCH_HOSTS: http://opensearch:9200
+    ports:
+      # Graylog web interface and REST API
+      - 9000:9000
+      # Syslog TCP
+      - 514:514
+      # Syslog UDP
+      - 514:514/udp
+      # GELF TCP
+      - 12201:12201
+      # GELF UDP
+      - 12201:12201/udp
+      # Filebeat
+      - 5044:5044
+    volumes:
+      - /srv/docker/graylog/data:/usr/share/graylog/data/data:z
+      - /srv/docker/graylog/GeoLite2-City.mmdb:/etc/graylog/server/GeoLite2-City.mmdb:z
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.log-secure.entrypoints=https"
+      - "traefik.http.routers.log-secure.rule=Host(`log.ov.ffmuc.net`)"
+      - "traefik.http.routers.log-secure.tls=true"
+      - "traefik.http.routers.log-secure.tls.certresolver=http"
+      - "traefik.http.routers.log-secure.service=log"
+      - "traefik.http.services.log.loadbalancer.server.port=9000"
+      - "traefik.docker.network=proxy"
+    deploy:
+      resources:
+        limits:
+          memory: 6g
+    mem_limit: 6g # must be consistent with deploy.resources.limits.memory
+    memswap_limit: 6g # if set to same value as mem_limit, swap is disabled
+    networks:
+      - graylog
+      - proxy
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE # java carries file capabilities; exec fails without it
+    security_opt:
+      - no-new-privileges:true
+networks:
+  graylog:
+    driver: bridge
+  proxy:
+    external: true
+  opensearch:
+    name: opensearch
+    driver: bridge
+    attachable: true

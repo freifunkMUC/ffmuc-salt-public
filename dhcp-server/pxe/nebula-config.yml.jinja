@@ -1,0 +1,46 @@
+{#-
+  Minimal Nebula config for the first boot after the install, so that the
+  minion can reach the master over Nebula. Same keys and paths as
+  nebula/files/config.yml.jinja with pki.mode local; the first highstate
+  replaces this file. Input: `nebula` (lighthouses, interface).
+#}
+# Bootstrap config from the guardian install. The first highstate replaces it.
+pki:
+  ca: /etc/nebula/ca.crt
+  cert: /etc/nebula/host.crt
+  key: /etc/nebula/host.key
+static_host_map:
+{%- for lighthouse in nebula.lighthouses | sort %}
+  "{{ lighthouse }}": {{ nebula.lighthouses[lighthouse] | tojson }}
+{%- endfor %}
+lighthouse:
+  am_lighthouse: false
+  interval: 60
+  hosts:
+{%- for lighthouse in nebula.lighthouses | sort %}
+    - "{{ lighthouse }}"
+{%- endfor %}
+listen:
+  host: "[::]"
+  port: 0
+punchy:
+  punch: true
+  respond: true
+tun:
+  dev: {{ nebula.interface }}
+  mtu: 1300
+logging:
+  level: info
+  format: text
+firewall:
+  outbound:
+    - port: any
+      proto: any
+      host: any
+  inbound:
+    - port: any
+      proto: icmp
+      host: any
+    - port: 22
+      proto: tcp
+      host: any

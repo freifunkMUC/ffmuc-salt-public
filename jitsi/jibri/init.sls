@@ -10,7 +10,7 @@ include:
 
 google-chrome-repo-key:
   cmd.run:
-    - name: "curl https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/google-chrome-keyring.gpg"
+    - name: "curl -fsSL https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --batch --yes --dearmor -o /usr/share/keyrings/google-chrome-keyring.gpg.tmp && mv /usr/share/keyrings/google-chrome-keyring.gpg.tmp /usr/share/keyrings/google-chrome-keyring.gpg"
     - creates: /usr/share/keyrings/google-chrome-keyring.gpg
 
 google-chrome-repo:
@@ -38,6 +38,25 @@ jibri:
       - file: /etc/jitsi/jibri/jibri.conf
     - watch:
       - file: /etc/jitsi/jibri/jibri.conf
+      - file: /etc/systemd/system/jibri.service.d/java-options.conf
+
+# launch.sh has no JVM options variable, so JAVA_TOOL_OPTIONS is the only hook.
+# -XX:-UseBASE64Intrinsics: CVE-2026-114938 (Java4Shell) stopgap, remove when the OpenJDK package is fixed.
+/etc/systemd/system/jibri.service.d/java-options.conf:
+  file.managed:
+    - makedirs: True
+    - contents: |
+        # Managed by Salt
+        [Service]
+        Environment=JAVA_TOOL_OPTIONS=-XX:-UseBASE64Intrinsics
+
+systemd-reload-jibri:
+  cmd.run:
+    - name: systemctl --system daemon-reload
+    - onchanges:
+      - file: /etc/systemd/system/jibri.service.d/java-options.conf
+    - watch_in:
+      - service: jibri
 
 google-chrome-stable:
   pkg.latest:
@@ -61,6 +80,7 @@ execute_chromedriver_update:
   file.managed:
     - source: salt://jitsi/jibri/jibri.conf.jinja
     - template: jinja
+    - show_changes: False
 
 {% else %}
 google-chrome-stable:
@@ -71,5 +91,7 @@ google-chrome-repo:
 jibri:
   pkg.removed
 /etc/jitsi/jibri:
+  file.absent
+/etc/systemd/system/jibri.service.d:
   file.absent
 {% endif %} # jibri.enabled

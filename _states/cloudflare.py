@@ -65,6 +65,10 @@ import salt.exceptions
 
 logger = logging.getLogger(__name__)
 
+# (connect, read) timeout for every Cloudflare API call - without it a
+# hanging API stalls the state run indefinitely.
+REQUEST_TIMEOUT = (5, 30)
+
 
 def manage_zone_records(name, zone):
     managed = Zone(name, zone)
@@ -278,13 +282,17 @@ class Zone(object):
         logger.info("Sending request: {0} {1} data: {2}".format(method, uri, json))
 
         if method == "GET":
-            resp = requests.get(uri, headers=headers)
+            resp = requests.get(uri, headers=headers, timeout=REQUEST_TIMEOUT)
         elif method == "POST":
-            resp = requests.post(uri, headers=headers, json=json)
+            resp = requests.post(
+                uri, headers=headers, json=json, timeout=REQUEST_TIMEOUT
+            )
         elif method == "PUT":
-            resp = requests.put(uri, headers=headers, json=json)
+            resp = requests.put(
+                uri, headers=headers, json=json, timeout=REQUEST_TIMEOUT
+            )
         elif method == "DELETE":
-            resp = requests.delete(uri, headers=headers)
+            resp = requests.delete(uri, headers=headers, timeout=REQUEST_TIMEOUT)
         else:
             raise Exception("Unknown request method: {0}".format(method))
 

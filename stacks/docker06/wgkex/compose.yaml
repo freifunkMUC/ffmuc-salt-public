@@ -1,0 +1,93 @@
+---
+services:
+  broker:
+    image: ghcr.io/freifunkmuc/wgkex:v0.6.4@sha256:ba4491bb44e7b959dcf3b8525c6c0b4942a51d9e73bc542cb8052171305dca5f
+    command: broker
+    restart: unless-stopped
+    depends_on:
+      mqtt_cluster:
+        condition: service_healthy
+        restart: true
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./wgkex.yaml:/etc/wgkex.yaml:ro
+      - ipam-snapshot:/var/lib/wgkex
+    environment:
+      WGKEX_DOMAINS: "ffmuc_freising, ffmuc_gauting, ffmuc_muc_cty, ffmuc_muc_nord, ffmuc_muc_ost, ffmuc_muc_sued, ffmuc_muc_west, ffmuc_uml_nord, ffmuc_uml_ost, ffmuc_uml_sued, ffmuc_uml_west, ffmuc_welt, ffmuc_ffdon_test"
+      WGKEX_DOMAIN_PREFIX: ffmuc_
+      WGKEX_DEBUG: DEBUG
+      MQTT_BROKER_URL: mqtt
+      MQTT_BROKER_PORT: "1883"
+      # wgkex >= #324 reads these over /etc/wgkex.yaml; older images ignore them.
+      WGKEX__MQTT__USERNAME: wgkex-broker
+      WGKEX__MQTT__PASSWORD: ${WGKEX_MQTT_BROKER_PASSWORD:?}
+      # Parker: signing key of the node config and NetBox token (Periphery secrets)
+      WGKEX__BROKER_SIGNING_KEY: ${WGKEX_PARKER_SIGNING_KEY:?}
+      WGKEX__NETBOX__API_KEY: ${WGKEX_PARKER_NETBOX_TOKEN:?}
+      MQTT_KEEPALIVE: "5"
+      MQTT_TLS: "False"
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection((\"127.0.0.1\", 5000), 4)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 128m
+
+  mqtt_cluster:
+    image: emqx/emqx:5.8.9@sha256:35b46f7aa7a0d51f3959e4344221ac5ec7f948b03e43099286b6c40a07bb393b
+    container_name: mqtt_cluster
+    restart: unless-stopped
+    # Users from Periphery secrets (hex, no commas); EMQX imports them only while its user table is empty,
+    # rotation: wgkex/README.md.
+    entrypoint:
+      - /bin/sh
+      - -c
+      - >-
+        (umask 077 &&
+        printf 'user_id,password,is_superuser\nwgkex-broker,%s,false\nwgkex-worker,%s,false\nparker,%s,false\n'
+        "$$WGKEX_MQTT_BROKER_PASSWORD" "$$WGKEX_MQTT_WORKER_PASSWORD" "$$WGKEX_MQTT_PARKER_PASSWORD"
+        > /tmp/auth-bootstrap.csv) &&
+        exec /usr/bin/docker-entrypoint.sh /opt/emqx/bin/emqx foreground
+    environment:
+      - EMQX_NODE_NAME=emqx@docker06.ov.ffmuc.net
+      - EMQX_CLUSTER__DISCOVERY_STRATEGY=static
+      - EMQX_CLUSTER__STATIC__SEEDS=[emqx@docker04.ov.ffmuc.net,emqx@docker05.ov.ffmuc.net,emqx@docker06.ov.ffmuc.net,emqx@docker07.ov.ffmuc.net]
+      - EMQX_NODE__COOKIE=${EMQX_NODE__COOKIE}
+      - EMQX_AUTHENTICATION__1__MECHANISM=password_based
+      - EMQX_AUTHENTICATION__1__BACKEND=built_in_database
+      - EMQX_AUTHENTICATION__1__USER_ID_TYPE=username
+      - EMQX_AUTHENTICATION__1__PASSWORD_HASH_ALGORITHM__NAME=bcrypt
+      - EMQX_AUTHENTICATION__1__BOOTSTRAP_FILE=/tmp/auth-bootstrap.csv
+      - EMQX_AUTHENTICATION__1__BOOTSTRAP_TYPE=plain
+      - EMQX_AUTHORIZATION__NO_MATCH=deny
+      - EMQX_AUTHORIZATION__DENY_ACTION=ignore
+      - EMQX_AUTHORIZATION__SOURCES__1__TYPE=file
+      - EMQX_AUTHORIZATION__SOURCES__1__PATH=/opt/emqx/etc/acl.conf
+      - WGKEX_MQTT_BROKER_PASSWORD=${WGKEX_MQTT_BROKER_PASSWORD:?}
+      - WGKEX_MQTT_WORKER_PASSWORD=${WGKEX_MQTT_WORKER_PASSWORD:?}
+      - WGKEX_MQTT_PARKER_PASSWORD=${WGKEX_MQTT_PARKER_PASSWORD:?}
+    healthcheck:
+      test: ["CMD", "/opt/emqx/bin/emqx", "ctl", "status"]
+      interval: 30s
+      timeout: 25s
+      retries: 5
+    ports:
+      - "1883:1883"
+      - "4370:4370"
+      - "5369:5369"
+    volumes:
+      - ./emqx/acl.conf:/opt/emqx/etc/acl.conf:ro
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 1g
+
+volumes:
+  ipam-snapshot:

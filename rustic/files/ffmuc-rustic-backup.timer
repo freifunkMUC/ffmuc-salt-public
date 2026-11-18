@@ -1,0 +1,11 @@
+[Unit]
+Description=Runs FFmuc-rustic-backup every day
+
+[Timer]
+OnCalendar=*-*-* 3:00:00
+RandomizedDelaySec=3600
+Unit=ffmuc-rustic-backup.service
+Persistent=true
+
+[Install]
+WantedBy=timers.target

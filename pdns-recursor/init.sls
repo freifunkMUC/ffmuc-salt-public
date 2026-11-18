@@ -7,25 +7,36 @@
 
 pdns-repo-key:
   cmd.run:
-    - name: "/usr/lib/apt/apt-helper download-file https://repo.powerdns.com/FD380FBB-pub.asc /tmp/FD380FBB-pub.asc && mv /tmp/FD380FBB-pub.asc /etc/apt/trusted.gpg.d/FD380FBB.asc"
-    - creates: /etc/apt/trusted.gpg.d/FD380FBB.asc
+    - name: "mkdir -p /etc/apt/keyrings && /usr/lib/apt/apt-helper download-file https://repo.powerdns.com/FD380FBB-pub.asc /tmp/FD380FBB-pub.asc && mv /tmp/FD380FBB-pub.asc /etc/apt/keyrings/powerdns.asc"
+    # NOTE: no 'creates' guard: PowerDNS periodically re-signs the FD380FBB key to
+    # extend its expiry. Always re-fetch so an expired key (EXPKEYSIG) is refreshed.
 
 pdns-repo:
   pkgrepo.managed:
-    - name: deb [arch=amd64] http://repo.powerdns.com/{{ grains.lsb_distrib_id | lower }} {{ grains.oscodename }}-rec-54 main
+    - name: deb [arch=amd64 signed-by=/etc/apt/keyrings/powerdns.asc] https://repo.powerdns.com/{{ grains.lsb_distrib_id | lower }} {{ grains.oscodename }}-rec-54 main
     - file: /etc/apt/sources.list.d/pdns.list
     - clean_file: True
     - require:
       - cmd: pdns-repo-key
 
+{#- Old global trust of the key (apt-key era); the repo uses signed-by now #}
+pdns-repo-legacy-key:
+  file.absent:
+    - name: /etc/apt/trusted.gpg.d/FD380FBB.asc
+    - require:
+      - pkgrepo: pdns-repo
+
+{#- repo.powerdns.com only serves the latest build: bump on each release #}
+{%- set pdns_suffix = '1pdns.' ~ (grains.os | lower) ~ (grains.osrelease if grains.os == 'Ubuntu' else grains.osmajorrelease | string) %}
+{%- set pdns_recursor_version = salt['config.get']('netbox:config_context:pdns-recursor:version', '5.4.9-' ~ pdns_suffix) %}
 pdns-recursor:
   pkg.installed:
+    - version: '{{ pdns_recursor_version }}'
     - refresh: True
     - require:
       - pkgrepo: pdns-repo
   service.running:
     - enable: True
-    - restart: True
     - require:
       - file: /etc/powerdns/recursor.conf
     - watch:

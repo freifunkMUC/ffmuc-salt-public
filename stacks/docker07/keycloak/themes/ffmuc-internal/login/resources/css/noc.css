@@ -1,0 +1,4 @@
+/* realm noc: plain dark background, so admins see at a glance they are not on a member or chat login */
+.login-pf body {
+    background: var(--ffmuc-ink);
+}

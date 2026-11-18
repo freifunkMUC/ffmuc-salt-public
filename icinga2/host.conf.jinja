@@ -6,10 +6,15 @@
 {%- set location = salt['mine.get'](node_id,'minion_location', tgt_type='glob')[node_id] %}
 {%- set overlay_address = salt['mine.get'](node_id,'minion_overlay_address', tgt_type='glob')[node_id] %}
 {%- set minion_external_address6 = salt['mine.get'](node_id,'minion_external_ip6', tgt_type='glob')[node_id] %}
+{%- import_yaml 'icinga2/known_down.yaml' as known_down %}
+{%- set down_ok = (known_down or {}).get(node_id, {}) %}
 
+{%- set is_meet = node_id.endswith('.meet.ffmuc.net') %}
 {%- if 'icinga2_server' not in tags %}
 object Endpoint "{{ node_id }}" {
+	{%- if not is_meet %}
 		host = "{{ node_id }}"
+	{%- endif %}
 }
 
 object Zone "{{ node_id }}" {
@@ -24,8 +29,22 @@ object Host "{{ node_id }}" {
 	display_name = "{{ node_id }}"
 	check_command = "hostalive"
 
-	{%- if 'mine_interval' not in overlay_address %}
+	{%- if is_meet %}
+	{#- Jitsi hosts: the agent connects to the master, the host check pings the public address (as agentless) #}
+	{%- set external = salt['mine.get'](node_id,'minion_external_ip', tgt_type='glob')[node_id] or [] %}
+	{%- if external %}
+	address = "{{ external[0] }}"
+	{%- endif %}
+	{%- elif 'mine_interval' not in overlay_address %}
 	address = "{{ overlay_address | regex_replace('/\d+$','') }}"
+	{%- endif %}
+
+	{%- if not is_meet %}
+	{%- set external4 = salt['mine.get'](node_id,'minion_external_ip', tgt_type='glob').get(node_id) or [] %}
+	{%- if external4 %}
+	# Public unicast IPv4, used by checks that must not go through the overlay
+	vars.external_address_4 = "{{ external4[0].split('/')[0] }}"
+	{%- endif %}
 	{%- endif %}
 
 	{%- if minion_external_address6 %}
@@ -45,25 +64,25 @@ object Host "{{ node_id }}" {
 
 	vars.location = "{{ location }}"
 
+	{%- if down_ok.get('bgp') %}
+	vars.bgp_sessions_down_ok = {{ down_ok.bgp | tojson }}
+	{%- endif %}
+	{%- if down_ok.get('wireguard') %}
+	vars.wireguard_down_ok = {{ down_ok.wireguard | tojson }}
+	{%- endif %}
+
 	{%- if 'metrics.in.ffmuc.net' == node_id %}
 	vars.disk_wfree = "15"
 	vars.disk_cfree = "10"
 	{% else %}
-	vars.disk_wfree = "4%"
-	vars.disk_cfree = "2%"
+	vars.disk_wfree = "20%"
+	vars.disk_cfree = "10%"
 	{%- endif %}
 
 	vars.disk_units = "GB"
-	vars.disks["disk /"] = {
-		disk_partitions = "/"
+	# All local filesystems, one service
+	vars.disks["disk"] = {
+		disk_all = true
+		disk_exclude_type = [ "tmpfs", "devtmpfs", "overlay", "aufs", "squashfs", "iso9660", "nsfs", "fuse.lxcfs" ]
 	}
-	{% if 'backupserver' == role %}
-	vars.disks["disk /srv"] = {
-		disk_partitions = "/srv"
-	}
-	{% elif 'buildserver' == role %}
-	vars.disks["disk /build"] = {
-		disk_partitions = "/build"
-	}
-	{% endif %}
 }

@@ -1,0 +1,16 @@
+# Managed by Salt (needrestart/50-ffmuc.conf.jinja)
+
+# Never restart routing/overlay daemons: restarting systemd-networkd removes
+# routes it does not own (e.g. the default route from bird), restarting
+# nebula/wireguard drops the overlay. bird is already blacklisted upstream.
+$nrconf{override_rc}{qr(^systemd-networkd)} = 0;
+$nrconf{override_rc}{qr(^nebula)} = 0;
+$nrconf{override_rc}{qr(^wg-quick@)} = 0;
+$nrconf{override_rc}{qr(^bird)} = 0;
+{%- if grains.id.endswith('.meet.ffmuc.net') or grains.id.startswith('call') %}
+
+# Jitsi: every service here is user facing (prosody, jicofo, videobridge,
+# jigasi, nginx, coturn, ...), a restart drops running conferences. Only list
+# the services needing a restart; restart them in a maintenance window.
+$nrconf{restart} = 'l';
+{%- endif %}

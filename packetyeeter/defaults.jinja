@@ -1,0 +1,5 @@
+{# Shared default release version for both daemons - bump this when a new
+   packetyeeter version is published, so the collector .deb and the analyzer
+   Docker image stay in lockstep by default. haproxy fetches the matching
+   Lua/SPOE files from the same tag. #}
+{% set default_version = '0.1.9' %}

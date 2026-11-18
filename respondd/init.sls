@@ -7,6 +7,12 @@
   file.managed:
     - source: salt://respondd/respondd-tmpl/respondd@.service
 
+respondd-daemon-reload:
+  cmd.run:
+    - name: systemctl daemon-reload
+    - onchanges:
+      - file: /etc/systemd/system/respondd@.service
+
 python3-netifaces:
    pkg.installed
 

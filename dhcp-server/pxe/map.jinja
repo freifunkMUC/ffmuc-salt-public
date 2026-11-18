@@ -1,0 +1,35 @@
+{#-
+  PXE and unattended install on the guardians. Values come from the NetBox
+  config context `dhcp_guardian` (the Kea data). PXE is on only if Kea is
+  enabled and `dhcp_guardian.pxe.enabled` is true. The PXE server address
+  and network are the `next_server` and `subnet` of the first Kea subnet
+  that has a `next_server`. `salt_master` is the Nebula address of the
+  master (docker05): the minions reach the master only over Nebula.
+#}
+{%- set _cfg = salt['config.get']('netbox:config_context:dhcp_guardian', none) %}
+{%- set pxe = {'enabled': False} %}
+{%- if _cfg is mapping and _cfg.get('enabled', False) and (_cfg.get('pxe') or {}).get('enabled', False) %}
+{%- set _subnets = [] %}
+{%- for s in _cfg.get('subnets', []) if s.get('next_server') %}{% do _subnets.append(s) %}{% endfor %}
+{%- if _subnets %}
+{%- set _p = _cfg['pxe'] %}
+{%- set _s = _subnets[0] %}
+{%- set _release = _p.get('ubuntu_release', '26.04.1') %}
+{%- do pxe.update({
+	'enabled': True,
+	'address': _s['next_server'],
+	'subnet': _s['subnet'],
+	'boot_file': _s.get('boot_file', 'netboot.xyz.kpxe'),
+	'routers': _s.get('routers'),
+	'dns': _s.get('dns'),
+	'interfaces': _cfg.get('interfaces', []),
+	'release': _release,
+	'iso': 'ubuntu-' ~ _release ~ '-live-server-amd64.iso',
+	'iso_sha256': _p.get('ubuntu_iso_sha256', 'cc8a95cde20f6ced61a322420de00f10cc3c90ced545daa46cb9c1a117f1d927'),
+	'install_hosts': _p.get('install_hosts', []),
+	'salt_master': _p.get('salt_master', '10.8.0.34'),
+	'root': '/srv/pxe',
+}) %}
+{%- do pxe.update({'url': 'http://' ~ pxe.address}) %}
+{%- endif %}
+{%- endif %}

@@ -4,7 +4,17 @@
 
 nebula-meet:
   enabled: false
-  version: 1.5.2-2
+  # the binary version is taken from nebula:version (nebula.install)
+
+  pki:
+    # legacy: certs from the repo; keygen: host key only; local: host key + certs from cert/new/
+    mode: legacy
+    cas:
+      - ca.crt
+    cert_versions:
+      - 1
+    initiating_version: ~
+    disconnect_invalid: ~
 
   am_lighthouse: false
   lighthouses:

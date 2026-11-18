@@ -1,0 +1,104 @@
+---
+# Traefik for docker04. Static configuration in traefik.yml (read at start: restart the stack after
+# a change), dynamic defaults in dynamic/ (watched, apply live). ACME account and certificates and
+# the DNS hook stay on the host in /srv/docker/traefik; the access log goes to
+# /srv/docker/traefik/logs (rotated by the logrotate state, not shipped to Graylog).
+services:
+  traefik:
+    # Traefik with nsupdate for the DNS-01 hook; source in stacks/build/traefik-nsupdate, built on deploy.
+    build: ../../build/traefik-nsupdate
+    image: local/traefik-nsupdate:v3.7.19
+    pull_policy: build
+    container_name: traefik
+    restart: unless-stopped
+    depends_on:
+      socket-proxy:
+        condition: service_healthy
+    read_only: true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+    networks:
+      - proxy
+      - socket-proxy
+    ports:
+      - 80:80
+      - 443:443
+      - 443:443/udp
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./dynamic:/etc/traefik/dynamic:ro
+      - /srv/docker/traefik/acme.json:/acme.json
+      - /srv/docker/traefik/update-dns.sh:/update-dns.sh:ro
+      - /srv/docker/traefik/logs:/logs
+    environment:
+      - EXEC_PATH=/update-dns.sh
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.traefik-secure.entrypoints=https
+      - traefik.http.routers.traefik-secure.rule=Host(`traefik-docker04.ov.ffmuc.net`)
+      - traefik.http.routers.traefik-secure.middlewares=noc-auth@file
+      - traefik.http.routers.traefik-secure.tls=true
+      - traefik.http.routers.traefik-secure.tls.certresolver=http
+      - traefik.http.routers.traefik-secure.service=api@internal
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          pids: 512
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+  # read-only Docker API for Traefik's docker provider: version, ping, container list/inspect,
+  # events; no POST
+  socket-proxy:
+    image: lscr.io/linuxserver/socket-proxy:3.4.7-r0-ls106@sha256:18289eeb306e8e3b70901ffec23eafbb318d73b4514d0bd737dbfc7c5b4fe506
+    restart: unless-stopped
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /run
+    networks:
+      - socket-proxy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - CONTAINERS=1
+      - EVENTS=1
+      - PING=1
+      - VERSION=1
+      - POST=0
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:2375/_ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+networks:
+  proxy:
+    external: true
+  socket-proxy:
+    internal: true

@@ -2,18 +2,26 @@ base:
   # Base config for all minions
   '*':
     - bash
+    - ca-distrust
+    # duplicity was replaced by rustic; drop once all hosts are cleaned up
+    - duplicity.remove
     - fail2ban
     - ff_base
     - graylog-sidecar
+    - journald
     - locales
     - logrotate
     - mosh
     - motd
     - nebula
+    - needrestart
+    - plymouth
     - resolv
+    - salt-minion
     - screen
     - sudo
     - sysctl
+    - systemd-networkd.foreign-routes
     - telegraf
     - timezone
     - tmux
@@ -25,16 +33,20 @@ base:
     - certs
     - docker
     - dphys-swapfile
-    - duplicity
+    - rustic
     - grafana
     - icinga2
     - influxdb
-    - jenkins
+    - komodo-periphery
     - kvm
     - ntp
     - snmpd
+  'icinga-vie01.in.ffmuc.net':
+    - nebula-meet
   '*.meet.ffmuc.net':
     - nebula-meet
+    - certs
+    - icinga2
     - jitsi.base
     - jitsi.jibri
     - jitsi.videobridge
@@ -42,23 +54,44 @@ base:
     - jitsi.prosody
     - jitsi.jicofo
     - jitsi.meet
-    - certs
-#    - nginx # broken, old nginx versions
+    - jitsi.nginx
   'call*':
     - jitsi.asterisk
     - jitsi.jigasi
+    - jitsi.vosk
   'gw*':
     - dhcp-server
     - knot-resolver.remove
     - pdns-recursor
     - radvd
     - respondd
+    - unified-respondd
     - systemd-networkd
-#  'webfrontend03.in.ffmuc.net':
-#    - cloudflare
+    - wgkex
   'webfrontend0[3-6].in.ffmuc.net':
+    - haproxy
     - dns-auth
     - pdns-recursor
     - github-downloader
+  'docker0[4-7].in.ffmuc.net':
+    - docker-user-firewall
+  'docker04.in.ffmuc.net':
+    - openldap-group-member
+  'docker07.in.ffmuc.net':
+    - akvorado
+    - bgpalerter
+    - keycloak
+  'gw04.in.ffmuc.net':
+    - meshviewer-web
+  # Parker gateways (states only with the NetBox role parker-gateway)
+  'pgw*.in.ffmuc.net':
+    - parker
+  'mail01.in.ffmuc.net':
+    - mailqueue
+  'guardian-*.in.ffmuc.net':
+    - dhcp-server.guardian
+    - dhcp-server.guardian_pxe
+    - sflowtool
+    - iptables
   'vpn0*.in.ffmuc.net':
     - wireguard

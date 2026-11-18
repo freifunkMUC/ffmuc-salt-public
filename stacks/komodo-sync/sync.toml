@@ -1,0 +1,11 @@
+[[resource_sync]]
+name = "ffmuc-salt-public"
+description = "Servers and stacks from stacks/komodo-sync"
+[resource_sync.config]
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+resource_path = ["stacks/komodo-sync"]
+delete = false
+include_resources = true
+include_variables = false
+include_user_groups = false

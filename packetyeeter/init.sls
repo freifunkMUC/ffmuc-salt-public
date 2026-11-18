@@ -1,0 +1,260 @@
+{# Standalone state: this formula is intentionally not referenced by top.sls.
+   It only runs when explicitly targeted via: salt '<target>' state.apply packetyeeter
+
+   Enablement is controlled purely by Netbox tags (netbox:tag_list), NOT config_context:
+     - packetyeeter-collector -> installs/runs the collector (enforcer) on this host
+     - packetyeeter-analyzer  -> prepares the analyzer data and GeoIP files on this host
+
+   The analyzer container itself is a Komodo stack
+   (stacks/<host>/packetyeeter-analyzer); its image and flags are set there.
+   The collector installs the .deb of default_version. Override
+   netbox:config_context:packetyeeter:collector:version (or :deb_url) to pin a
+   different/newer release once available.
+   netbox:config_context:packetyeeter is otherwise OPTIONAL and only used to
+   override specific collector defaults (e.g. interface, analyzer_addr). #}
+
+{% set tags = salt['config.get']('netbox:tag_list', []) %}
+{% set collector_enabled = 'packetyeeter-collector' in tags %}
+{% set analyzer_enabled = 'packetyeeter-analyzer' in tags %}
+
+{% if collector_enabled or analyzer_enabled %}
+
+{% set overrides = salt['config.get']('netbox:config_context:packetyeeter', {}) %}
+{% set collector_overrides = overrides.get('collector', {}) %}
+{% set own_location = salt['config.get']('netbox:site:name', '') %}
+
+{# Auto-discover a same-site analyzer via the mine, so collectors don't need
+   analyzer_addr set explicitly. Falls back to localhost if none is found.
+   NOTE: uses a Jinja namespace() object, not a plain {% set %}, because
+   {% set %} assignments inside a {% for %} loop are scoped to that loop
+   iteration and do NOT persist outside it (classic Jinja2 gotcha) - a plain
+   variable here would silently never propagate the discovered address. #}
+{% set ns = namespace(analyzer_addr='') %}
+{% if collector_enabled %}
+  {% set analyzer_ids = salt['mine.get']('netbox:tag_list:packetyeeter-analyzer', 'minion_id', tgt_type='pillar') %}
+  {% for node in analyzer_ids %}
+    {% if not ns.analyzer_addr %}
+      {% set node_location = salt['mine.get'](node, 'minion_location', tgt_type='glob') %}
+      {% if node_location and node_location.get(node) == own_location %}
+        {% set node_addr = salt['mine.get'](node, 'minion_address', tgt_type='glob') %}
+        {% if node_addr and node_addr.get(node) %}
+          {% set ns.analyzer_addr = node_addr[node].split('/')[0] ~ ':9090' %}
+        {% endif %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+{# Reuse the GeoLite2-ASN.mmdb the haproxy formula already downloads to
+   /etc/haproxy/geoip on webfrontends, instead of fetching/storing a second
+   copy for the collector. Hosts without haproxy (e.g. the analyzer's docker
+   host) fall back to a standalone path. #}
+{% set haproxy_geoip_asn = '/etc/haproxy/geoip/GeoLite2-ASN.mmdb' %}
+{% set default_geoip_asn = haproxy_geoip_asn if salt['file.file_exists'](haproxy_geoip_asn) else '/var/lib/GeoIP/GeoLite2-ASN.mmdb' %}
+
+{# Auto-detect the external/uplink interface the same way bird2 and iptables
+   do (netbox:config_context:network:uplink_vlan:interface, e.g. "vlan101"),
+   instead of assuming "eth0" which doesn't exist on these hosts. Falls back
+   to eth0 only if that config_context key is absent.
+   NOTE: use config.get, not pillar.get - this sub-dict is also wrapped as a
+   MaskedDict (same issue as netbox:config_context:wireguard etc.), so
+   pillar.get returns '**********' here too. #}
+{% set uplink_iface = salt['config.get']('netbox:config_context:network:uplink_vlan:interface', '') %}
+{% set default_iface = uplink_iface if uplink_iface else 'eth0' %}
+
+{# Default allowlist: this site's own Netbox-registered prefixes
+   (netbox:site:prefixes, already in pillar - no extra API call needed).
+   Excludes our own IP ranges from the collector's kernel-space detections
+   AND the SPOE path (checkAllowlist runs before any SPOE signal is emitted
+   to the analyzer, so this single collector-side setting also keeps our own
+   traffic out of the analyzer's reputation/detection tracking entirely). #}
+{% set site_prefix_objs = salt['config.get']('netbox:site:prefixes', []) %}
+{% set own_site_prefixes = [] %}
+{% for p in site_prefix_objs %}
+  {% if p.get('prefix') %}
+    {% do own_site_prefixes.append(p['prefix']) %}
+  {% endif %}
+{% endfor %}
+{% set default_allowlist = own_site_prefixes | join(',') %}
+
+{# Default collector release version. When you bump it, also bump the
+   analyzer image in stacks/<host>/packetyeeter-analyzer/compose.yaml. #}
+{# renovate: datasource=github-releases depName=awlx/packetyeeter extractVersion=^v(?<version>.+)$ #}
+{% set default_version = '0.2.0' %}
+
+{# The collector runs natively (systemd) since it needs to load eBPF/XDP/TC
+   programs against a host interface - this isn't practical to containerize.
+   Installed from the project's official .deb package (nfpm), which ships its
+   own systemd unit, capabilities, and /etc/default/packetyeeter-collector
+   template - so we no longer manage a custom binary or .service file here.
+   Defaults to default_version; override collector:version (or
+   collector:deb_url) via config_context to pin a different/newer release. #}
+{# egress_accounting / egress_min_bytes are v0.1.9+ collector flags for the
+   sustained-download detection feature. Both default OFF: -egress-accounting
+   is only emitted when egress_accounting is truthy (and -egress-min-bytes
+   only alongside it), so an older (<=v0.1.8) collector binary never receives
+   an unknown flag - Go's flag parser would exit 2 on that, and with
+   Restart=on-failure that turns into a crash loop, not a clean failure. Do
+   NOT enable these until the host actually runs v0.1.9. #}
+{% set collector_defaults = {
+  'version': default_version,
+  'deb_url': '',
+  'interface': default_iface,
+  'analyzer_addr': ns.analyzer_addr if ns.analyzer_addr else '127.0.0.1:9090',
+  'metrics_addr': ':2112',
+  'spoe_port': 9876,
+  'socket_path': '/var/run/packetyeeter-collector.sock',
+  'geoip_asn': default_geoip_asn,
+  'block_duration': '5m',
+  'allowlist': default_allowlist,
+  'dry_run': True,
+  'egress_accounting': True,
+  'egress_min_bytes': 1048576,
+} %}
+{% set collector = {} %}
+{% do collector.update(collector_defaults) %}
+{% do collector.update(collector_overrides) %}
+{% if not collector['deb_url'] and collector['version'] %}
+  {% do collector.update({'deb_url': 'https://github.com/awlx/packetyeeter/releases/download/v' ~ collector['version'] ~ '/packetyeeter-collector_' ~ collector['version'] ~ '_amd64.deb'}) %}
+{% endif %}
+
+{# The analyzer container is a Komodo stack (stacks/<host>/packetyeeter-analyzer).
+   This state only creates its directories and downloads the GeoIP files
+   that the stack mounts read-only. Same mirror the haproxy formula uses. #}
+{% set docker_geoip_asn = '/srv/docker/packetyeeter-analyzer/geoip/GeoLite2-ASN.mmdb' %}
+{% set docker_geoip_country = '/srv/docker/packetyeeter-analyzer/geoip/GeoLite2-Country.mmdb' %}
+
+packetyeeter-runtime-pkgs:
+  pkg.installed:
+    - pkgs:
+      - ca-certificates
+
+{% if collector_enabled %}
+{% if collector['deb_url'] %}
+packetyeeter-collector-pkg:
+  pkg.installed:
+    - sources:
+      - packetyeeter-collector: {{ collector['deb_url'] }}
+    - require:
+      - pkg: packetyeeter-runtime-pkgs
+
+/etc/default/packetyeeter-collector:
+  file.managed:
+    - source: salt://packetyeeter/packetyeeter-collector.default.jinja
+    - template: jinja
+    - mode: "0644"
+    - context:
+        collector: {{ collector | json }}
+    - require:
+      - pkg: packetyeeter-collector-pkg
+
+{# The officially packaged unit (v0.1.0) uses bash-only ${VAR:-default}
+   expansion in ExecStart, which native systemd does not support (fails even
+   when the variable IS set - confirmed via journalctl INVALIDARGUMENT).
+   Override just ExecStart with a corrected, plain-${VAR} version. #}
+/etc/systemd/system/packetyeeter-collector.service.d:
+  file.directory:
+    - user: root
+    - group: root
+    - mode: "0755"
+    - makedirs: True
+    - require:
+      - pkg: packetyeeter-collector-pkg
+
+/etc/systemd/system/packetyeeter-collector.service.d/override.conf:
+  file.managed:
+    - source: salt://packetyeeter/packetyeeter-collector-override.conf
+    - mode: "0644"
+    - require:
+      - file: /etc/systemd/system/packetyeeter-collector.service.d
+
+packetyeeter-collector-daemon-reload:
+  cmd.run:
+    - name: systemctl daemon-reload
+    - onchanges:
+      - file: /etc/systemd/system/packetyeeter-collector.service.d/override.conf
+
+packetyeeter-collector-service:
+  service.running:
+    - name: packetyeeter-collector
+    - enable: True
+    - require:
+      - file: /etc/default/packetyeeter-collector
+      - file: /etc/systemd/system/packetyeeter-collector.service.d/override.conf
+      - cmd: packetyeeter-collector-daemon-reload
+      - pkg: packetyeeter-collector-pkg
+    - watch:
+      - file: /etc/default/packetyeeter-collector
+      - file: /etc/systemd/system/packetyeeter-collector.service.d/override.conf
+      - pkg: packetyeeter-collector-pkg
+{% else %}
+packetyeeter-collector-version-missing:
+  test.fail_without_changes:
+    - name: "packetyeeter collector enabled, but netbox:config_context:packetyeeter:collector:version (or :deb_url) is not set - pin it to a real published release"
+{% endif %}
+{% endif %}
+
+{% if analyzer_enabled %}
+/srv/docker/packetyeeter-analyzer:
+  file.directory:
+    - user: root
+    - group: root
+    - mode: "0755"
+    - makedirs: True
+
+/srv/docker/packetyeeter-analyzer/data:
+  file.directory:
+    - user: root
+    - group: root
+    - mode: "0755"
+    - require:
+      - file: /srv/docker/packetyeeter-analyzer
+
+{# Persistent storage for the analyzer's ML state (feedback loop allowlist,
+   learned patterns, trained model) and recorded traffic sessions used for
+   ML training - both previously written inside the container only and lost
+   on every recreate since nothing mounted these paths to host storage. #}
+/srv/docker/packetyeeter-analyzer/ml-data:
+  file.directory:
+    - user: root
+    - group: root
+    - mode: "0755"
+    - require:
+      - file: /srv/docker/packetyeeter-analyzer
+
+/srv/docker/packetyeeter-analyzer/ml-data/sessions:
+  file.directory:
+    - user: root
+    - group: root
+    - mode: "0755"
+    - require:
+      - file: /srv/docker/packetyeeter-analyzer/ml-data
+
+/srv/docker/packetyeeter-analyzer/geoip:
+  file.directory:
+    - user: root
+    - group: root
+    - mode: "0755"
+    - require:
+      - file: /srv/docker/packetyeeter-analyzer
+
+packetyeeter-analyzer-geoip-asn:
+  cmd.run:
+    - name: wget -qO {{ docker_geoip_asn }} https://github.com/P3TERX/GeoLite.mmdb/raw/download/GeoLite2-ASN.mmdb
+    - creates: {{ docker_geoip_asn }}
+    - require:
+      - file: /srv/docker/packetyeeter-analyzer/geoip
+
+packetyeeter-analyzer-geoip-country:
+  cmd.run:
+    - name: wget -qO {{ docker_geoip_country }} https://github.com/P3TERX/GeoLite.mmdb/raw/download/GeoLite2-Country.mmdb
+    - creates: {{ docker_geoip_country }}
+    - require:
+      - file: /srv/docker/packetyeeter-analyzer/geoip
+{% endif %}
+
+{% else %}
+packetyeeter-disabled:
+  test.nop:
+    - name: "packetyeeter: no packetyeeter-collector/packetyeeter-analyzer tag in netbox:tag_list on this host"
+{% endif %}

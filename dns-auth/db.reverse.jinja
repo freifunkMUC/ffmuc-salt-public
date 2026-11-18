@@ -1,0 +1,11 @@
+$ORIGIN .
+$TTL 3600
+{{ zone }}		IN	SOA	anycast01.ffmuc.net. hostmaster.ffmuc.net. (
+					2026093001 ; serial
+					300        ; refresh (5 minutes)
+					100        ; retry (1 minute 40 seconds)
+					604800     ; expire (1 week)
+					600        ; minimum (10 minutes)
+					)
+			IN	NS	anycast01.ffmuc.net.
+			IN	NS	anycast02.ffmuc.net.

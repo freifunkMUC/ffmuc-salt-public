@@ -8,6 +8,9 @@ User=wgkex
 WorkingDirectory=/srv/wgkex/wgkex
 ExecStart=/srv/wgkex/wgkex/venv/bin/python3 -u -m wgkex.worker.app
 Restart=on-failure
+# /run/wgkex holds the drain file (see drain.file in /etc/wgkex.yaml)
+RuntimeDirectory=wgkex
+RuntimeDirectoryPreserve=yes
 
 # Enable Logging
 SyslogIdentifier=wgkex

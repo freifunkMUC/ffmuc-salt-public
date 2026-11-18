@@ -1,0 +1,36 @@
+{%- set interfaces = salt['pillar.get']('netbox:interfaces') %}
+{%- set uplink_iface = salt['pillar.get']('netbox:config_context:network:uplink_vlan:interface') %}
+{%- set parker_range = salt['pillar.get']('netbox:config_context:network:additional_v6_prefix') %}
+{%- set primary_ip4 = salt['pillar.get']('netbox:primary_ip4:address', '') %}
+{%- set ns = namespace(mgmt_iface='') %}
+{%- for iface, details in interfaces.items() %}
+{%-   if primary_ip4 in details['ipaddresses'] | map(attribute='address') | list %}
+{%-     set ns.mgmt_iface = iface %}
+{%-   endif %}
+{%- endfor %}
+{%- if not (uplink_iface and parker_range and ns.mgmt_iface) %}
+{{- raise('parker.xpgw-counters needs the uplink VLAN, network.additional_v6_prefix and the primary IPv4 interface of ' ~ grains.id) }}
+{%- endif %}
+# Salt managed (parker/xpgw-counters).
+# Counters for node traffic between the pgws of a site. Counters only: no verdict, no log,
+# no sets. The chain runs after the iptables filter (priority filter + 10), so it counts only
+# packets that the filter lets through.
+# Read by telegraf: sudo nft -j list counters table inet parker_stats
+
+table inet parker_stats
+delete table inet parker_stats
+
+table inet parker_stats {
+	# (a) node traffic from the uplink to the other pgw of the site (the node uses the other pgw)
+	counter uplink_to_partner {
+	}
+	# (b) node traffic from the other pgw of the site to the nodes on this pgw
+	counter partner_to_nodes {
+	}
+
+	chain forward {
+		type filter hook forward priority filter + 10; policy accept;
+		iifname "{{ uplink_iface }}" oifname "{{ ns.mgmt_iface }}" ip6 daddr {{ parker_range }} counter name "uplink_to_partner"
+		iifname "{{ ns.mgmt_iface }}" oifname "wg-nodes" counter name "partner_to_nodes"
+	}
+}

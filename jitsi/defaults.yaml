@@ -35,7 +35,6 @@ jitsi:
     opts: ""
     username: "focus"
     password: "THIS_IS_SUPER_SECRET_JICOFO"
-    secret: "THIS_IS_A_LEGACY_SECRET"
     bridge_selection_strategy: SplitBridgeSelectionStrategy
 
   videobridge:
@@ -46,6 +45,15 @@ jitsi:
     brewery_room: JvbBrewery
     load_management:
       packet_rate: 50000
+    # UDP tuning, skipped in containers (set on the container host there). Every client
+    # gets its own connected UDP socket, which starts with rmem_default/wmem_default,
+    # not rmem_max/wmem_max. Send buffers need the same size as receive buffers.
+    sysctl:
+      net.core.rmem_max: 10485760
+      net.core.rmem_default: 1048576
+      net.core.wmem_max: 10485760
+      net.core.wmem_default: 1048576
+      net.core.netdev_max_backlog: 100000
     octo:
       enabled: false
       interface: tun0 # or "ip_addr: 127.0.0.1"
@@ -76,6 +84,7 @@ jitsi:
   prosody:
     enabled: false
     version: 1nightly136-1~buster
+    auth_backend: internal_hashed  # service accounts on the auth and recorder domains
 
   jitsi_meet_prosody:
     version: 1.0.9008-1
@@ -97,6 +106,10 @@ jitsi:
       password: sip-password
       host: sip.example.com
 
+  # Phone dial-in (jigasi SIP gateway and the dial-in info in the web app); false while the SIP trunk is down
+  dial_in:
+    enabled: true
+
   jigasi:
     enabled: false
     version: 1.1-178-g3c53cf6-1
@@ -106,3 +119,75 @@ jitsi:
       password: cccc
     xmpp:
       secret: SUPER_SECRET
+
+  # Visitors (view-only participants on local visitor prosodies "vnodes", prosody-v@N)
+  visitors:
+    enabled: false
+    vnodes: 2                    # vN: c2s 5222N, s2s 5269N, http 5280N on 127.0.0.1 (N = 1..9)
+    domain: meet.jitsi           # internal vnode domain base (vN.meet.jitsi), hardcoded in the client
+    max_participants: 50         # main room size before newcomers are redirected to vnodes
+    max_visitors_per_node: 250
+    auto_allow_promotion: true   # false: visitors' raise-hand needs moderator approval
+    # optional, e.g. VisitorSelectionStrategy (needs visitor/participant_selection_strategy)
+    bridge_selection_strategy: ""
+    visitor_selection_strategy: ""
+    participant_selection_strategy: ""
+    topology_strategy: ""        # e.g. VisitorTopologyStrategy
+
+  # Signed viewers-only rooms minted by meet-reserve (stacks/docker0*/meet-reserve),
+  # verified by prosody/files/mod_ffmuc_signed_rooms.lua. Needs visitors.enabled.
+  signed_rooms:
+    enabled: false
+    public_keys: {}             # key id -> base64 raw ed25519 public key
+    max_extension: 2592000      # v1 rooms: seconds tokens may be extended past the room name expiry
+    lookup_url: ""              # room state API, default https://<public_domain>/reserve/api/room/
+    lookup_ttl: 60              # seconds a room state is cached (also the delay until rotated links stop working for new joins)
+    lookup_grace: 600           # seconds a cached state is still used while meet-reserve is unreachable, then short rooms are refused
+
+  # Transcription through jigasi (transcriber) + vosk, see jitsi/vosk
+  transcription:
+    enabled: false
+    transcriber_username: transcriber   # logs in at recorder.<public_domain>
+    transcriber_password: "THIS_IS_SUPER_SECRET_TRANSCRIBER"
+    brewery_room: JigasiBrewery
+    jigasi_username: jigasi             # brewery control login at <auth_domain>
+    jigasi_password: "THIS_IS_SUPER_SECRET_JIGASI"
+    # prosody c2s endpoints of every shard jigasi has to register in the brewery of
+    shards: []
+    #  - host: 10.111.0.100
+    #  - host: 10.111.0.102
+    default_language: de
+    # BCP-47 tag the transcriber is told to use. The Vosk model only understands one
+    # language, so this must not follow each participant's UI language.
+    preferred_language: de-DE
+    disable_dial_out: true              # enabling the jigasi brewery would otherwise offer SIP dial-out to moderators
+    save_transcripts: false             # write transcripts to /var/lib/jigasi/transcripts on the jigasi host
+    # live translated subtitles via LibreTranslate (stacks/docker07/libretranslate)
+    translation:
+      enabled: false
+      api_url: ""                       # e.g. http://10.111.0.118:5010/translate
+      # targets offered in the subtitles menu, each needs an Argos model (via en)
+      languages: [en, ar, bg, el, es, fa, fr, hu, it, pl, ro, ru, sq, tr, uk]
+      languages_head: [en]
+
+  vosk:
+    enabled: false
+    interface: 127.0.0.1
+    port: 2700
+    # small model fits call01's disk; vosk-model-de-0.21 is better but needs ~4 GB disk + RAM
+    model: vosk-model-small-de-0.15
+    model_base_url: https://alphacephei.com/vosk/models
+    server_script_url: https://raw.githubusercontent.com/alphacep/vosk-server/9f1ae2d6355f6fb9d4b31bef721f533da31cd67a/websocket/asr_server.py
+    server_script_hash: sha256=e43640b3db99b95f50fb7b0e1f8679a8cdd5c08a69e0a89ce96bfd37f38d62af
+    # asr_server.py runs a thread pool of cpu_count() threads with one recognizer per
+    # connection; with glibc's per-thread arenas RSS grew from 0.2 to 1.9 GB in 13 h
+    # on call01 (20.10.2026, small model, ~300 MB expected). With MALLOC_ARENA_MAX=2
+    # it stays at about 1.3 GB (peak 1.35 GB in 9 days). memory_high is above that
+    # plateau so the kernel does not throttle vosk; memory_max only stops unbounded
+    # growth, so that vosk-server restarts instead of the host running out of memory.
+    malloc_arena_max: 2
+    memory_high: 2G
+    memory_max: 3G
+    pip_packages:
+      - vosk==0.3.45
+      - websockets==12.0    # asr_server.py uses the legacy (websocket, path) handler signature

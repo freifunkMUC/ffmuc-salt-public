@@ -5,7 +5,7 @@ server_url: '{% if "meet" == grains.id.split(".")[1] %}http://10.111.0.7:9000{%e
 
 # The API token to use to authenticate against the Graylog server API.
 # This field is mandatory
-server_api_token: "{{ salt['pillar.get']('netbox:services:log.in.ffmuc.net:custom_fields:api_token') }}" # yamllint disable-line rule:line-length
+server_api_token: "{{ salt['config.get']('netbox:services:log.in.ffmuc.net:custom_fields:api_token') }}" # yamllint disable-line rule:line-length
 # The node ID of the sidecar. This can be a path to a file or an ID string.
 # If set to a file and the file doesn't exist, the sidecar will generate an
 # unique ID and writes it to the configured path.

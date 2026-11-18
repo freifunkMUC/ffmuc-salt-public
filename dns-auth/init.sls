@@ -19,6 +19,15 @@ dnspython:
   pip.installed:  # Install into Salt's Python environment
     - reload_modules: True
 
+/etc/apparmor.d/local/usr.sbin.named:
+  file.managed:
+    - contents: "/etc/bind/** rw,"
+
+apparmor-reload:
+  cmd.run:
+    - name: apparmor_parser -r /etc/apparmor.d/usr.sbin.named
+    - onchanges:
+      - file: /etc/apparmor.d/local/usr.sbin.named
 
 
 #
@@ -29,7 +38,10 @@ dnspython:
 
 # Get all nodes for DNS records
 {% set nodes = salt['mine.get']('netbox:platform:slug:linux', 'minion_id', tgt_type='pillar') %}
-{% set cnames = salt['pillar.get']('netbox:config_context:dns_zones:cnames') %}
+{% set cnames = salt['config.get']('netbox:config_context:dns_zones:cnames') %}
+{% set reverse_zones = salt['config.get']('reverse_dns:zones', {}) %}
+{% set zones = salt['config.get']('netbox:config_context:dns_zones:zones', []) %}
+{%- set ptr_candidates = [] %}{# derived from A/AAAA records, lower priority wins #}
 {%- set node_has_overlay = [] %}{# List of node[0] #}
 
 {%- if 'dnsdist' in salt['pillar.get']('netbox:tag_list', []) %}
@@ -73,7 +85,7 @@ dnspython:
     - source: salt://dns-auth/db.resolver.arpa
     - user: bind
     - group: bind
-    - mode: "0775"
+    - mode: "0644"
     - replace: True
     - require:
       - file: /etc/bind/zones
@@ -85,7 +97,7 @@ dnspython:
     - source: salt://dns-auth/db.in.ffmuc.net
     - user: bind
     - group: bind
-    - mode: "0775"
+    - mode: "0644"
     - replace: False
     - require:
       - file: /etc/bind/zones
@@ -97,7 +109,7 @@ dnspython:
     - source: salt://dns-auth/db.ov.ffmuc.net
     - user: bind
     - group: bind
-    - mode: "0775"
+    - mode: "0644"
     - replace: False
     - require:
       - file: /etc/bind/zones
@@ -109,19 +121,33 @@ dnspython:
     - source: salt://dns-auth/db.ext.ffmuc.net
     - user: bind
     - group: bind
-    - mode: "0775"
+    - mode: "0644"
     - replace: False
     - require:
       - file: /etc/bind/zones
     - watch_in:
       - cmd: rndc-reload
 
+{%- if 'in.meet.ffmuc.net' in zones %}
+/etc/bind/zones/db.in.meet.ffmuc.net:
+  file.managed:
+    - source: salt://dns-auth/db.in.meet.ffmuc.net
+    - user: bind
+    - group: bind
+    - mode: "0644"
+    - replace: False
+    - require:
+      - file: /etc/bind/zones
+    - watch_in:
+      - cmd: rndc-reload
+{%- endif %}
+
 /etc/bind/zones/db.80.10.in-addr.arpa:
   file.managed:
     - source: salt://dns-auth/db.80.10.in-addr.arpa
     - user: bind
     - group: bind
-    - mode: "0775"
+    - mode: "0644"
     - replace: False
     - require:
       - file: /etc/bind/zones
@@ -133,14 +159,31 @@ dnspython:
     - source: salt://dns-auth/db.1.0.a.0.8.0.6.0.1.0.0.2.ip6.arpa
     - user: bind
     - group: bind
-    - mode: "0775"
+    - mode: "0644"
     - replace: False
     - require:
       - file: /etc/bind/zones
     - watch_in:
       - cmd: rndc-reload
 
-{% set freifunk_net_zones = salt['pillar.get']('netbox:config_context:dns_zones:freifunk_net_zones') %}
+{% for zone in reverse_zones.values() | sort %}
+/etc/bind/zones/db.{{ zone }}:
+  file.managed:
+    - source: salt://dns-auth/db.reverse.jinja
+    - user: bind
+    - group: bind
+    - mode: "0644"
+    - template: jinja
+    - defaults:
+        zone: {{ zone }}
+    - replace: False
+    - require:
+      - file: /etc/bind/zones
+    - watch_in:
+      - cmd: rndc-reload
+{% endfor %}
+
+{% set freifunk_net_zones = salt['config.get']('netbox:config_context:dns_zones:freifunk_net_zones') %}
 {% for domain in freifunk_net_zones %}
 {% set zonefile_path = '/etc/bind/zones/db.'+domain %}
 /etc/bind/zones/db.{{ domain }}:
@@ -180,6 +223,7 @@ dns-key:
   {%- set external_address6 = salt['mine.get'](node_id,'minion_external_ip6', tgt_type='glob') %}
 
   {% if 'mine_interval' not in address and address %}
+  {%- do ptr_candidates.append({'address': address, 'target': node_id, 'priority': 40}) %}
 record-A-{{ node_id }}:
   ddns.present:
     - name: {{ node_id }}.
@@ -196,6 +240,7 @@ record-A-{{ node_id }}:
       - pip: dnspython
       - file: dns-key
 
+  {%- if salt['network.ip_in_subnet'](address | regex_replace('/\d+$',''), '10.80.0.0/16') %}{# zone 80.10.in-addr.arpa; a primary address elsewhere (mail01 at Hetzner) has no PTR here #}
 record-PTR-{{ node_id }}:
   ddns.present:
     - name: {{  salt.network.reverse_ip(address | regex_replace('/\d+$','')) }}.
@@ -211,10 +256,12 @@ record-PTR-{{ node_id }}:
     - require:
       - pip: dnspython
       - file: dns-key
+  {%- endif %}{# PTR only inside the zone #}
 
   {% endif %}
 
   {% if 'mine_interval' not in address6 and address6 %}
+  {%- do ptr_candidates.append({'address': address6, 'target': node_id, 'priority': 40}) %}
 record-AAAA-{{ node_id }}:
   ddns.present:
     - name: {{ node_id }}.
@@ -231,6 +278,7 @@ record-AAAA-{{ node_id }}:
       - pip: dnspython
       - file: dns-key
 
+  {%- if salt['network.ip_in_subnet'](address6 | regex_replace('/\d+$',''), '2001:608:a01::/48') %}{# zone 1.0.a.0.8.0.6.0.1.0.0.2.ip6.arpa; a primary address elsewhere (mail01 at Hetzner) has no PTR here #}
 record-PTR6-{{ node_id }}:
   ddns.present:
     - name: {{  salt.network.reverse_ip(address6 | regex_replace('/\d+$','')) }}.
@@ -246,6 +294,7 @@ record-PTR6-{{ node_id }}:
     - require:
       - pip: dnspython
       - file: dns-key
+  {%- endif %}{# PTR only inside the zone #}
 
   {%- endif %}
 
@@ -272,6 +321,7 @@ record-A-overlay-{{ node_id }}:
   {% if external_address is defined and external_address[node_id]
   | length > 0 and external_address[node_id][0] is defined
   and not '__data__' in external_address[node_id] %}
+  {%- do ptr_candidates.append({'address': external_address[node_id][0], 'target': node[0] ~ '.ext.ffmuc.net', 'priority': 10}) %}
 record-A-external-{{ node_id }}:
   ddns.present:
     - name: {{ node[0] }}.ext.ffmuc.net.
@@ -287,11 +337,13 @@ record-A-external-{{ node_id }}:
     - require:
       - pip: dnspython
       - file: dns-key
+
   {%- endif -%}
 
   {%- if external_address6 is defined and external_address[node_id]
   | length > 0 and external_address6[node_id][0] is defined
   and not '__data__' in external_address6[node_id] %}
+  {%- do ptr_candidates.append({'address': external_address6[node_id][0], 'target': node[0] ~ '.ext.ffmuc.net', 'priority': 10}) %}
 record-AAAA-external-{{ node_id }}:
   ddns.present:
     - name: {{ node[0] }}.ext.ffmuc.net.
@@ -312,24 +364,41 @@ record-AAAA-external-{{ node_id }}:
   {%- endif %}
 {%- endfor %}{# for node_id in nodes #}
 
+{#- Jitsi hosts: nebula-meet address as <host>.in.meet.ffmuc.net (colibri-ws proxy in jitsi/nginx, replaces the
+    hand-made int.meet records). Straight from the mine: the meet hosts are not in `nodes` (platform ubuntu-noble). #}
+{%- if 'in.meet.ffmuc.net' in zones %}
+{%- for node_id, meet_address in salt['mine.get']('*.meet.ffmuc.net', 'minion_meet_overlay_address', tgt_type='glob') | dictsort %}
+{%- if meet_address is string and meet_address %}
+record-A-meet-overlay-{{ node_id }}:
+  ddns.present:
+    - name: {{ node_id.split('.')[0] }}.in.meet.ffmuc.net.
+    - zone: in.meet.ffmuc.net
+    - ttl: 60
+    - data: {{ meet_address | regex_replace('/\d+$','') }}
+    - rdtype: A
+    - nameserver: 127.0.0.1
+    - port: {{ listening_port }}
+    - keyfile: /etc/bind/salt-master.key
+    - keyalgorithm: hmac-sha512
+    - replace_on_change: True
+    - require:
+      - pip: dnspython
+      - file: dns-key
+      - cmd: rndc-reload
+{%- endif %}
+{%- endfor %}
+{%- endif %}
+
 # Create CNAMES as defined in netbox:config_context:dns_zones:cnames or netbox:services (cnames field needs to be set to true)
 {% set services = salt['pillar.get']('netbox:services') %}
 {% for service in services %}
   {% if services[service]['custom_fields']['cname'] %}
-    {% if services[service]['virtual_machine'] %}
-      {% if services[service]['custom_fields']['public'] %}
-        {% set target = services[service]['virtual_machine']['name'] | regex_search('(^\w+(\d+)?)') %}
-        {% do cnames.update({service: target[0] ~ '.ext.ffmuc.net' }) %}
-      {% else %}
-        {% do cnames.update({service: services[service]['virtual_machine']['name'] }) %}
-      {% endif %}
+    {% set parent = services[service].get('parent') or services[service].get('virtual_machine') or services[service].get('device') %}
+    {% if services[service]['custom_fields']['public'] %}
+      {% set target = parent['name'] | regex_search('(^\w+(\d+)?)') %}
+      {% do cnames.update({service: target[0] ~ '.ext.ffmuc.net' }) %}
     {% else %}
-      {% if services[service]['custom_fields']['public'] %}
-        {% set target = services[service]['device']['name'] | regex_search('(^\w+(\d+)?)') %}
-        {% do cnames.update({service: target[0] ~ '.ext.ffmuc.net' }) %}
-      {% else %}
-        {% do cnames.update({service: services[service]['device']['name'] }) %}
-      {% endif %}
+      {% do cnames.update({service: parent['name'] }) %}
     {% endif %}
   {% endif %}
 {% endfor %}
@@ -384,12 +453,13 @@ record-CNAME-{{ cname_ov }}:
 # Create extra DNS entries for devices not in pillars
 {%- set extra_dns_entries = salt['extra_dns_entries.get_extra_dns_entries'](
   salt['pillar.get']('netbox:config_context:netbox:api_url'),
-  salt['pillar.get']('netbox:config_context:dns_zones:netbox_token'),
-  salt['pillar.get']('netbox:config_context:dns_zones:netbox_filter')
+  salt['config.get']('netbox:config_context:dns_zones:netbox_token'),
+  salt['config.get']('netbox:config_context:dns_zones:netbox_filter')
 ) %}
 
 {%- for dns_entry in extra_dns_entries %}
   {%- if extra_dns_entries[dns_entry].get('address') %}
+  {%- do ptr_candidates.append({'address': extra_dns_entries[dns_entry]['address'], 'target': dns_entry, 'priority': 30}) %}
 record-A-extra-{{ dns_entry }}:
   ddns.present:
     - name: {{ dns_entry }}.
@@ -409,6 +479,7 @@ record-A-extra-{{ dns_entry }}:
   {%- endif %}
 
   {%- if extra_dns_entries[dns_entry].get('address6') %}
+  {%- do ptr_candidates.append({'address': extra_dns_entries[dns_entry]['address6'], 'target': dns_entry, 'priority': 30}) %}
 record-AAAA-extra-{{ dns_entry }}:
   ddns.present:
     - name: {{ dns_entry }}.
@@ -429,8 +500,13 @@ record-AAAA-extra-{{ dns_entry }}:
 {%- endfor %}{# for dns_entry in extra_dns_entries #}
 
 # Additional DNS records
-{%- set custom_records = salt['pillar.get']('netbox:config_context:dns_zones:custom_records', []) %}
+{%- set custom_records = salt['config.get']('netbox:config_context:dns_zones:custom_records', []) %}
 {%- for record in custom_records %}
+  {%- if record.get('type') in ['A', 'AAAA'] %}
+    {%- set record_name = record.get('name') | string %}
+    {%- set record_target = record_name if record_name.endswith('.') else record_name ~ '.' ~ record.get('zone') %}
+    {%- do ptr_candidates.append({'address': record.get('content'), 'target': record_target, 'priority': 20}) %}
+  {%- endif %}
 record-{{ loop.index }}-{{ record.get('type') }}-{{ record.get('name') }}.{{ record.get('zone') }}:
   ddns.present:
     - name: {{ record.get('name') }}
@@ -447,6 +523,32 @@ record-{{ loop.index }}-{{ record.get('type') }}-{{ record.get('name') }}.{{ rec
       - pip: dnspython
       - file: dns-key
 {%- endfor %}{# for record in custom_records #}
+
+# PTR records for public prefixes, generated from the A/AAAA records above plus reverse_dns:ptr_records
+{%- set ptr_records = salt['ffmuc_rdns.ptr_records'](
+  ptr_candidates,
+  reverse_zones,
+  salt['config.get']('reverse_dns:ptr_records', {})
+) %}
+{%- for record in ptr_records %}
+record-PTR-public-{{ record['address'] }}:
+  ddns.present:
+    - name: {{ record['name'] }}
+    - zone: {{ record['zone'] }}
+    - ttl: 60
+    - data: {{ record['target'] }}
+    - rdtype: PTR
+    - nameserver: 127.0.0.1
+    - port: {{ listening_port }}
+    - keyfile: /etc/bind/salt-master.key
+    - keyalgorithm: hmac-sha512
+    - replace_on_change: True
+    - require:
+      - pip: dnspython
+      - file: dns-key
+      - file: /etc/bind/zones/db.{{ record['zone'] }}
+      - cmd: rndc-reload
+{%- endfor %}{# for record in ptr_records #}
 
 
 {%- endif %}{# if 'authorative-dns' in salt['pillar.get']('netbox:tag_list', []) #}

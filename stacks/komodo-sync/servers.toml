@@ -1,0 +1,48 @@
+[[server]]
+name = "docker04"
+tags = ["ffmuc"]
+[server.config]
+address = "https://10.8.0.31:8120"
+enabled = true
+
+[[server]]
+name = "docker05"
+tags = ["ffmuc"]
+[server.config]
+address = "https://10.8.0.34:8120"
+enabled = true
+
+[[server]]
+name = "docker06"
+tags = ["ffmuc"]
+[server.config]
+address = "https://10.8.0.15:8120"
+enabled = true
+
+[[server]]
+name = "docker07"
+tags = ["ffmuc"]
+[server.config]
+address = "https://10.8.0.16:8120"
+enabled = true
+
+[[server]]
+name = "mail01"
+tags = ["ffmuc"]
+[server.config]
+address = "https://10.8.0.45:8120"
+enabled = true
+
+[[server]]
+name = "rw-vpn01"
+tags = ["ffmuc"]
+[server.config]
+address = "https://10.8.0.1:8120"
+enabled = true
+
+[[server]]
+name = "rw-vpn02"
+tags = ["ffmuc"]
+[server.config]
+address = "https://10.8.0.44:8120"
+enabled = true

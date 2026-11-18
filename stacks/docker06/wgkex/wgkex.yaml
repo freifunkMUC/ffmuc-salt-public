@@ -1,0 +1,159 @@
+---
+
+domains:
+  - ffmuc_augsburg
+  - ffmuc_freising
+  - ffmuc_gauting
+  - ffmuc_muc_cty
+  - ffmuc_muc_nord
+  - ffmuc_muc_ost
+  - ffmuc_muc_sued
+  - ffmuc_muc_west
+  - ffmuc_uml_nord
+  - ffmuc_uml_ost
+  - ffmuc_uml_sued
+  - ffmuc_uml_west
+  - ffmuc_ulm
+  - ffmuc_welt
+  - ffmuc_dlg
+  - ffdon_mitte
+  - ffdon_nordwest
+  - ffdon_sued
+  - ffwert_city
+  - ffwert_events
+  - ffbachtal_bachtal
+domain_prefixes:
+  - ffmuc_
+  - ffdon_
+  - ffwert_
+  - ffbachtal_
+
+# [broker] The dict of workers mapping their hostname to their respective weight for weighted peer distribution
+# The id is the Parker tunnel id of a pgw (the digits of its name, it must not change).
+# The classic gateways do not use it, but all ids must be unique.
+# pop is the Parker site of a pgw (parker.sites). The key is the hostname of the pgw.
+workers:
+  gw04.in.ffmuc.net:
+    id: 104
+    weight: 25
+  gw05:
+    id: 105
+    weight: 25
+  gw06:
+    id: 106
+    weight: 25
+  gw07:
+    id: 107
+    weight: 25
+  pgw01:
+    id: 1
+    weight: 25
+    pop: muc01
+  pgw02:
+    id: 2
+    weight: 25
+    pop: muc01
+  pgw03:
+    id: 3
+    weight: 25
+    pop: vie01
+  pgw04:
+    id: 4
+    weight: 25
+    pop: vie01
+
+mqtt:
+  broker_url: mqtt_cluster
+  username:
+  password:
+  tls: False
+  broker_port: 1883
+  keepalive: 20
+broker_listen:
+  host: 0.0.0.0
+  port: 5000
+logging_config:
+  formatters:
+    standard:
+      format: '%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s'
+  handlers:
+    console:
+      class: logging.StreamHandler
+      formatter: standard
+  root:
+    handlers:
+      - console
+    level: DEBUG
+  version: 1
+# Load balancing (wgkex >= 9f53ff0, #294); all values are the upstream defaults.
+# Active rebalancing must also be enabled on the workers (salt: wgkex/wgkex.yaml.jinja).
+load_balancing:
+  # Stable name of this broker: it marks the NetBox prefixes that this broker reserves (Parker IPAM)
+  broker_id: docker06
+  # Count the other brokers' pending assignments (4 brokers behind haproxy, wgkex >= caf959c)
+  share_pending_assignments: true
+  pending_assignment_ttl: 300
+  pending_assignment_settle_time: 60
+  rebalancing:
+    enabled: true
+    interval: 60
+    tolerance: 0.1
+    min_excess_peers: 10
+    stable_time: 600
+# wgkex >= caf959c: haproxy on the webfrontends overwrites X-Forwarded-For with the client address,
+# trust it only from them (vlan100x + nebula addresses) for the per-client rate limit
+broker:
+  trusted_proxies:
+    - 10.80.248.36/32
+    - 10.80.248.37/32
+    - 10.80.248.73/32
+    - 10.80.248.74/32
+    - 10.8.0.29/32
+    - 10.8.0.30/32
+    - 10.8.0.39/32
+    - 10.8.0.40/32
+log_level: INFO
+
+# Parker (wgkex >= #323): signed node config on /config and /api/v3/.
+# Secrets from the stack environment: WGKEX__BROKER_SIGNING_KEY, WGKEX__NETBOX__API_KEY.
+parker:
+  enabled: true
+  ipam: netbox
+  464xlat: true
+  prefixes:
+    ipv4:
+      clat_subnet: 10.80.96.0/22
+    ipv6:
+      length: 63
+      netbox_additional_data:
+        tags:
+          - slug: node-prefix
+  # One site per PoP. Each site has its own /50 ("FF Pool Parker") and node tunnel.
+  # The broker spreads the nodes over the sites by weight (default 1), up to the
+  # optional capacity (max nodes). A preferred site of a node is used if it has capacity.
+  # dns64: the DNS64 resolver of the site (pdns-recursor on the pgw, dummy0).
+  # It is the first pgw of the site (pgw01, pgw03). The nodes of pgw02 and pgw04
+  # use it too, so it is a single point of failure for DNS64 of the site. Replace it
+  # with a site anycast DNS64 address. The anycast resolvers 2001:678:{ed0,e68}:f000::
+  # do no DNS64.
+  sites:
+    muc01:
+      tunnel_id: 1
+      dns64: 2001:678:ed0:ff00::d
+      netbox_filter:
+        prefix: 2001:678:ed0:4000::/50
+    vie01:
+      tunnel_id: 3
+      dns64: 2001:678:e68:ff00::11
+      netbox_filter:
+        prefix: 2001:678:e68:4000::/50
+  # In-memory IPAM: NetBox is not on the request path. The snapshot is used
+  # when NetBox is down at broker start.
+  ipam_cache:
+    snapshot_dir: /var/lib/wgkex
+    sync_interval: 60
+    reserve: 32
+# Main NetBox: the site /50s (parker.sites.*.netbox_filter) and the node /63s
+# (tag node-prefix, reserved blocks have reserved_by=<broker_id>). polld on the pgws reads the same.
+netbox:
+  url: https://nb.ov.ffmuc.net

@@ -1,0 +1,9 @@
+/* realm ffmuc (members): light page, skyline from freifunkMUC/logo_merchandise_ci at the bottom */
+.login-pf body {
+    background: #f8f9fa url("../img/skyline.png") center bottom / min(896px, 100%) auto no-repeat;
+}
+
+#kc-header-wrapper {
+    /* keycloak.v2 forces white with !important */
+    color: var(--ffmuc-ink) !important;
+}

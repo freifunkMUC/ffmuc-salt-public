@@ -1,0 +1,20 @@
+{%- set nebula_ip4 = salt['grains.get']('ip4_interfaces:nebula0', []) %}
+{%- set site = salt['pillar.get']('netbox:site', {}) %}
+{%- set nodeinfo = {
+  'owner': {'contact': 'hilfe@ffmuc.net'},
+  'system': {'site_code': 'ffmuc', 'domain_code': 'ffmuc', 'role': 'gateway'},
+  'hardware': {'model': 'KVM VirtualMachine'},
+  'pages': ['https://stats.ffmuc.net', 'https://ffmuc.net'],
+} %}
+{%- if site.get('latitude') and site.get('longitude') %}
+{%- set location = {'latitude': site.latitude | float, 'longitude': site.longitude | float} %}
+{%- do nodeinfo.update({'location': location}) %}
+{%- endif %}
+{{ {
+  'hostname': grains['id'] | regex_replace('in\.ffmuc\.net', 'ext.ffmuc.net'),
+  'listen': ['::1'] + nebula_ip4[:1],
+  'port': 1001,
+  'wireguard_interface': 'wg-nodes',
+  'address_interfaces': ['dummy0'],
+  'nodeinfo': nodeinfo,
+} | tojson(indent=2) }}

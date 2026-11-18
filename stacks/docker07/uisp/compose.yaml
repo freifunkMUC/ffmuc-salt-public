@@ -1,0 +1,19 @@
+---
+services:
+  unms:
+    image: nico640/docker-unms:3.1.70@sha256:59eb621788426fede06d47d333afc12237a04b4820946738f40a694d3085605c
+    restart: always
+    ports:
+      - 8099:80
+      - 9443:443
+      - 2055:2055/udp
+    environment:
+      - TZ=Europe/Berlin
+    volumes:
+      - /srv/docker/uisp/data:/config
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:80/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 3m

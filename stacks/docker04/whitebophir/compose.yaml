@@ -1,0 +1,33 @@
+---
+services:
+  whiteboard:
+    image: lovasoa/wbo:v2.18.37@sha256:4d6f55fedd867120326e7bad1b73106ce23c822c376db9a2376bea8a6b6c7993
+    restart: unless-stopped
+    environment:
+      # nginx on the webfrontends proxies /draw/ and passes X-Forwarded-For
+      # from haproxy. Without this, all users share one rate limit bucket.
+      - WBO_IP_SOURCE=X-Forwarded-For
+      - WBO_TRUST_PROXY_HOPS=1
+      # Public path is https://ffmuc.net/draw/; nginx removes the prefix.
+      # Without it, v2 redirects to /boards/... outside of /draw/.
+      - WBO_BASE_PATH=/draw
+    ports:
+      - "5001:80"
+    volumes:
+      # v1 boards are board-<name>.json. v2 writes board-<name>.svg next to
+      # them on first load and keeps the JSON file.
+      - /srv/docker/whitebophir/boards:/opt/app/server-data:z
+    cap_drop:
+      - ALL
+    # the image's node binary carries file capability cap_net_bind_service; without it exec fails (EPERM)
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 256m
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:80/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s

@@ -12,19 +12,12 @@ jitsi-videobridge2:
   pkg.installed:
     - version: {{ jitsi.videobridge.version }}
     - hold: True
+    - update_holds: True
     - require:
       - pkgrepo: jitsi-repo
+      - cmd: jitsi-java17
   service.running:
     - enable: True
-
-#jvb-ffmuc-version:
-#  pkg.installed:
-#    - require:
-#      - pkg: jitsi-videobridge2 # for dependencies
-#    - required_in:
-#      - service: jitsi-videobridge2 # only start if this version got installed
-#    #- sources:
-#    #  - jitsi-videobridge2: https://apt.ffmuc.net/unstable/jitsi-videobridge2_2.1-411-g9754898e-1_all.deb
 
 systemd-reload-jvb:
   cmd.run:
@@ -52,6 +45,7 @@ stats.in.ffmuc.net:
   file.managed:
     - source: salt://jitsi/videobridge/jvb.conf.jinja
     - template: jinja
+    - show_changes: False
     - require:
       - pkg: jitsi-videobridge2 # only start if this version got installed
     - watch_in:
@@ -75,10 +69,30 @@ stats.in.ffmuc.net:
     - watch_in:
       - service: jitsi-videobridge2
 
+# BandwidthAllocator logs every allocation for receivers with low bandwidth at INFO;
+# a large meeting with poor connections produced ~70k lines/min and stress 1.0.
+jvb-logging-bandwidthallocator:
+  file.append:
+    - name: /etc/jitsi/videobridge/logging.properties
+    - text: org.jitsi.videobridge.cc.allocation.BandwidthAllocator.level=WARNING
+    - require:
+      - pkg: jitsi-videobridge2 # only start if this version got installed
+    - watch_in:
+      - service: jitsi-videobridge2
+
 /etc/systemd/system/jitsi-videobridge2.service.d/override.conf:
   file.managed:
     - source: salt://jitsi/videobridge/systemd-override.conf
     - makedirs: True
+{%- if grains.virtual != 'container' %}
+{%- for name, value in jitsi.videobridge.sysctl.items() %}
+
+{{ name }}:
+  sysctl.present:
+    - value: {{ value }}
+    - config: /etc/sysctl.d/25-jvb-udp.conf
+{%- endfor %}
+{%- endif %}
 
 {% else %}
 jitsi-videobridge2:

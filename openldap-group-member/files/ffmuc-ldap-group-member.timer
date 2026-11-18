@@ -1,0 +1,10 @@
+[Unit]
+Description=Mirror memberUid into member for the team OpenLDAP groups every 10 minutes
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=10min
+Unit=ffmuc-ldap-group-member.service
+
+[Install]
+WantedBy=timers.target

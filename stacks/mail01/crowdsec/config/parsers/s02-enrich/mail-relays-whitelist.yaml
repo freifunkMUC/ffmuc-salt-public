@@ -1,0 +1,6 @@
+name: local/mail-relays-whitelist
+description: Whitelist events from trusted upstream mail relays
+whitelist:
+  reason: trusted mail relays, never banned
+  cidr:
+    - 141.82.0.0/16

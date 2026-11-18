@@ -1,0 +1,24 @@
+#
+# {{ node_id }} (no Icinga agent, checked from the master; Salt managed)
+#
+
+object Host "{{ node_id }}" {
+	import "generic-host"
+
+	display_name = "{{ node_id }}"
+	check_command = "hostalive"
+	address = "{{ address }}"
+
+	vars.os = "Linux"
+	# Keeps every check that runs on the agent (command_endpoint) away
+	vars.agentless = true
+	{%- if role %}
+	vars.role = "{{ role }}"
+	{%- endif %}
+	{%- if location %}
+	vars.location = "{{ location }}"
+	{%- endif %}
+	{%- if notes %}
+	notes = "{{ notes }}"
+	{%- endif %}
+}

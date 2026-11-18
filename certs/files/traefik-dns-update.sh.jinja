@@ -2,16 +2,12 @@
 
 # Script to nsupdate all our authoritative servers for Traefik ACME DNS-01 challenges.
 # Used by Traefik's lego exec DNS provider.
-# Requires bind-tools (nsupdate) installed.
+# Needs nsupdate (bind-tools), baked into the image local/traefik-nsupdate.
 
 # lego exec provider calls this script as:
 #   update-dns.sh present <fqdn> <token> <keyauth>
 #   update-dns.sh cleanup <fqdn> <token> <keyauth>
 # where <fqdn> is e.g. _acme-challenge.flow.ov.ffmuc.net
-
-if [ ! -f /usr/bin/nsupdate ]; then
-    apk update && apk add bind-tools
-fi
 
 ACTION="$1"
 FQDN="$2"
@@ -22,7 +18,7 @@ TOKEN="$3"
 HOST=$(echo "$FQDN" | cut -d. -f1-2)
 ZONE=$(echo "$FQDN" | cut -d. -f3-)
 
-{%- set update_key = salt['pillar.get']('netbox:config_context:dns_zones:update_keys:letsencrypt:key') %}
+{%- set update_key = salt['config.get']('netbox:config_context:dns_zones:update_keys:letsencrypt:key') %}
 UPDATE_KEY="{{ update_key }}"
 
 AUTH_SERVERS="webfrontend03.ov.ffmuc.net webfrontend04.ov.ffmuc.net webfrontend05.ov.ffmuc.net webfrontend06.ov.ffmuc.net"

@@ -1,0 +1,34 @@
+---
+services:
+  mastodon-paywall:
+    image: ghcr.io/freifunkmuc/mastodon-paywall:v0.3.1@sha256:01fd632373dd2535ea4b9e5825627eb9ef52315f09c971aac7223954c8c5b6c5
+    container_name: mastodon-paywall
+    restart: always
+    environment:
+      # Next.js binds to $HOSTNAME (the container ID); 0.0.0.0 lets the healthcheck reach 127.0.0.1.
+      HOSTNAME: 0.0.0.0
+      API_TOKEN: ${API_TOKEN}
+      PAYPAL_CLIENT_ID: ${PAYPAL_CLIENT_ID}
+      PAYPAL_CLIENT_SECRET: ${PAYPAL_CLIENT_SECRET}
+      PAYPAL_PLAN_ID: P-7AC70324RL420101MMPUURQQ
+      PAYPAL_WEBHOOK_ID: ${PAYPAL_WEBHOOK_ID}
+    ports:
+      - 3001:3000
+    volumes:
+      # Persists the default sqlite database (DATABASE_URL) across restarts.
+      # Not needed if DATABASE_URL points at an external Postgres/MySQL.
+      - mastodon-paywall-data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-sS", "-o", "/dev/null", "http://127.0.0.1:3000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 256m
+
+volumes:
+  mastodon-paywall-data:

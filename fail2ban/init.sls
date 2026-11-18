@@ -3,10 +3,29 @@ fail2ban-pkg:
   pkg.latest:
     - name: fail2ban
 
+{% if 'guardian' in grains.id %}
+# Debian 13 defaults to banaction=nftables, the guardians have iptables only
+fail2ban-banaction:
+  file.managed:
+    - name: /etc/fail2ban/jail.d/zz-banaction.local
+    - contents: |
+        [DEFAULT]
+        banaction = iptables-multiport
+        banaction_allports = iptables-allports
+        # never ban the management paths (Nebula, guardian LANs)
+        ignoreip = 127.0.0.1/8 ::1 10.8.0.0/23 10.80.248.0/24
+    - mode: '0644'
+    - require:
+      - pkg: fail2ban-pkg
+    - watch_in:
+      - service: fail2ban-service
+{% endif %}
+
 fail2ban-service:
   service.running:
     - name: fail2ban
     - enable: true
+    # restart, not reload: a reload with a changed banaction drops the jail's actions
     - require:
       - pkg: fail2ban-pkg
 {% endif %}

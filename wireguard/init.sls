@@ -5,6 +5,14 @@ netifaces:
 netaddr:
   pip.installed  # Install into Salt's Python environment
 
+wireguard-python3-netifaces:
+  pkg.installed:
+    - name: python3-netifaces
+
+wireguard-python3-netaddr:
+  pkg.installed:
+    - name: python3-netaddr
+
 iptables-persistent:
   pkg.installed
 
@@ -13,7 +21,6 @@ netfilter-persistent:
     - name: netfilter-persistent
   service.running:
     - enable: True
-    - restart: True
 
 ifreload:
    cmd.wait:
@@ -64,8 +71,8 @@ generate-privkey:
         - watch_in:
            - cmd: bird-configure
         - require:
-           - pkg: python3-netifaces
-           - pkg: python3-netaddr
+           - pkg: wireguard-python3-netifaces
+           - pkg: wireguard-python3-netaddr
 
 /etc/bird/bird6.d/ebgp.conf:
     file.managed:
@@ -77,8 +84,8 @@ generate-privkey:
         - watch_in:
            - cmd: bird6-configure
         - require:
-           - pkg: python3-netifaces
-           - pkg: python3-netaddr
+           - pkg: wireguard-python3-netifaces
+           - pkg: wireguard-python3-netaddr
 
 {% for interface in interfaces | sort %}
 {% if 'wg-' in interface %}

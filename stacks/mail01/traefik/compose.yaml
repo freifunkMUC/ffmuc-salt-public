@@ -1,0 +1,119 @@
+# Traefik of mail01 (project "traefik", /opt/containers/traefik). It owns the
+# Docker network "proxy" that crowdsec, maintenance and mailserver join as
+# external; keep it first when everything is recreated. traefik.yml and
+# dynamic_conf.yml are in git (file changes need a restart: single-file mount);
+# acme.json (certificates, also read by the mailserver) stays on the host. The dashboard is Nebula only (traefik-mail01.ov.ffmuc.net)
+# behind the Keycloak realm noc login, as on docker04-07.
+# Docker API only through the read-only socket-proxy, no socket mount in Traefik.
+# Deploy order: socket-proxy first (compose up -d socket-proxy), then recreate mailserver and
+# maintenance (their v3 rules also parse under v2), then traefik last (drops defaultRuleSyntax v2).
+services:
+  traefik:
+    # Traefik with nsupdate for the DNS-01 hook; source in stacks/build/traefik-nsupdate, built on deploy.
+    build: ../../build/traefik-nsupdate
+    image: local/traefik-nsupdate:v3.7.19
+    pull_policy: build
+    container_name: traefik
+    restart: unless-stopped
+    depends_on:
+      socket-proxy:
+        condition: service_healthy
+    read_only: true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    tmpfs:
+      - /tmp
+    mem_limit: 384m
+    pids_limit: 512
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - proxy
+      - socket-proxy
+    ports:
+      - 80:80
+      - 443:443/tcp
+      - 443:443/udp
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./traefik.yml:/traefik.yml:ro
+      # DNS-01 for resolver ov, written by the Salt state certs (0700, holds the update key)
+      - /opt/containers/traefik/update-dns.sh:/update-dns.sh:ro
+      - /opt/containers/traefik/data/acme.json:/acme.json
+      - ./dynamic_conf.yml:/dynamic_conf.yml:ro
+      - /var/log/crowdsec/traefik/:/var/log/traefik/
+    environment:
+      - EXEC_PATH=/update-dns.sh
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.entrypoints=https"
+      - "traefik.http.routers.traefik.rule=Host(`traefik-mail01.ov.ffmuc.net`)"
+      # Login with Keycloak realm noc through oauth2-proxy on docker07 (same settings as docker05's dynamic/noc-auth.yml)
+      - "traefik.http.middlewares.noc-auth.forwardauth.address=https://auth.ov.ffmuc.net/"
+      - "traefik.http.middlewares.noc-auth.forwardauth.trustforwardheader=false"
+      - "traefik.http.middlewares.noc-auth.forwardauth.maxresponsebodysize=65536"
+      - "traefik.http.middlewares.noc-auth.forwardauth.authresponseheaders=X-Auth-Request-User,X-Auth-Request-Preferred-Username"
+      - "traefik.http.middlewares.noc-auth.forwardauth.addauthcookiestoresponse=_oauth2_noc,_oauth2_noc_0,_oauth2_noc_1,_oauth2_noc_2"
+      - "traefik.http.routers.traefik.middlewares=noc-auth@docker,default@file"
+      - "traefik.http.routers.traefik.tls=true"
+      - "traefik.http.routers.traefik.tls.certresolver=ov"
+      - "traefik.http.routers.traefik-middlewares=error-pages-middleware"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.services.traefik.loadbalancer.sticky.cookie.httpOnly=true"
+      - "traefik.http.services.traefik.loadbalancer.sticky.cookie.secure=true"
+      - "providers.file.filename=/dynamic_conf.yml"
+      - "traefik.docker.network=proxy"
+
+  # Read-only Docker API for the docker provider: version, ping, containers, events; no POST.
+  socket-proxy:
+    image: lscr.io/linuxserver/socket-proxy:3.4.7-r0-ls106@sha256:18289eeb306e8e3b70901ffec23eafbb318d73b4514d0bd737dbfc7c5b4fe506
+    container_name: traefik-socket-proxy
+    restart: unless-stopped
+    read_only: true
+    mem_limit: 64m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:2375/_ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    tmpfs:
+      - /run
+    environment:
+      CONTAINERS: "1"
+      EVENTS: "1"
+      PING: "1"
+      VERSION: "1"
+      POST: "0"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - socket-proxy
+
+networks:
+  default:
+    driver: bridge
+    enable_ipv6: true
+    ipam:
+      driver: default
+      config:
+        - subnet: fd00:0123:4567::/48
+          gateway: fd00:0123:4567::1
+  proxy:
+    name: proxy
+    driver: bridge
+    attachable: true
+  socket-proxy:
+    internal: true

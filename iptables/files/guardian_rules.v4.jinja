@@ -1,4 +1,5 @@
-{%- from 'iptables/nebula_map.jinja' import nebula_node_data_list with context %}
+{%- from 'iptables/nebula_map.jinja' import nebula_node_data_list, nebula_meet_data_list with context %}
+{%- from 'dhcp-server/pxe/map.jinja' import pxe with context %}
 # Managed with Salt
 
 *nat
@@ -11,6 +12,9 @@
 {%- for node in nebula_node_data_list %}
 -A PREROUTING -d {{ nat_ip }} -p udp -m udp --dport {{ node.nebula_port }} -j DNAT --to-destination {{ node.minion_address }} -m comment --comment "{{ node.hostname }}"
 {%- endfor %}{# node #}
+{%- for node in nebula_meet_data_list %}
+-A PREROUTING -d {{ nat_ip }} -p udp -m udp --dport {{ node.nebula_port }} -j DNAT --to-destination {{ node.minion_address }} -m comment --comment "{{ node.hostname }} nebula-meet"
+{%- endfor %}{# node #}
 
 {%- if own_location == "MUC01" %}
 -A PREROUTING -d {{ nat_ip }} -p tcp -m tcp --dport 52210 -j DNAT --to-destination 10.80.248.86:22 -m comment --comment "Fallback SSH for ft04"
@@ -18,6 +22,9 @@
 
 {%- for node in nebula_node_data_list %}
 -A POSTROUTING -s {{ node.minion_address }} -p udp -m udp --sport {{ node.nebula_port }} -j SNAT --to-source {{ nat_ip }}:{{ node.nebula_port }} -m comment --comment "{{ node.hostname }}"
+{%- endfor %}{# node #}
+{%- for node in nebula_meet_data_list %}
+-A POSTROUTING -s {{ node.minion_address }} -p udp -m udp --sport {{ node.nebula_port }} -j SNAT --to-source {{ nat_ip }}:{{ node.nebula_port }} -m comment --comment "{{ node.hostname }} nebula-meet"
 {%- endfor %}{# node #}
 
 {%- if own_location == "MUC01" %}
@@ -36,4 +43,30 @@ COMMIT
 :INPUT ACCEPT
 :FORWARD ACCEPT
 :OUTPUT ACCEPT
+
+{#- Own nebula port, derived like in nebula_map.jinja #}
+{%- set overlay_split = salt['mine.get'](grains.id, 'minion_overlay_address', tgt_type='glob')[grains.id].split('/')[0].split('.') %}
+{%- set own_nebula_port = 20000 + overlay_split[2] | int * 256 + overlay_split[3] | int %}
+
+-A INPUT -i lo -j ACCEPT
+-A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A INPUT -p icmp -j ACCEPT
+{#- Management (ssh, icinga2, snmp) over nebula; ssh also from the local LAN as fallback #}
+-A INPUT -i nebula0 -p tcp -m tcp --dport 22 -j ACCEPT
+-A INPUT -i eth0 -p tcp -m tcp --dport 22 -j ACCEPT
+-A INPUT -i nebula0 -p tcp -m tcp --dport 5665 -j ACCEPT
+-A INPUT -i nebula0 -p udp -m udp --dport 161 -j ACCEPT
+{#- BGP and sFlow come from the router on the uplink VLAN #}
+-A INPUT -i {{ uplink_iface }} -p tcp -m tcp --dport 179 -j ACCEPT
+-A INPUT -i {{ uplink_iface }} -p udp -m udp --dport 6343 -j ACCEPT
+-A INPUT -p udp -m udp --dport {{ own_nebula_port }} -j ACCEPT
+-A INPUT -p udp -m udp --dport 123 -j ACCEPT
+-A INPUT -i eth0 -p udp -m udp --dport 67 -j ACCEPT
+{%- if pxe.enabled %}
+{#- PXE: TFTP and HTTP from the mgmt network only #}
+-A INPUT -s {{ pxe.subnet }} -i eth0 -p udp -m udp --dport 69 -j ACCEPT
+-A INPUT -s {{ pxe.subnet }} -i eth0 -p tcp -m tcp --dport 80 -j ACCEPT
+{%- endif %}
+-A INPUT -j REJECT --reject-with icmp-port-unreachable
+
 COMMIT

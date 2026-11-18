@@ -1,0 +1,10 @@
+# Managed with Salt. PXE files for the mgmt network only.
+server {
+    listen {{ pxe.address }}:80;
+    server_name _;
+    root {{ pxe.root }};
+    autoindex off;
+    access_log /var/log/nginx/pxe.access.log;
+    allow {{ pxe.subnet }};
+    deny all;
+}

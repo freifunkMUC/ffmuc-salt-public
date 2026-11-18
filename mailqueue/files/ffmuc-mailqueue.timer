@@ -1,0 +1,10 @@
+[Unit]
+Description=Write the mail queue state every 5 minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+Unit=ffmuc-mailqueue.service
+
+[Install]
+WantedBy=timers.target

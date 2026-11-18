@@ -1,0 +1,70 @@
+---
+# FFMUC changes on top of peering-manager/docker v2.4.0.
+# compose.yaml is the upstream docker-compose.yml with an absolute
+# configuration path. Local changes live here and in env/*.env. The
+# secrets come from the Komodo Stack environment.
+# Images pinned by tag and digest.
+x-peering-manager-secrets: &pm-secrets
+  SECRET_KEY: ${SECRET_KEY}
+  DB_PASSWORD: ${DB_PASSWORD}
+  REDIS_PASSWORD: ${REDIS_PASSWORD}
+  REDIS_CACHE_PASSWORD: ${REDIS_CACHE_PASSWORD}
+  PEERINGDB_PASSWORD: ${PEERINGDB_PASSWORD}
+  PEERINGDB_API_KEY: ${PEERINGDB_API_KEY}
+x-peering-manager-image: &pm-image docker.io/peeringmanager/peering-manager:v1.11.1-2.4.0@sha256:dbb0f83ab86299be4e9020c1780abed4cf07328ab74c505bb96752119937f152
+
+services:
+  peering-manager:
+    image: *pm-image
+    restart: always
+    environment: *pm-secrets
+    networks:
+      - default
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.middlewares.peeringmanager-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
+      - "traefik.http.middlewares.peeringmanager-headers.headers.customrequestheaders.X-Forwarded-Port=443"
+      - "traefik.http.routers.peeringmanager-secure.entrypoints=https"
+      - "traefik.http.routers.peeringmanager-secure.rule=Host(`peeringmanager.ov.ffmuc.net`)"
+      - "traefik.http.routers.peeringmanager-secure.middlewares=peeringmanager-headers"
+      - "traefik.http.routers.peeringmanager-secure.tls=true"
+      - "traefik.http.routers.peeringmanager-secure.tls.certresolver=http"
+      - "traefik.http.routers.peeringmanager-secure.service=peeringmanager"
+      - "traefik.http.services.peeringmanager.loadbalancer.server.port=8080"
+      - "traefik.docker.network=proxy"
+  rqworker:
+    image: *pm-image
+    restart: always
+    environment: *pm-secrets
+  # Only with --profile external-scheduler (1.11 runs both tasks in rqworker).
+  housekeeping:
+    image: *pm-image
+    restart: always
+    environment: *pm-secrets
+  peeringdb-sync:
+    image: *pm-image
+    restart: always
+    environment: *pm-secrets
+
+  postgres:
+    # PostgreSQL 18 layout (data in 18/docker below the mount); !override drops the base file's mount.
+    image: docker.io/postgres:18.7-alpine@sha256:b6972e1115a4ff8eba5d7f7d19184926d1e16d7d1136ae1e1a7ebf286da0f015
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes: !override
+      - /srv/docker/peeringmanager-postgres18:/var/lib/postgresql
+
+  redis:
+    restart: always
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+  redis-cache:
+    restart: always
+    environment:
+      REDIS_PASSWORD: ${REDIS_CACHE_PASSWORD}
+
+networks:
+  proxy:
+    external: true

@@ -1,0 +1,72 @@
+---
+# The database and admin passwords come from Komodo. The other settings are in
+# env/keycloak.env.
+volumes:
+  postgres_data:
+    driver: local
+
+services:
+  postgres:
+    image: postgres:18.7-alpine@sha256:b6972e1115a4ff8eba5d7f7d19184926d1e16d7d1136ae1e1a7ebf286da0f015
+    restart: always
+    user: "70:70"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/run/postgresql
+    volumes:
+      - /srv/docker/keycloak/data18:/var/lib/postgresql
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.2@sha256:c68e286cacd87b942ac1939a0a1481461109d6acd3a57dc496969a319a76bbf0
+    restart: unless-stopped
+    entrypoint: ["/opt/keycloak/bin/kc.sh", "start", "--proxy-headers", "xforwarded"]
+    volumes:
+      # login themes (shared ffmuc + one per realm), read-only bind mounts: a Komodo pull updates the files, Keycloak caches themes so a restart is needed
+      # (komodo-stack.sh docker07-keycloak restart); browsers cache CSS for 30 days, so bump ?v= in theme.properties
+      - ./themes/ffmuc:/opt/keycloak/themes/ffmuc:ro
+      - ./themes/ffmuc-internal:/opt/keycloak/themes/ffmuc-internal:ro
+      - ./themes/ffmuc-member:/opt/keycloak/themes/ffmuc-member:ro
+      - ./themes/ffmuc-chat:/opt/keycloak/themes/ffmuc-chat:ro
+      # ALTCHA registration provider (realm chat): the JAR is placed by the Salt state `keycloak` (pinned URL + sha256).
+      # `start` (not --optimized) rebuilds the provider index at boot.
+      - /srv/docker/keycloak/providers:/opt/keycloak/providers:ro
+    env_file:
+      - env/keycloak.env
+    environment:
+      KC_DB_PASSWORD: ${DB_PASSWORD}
+      KEYCLOAK_ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      KC_PROXY_TRUSTED_ADDRESSES: "10.8.0.29,10.8.0.30,10.8.0.39,10.8.0.40"  # HAProxy webfrontend03-06
+      KC_FEATURES: authorization,token-exchange,docker,impersonation,scripts,web-authn,client-policies,parameterized-scopes
+      # CVE-2026-114938 (Java4Shell) stopgap: kc.sh appends this to its default JAVA_OPTS.
+      # Remove when the image ships a fixed JDK.
+      JAVA_OPTS_APPEND: "-XX:-UseBASE64Intrinsics"
+    ports:
+      - "10.8.0.16:8081:8080"  # Nebula only, haproxy on the webfrontends
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf \"GET /realms/master HTTP/1.0\\r\\n\\r\\n\" >&3 && head -n1 <&3 | grep -q \" 200 \""]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 2m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 3g

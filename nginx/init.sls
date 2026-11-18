@@ -1,7 +1,9 @@
 ###
 # nginx
 ###
-{%- set role = salt['pillar.get']('netbox:role:name', salt['pillar.get']('netbox:role:name')) %}
+{#- Default to '' rather than to the same lookup again: an unset role made
+    this None, and `'... ' in None` aborts the render with a TypeError. #}
+{%- set role = salt['pillar.get']('netbox:role:name', '') or '' %}
 {% set tags = salt['pillar.get']('netbox:tag_list', []) %}
 {% if not "jitsi meet" in role and ("webserver" in role or "webserver" in tags) %}
 
@@ -10,10 +12,13 @@
 {% if behind_haproxy %}
 {% set sslPort = 8843 %}{# not enabled during testing #}
 {% endif %}
+{# behind HAProxy nginx only answers on loopback, so nothing bypasses HAProxy's filters #}
+{% set sslListen = ('127.0.0.1:' ~ sslPort) if behind_haproxy else (sslPort | string) %}
+{% set sslListen6 = ('[::1]:' ~ sslPort) if behind_haproxy else ('[::]:' ~ sslPort) %}
 
 nginx-repo-key:
   cmd.run:
-    - name: "curl https://nginx.org/keys/nginx_signing.key | gpg --dearmor -o /usr/share/keyrings/nginx-archive-keyring.gpg"
+    - name: "curl -fsSL https://nginx.org/keys/nginx_signing.key | gpg --batch --yes --dearmor -o /usr/share/keyrings/nginx-archive-keyring.gpg.tmp && mv /usr/share/keyrings/nginx-archive-keyring.gpg.tmp /usr/share/keyrings/nginx-archive-keyring.gpg"
     - creates: /usr/share/keyrings/nginx-archive-keyring.gpg
 
 /etc/apt/sources.list.d/nginx.list:
@@ -24,9 +29,11 @@ nginx-repo-key:
     - require:
       - cmd: nginx-repo-key
 
+{%- set nginx_pkg_version = salt['config.get']('netbox:config_context:nginx:version', '1.30.6-1~' ~ grains.oscodename) %}
 nginx:
   pkg.installed:
     - name: nginx
+    - version: '{{ nginx_pkg_version }}'
     - require:
       - pkgrepo: /etc/apt/sources.list.d/nginx.list
   service.running:
@@ -42,6 +49,30 @@ nginx-configtest:
   cmd.run:
     - name: /usr/sbin/nginx -t
 
+{# On the webfrontends /etc/resolv.conf points at the anycast resolvers, which are answered by the local dnsdist.
+   At boot nginx started before dnsdist, could not resolve its proxy_pass upstreams (e.g. docker04.ov.ffmuc.net)
+   and failed for good (Restart=no), so haproxy's "servers" backend answered 503 until nginx was started by hand. #}
+nginx-systemd-ordering:
+  file.managed:
+    - name: /etc/systemd/system/nginx.service.d/ffmuc-ordering.conf
+    - makedirs: True
+    - contents: |
+        # Managed by Salt (nginx/init.sls)
+        [Unit]
+        After=dnsdist.service pdns-recursor.service nebula.service
+        StartLimitIntervalSec=300
+        StartLimitBurst=30
+
+        [Service]
+        Restart=on-failure
+        RestartSec=5s
+
+nginx-systemd-daemon-reload:
+  cmd.run:
+    - name: systemctl daemon-reload
+    - onchanges:
+      - file: nginx-systemd-ordering
+
 # Disable default configuration
 /etc/nginx/sites-enabled/default:
   file.absent:
@@ -55,11 +86,6 @@ nginx-configtest:
     - watch_in:
       - cmd: nginx-configtest
 
-{% if salt["service.available"]("nginx") %}
-{% set nginx_version = salt["pkg.info_installed"]("nginx").get("nginx", {}).get("version","").split("-")[0] %}
-{% else %}
-{% set nginx_version = "1.26.2" %}{# current on 02.11.2020 #}
-{% endif %}
 
 
 /etc/nginx/nginx.conf:
@@ -132,6 +158,8 @@ nginx-configtest:
         domain: {{ domain }}
         behind_haproxy: {{ behind_haproxy }}
         sslPort: {{ sslPort }}
+        sslListen: "{{ sslListen }}"
+        sslListen6: "{{ sslListen6 }}"
     - template: jinja
     - require:
       - pkg: nginx
@@ -144,6 +172,33 @@ nginx-configtest:
     - source: salt://nginx/files/recorder.ffmuc.net
     - clean: True
 {% endif %}{# if domain == "recorder.ffmuc.net" #}
+
+{% if domain == "map.ffdon.net" %}
+/srv/www/map.ffdon.net:
+  file.directory:
+    - user: deploy-map
+    - group: nogroup  # as /srv/www/map.ffmuc.net; deploy-map is created by hand, not by Salt
+    - mode: '0755'
+    - makedirs: True
+{% endif %}{# if domain == "map.ffdon.net" #}
+
+{% if domain == "apt.ffmuc.net" %}
+{% for old in ["nebula", "systemd-packages", "ifupdown2_1.2.8-1_all.deb",
+               "jitsi-videobridge2_2.1-394-g36698039-1_all.deb", "yanic_1.2.1-1_amd64.deb", "yanic_1.5.2-2_amd64.deb",
+               "yanic_1.8.3-2_amd64.deb"] %}
+/srv/www/apt.ffmuc.net/{{ old }}:
+  file.absent
+{% endfor %}
+{% for n in range(17, 29) %}
+/srv/www/apt.ffmuc.net/yanic-0.0.2-{{ n }}.deb:
+  file.absent
+{% endfor %}
+
+/var/cache/nginx-apt:
+  file.absent:
+    - require:
+      - file: /etc/nginx/sites-enabled/apt.ffmuc.net.conf
+{% endif %}{# if domain == "apt.ffmuc.net" #}
 
 {% endfor %}{# domain #}
 

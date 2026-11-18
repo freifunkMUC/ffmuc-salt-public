@@ -1,19 +1,20 @@
 #
 # Setup docker.io
 #
-{%- set role = salt['pillar.get']('netbox:role:name', salt['pillar.get']('netbox:role:name')) %}
+{#- Default to '' rather than to the same lookup again: an unset role made
+    this None, and `'docker' in None` aborts the render with a TypeError. #}
+{%- set role = salt['pillar.get']('netbox:role:name', '') or '' %}
 
 {% if 'docker' in role or 'mailserver' in role or 'roadwarrior' in role %}
 docker-repo-key:
   cmd.run:
-    - name: "curl https://download.docker.com/linux/{{ grains.lsb_distrib_id | lower }}/gpg | gpg --dearmor -o /usr/share/keyrings/docker-keyring.gpg"
+    - name: "curl -fsSL https://download.docker.com/linux/{{ grains.lsb_distrib_id | lower }}/gpg | gpg --batch --yes --dearmor -o /usr/share/keyrings/docker-keyring.gpg.tmp && mv /usr/share/keyrings/docker-keyring.gpg.tmp /usr/share/keyrings/docker-keyring.gpg"
     - creates: /usr/share/keyrings/docker-keyring.gpg
 
 docker-repo:
   pkgrepo.managed:
-    - comments: "# Docker.io"
     - human_name: Docker.io repository
-    - name: "deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/docker-keyring.gpg] https://download.docker.com/linux/{{ grains.lsb_distrib_id | lower }}  {{ grains.oscodename }} stable"
+    - name: "deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/docker-keyring.gpg] https://download.docker.com/linux/{{ grains.lsb_distrib_id | lower }} {{ grains.oscodename }} stable"
     - dist: {{ grains.oscodename }}
     - file: /etc/apt/sources.list.d/docker.list
     - clean_file: True
@@ -30,9 +31,53 @@ docker-pkgs:
     - require:
       - pkgrepo: docker-repo
 
+{#- Containers that publish a port on the Nebula address (e.g. meet-reserve on docker04) fail at boot when dockerd
+   starts before nebula0 exists, and Docker does not retry the bind. nebula.service is Type=notify, so After= waits
+   until the tunnel is up; Wants= is ignored on hosts without nebula. #}
+docker-systemd-ordering:
+  file.managed:
+    - name: /etc/systemd/system/docker.service.d/ffmuc-nebula.conf
+    - makedirs: True
+    - contents: |
+        # Managed by Salt (docker/init.sls)
+        [Unit]
+        Wants=nebula.service
+        After=nebula.service
+
+{#- live-restore keeps containers running across a dockerd upgrade, but the new docker.socket is a new inode:
+   containers that bind-mount it (socket proxies, crowdsec) then fail until restarted. #}
+docker-socket-remount-script:
+  file.managed:
+    - name: /usr/local/sbin/docker-socket-remount
+    - source: salt://docker/files/docker-socket-remount.sh
+    - mode: "0755"
+
+docker-systemd-socket-remount:
+  file.managed:
+    - name: /etc/systemd/system/docker.service.d/ffmuc-socket-remount.conf
+    - makedirs: True
+    - contents: |
+        # Managed by Salt (docker/init.sls)
+        [Service]
+        ExecStartPost=-/usr/local/sbin/docker-socket-remount
+    - require:
+      - file: docker-socket-remount-script
+
+docker-systemd-daemon-reload:
+  module.run:
+    - service.systemctl_reload: []
+    - onchanges:
+      - file: docker-systemd-ordering
+      - file: docker-systemd-socket-remount
+
 {# limit log-file-size #}
 /etc/docker/daemon.json:
   file.managed:
+    - user: root
+    - group: root
+    - mode: "0644"
+    - require:
+      - pkg: docker-pkgs
     - contents: |
         {
           "log-driver": "json-file",
@@ -40,6 +85,7 @@ docker-pkgs:
             "max-size": "10m",
             "max-file": "3"
           },
+          "live-restore": true,
           "default-address-pools": [
             {
               "base": "172.17.0.0/12",
@@ -52,6 +98,10 @@ docker-pkgs:
           ]
         }
 
+{#- Deliberately no service watch on daemon.json: restarting dockerd would
+    restart every container on the host. Changes here take effect on the
+    next manual docker restart or reboot. With live-restore on, that restart
+    (and a dockerd upgrade) leaves the containers running. #}
 /usr/local/bin/docker-compose:
   file.absent
 {% endif  %}

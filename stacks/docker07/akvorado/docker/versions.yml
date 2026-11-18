@@ -1,0 +1,54 @@
+---
+services:
+  # main services
+  kafka:
+    image: apache/kafka:4.4.0@sha256:833b867a9585a141da455dc2b57431c65cbccb27f11c91f694444cca9f777e0f # \d+\.\d+\.\d+
+  redis:
+    image: valkey/valkey:9.0@sha256:7e1deda01b64ece3167d370ab5be3452d29734feec22cbcbc69b3a64f6859d6d # \d+\.\d+
+  clickhouse:
+    image: clickhouse/clickhouse-server:26.8 # \d+\.[38]
+  clickhouse-keeper:
+    image: clickhouse/clickhouse-keeper:26.8@sha256:d1aaac927e68cfe4e97d6ca2a420b51608a2e230019e8b5bce873b60556f2522 # \d+\.[38]
+  traefik:
+    image: traefik:v3.7@sha256:b7b1b31e6440de0b1f7c4e0f6cf0a0f3f004866761d30c025fe00c80daaf7d9c # v\d+\.\d+
+  maxmind-geoipupdate:
+    image: ghcr.io/maxmind/geoipupdate:v8@sha256:51e70dd6f16cd3e4d845ac02d09940b10772a75b9d741427d235a78570923c1d
+  ipinfo-geoipupdate:
+    image: quay.io/akvorado/ipinfo-geoipupdate:latest
+    # image: ghcr.io/akvorado/ipinfo-geoipupdate:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.ipinfo-geoipupdate
+  akvorado:
+    image: quay.io/akvorado/akvorado:main@sha256:e9225549aa999ce2d4a195b1e6681344eec6618c20811e3e353fd5dcad3d7bde
+    # image: ghcr.io/akvorado/akvorado:main
+
+  # observability
+  grafana:
+    image: grafana/grafana-oss:13.0.2@sha256:5dad0df181cb644a14e13617b913b261a54f7d4fd4510721dba420929f35bea2 # \d+\.\d+\.\d+
+  alloy:
+    image: grafana/alloy:v1.22.0@sha256:9acc2529bc1edb7f5b2bd801dd8334ebc80c158e3a9e5526ecd7c9a273d43189 # v\d+\.\d+\.\d+
+  loki:
+    image: grafana/loki:3.7@sha256:b43c257ccfc925d4a50b8717cac61a3b51df8c48d01847936057e5c4075a24a7 # \d+\.\d+
+  prometheus:
+    image: prom/prometheus:v3.16.0@sha256:e04987641b57704f408e31f6373ba4138ecf27cb4a165d24aabb6c38fddd0f06 # v\d+\.\d+\.\d+
+  node-exporter:
+    image: prom/node-exporter:v1.12.1@sha256:1b4e4438faca4dd7e001dd445d161a4a2091b0fededa84093b3a8dfeae1f1be0 # v\d+\.\d+\.\d+
+  cadvisor:
+    image: ghcr.io/google/cadvisor:v0.61.0@sha256:448ca9b1ce0d3f2eb7563938030908a4b81ddfe959a3fe5e62f691fd4b2cb417 # v\d+\.\d+\.\d+
+  kafka-ui:
+    image: kafbat/kafka-ui:v1.5.0@sha256:7cda86a33344160309fdb65146332e4da65db81a945614f2fe32e210803f6fd1 # v\d+\.\d+\.\d+
+    # image: ghcr.io/kafbat/kafka-ui:v1.4.2
+    # image: ecr-public.aws.com/kafbat/kafka-ui:v1.4.2
+  vector:
+    image: timberio/vector:0.58.X-alpine@sha256:228bf41ffa5beaa18214a2e82ad80de0a61b446ae407a37b0a48fb2ebfa464b8 # \d+\.\d+\.X-alpine
+
+  # for tests
+  srlinux:
+    image: ghcr.io/nokia/srlinux:26.7.2@sha256:0096fe3ebcafabb7253492e2060425fe027a168e0e066766d1e85efbb0b48be8
+  postgres:
+    image: postgres:18@sha256:2ea8630df176ad090ec92136dee850397c5af8781e4bcf2e4162593691c61bbc # \d+
+  mysql:
+    image: mariadb:13@sha256:54f493ea0d60b621a5bff84e5b20100f8b86b6efa6b79158e04756c5194a5e4d # \d+
+  mock-oauth2-server:
+    image: ghcr.io/navikt/mock-oauth2-server:3.0.3@sha256:876229d27fc99d7b1ab00dcd64a59a8c10826a6260b68f042558d83a0323dfb7 # \d+\.\d+\.\d+

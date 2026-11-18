@@ -1,0 +1,84 @@
+---
+services:
+  mongo:
+    image: mongo:8.0.34-noble@sha256:3c64937121b9437095921c4bb2569911084c05f7b88e4a263d62a8959d2b2399
+    labels:
+      komodo.skip: ""
+    command: --quiet --wiredTigerCacheSizeGB 0.25
+    restart: unless-stopped
+    user: "999:999"
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 1g
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=komodo
+      - MONGO_INITDB_ROOT_PASSWORD=${KOMODO_DATABASE_PASSWORD}
+    volumes:
+      - /srv/docker/komodo/mongo/db:/data/db
+      - /srv/docker/komodo/mongo/configdb:/data/configdb
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - komodo
+
+  core:
+    image: ghcr.io/moghtech/komodo-core:2.3.4@sha256:91b2afd7b3bb2abea0ebd3046d65ec457eb1f3d505868d1d60cb0f8562490ef9
+    init: true
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      - TZ=Europe/Berlin
+      - KOMODO_HOST=${KOMODO_HOST}
+      - KOMODO_TITLE=FFMUC Komodo
+      - KOMODO_DATABASE_ADDRESS=mongo:27017
+      - KOMODO_DATABASE_USERNAME=komodo
+      - KOMODO_DATABASE_PASSWORD=${KOMODO_DATABASE_PASSWORD}
+      - KOMODO_JWT_SECRET=${KOMODO_JWT_SECRET}
+      - KOMODO_WEBHOOK_SECRET=${KOMODO_WEBHOOK_SECRET}
+      - KOMODO_LOCAL_AUTH=false
+      - KOMODO_DISABLE_LOCAL_USER_REGISTRATION=true
+      - KOMODO_ENABLE_NEW_USERS=false
+      - KOMODO_DISABLE_NON_ADMIN_CREATE=true
+      - KOMODO_OIDC_ENABLED=true
+      - KOMODO_OIDC_PROVIDER=${KOMODO_OIDC_PROVIDER}
+      - KOMODO_OIDC_CLIENT_ID=${KOMODO_OIDC_CLIENT_ID}
+      - KOMODO_OIDC_CLIENT_SECRET=${KOMODO_OIDC_CLIENT_SECRET}
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=proxy
+      - traefik.http.routers.komodo-secure.entrypoints=https
+      - traefik.http.routers.komodo-secure.rule=Host(`komodo.ov.ffmuc.net`)
+      - traefik.http.routers.komodo-secure.tls=true
+      - traefik.http.routers.komodo-secure.tls.certresolver=http
+      - traefik.http.services.komodo.loadbalancer.server.port=9120
+    volumes:
+      - /srv/docker/komodo/keys:/config/keys
+      - /srv/docker/komodo/backups:/backups
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:9120/version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    networks:
+      - komodo
+      - proxy
+
+networks:
+  proxy:
+    external: true
+  komodo:
+    ipam:
+      config:
+        - subnet: 172.31.255.0/28

@@ -4,16 +4,54 @@
 jicofo {
     bridge {
         brewery-jid = "{{ jitsi.videobridge.brewery_room }}@{{ jitsi.xmpp.brewery_domain }}"
-        selection-strategy = {{ jitsi.jicofo.bridge_selection_strategy }}
+        selection-strategy = {{ jitsi.visitors.bridge_selection_strategy if jitsi.visitors.enabled and jitsi.visitors.bridge_selection_strategy else jitsi.jicofo.bridge_selection_strategy }}
+        {%- if jitsi.visitors.enabled %}
+        {%- if jitsi.visitors.visitor_selection_strategy %}
+        visitor-selection-strategy = {{ jitsi.visitors.visitor_selection_strategy }}
+        {%- endif %}
+        {%- if jitsi.visitors.participant_selection_strategy %}
+        participant-selection-strategy = {{ jitsi.visitors.participant_selection_strategy }}
+        {%- endif %}
+        {%- if jitsi.visitors.topology_strategy %}
+        topology-strategy = {{ jitsi.visitors.topology_strategy }}
+        {%- endif %}
+        {%- endif %}
         health-checks {
             enabled = true
-            max-check-duration = 60 seconds
+        }
+        # spread join bursts (large meetings) over bridges instead of piling onto one
+        max-bridge-participants-per-interval = 30
+        max-bridge-participants-interval = 1 minute
+        ice-failure-detection {
+            enabled = true
+        }
+        # move endpoints off bridges whose stress stays above 0.9
+        load-redistribution {
+            enabled = true
         }
     }
     conference {
         shared-document {
             use-random-name = false
         }
+        # show an "please update" hint to clients lacking features (soft only, nobody is blocked)
+        client-requirements {
+            enabled = true
+            enforce = false
+            requirements {
+                SOURCE_NAMES {
+                    level = "soft"
+                    details = "Please update your browser or Jitsi Meet app."
+                }
+                SSRC_REWRITING_V1 {
+                    level = "soft"
+                    details = "Please update your browser or Jitsi Meet app."
+                }
+            }
+        }
+    }
+    health {
+        enabled = true
     }
 {%- if jitsi.jibri_enabled %}{# not working yet #}
     jibri {
@@ -21,9 +59,20 @@ jicofo {
         pending-timeout = 90 seconds
     }
 {% endif %}
+{%- if jitsi.transcription.enabled %}
+    jigasi {
+        brewery-jid = "{{ jitsi.transcription.brewery_room }}@{{ jitsi.xmpp.brewery_domain }}"
+    }
+{%- endif %}
+{%- if jitsi.visitors.enabled %}
+    visitors {
+        enabled = true
+        max-participants = {{ jitsi.visitors.max_participants }}
+        max-visitors-per-node = {{ jitsi.visitors.max_visitors_per_node }}
+    }
+{%- endif %}
     octo {
         enabled = true
-        id = 42
     }
     xmpp {
         client {
@@ -38,5 +87,22 @@ jicofo {
             disable-certificate-verification = true
         }
         trusted-domains: [ "recorder.meet.ffmuc.net" ]
+        {%- if jitsi.visitors.enabled %}
+        visitors {
+        {%- for i in range(1, jitsi.visitors.vnodes | int + 1) %}
+            v{{ i }} {
+                enabled = true
+                conference-service = conference.v{{ i }}.{{ jitsi.visitors.domain }}
+                hostname = 127.0.0.1
+                port = 5222{{ i }}
+                domain = auth.{{ jitsi.visitors.domain }}
+                xmpp-domain = v{{ i }}.{{ jitsi.visitors.domain }}
+                username = {{ jitsi.jicofo.username }}
+                password = "{{ jitsi.jicofo.password }}"
+                disable-certificate-verification = true
+            }
+        {%- endfor %}
+        }
+        {%- endif %}
     }
 }

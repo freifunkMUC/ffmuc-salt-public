@@ -1,0 +1,64 @@
+#!/usr/bin/python3
+#
+# Icinga plugin: size and age of the mail queue on mail01.
+#
+# Reads the state file written by ffmuc-mailqueue-snapshot (root timer, no
+# docker access for Icinga). WARNING/CRITICAL on the number of queued
+# messages, CRITICAL when the oldest deferred message is too old, UNKNOWN when
+# the file is missing, unreadable or stale.
+#
+
+import argparse
+import sys
+import time
+
+OK, WARNING, CRITICAL, UNKNOWN = 0, 1, 2, 3
+STATUS = {OK: "OK", WARNING: "WARNING", CRITICAL: "CRITICAL", UNKNOWN: "UNKNOWN"}
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Check the mail queue state file")
+    parser.add_argument("--file", default="/var/lib/icinga2/mailqueue.state")
+    parser.add_argument("-w", "--warning", type=int, default=50, help="messages")
+    parser.add_argument("-c", "--critical", type=int, default=200, help="messages")
+    parser.add_argument("--max-age", type=int, default=3600,
+                        help="CRITICAL when the oldest deferred message is older (seconds)")
+    parser.add_argument("--stale", type=int, default=900,
+                        help="UNKNOWN when the file is older (seconds)")
+    return parser.parse_args()
+
+
+def finish(code, text, perf=""):
+    print(f"MAILQUEUE {STATUS[code]} - {text}" + (f" | {perf}" if perf else ""))
+    sys.exit(code)
+
+
+def main():
+    args = parse_args()
+    try:
+        with open(args.file) as fh:
+            data = dict(line.strip().split("=", 1) for line in fh if "=" in line)
+        stamp = int(data["timestamp"])
+        messages = int(data["messages"])
+        oldest = int(data["oldest_deferred_seconds"])
+    except (OSError, KeyError, ValueError) as err:
+        finish(UNKNOWN, f"cannot read {args.file}: {type(err).__name__}")
+
+    age = int(time.time()) - stamp
+    if age > args.stale:
+        finish(UNKNOWN, f"state file is {age // 60} min old")
+
+    perf = (
+        f"messages={messages};{args.warning};{args.critical};0 "
+        f"oldest_deferred={oldest}s;;{args.max_age};0"
+    )
+    text = f"{messages} messages, oldest deferred {oldest // 60} min"
+    if messages >= args.critical or oldest >= args.max_age:
+        finish(CRITICAL, text, perf)
+    if messages >= args.warning:
+        finish(WARNING, text, perf)
+    finish(OK, text, perf)
+
+
+if __name__ == "__main__":
+    main()

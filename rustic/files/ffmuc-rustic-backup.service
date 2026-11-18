@@ -1,0 +1,10 @@
+[Unit]
+Description=FFMuc rustic Backup
+
+[Service]
+Type=oneshot
+Nice=19
+IOSchedulingClass=idle
+ExecStart=/usr/local/bin/rustic backup
+ExecStart=/usr/local/bin/rustic forget
+ExecStartPost=/usr/bin/touch /var/lib/ffmuc-rustic-last-success

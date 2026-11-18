@@ -1,0 +1,10 @@
+# Failed procedures (failure_alert) go to Mattermost via its Slack-compatible incoming webhook.
+# The URL is the Komodo Variable MATTERMOST_WEBHOOK_URL (secret), resolved when sending; never in Git.
+[[alerter]]
+name = "mattermost-procedures"
+tags = ["ffmuc"]
+[alerter.config]
+enabled = true
+endpoint.type = "Slack"
+endpoint.params.url = "[[MATTERMOST_WEBHOOK_URL]]"
+alert_types = ["ProcedureFailed"]

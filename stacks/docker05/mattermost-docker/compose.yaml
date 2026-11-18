@@ -1,0 +1,59 @@
+---
+# Based on github.com/mattermost/docker (docker-compose.yml). The values of
+# the upstream .env file are written in here. Only POSTGRES_PASSWORD comes
+# from the Komodo Stack environment.
+services:
+  postgres:
+    image: postgres:18.7-alpine@sha256:b6972e1115a4ff8eba5d7f7d19184926d1e16d7d1136ae1e1a7ebf286da0f015
+    restart: unless-stopped
+    user: "70:70"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 2G
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/run/postgresql
+    volumes:
+      - /srv/docker/postgres18-mattermost:/var/lib/postgresql
+    environment:
+      TZ: Europe/Berlin
+      POSTGRES_USER: mmuser
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: mattermost
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+  mattermost:
+    depends_on:
+      - postgres
+    image: mattermost/mattermost-team-edition:12.1.0@sha256:35927b9c535a9eb74f0e45385d3fe5d8308b16e0464031f157a834da8af3ee73
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 4G
+    read_only: false
+    tmpfs:
+      - /tmp
+    volumes:
+      - /srv/docker/mattermost/config:/mattermost/config:rw
+      - /srv/docker/mattermost/data:/mattermost/data:rw
+      - /srv/docker/mattermost/logs:/mattermost/logs:rw
+      - /srv/docker/mattermost/plugins:/mattermost/plugins:rw
+      - /srv/docker/mattermost/client-plugins:/mattermost/client/plugins:rw
+      - /srv/docker/mattermost/bleve-indexes:/mattermost/bleve-indexes:rw
+    environment:
+      TZ: Europe/Berlin
+      MM_SQLSETTINGS_DRIVERNAME: postgres
+      MM_SQLSETTINGS_DATASOURCE: postgres://mmuser:${POSTGRES_PASSWORD}@postgres:5432/mattermost?sslmode=disable&connect_timeout=10
+      MM_BLEVESETTINGS_INDEXDIR: /mattermost/bleve-indexes
+      MM_SERVICESETTINGS_SITEURL: https://chat.ffmuc.net
+      # One digest per interval instead of one mail per mention.
+      MM_EMAILSETTINGS_ENABLEEMAILBATCHING: "true"
+    cap_drop:
+      - ALL

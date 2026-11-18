@@ -2,6 +2,10 @@
 # SSL Certificates
 #
 
+{#- Per host via NetBox config context certs: issuer (cfssl|x509), trust_v2 (bool) #}
+{%- set issuer = salt['pillar.get']('netbox:config_context:certs:issuer', 'cfssl') %}
+{%- set trust_v2 = salt['pillar.get']('netbox:config_context:certs:trust_v2', false) %}
+
 openssl:
   pkg.installed:
     - name: openssl
@@ -14,6 +18,9 @@ update_ca_certificates:
     - name: /usr/sbin/update-ca-certificates
     - onchanges:
       - file: /usr/local/share/ca-certificates/ffmuc-cacert.crt
+      {%- if trust_v2 and 'BEGIN CERTIFICATE' in salt['cp.get_file_str']('salt://certs/ffmuc-cacert-v2.pem') %}
+      - file: /usr/local/share/ca-certificates/ffmuc-cacert-v2.crt
+      {%- endif %}
 
 generate-dhparam:
   cmd.run:
@@ -37,9 +44,105 @@ generate-dhparam:
     - watch_in:
       - cmd: update_ca_certificates
 
+{% if trust_v2 and 'BEGIN CERTIFICATE' not in salt['cp.get_file_str']('salt://certs/ffmuc-cacert-v2.pem') %}
+# certs:trust_v2 is set but salt://certs/ffmuc-cacert-v2.pem is still the placeholder: no trust changes.
+ffmuc-cacert-v2-missing:
+  test.fail_without_changes:
+    - name: certs:trust_v2 needs a PEM certificate in certs/ffmuc-cacert-v2.pem
+{% elif trust_v2 %}
+# Second root (x509_v2 CA) next to the current one; placeholder until the CA exists.
+/usr/local/share/ca-certificates/ffmuc-cacert-v2.crt:
+  file.managed:
+    - source: salt://certs/ffmuc-cacert-v2.pem
+    - user: root
+    - group: root
+    - mode: "0644"
+    - watch_in:
+      - cmd: update_ca_certificates
+
+# Bundle old + new root for consumers that read a single CA file (icinga2 ca.crt).
+# Outside /etc/ssl/certs, which update-ca-certificates rehashes.
+/etc/ssl/ffmuc-ca-bundle.pem:
+  file.managed:
+    - contents: |
+        {{ salt['cp.get_file_str']('salt://certs/ffmuc-cacert.pem')|indent(8) }}
+        {{ salt['cp.get_file_str']('salt://certs/ffmuc-cacert-v2.pem')|indent(8) }}
+    - user: root
+    - group: root
+    - mode: "0644"
+{% endif %}{# trust_v2 #}
+
+{% if issuer == 'x509' %}
+#
+# Internal certificate via x509_v2 (host-generated key, signed by the CA minion)
+#
+# Key and certificate are created at staging paths and only copied to the consumer
+# paths after signing succeeded, so a failed signing leaves the current pair untouched.
+{%- set hid = grains['id'] %}
+{%- if 'BEGIN CERTIFICATE' not in (salt['cp.get_file_str']('salt://certs/ffmuc-int-v2.pem') or '') %}
+ffmuc-int-v2-missing:
+  test.fail_without_changes:
+    - name: "certs:issuer x509 needs the intermediate in certs/ffmuc-int-v2.pem"
+{%- else %}
+# Intermediate that signs the leaf, appended to the delivered certificate (peers verify against the root only).
+/etc/ssl/ffmuc-int-v2.pem:
+  file.managed:
+    - source: salt://certs/ffmuc-int-v2.pem
+    - user: root
+    - group: root
+    - mode: "0644"
+
+/etc/ssl/private/{{ hid }}.x509.key.pem:
+  x509.private_key_managed:
+    - algo: ec
+    - keysize: 256
+    - new: false
+    - user: root
+    - group: ssl-cert
+    - mode: "0440"
+    - require:
+      - pkg: ssl-cert
+
+/etc/ssl/certs/{{ hid }}.x509.cert.pem:
+  x509.certificate_managed:
+    - ca_server: {{ salt['pillar.get']('netbox:config_context:certs:ca_server', 'docker05.in.ffmuc.net') }}
+    - signing_policy: host-{{ hid }}
+    - private_key: /etc/ssl/private/{{ hid }}.x509.key.pem
+    - append_certs:
+      - /etc/ssl/ffmuc-int-v2.pem
+    - days_remaining: 30
+    - user: root
+    - group: root
+    - mode: "0644"
+    - require:
+      - x509: /etc/ssl/private/{{ hid }}.x509.key.pem
+      - file: /etc/ssl/ffmuc-int-v2.pem
+
+/etc/ssl/private/{{ hid }}.key.pem:
+  file.managed:
+    - source: /etc/ssl/private/{{ hid }}.x509.key.pem
+    - user: root
+    - group: ssl-cert
+    - mode: "0440"
+    - show_changes: False  # never print the private key
+    - require:
+      - x509: /etc/ssl/certs/{{ hid }}.x509.cert.pem
+
+/etc/ssl/certs/{{ hid }}.cert.pem:
+  file.managed:
+    - source: /etc/ssl/certs/{{ hid }}.x509.cert.pem
+    - user: root
+    - group: root
+    - mode: "0644"
+    - require:
+      - file: /etc/ssl/private/{{ hid }}.key.pem
+{%- endif %}{# intermediate present #}
+{% else %}{# issuer cfssl #}
 {%- set cert_validity = salt['cmd.run']('openssl x509 -noout -checkend 2592000 -in /etc/ssl/certs/'~ grains['id']  ~'.cert.pem') %}
+{#- A certificate from the x509 issuer is replaced at once, so switching back to cfssl is a rollback #}
+{%- set cert_issuer = salt['cmd.run']('openssl x509 -noout -issuer -in /etc/ssl/certs/'~ grains['id']  ~'.cert.pem') %}
 {%- if salt["network.ping"]("ca.ov.ffmuc.net", return_boolean=True, timeout=10) %}
-{% if 'Certificate will not expire' not in cert_validity %}
+{% if 'Certificate will not expire' not in cert_validity or 'FFMUC Internal CA' in cert_issuer %}
 {%- set cert_bundle = salt['cfssl_certs.request_cert']('https://ca.ov.ffmuc.net', grains['id']) %}
 #
 # Internal certificate from FFMUC CA
@@ -61,26 +164,33 @@ generate-dhparam:
     - user: root
     - group: ssl-cert
     - mode: "0440"
+    - show_changes: False  # never print the private key
     - require:
       - pkg: ssl-cert
 {% endif %}{# Certificate wont expire #}
 {% endif %}{# can ping ca #}
+{% endif %}{# issuer #}
 
-{%- set role = salt['pillar.get']('netbox:role:name', salt['pillar.get']('netbox:role:name')) %}
+{#- Default to '' rather than to the same lookup again: an unset role made
+    this None, and `'...' in None` aborts the render with a TypeError. #}
+{%- set role = salt['pillar.get']('netbox:role:name', '') or '' %}
 
 #
-# Traefik ACME DNS update script for docker hosts
+# Traefik ACME DNS update script for docker hosts and mail01 (mailserver role,
+# Traefik under /opt/containers/traefik, see stacks/mail01/traefik)
 #
-{% if "docker" in role %}
-/srv/docker/traefik/update-dns.sh:
+{% if "docker" in role or "mailserver" in role %}
+{% set traefik_dir = '/opt/containers/traefik' if "mailserver" in role else '/srv/docker/traefik' %}
+{{ traefik_dir }}/update-dns.sh:
   file.managed:
     - source: salt://certs/files/traefik-dns-update.sh.jinja
     - template: jinja
     - mode: "0700"
-{% endif %}{# if "docker" in role #}
+{% endif %}{# if "docker" in role or "mailserver" in role #}
 
 {% set gcore_token = salt['pillar.get']('netbox:config_context:gcore:api_token') %}
-{% set cloudflare_token = salt['pillar.get']('netbox:config_context:cloudflare:api_token') %}
+{% from "certs/ddr_cert.jinja" import ddr_responder, ddr_staging, ddr_issue, ddr_cert_name, ddr_dns_names, ddr_ips with context %}
+{% set cloudflare_token = salt['config.get']('netbox:config_context:cloudflare:api_token') %}
 
 {% if "webserver-external" in role %}
 # Preparation / install deploy hooks
@@ -129,10 +239,11 @@ python3-venv:
 python3-pip:
   pkg.installed
 
+# Recreate the venv when certbot no longer imports (e.g. Python changed by a release upgrade)
 certbot-venv:
   cmd.run:
-    - name: python3 -m venv /opt/certbot-venv
-    - creates: /opt/certbot-venv/bin/python3
+    - name: python3 -m venv --clear /opt/certbot-venv
+    - unless: /opt/certbot-venv/bin/python3 -c 'import certbot'
     - require:
       - pkg: python3-venv
 
@@ -140,7 +251,8 @@ certbot-venv-packages:
   pip.installed:
     - bin_env: /opt/certbot-venv/bin/pip
     - pkgs:
-      - certbot>=2.0.0
+      # DDR certificate ffmuc-dns needs >= 5.4: --ip-address and --preferred-profile (certs/ddr_cert.jinja)
+      - certbot>={{ '5.4' if ddr_responder else '2.0.0' }}
     - require:
       - cmd: certbot-venv
       - pkg: python3-pip
@@ -235,6 +347,120 @@ ffmuc-wildcard-cert:
       {% endif %}{# if "webserver-external" in role #}
 {% endif %}{# if ("webserver-external" in role or "jitsi meet" in role) and gcore_token #}
 
+{% if "webserver-external" in role and gcore_token and ddr_responder %}
+#
+# DDR certificate "ffmuc-dns" (RFC 9462): anycast resolver IPs + DoH/DoT/DoQ names.
+# Gated by NetBox config context ddr_cert, see certs/ddr_cert.jinja.
+# Names: DNS-01 (Gcore). IPs: HTTP-01, answered by haproxy on every webfrontend
+# from the peers table meet/acme (haproxy/haproxy.cfg).
+#
+{% set acme_hook = '/var/lib/cache/salt/ffmuc-dns-acme-hook.py' %}
+{% set acme_accounts = '/etc/letsencrypt/accounts' %}
+
+ffmuc-dns-acme-hook:
+  file.managed:
+    - name: {{ acme_hook }}
+    - source: salt://certs/files/ffmuc-dns-acme-hook.py
+    - makedirs: True
+    - mode: "0700"
+
+# One ACME account per node. haproxy needs the thumbprint of every account to answer HTTP-01.
+{% for acme_server, server_flag in [('acme-v02.api.letsencrypt.org', ''), ('acme-staging-v02.api.letsencrypt.org', '--staging')] %}
+ffmuc-dns-acme-account-{{ acme_server.split('.')[0] }}:
+  cmd.run:
+    - name: /opt/certbot-venv/bin/certbot register -n --agree-tos -m hilfe@ffmuc.net {{ server_flag }}
+    - unless: ls {{ acme_accounts }}/{{ acme_server }}/directory/*/private_key.json
+    - require:
+      - pip: certbot-venv-packages
+{% endfor %}
+
+# Publish the public account thumbprints (RFC 7638) in the Salt mine as "acme_thumbprints".
+# Only when they changed, so a highstate stays clean.
+{% set thumbprints_now = salt['ffmuc_acme.account_thumbprints']() if 'ffmuc_acme.account_thumbprints' in salt else [] %}
+{% set thumbprints_mine = (salt['mine.get'](grains['id'], 'acme_thumbprints', tgt_type='glob') or {}).get(grains['id']) %}
+ffmuc-dns-acme-thumbprints:
+  module.run:
+    - mine.send:
+      - acme_thumbprints
+      - mine_function: ffmuc_acme.account_thumbprints
+    - require:
+      - cmd: ffmuc-dns-acme-account-acme-v02
+      - cmd: ffmuc-dns-acme-account-acme-staging-v02
+{% if thumbprints_now and thumbprints_mine == thumbprints_now %}
+    - onchanges:
+      - cmd: ffmuc-dns-acme-account-acme-v02
+      - cmd: ffmuc-dns-acme-account-acme-staging-v02
+{% endif %}
+
+# dnsdist runs as _dnsdist (group ssl-cert) and must read the key of a new lineage
+/etc/letsencrypt/renewal-hooks/deploy/00-ffmuc-dns-permissions.sh:
+  file.managed:
+    - contents: |
+        #!/bin/sh
+        case "$RENEWED_LINEAGE" in
+          */{{ ddr_cert_name }}|*/{{ ddr_cert_name }}-staging)
+            key="$(readlink -f "$RENEWED_LINEAGE/privkey.pem")"
+            chgrp ssl-cert "$key" && chmod 0640 "$key"
+            ;;
+        esac
+    - mode: "0750"
+    - makedirs: True
+
+{% set ddr_lineages = [] %}
+{% if ddr_staging %}{% do ddr_lineages.append((ddr_cert_name ~ '-staging', '--staging')) %}{% endif %}
+{% if ddr_issue %}{% do ddr_lineages.append((ddr_cert_name, '')) %}{% endif %}
+{% for lineage, server_flag in ddr_lineages %}
+# Let's Encrypt "shortlived" profile (6 days, required for IP addresses). certbot renews
+# certificates with less than 10 days lifetime when half of it is left (or earlier via ARI).
+{{ lineage }}-cert:
+  cmd.run:
+    - name: >
+        /opt/certbot-venv/bin/certbot certonly -n --agree-tos -m hilfe@ffmuc.net {{ server_flag }}
+        --cert-name {{ lineage }}
+        --manual
+        --manual-auth-hook "{{ acme_hook }} auth"
+        --manual-cleanup-hook "{{ acme_hook }} cleanup"
+        --preferred-challenges dns,http
+        --preferred-profile shortlived
+        {%- for name in ddr_dns_names %}
+        -d "{{ name }}"
+        {%- endfor %}
+        {%- for ip in ddr_ips %}
+        --ip-address "{{ ip }}"
+        {%- endfor %}
+    # Valid for more than 2 days and SANs match (an address change triggers a new certificate)
+    - unless: >
+        /opt/certbot-venv/bin/python3 {{ acme_hook }} covers /etc/letsencrypt/live/{{ lineage }}/fullchain.pem 172800
+        {{ (ddr_dns_names + ddr_ips) | join(' ') }}
+    - require:
+      - file: ffmuc-dns-acme-hook
+      - file: dns_gcore_credentials
+      - pip: certbot-venv-gcore-plugin
+      - cmd: ffmuc-wildcard-cert
+      - module: ffmuc-dns-acme-thumbprints
+      - file: /etc/letsencrypt/renewal-hooks/deploy/00-ffmuc-dns-permissions.sh
+      - file: /etc/letsencrypt/renewal-hooks/deploy/01-reload-nginx.sh
+      - file: /etc/letsencrypt/renewal-hooks/deploy/02-reload-dnsdist-certs.sh
+      - file: /etc/letsencrypt/renewal-hooks/deploy/03-reload-haproxy.sh
+
+# certbot runs the deploy hooks only on renewal, so fix the key permissions after the first issuance
+{{ lineage }}-key-permissions:
+  cmd.run:
+    - name: /etc/letsencrypt/renewal-hooks/deploy/00-ffmuc-dns-permissions.sh
+    - env:
+      - RENEWED_LINEAGE: /etc/letsencrypt/live/{{ lineage }}
+    - onchanges:
+      - cmd: {{ lineage }}-cert
+{% endfor %}
+
+{% if not ddr_staging %}
+{{ ddr_cert_name }}-staging-cert-absent:
+  cmd.run:
+    - name: /opt/certbot-venv/bin/certbot delete -n --cert-name {{ ddr_cert_name }}-staging
+    - onlyif: test -e /etc/letsencrypt/renewal/{{ ddr_cert_name }}-staging.conf
+{% endif %}
+{% endif %}{# if "webserver-external" in role and gcore_token and ddr_responder #}
+
 
 {% if ("webserver-external" in role or "jitsi meet" in role) and cloudflare_token %}
 #
@@ -267,7 +493,9 @@ ffmuc-cloudflare-domains-cert:
         --dns-cloudflare-credentials /var/lib/cache/salt/dns_cloudflare_credentials.ini
         --dns-cloudflare-propagation-seconds=80
         --preferred-challenges dns --expand
-        -d "ffmeet.net"
+        -d "ffmeet.net" -d "*.ffmeet.net"
+        -d "ffmeet.de" -d "*.ffmeet.de"
+        -d "klassenkonferenz.de" -d "*.klassenkonferenz.de"
         -d "ffmuc.bayern"
         -d "*.ffmuc.bayern"
         -d "fnmuc.net"
@@ -281,7 +509,8 @@ ffmuc-cloudflare-domains-cert:
         -d "*.xn--freifunk-mnchen-8vb.de"
     - unless: >
         test -f /etc/letsencrypt/live/ffmuc-cloudflare/fullchain.pem &&
-        openssl x509 -noout -checkend 2592000 -in /etc/letsencrypt/live/ffmuc-cloudflare/fullchain.pem
+        openssl x509 -noout -checkend 2592000 -in /etc/letsencrypt/live/ffmuc-cloudflare/fullchain.pem &&
+        openssl x509 -noout -ext subjectAltName -in /etc/letsencrypt/live/ffmuc-cloudflare/fullchain.pem | grep -q 'DNS:\*.klassenkonferenz.de'
     - require:
       - pip: certbot-venv-cloudflare-plugin
       - file: dns_cloudflare_credentials
@@ -333,6 +562,13 @@ muenchen.freifunk.net-wildcard-cert:
         -d "wertingen.freifunk.net" -d "*.wertingen.freifunk.net"
         -d "donau-ries.freifunk.net" -d "*.donau-ries.freifunk.net"
         -d "augsburg.freifunk.net" -d "*.augsburg.freifunk.net"
+        -d "map.ffdon.net"
+        -d "map.freifunk-donau-ries.de"
+    - unless: >
+        test -f /etc/letsencrypt/live/muenchen.freifunk.net/fullchain.pem &&
+        openssl x509 -noout -checkend 2592000 -in /etc/letsencrypt/live/muenchen.freifunk.net/fullchain.pem &&
+        openssl x509 -noout -ext subjectAltName -in /etc/letsencrypt/live/muenchen.freifunk.net/fullchain.pem | grep -qE 'DNS:map\.ffdon\.net(,|$)' &&
+        openssl x509 -noout -ext subjectAltName -in /etc/letsencrypt/live/muenchen.freifunk.net/fullchain.pem | grep -qE 'DNS:map\.freifunk-donau-ries\.de(,|$)'
     - require:
         - pip: certbot-venv-packages
         - file: update-dns.sh

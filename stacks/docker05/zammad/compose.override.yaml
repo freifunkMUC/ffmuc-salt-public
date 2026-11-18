@@ -1,0 +1,100 @@
+---
+# FFMUC changes on top of zammad/zammad-docker-compose v17.5.5.
+# compose.yaml is the upstream docker-compose.yml, unchanged.
+# Images are pinned here. The other values that compose.yaml reads from
+# .env (POSTGRES_USER, NGINX_EXPOSE_PORT, ...) and the secret POSTGRES_PASS
+# come from the Komodo Stack environment.
+x-zammad-image: &zammad-image ghcr.io/zammad/zammad:7.2.3-0003@sha256:6669ad5070e8b0ae1820cbfb6c418debb6a59a1a7cf0922496dd9b1c0a2414ee
+
+x-ffmuc-app-mounts: &ffmuc-app-mounts
+  - /srv/docker/zammad-backup:/var/tmp/zammad:ro
+  - /srv/docker/zammad-storage:/opt/zammad/storage
+
+# Services that run as a non-root user. Backup, PostgreSQL and Redis start
+# as root (dump into the uid 1000 backup dir, chown in the entrypoint) and
+# only get no-new-privileges.
+x-hardening: &hardening
+  security_opt: ["no-new-privileges:true"]
+  cap_drop: [ALL]
+
+services:
+  zammad-backup:
+    image: *zammad-image
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 512m
+    volumes:
+      - /srv/docker/zammad-backup:/var/tmp/zammad
+      - /srv/docker/zammad-storage:/opt/zammad/storage
+  zammad-init:
+    <<: *hardening
+    image: *zammad-image
+    volumes: *ffmuc-app-mounts
+    mem_limit: 1g
+  zammad-nginx:
+    <<: *hardening
+    image: *zammad-image
+    # favicon and app icon, nginx serves them from public/
+    volumes:
+      - /srv/docker/zammad-backup:/var/tmp/zammad:ro
+      - /srv/docker/zammad-storage:/opt/zammad/storage
+      - ./branding/favicon.ico:/opt/zammad/public/favicon.ico:ro
+      - ./branding/apple-touch-icon.png:/opt/zammad/public/apple-touch-icon.png:ro
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "-o", "/dev/null", "http://127.0.0.1:8080/"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    mem_limit: 256m
+  zammad-railsserver:
+    <<: *hardening
+    image: *zammad-image
+    volumes: *ffmuc-app-mounts
+    mem_limit: 2g
+  zammad-scheduler:
+    <<: *hardening
+    image: *zammad-image
+    volumes: *ffmuc-app-mounts
+    mem_limit: 2g
+  zammad-websocket:
+    <<: *hardening
+    image: *zammad-image
+    volumes: *ffmuc-app-mounts
+    mem_limit: 1g
+  zammad-memcached:
+    <<: *hardening
+    mem_limit: 384m
+    image: memcached:1.6.45-alpine@sha256:084fb554292d1447bc2c68b80c2331b98834514f56c866bc21a61be3c2ee376d
+  zammad-redis:
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 256m
+    image: redis:8.10.3-alpine@sha256:7958cfbb9d152f87dadfbc89f1b0b15938f0b81ff8982feb327476f4911935c3
+    user: "999:1000"
+    cap_drop:
+      - ALL
+  zammad-postgresql:
+    # new directory for Postgres 18 (data in 18/docker below the mount, !override drops the base file's mount); the old ones stay as the way back
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 2g
+    image: postgres:18.7-alpine@sha256:b6972e1115a4ff8eba5d7f7d19184926d1e16d7d1136ae1e1a7ebf286da0f015
+    user: "70:70"  # no read_only: compose cannot place upstream's inline `configs:` (initdb) into a read-only container
+    cap_drop:
+      - ALL
+    volumes: !override
+      - /srv/docker/postgresql18-zammad:/var/lib/postgresql:z
+  zammad-elasticsearch:
+    <<: *hardening
+    mem_limit: 4g
+    image: elasticsearch:9.5.5@sha256:b7b0f24e9b5e90656ffe69804b3a48907499ab2b9cd67f02b7af3aff1b026a89
+    environment:
+      # Same value as upstream plus -XX:-UseBASE64Intrinsics, also when ELASTICSEARCH_JAVA_OPTS is set.
+      # CVE-2026-114938 (Java4Shell) stopgap, remove when the image ships a fixed JDK.
+      ES_JAVA_OPTS: "${ELASTICSEARCH_JAVA_OPTS:--Xms1g -Xmx1g} -XX:-UseBASE64Intrinsics"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    volumes:
+      - /srv/docker/elasticsearch9-zammad/data:/usr/share/elasticsearch/data

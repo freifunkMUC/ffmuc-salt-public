@@ -11,7 +11,7 @@
 
 influx-db-repo-key:
   cmd.run:
-    - name: "curl https://repos.influxdata.com/influxdata-archive_compat.key | gpg --batch --yes --dearmor -o /usr/share/keyrings/influxdb-keyring.gpg"
+    - name: "curl -fsSL https://repos.influxdata.com/influxdata-archive.key | gpg --batch --yes --dearmor -o /usr/share/keyrings/influxdb-keyring.gpg.tmp && mv /usr/share/keyrings/influxdb-keyring.gpg.tmp /usr/share/keyrings/influxdb-keyring.gpg"
 
 influx-db-repo:
   pkgrepo.managed:
@@ -27,7 +27,6 @@ telegraf:
         - pkgrepo: influx-db-repo
   service.running:
     - enable: True
-    - running: True
 
 systemd-reload-telegraf:
   cmd.run:
@@ -71,6 +70,26 @@ systemd-reload-telegraf:
     - contents: |
         telegraf    ALL=(ALL:ALL) NOPASSWD:/usr/local/bin/get_asterisk_calls.sh
 
+/usr/local/bin/get_asterisk_registrations.sh:
+  file.managed:
+    - contents: |
+        #!/bin/bash
+        # Influx line protocol, one line per PJSIP registration (SIP trunk of the dial-in number).
+        # No output when Asterisk does not answer; the Grafana rule treats missing data as an alarm.
+        asterisk -rx 'pjsip show registrations' | awk '/\/sip:/ {
+          split($1, name, "/")
+          printf "asterisk_registration,registration=%s registered=%di,status=\"%s\"\n", name[1], ($3 == "Registered"), $3
+        }'
+    - mode: "0750"
+    - user: root
+
+/etc/sudoers.d/telegraf_asterisk_registrations:
+  file.managed:
+    - contents: |
+        telegraf    ALL=(ALL:ALL) NOPASSWD:/usr/local/bin/get_asterisk_registrations.sh
+    - mode: "0440"
+    - user: root
+
 /etc/telegraf/telegraf.d/in-asterisk.conf:
   file.managed:
     - source: salt://telegraf/files/in_asterisk.conf
@@ -81,7 +100,9 @@ remove_asterisk_monitoring:
   file.absent:
     - names:
       - /usr/local/bin/get_asterisk_calls.sh
+      - /usr/local/bin/get_asterisk_registrations.sh
       - /etc/sudoers.d/telegraf_asterisk
+      - /etc/sudoers.d/telegraf_asterisk_registrations
       - /etc/telegraf/telegraf.d/in-asterisk.conf
 {% endif %}
 
@@ -114,6 +135,7 @@ remove_asterisk_monitoring:
 {% if 'gateway' in role or 'nextgen-gateway' in role %}
   file.managed:
     - source: salt://telegraf/files/in_dhcpd-pool.conf
+    - template: jinja
 {% else %}
   file.absent:
 {% endif %}
@@ -181,10 +203,59 @@ remove_asterisk_monitoring:
     - watch_in:
           service: telegraf
 
+# reads the world-readable runtime API socket /run/haproxy/api.sock (level user)
+/usr/local/bin/haproxy_peers_stats:
+{% if behind_haproxy %}
+  file.managed:
+    - source: salt://telegraf/files/haproxy_peers_stats.py
+    - mode: "0755"
+{% else %}
+  file.absent:
+{% endif %}
+    - watch_in:
+          service: telegraf
+
+/etc/telegraf/telegraf.d/in-haproxy_peers.conf:
+{% if behind_haproxy %}
+  file.managed:
+    - source: salt://telegraf/files/in_haproxy_peers.conf
+    - require:
+      - file: /usr/local/bin/haproxy_peers_stats
+{% else %}
+  file.absent:
+{% endif %}
+    - watch_in:
+          service: telegraf
+
 /etc/telegraf/telegraf.d/in-powerdns_recursor.conf:
 {% if salt["service.available"]("pdns-recursor") %}
   file.managed:
     - source: salt://telegraf/files/in_powerdns_recursor.conf
+{% else %}
+  file.absent:
+{% endif %}
+    - watch_in:
+          service: telegraf
+
+/etc/telegraf/telegraf.d/in-packetyeeter.conf:
+  file.absent:
+    - watch_in:
+          service: telegraf
+
+/etc/telegraf/telegraf.d/in-packetyeeter-collector.conf:
+{% if 'packetyeeter-collector' in tags %}
+  file.managed:
+    - source: salt://telegraf/files/in_packetyeeter-collector.conf
+{% else %}
+  file.absent:
+{% endif %}
+    - watch_in:
+          service: telegraf
+
+/etc/telegraf/telegraf.d/in-packetyeeter-analyzer.conf:
+{% if 'packetyeeter-analyzer' in tags %}
+  file.managed:
+    - source: salt://telegraf/files/in_packetyeeter-analyzer.conf
 {% else %}
   file.absent:
 {% endif %}
@@ -210,6 +281,145 @@ remove_asterisk_monitoring:
 {% endif %}
     - watch_in:
           service: telegraf
+
+/etc/telegraf/telegraf.d/in-wgkex-broker.conf:
+{#- the broker runs from a hand-managed docker compose project #}
+{%- if salt['file.file_exists']('/srv/docker/wgkex/config/broker/wgkex.yaml') %}
+  file.managed:
+    - source: salt://telegraf/files/in_wgkex-broker.conf
+{% else %}
+  file.absent:
+{% endif %}
+    - watch_in:
+          service: telegraf
+
+/etc/telegraf/telegraf.d/in-hedgedoc.conf:
+{#- hedgedoc runs from the docker compose stack stacks/docker04/hedgedoc #}
+{%- if salt['file.file_exists']('/srv/docker/hedgedoc/data/config.json') %}
+  file.managed:
+    - source: salt://telegraf/files/in_hedgedoc.conf
+{% else %}
+  file.absent:
+{% endif %}
+    - watch_in:
+          service: telegraf
+
+/etc/telegraf/telegraf.d/in-meet-reserve.conf:
+{%- if salt["pillar.get"]("netbox:config_context:meet_reserve:enabled", False) %}
+  file.managed:
+    - source: salt://telegraf/files/in_meet-reserve.conf
+    - template: jinja
+    - context:
+        port: {{ salt["pillar.get"]("netbox:config_context:meet_reserve:metrics_port", 9195) }}
+{% else %}
+  file.absent:
+{% endif %}
+    - watch_in:
+          service: telegraf
+
+{#- Parker gateway: BIRD and WireGuard counts, read only (sudo allows only the exact commands) #}
+/usr/local/bin/parker_gateway_stats:
+{%- if 'parker-gateway' in role %}
+  file.managed:
+    - source: salt://telegraf/files/parker_gateway_stats.py
+    - mode: "0755"
+{% else %}
+  file.absent:
+{% endif %}
+    - watch_in:
+          service: telegraf
+
+/etc/sudoers.d/telegraf_parker_gateway:
+{%- if 'parker-gateway' in role %}
+  file.managed:
+    - contents: |
+        telegraf    ALL=(root) NOPASSWD: /usr/sbin/birdc -r show protocols all
+        telegraf    ALL=(root) NOPASSWD: /usr/sbin/birdc -r show bfd sessions
+        telegraf    ALL=(root) NOPASSWD: /usr/bin/wg show wg-nodes latest-handshakes
+        telegraf    ALL=(root) NOPASSWD: /usr/sbin/nft -j list counters table inet parker_stats
+    - mode: "0440"
+    - user: root
+    - check_cmd: /usr/sbin/visudo -c -f
+{% else %}
+  file.absent:
+{% endif %}
+
+/etc/telegraf/telegraf.d/in-parker-gateway.conf:
+{%- if 'parker-gateway' in role %}
+  file.managed:
+    - source: salt://telegraf/files/in_parker_gateway.conf
+    - require:
+      - file: /usr/local/bin/parker_gateway_stats
+      - file: /etc/sudoers.d/telegraf_parker_gateway
+{% else %}
+  file.absent:
+{% endif %}
+    - watch_in:
+          service: telegraf
+
+/etc/telegraf/telegraf.d/in-wgkex-worker.conf:
+{%- if 'nextgen-gateway' in role or 'parker-gateway' in role %}
+  file.managed:
+    - source: salt://telegraf/files/in_wgkex-worker.conf
+{% else %}
+  file.absent:
+{% endif %}
+    - watch_in:
+          service: telegraf
+
+/etc/telegraf/telegraf.d/in-x509_cert.conf:
+{#- hosts with a certificate from the certs state #}
+{%- if salt['file.file_exists']('/etc/ssl/certs/' ~ grains['id'] ~ '.cert.pem') %}
+  file.managed:
+    - source: salt://telegraf/files/in_x509_cert.conf
+    - template: jinja
+{% else %}
+  file.absent:
+{% endif %}
+    - watch_in:
+          service: telegraf
+
+/etc/telegraf/telegraf.d/in-zfs.conf:
+{% if 'zfs' in tags %}
+  file.managed:
+    - source: salt://telegraf/files/in_zfs.conf
+{% else %}
+  file.absent:
+{% endif %}
+    - watch_in:
+          service: telegraf
+
+{% if grains.virtual == 'physical' %}
+smartmontools:
+  pkg.installed:
+    - pkgs:
+      - smartmontools
+      - nvme-cli
+
+/etc/sudoers.d/telegraf_smart:
+  file.managed:
+    - mode: "0440"
+    - contents: |
+        telegraf    ALL=(root) NOPASSWD:/usr/sbin/smartctl, /usr/sbin/nvme
+    - check_cmd: /usr/sbin/visudo -c -f
+
+/etc/telegraf/telegraf.d/in-smart.conf:
+  file.managed:
+    - source: salt://telegraf/files/in_smart.conf
+    - require:
+      - pkg: smartmontools
+      - file: /etc/sudoers.d/telegraf_smart
+    - watch_in:
+          service: telegraf
+{% else %}
+remove_smart_monitoring:
+  file.absent:
+    - names:
+      - /etc/sudoers.d/telegraf_smart
+      - /etc/telegraf/telegraf.d/in-smart.conf
+    - watch_in:
+          service: telegraf
+{% endif %}
 
 /etc/telegraf/telegraf.d/out-influxdb.conf:
   file.managed:

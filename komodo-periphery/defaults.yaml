@@ -1,0 +1,17 @@
+# -*- coding: utf-8 -*-
+# vim: ft=yaml
+---
+komodo:
+  periphery:
+    enabled: false
+    # renovate: datasource=github-releases depName=moghtech/komodo extractVersion=^v(?<version>.+)$
+    version: 2.3.4
+    sha256:
+      x86_64: 46d50313970aea59d293bbe237648f4becea74e8abc2f30f1bb62b73456fc72e
+      aarch64: f49dc4cfab0046563cab9d7f3910e92e083f7742161a8b877bd60e2e74550feb
+    interface: nebula0
+    port: 8120
+    allowed_ips:
+      - 10.8.0.15
+    disable_terminals: true
+    disable_container_terminals: false

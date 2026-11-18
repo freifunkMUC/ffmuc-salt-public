@@ -1,0 +1,77 @@
+---
+services:
+  postgresql:
+    image: postgres:18.7@sha256:2ea8630df176ad090ec92136dee850397c5af8781e4bcf2e4162593691c61bbc
+    environment:
+      POSTGRES_USER: "cfssl"
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DATABASE: "cfssl"
+    volumes:
+      - /srv/docker/cfssl/volumes/postgresql18:/var/lib/postgresql  # 18 layout: data in 18/docker below the mount
+    restart: always
+    user: "999:999"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 256m
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/run/postgresql
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  cfssl:
+    image: cfssl/cfssl:v1.7.1@sha256:a32a9048078819d3035f5dc46637346a0e7da9df297ab234994c9a80cde10b98
+    depends_on:
+      - postgresql
+    environment:
+      VIRTUAL_HOST: ca.ov.ffmuc.net
+      CERT_NAME: shared
+      CFSSL_USE_DB: "yes"
+      CFSSL_CA_CERTIFICATE: "/data/ca.pem"
+      CFSSL_CA_PRIVATE_KEY: "/data/ca-key.pem"
+    volumes:
+      # db_config.json has the database password, so config/ stays on the host
+      - /srv/docker/cfssl/config:/config
+      - /srv/docker/cfssl/volumes/cfssl/data:/data
+    entrypoint: ["cfssl", "serve"]
+    command: ["-address", "0.0.0.0", "-ca", "/data/ca.pem", "-ca-key", "/data/ca-key.pem", "-port", "8080", "-config", "/config/ca_root_config.json", "-db-config", "/config/db_config.json"]
+    restart: on-failure
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.cfssl-secure.entrypoints=https"
+      - "traefik.http.routers.cfssl-secure.rule=Host(`ca.ov.ffmuc.net`) && (Path(`/api/v1/cfssl/newcert`) || Path(`/api/v1/cfssl/info`))"
+      - "traefik.http.routers.cfssl-secure.tls=true"
+      - "traefik.http.routers.cfssl-secure.tls.certresolver=http"
+      - "traefik.http.routers.cfssl-secure.service=cfssl"
+      # Minions reach the CA over the overlay only
+      - "traefik.http.routers.cfssl-secure.middlewares=cfssl-overlay"
+      - "traefik.http.middlewares.cfssl-overlay.ipallowlist.sourcerange=10.8.0.0/23"
+      - "traefik.http.services.cfssl.loadbalancer.server.port=8080"
+      - "traefik.docker.network=proxy"
+    networks:
+      - default
+      - proxy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/api/v1/cfssl/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 128m
+
+networks:
+  proxy:
+    external: true

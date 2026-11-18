@@ -1,4 +1,4 @@
-{% if grains.osfullname in 'Raspbian' %}
+{% if grains.os == 'Raspbian' %}
 dphys-swapfile-config:
   file.managed:
     - name: /etc/dphys-swapfile

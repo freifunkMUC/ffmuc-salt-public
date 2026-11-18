@@ -1,5 +1,0 @@
-[Unit]
-Description=FFMuc Backup
-
-[Service]
-ExecStart=/bin/bash /usr/local/sbin/backup.sh

@@ -1,0 +1,37 @@
+#!/bin/bash
+# State of the rustic backup: CRITICAL when the backup unit failed or the last successful run is too old.
+# The service touches /var/lib/ffmuc-rustic-last-success after "backup" and "forget" (rustic state).
+# armhf hosts (guardians) are outside the rustic state and keep ffmuc-backup.service: its last exit counts there.
+# Usage: check_ffmuc_rustic [warning hours] [critical hours]
+M=/var/lib/ffmuc-rustic-last-success
+W=${1:-30}
+C=${2:-54}
+U=ffmuc-rustic-backup.service
+L=ffmuc-backup.service
+if [ ! -e "/etc/systemd/system/$U" ] && [ -e "/etc/systemd/system/$L" ]; then
+  U=$L
+fi
+if [ "$(systemctl is-failed "$U" 2>/dev/null)" = "failed" ]; then
+  echo "CRITICAL - $U failed"
+  exit 2
+fi
+ts=
+if [ "$U" = "$L" ]; then
+  t=$(systemctl show -p ExecMainExitTimestamp --value "$U")
+  [ -n "$t" ] && [ "$(systemctl show -p Result --value "$U")" = "success" ] && ts=$(date -d "$t" +%s)
+elif [ -e "$M" ]; then
+  ts=$(stat -c %Y "$M")
+fi
+if [ -z "$ts" ]; then
+  echo "WARNING - no successful backup recorded"
+  exit 1
+fi
+age=$(( ($(date +%s) - ts) / 3600 ))
+if [ "$age" -ge "$C" ]; then
+  echo "CRITICAL - last successful backup ${age}h ago"
+  exit 2
+elif [ "$age" -ge "$W" ]; then
+  echo "WARNING - last successful backup ${age}h ago"
+  exit 1
+fi
+echo "OK - last successful backup ${age}h ago"

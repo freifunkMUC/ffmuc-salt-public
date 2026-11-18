@@ -1,14 +1,25 @@
-{%- set role = salt['pillar.get']('netbox:role:name', salt['pillar.get']('netbox:role:name')) %}
+include:
+  - systemd-networkd.netplan
+
+{#- Default to '' rather than to the same lookup again: an unset role made
+    this None, and `'...' in None` aborts the render with a TypeError. #}
+{%- set role = salt['pillar.get']('netbox:role:name', '') or '' %}
 
 {%- if 'nextgen-gateway' in role %}
-{%- set batman_version = '2024.1' %}
+{#- 2026.x builds against Linux 5.15 - 7.3 (2024.1 only up to 6.8, so not
+    against the noble HWE kernels) and keeps compat version 15. Since 2026.4,
+    the DKMS pre-build hook is needed for kernels with backported lock guards. #}
+{#- renovate: datasource=github-tags depName=open-mesh-mirror/batman-adv extractVersion=^v(?<version>.+)$ versioning=loose #}
+{%- set batman_version = '2026.4' %}
+{%- set batman_old_versions = ['2024.1'] %}
 /usr/src/batman-adv-{{ batman_version }}:
   git.latest:
     - name: https://github.com/open-mesh-mirror/batman-adv.git
     - rev: v{{ batman_version }}
     - target: /usr/src/batman-adv-{{ batman_version }}
     - force_reset: True
-    - require_in: /usr/src/batman-adv-{{ batman_version }}/dkms.conf
+    - require_in:
+      - file: /usr/src/batman-adv-{{ batman_version }}/dkms.conf
 
 /usr/src/batman-adv-{{ batman_version }}/dkms.conf:
   file.managed:
@@ -20,33 +31,54 @@
         BUILT_MODULE_NAME=batman-adv
         BUILT_MODULE_LOCATION=net/batman-adv
 
+        PRE_BUILD="dkms-pre-build.sh ${kernel_source_dir}"
         MAKE="'make' KERNELPATH=${kernel_source_dir}"
         CLEAN="'make' clean"
 
         AUTOINSTALL="yes"
-    - require_in: systemd-packages
 
-# for gateways we need v249+ (not in Ubuntu 20.04 repos) to to configure Batman-Adv and FDB entries
-{% if grains.os == 'Ubuntu' and grains.osmajorrelease < 24 %}
-{% set systemd_nightly_buildid = "21960774" %}
-{% set systemd_version = "249.287.g84817bfdb3+20.04.20210808175006" %}
-systemd-packages:
+/usr/src/batman-adv-{{ batman_version }}/dkms-pre-build.sh:
+  file.managed:
+    - source: salt://systemd-networkd/files/batman-adv-dkms-pre-build.sh
+    - mode: '0755'
+    - require:
+      - git: /usr/src/batman-adv-{{ batman_version }}
+
+batman-adv-dkms-deps:
   pkg.installed:
-    - sources:
-{% for package in [
-  "libnss-systemd",
-  "libpam-systemd",
-  "libsystemd0",
-  "libudev1",
-  "systemd-sysv",
-  "systemd",
-  "udev"
-] %}
-    #- {{ package }}: https://code.launchpad.net/~ubuntu-support-team/+archive/ubuntu/systemd/+build/{{ systemd_nightly_buildid }}/+files/{{ package }}_{{ systemd_version }}_{{ grains.osarch }}.deb
-      - {{ package }}: https://apt.ffmuc.net/systemd-packages/{{ package }}_{{ systemd_version }}_{{ grains.osarch }}.deb
-{% endfor %}{# packages #}
-{% endif %}
+    - pkgs:
+      - dkms
+      - linux-headers-{{ grains.kernelrelease }}
 
+# Build and install the module for the running kernel; AUTOINSTALL rebuilds
+# it for new kernels. The new module is loaded on the next reboot.
+batman-adv-dkms-install:
+  cmd.run:
+    - name: >-
+        (dkms status batman-adv/{{ batman_version }} | grep -q .
+        || dkms add batman-adv/{{ batman_version }})
+        && dkms install batman-adv/{{ batman_version }} -k {{ grains.kernelrelease }}
+    - unless: dkms status batman-adv/{{ batman_version }} -k {{ grains.kernelrelease }} | grep -q installed
+    - require:
+      - git: /usr/src/batman-adv-{{ batman_version }}
+      - file: /usr/src/batman-adv-{{ batman_version }}/dkms.conf
+      - file: /usr/src/batman-adv-{{ batman_version }}/dkms-pre-build.sh
+      - pkg: batman-adv-dkms-deps
+
+{%- for old_version in batman_old_versions %}
+
+batman-adv-dkms-remove-{{ old_version }}:
+  cmd.run:
+    - name: dkms remove batman-adv/{{ old_version }} --all
+    - onlyif: dkms status batman-adv/{{ old_version }} | grep -q .
+    - require:
+      - cmd: batman-adv-dkms-install
+
+/usr/src/batman-adv-{{ old_version }}:
+  file.absent:
+    - require:
+      - cmd: batman-adv-dkms-remove-{{ old_version }}
+{%- endfor %}
 
 /etc/systemd/system/batadv-throughput.service:
   file.managed:
@@ -86,34 +118,22 @@ vxlan-fdb-fill.service:
 
 {% endif %}{# 'nextgen-gateway' in role #}
 
-{% if grains.os == 'Ubuntu' %}
-disable_netplan:
-  file.managed:
-    - name: /etc/netplan/01-netcfg.yaml
-    - source: salt://systemd-networkd/files/netplan.conf
-
-disable_netplan_generator:
-  file.symlink:
-    - name: /usr/lib/systemd/system-generators/netplan
-    - target: /dev/null
-    - force: True
-{% endif %}
 
 systemd-networkd:
     service.running:
         - enable: True
-        - running: True
 
 generate_initrd:
     cmd.wait:
         - name: update-initramfs -k all -u
         - watch: []
 
+# cmd.wait, not cmd.run: the watch_in triggers are rendered conditionally and
+# a cmd.run without any requisite would reload on every highstate
 systemd-networkd-reload:
-  cmd.run:
+  cmd.wait:  # noqa: 213
     - name: networkctl reload
     - runas: root
-    - onchanges: []
     - require:
       - service: systemd-networkd
 
@@ -157,7 +177,9 @@ systemd-networkd-reload:
       interface: {{ iface }}
       desc: "{{ interfaces[iface]['description'] }}"
       kind: "wireguard"
-    - mode: "0644"
+    - user: root
+    - group: systemd-network
+    - mode: "0640"
     - watch_in:
       - cmd: systemd-networkd-reload
 {% set id = 30 %}

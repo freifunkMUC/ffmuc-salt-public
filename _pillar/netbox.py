@@ -48,13 +48,47 @@ site_prefixes: ``True``
 """
 
 import logging
+import time
 
 # Import Salt libs
 import salt.utils.http
+from salt.exceptions import SaltInvocationError
 
 import ipaddress
 
 log = logging.getLogger(__name__)
+
+TIMEOUT = 30
+RETRIES = 2
+
+
+def _query(url, header_dict, **kwargs):
+    """
+    Query the NetBox API with a timeout and retry on 5xx and connection errors.
+    Raise instead of returning an error result, so a NetBox problem fails the
+    pillar render (``_errors``, no highstate) and never yields partial data.
+    """
+    for attempt in range(RETRIES + 1):
+        result = salt.utils.http.query(
+            url,
+            header_dict=header_dict,
+            decode=True,
+            # query() takes its timeouts from opts, not from a keyword
+            opts=dict(
+                __opts__, http_connect_timeout=10.0, http_request_timeout=TIMEOUT
+            ),
+            **kwargs,
+        )
+        status = result.get("status")
+        if "error" not in result and "dict" in result:
+            return result
+        retry = status is None or status >= 500 or "error" not in result
+        if not retry or attempt == RETRIES:
+            break
+        time.sleep(2 * 2**attempt)
+    raise SaltInvocationError(
+        f"NetBox API query {url} failed, status {status}: {result.get('error')}"
+    )
 
 
 def ext_pillar(minion_id, pillar, *args, **kwargs):
@@ -80,25 +114,18 @@ def ext_pillar(minion_id, pillar, *args, **kwargs):
     device_search_url = "{api_url}/{app}/{endpoint}".format(
         api_url=api_url, app="dcim", endpoint="devices"
     )
-    device_search_results = salt.utils.http.query(
-        device_search_url, params={"name": minion_id}, header_dict=headers, decode=True
+    device_search_results = _query(
+        device_search_url, params={"name": minion_id}, header_dict=headers
     )
     search_results = device_search_results
     if len(search_results["dict"]["results"]) == 0:
         vm_search_url = "{api_url}/{app}/{endpoint}".format(
             api_url=api_url, app="virtualization", endpoint="virtual-machines"
         )
-        vm_search_results = salt.utils.http.query(
-            vm_search_url, params={"name": minion_id}, header_dict=headers, decode=True
+        vm_search_results = _query(
+            vm_search_url, params={"name": minion_id}, header_dict=headers
         )
         search_results = vm_search_results
-    # Check status code for API call
-    if "error" in search_results:
-        log.error(
-            f'API query failed for "{minion_id}", status code: {search_results["status"]}'
-        )
-        log.error(search_results["error"])
-        return ret
     # Assign results from API call to "netbox" key
     if len(search_results["dict"]["results"]) == 0:
         log.error(f'No device found for "{minion_id}"')
@@ -113,9 +140,7 @@ def ext_pillar(minion_id, pillar, *args, **kwargs):
             endpoint="devices",
             id=search_results["dict"]["results"][0]["id"],
         )
-        device_results = salt.utils.http.query(
-            device_url, header_dict=headers, decode=True
-        )
+        device_results = _query(device_url, header_dict=headers)
 
     else:
         device_url = "{api_url}/{app}/{endpoint}/{id}/".format(
@@ -124,16 +149,7 @@ def ext_pillar(minion_id, pillar, *args, **kwargs):
             endpoint="virtual-machines",
             id=search_results["dict"]["results"][0]["id"],
         )
-        device_results = salt.utils.http.query(
-            device_url, header_dict=headers, decode=True
-        )
-
-    if "error" in device_results:
-        log.error(
-            f'API query failed for "{minion_id}", status code: {search_results["status"]}'
-        )
-        log.error(search_results["error"])
-        return ret
+        device_results = _query(device_url, header_dict=headers)
 
     ret["netbox"] = device_results["dict"]
     site_id = 0
@@ -148,9 +164,7 @@ def ext_pillar(minion_id, pillar, *args, **kwargs):
     service_url = "{api_url}/{app}/{endpoint}".format(
         api_url=api_url, app="ipam", endpoint="services"
     )
-    service_results = salt.utils.http.query(
-        service_url, header_dict=headers, decode=True
-    )
+    service_results = _query(service_url, header_dict=headers)
     services = service_results["dict"]["results"]
     if len(services) >= 1:
         ret["netbox"]["services"] = {}
@@ -168,40 +182,25 @@ def ext_pillar(minion_id, pillar, *args, **kwargs):
         api_url=api_url, app=app, endpoint="interfaces"
     )
 
-    interface_results = salt.utils.http.query(
+    interface_results = _query(
         interface_url,
         params={query_param: search_results["dict"]["results"][0]["id"], "limit": 1000},
         header_dict=headers,
-        decode=True,
     )
-    if "error" in interface_results:
-        log.error(
-            f'API query failed for "{minion_id}", status code: {interface_results["status"]}'
-        )
-        log.error(interface_results["error"])
-        return ret
-    else:
-        for interface in interface_results["dict"]["results"]:
-            ret["netbox"]["interfaces"][interface["name"]] = interface
-            ret["netbox"]["interfaces"][interface["name"]]["ipaddresses"] = []
+    for interface in interface_results["dict"]["results"]:
+        ret["netbox"]["interfaces"][interface["name"]] = interface
+        ret["netbox"]["interfaces"][interface["name"]]["ipaddresses"] = []
 
     if "vcpus" in ret["netbox"]:
         query_param = "virtual_machine_id"
     ipaddress_url = "{api_url}/{app}/{endpoint}/".format(
         api_url=api_url, app="ipam", endpoint="ip-addresses"
     )
-    ipaddress_results = salt.utils.http.query(
+    ipaddress_results = _query(
         ipaddress_url,
         params={query_param: search_results["dict"]["results"][0]["id"]},
         header_dict=headers,
-        decode=True,
     )
-    if "error" in ipaddress_results:
-        log.error(
-            f'API query failed for "{minion_id}", status code: {ipaddress_results["status"]}'
-        )
-        log.error(ipaddress_results["error"])
-        return ret
     ipaddresses = ipaddress_results["dict"]["results"]
     ## Get all interfaces for device
 
@@ -213,15 +212,7 @@ def ext_pillar(minion_id, pillar, *args, **kwargs):
         interface_url = "{api_url}/{app}/{endpoint}/{id}/".format(
             api_url=api_url, app=app, endpoint="interfaces", id=interface_id
         )
-        interface_results = salt.utils.http.query(
-            interface_url, header_dict=headers, decode=True
-        )
-        if "error" in interface_results:
-            log.error(
-                f'API query failed for "{minion_id}", status code: {interface_results["status"]}'
-            )
-            log.error(interface_results["error"])
-            return ret
+        interface_results = _query(interface_url, header_dict=headers)
         if interface_results["dict"]["name"] not in ret["netbox"]["interfaces"]:
             ret["netbox"]["interfaces"][interface_results["dict"]["name"]] = (
                 interface_results["dict"]
@@ -244,16 +235,8 @@ def ext_pillar(minion_id, pillar, *args, **kwargs):
         site_url = "{api_url}/{app}/{endpoint}/{site_id}/".format(
             api_url=api_url, app="dcim", endpoint="sites", site_id=site_id
         )
-        site_details_ret = salt.utils.http.query(
-            site_url, header_dict=headers, decode=True
-        )
-        if "error" in site_details_ret:
-            log.error(f"Unable to retrieve site details for {site_name} (ID {site_id})")
-            log.error(
-                f'Status code: {site_details_ret["status"]}, error: {site_details_ret["error"]}'
-            )
-        else:
-            ret["netbox"]["site"] = site_details_ret["dict"]
+        site_details_ret = _query(site_url, header_dict=headers)
+        ret["netbox"]["site"] = site_details_ret["dict"]
     if site_prefixes:
         log.debug(
             f'Retrieving site prefixes for "{minion_id}" - site {site_name} (ID {site_id})'
@@ -261,30 +244,17 @@ def ext_pillar(minion_id, pillar, *args, **kwargs):
         prefixes_url = "{api_url}/{app}/{endpoint}".format(
             api_url=api_url, app="ipam", endpoint="prefixes"
         )
-        site_prefixes_ret = salt.utils.http.query(
-            prefixes_url, params={"site_id": site_id}, header_dict=headers, decode=True
+        site_prefixes_ret = _query(
+            prefixes_url, params={"site_id": site_id}, header_dict=headers
         )
-        if "error" in site_prefixes_ret:
-            log.error(
-                f"Unable to retrieve site prefixes for {site_name} (ID {site_id})"
-            )
-            log.error(
-                f'Status code: {site_prefixes_ret["status"]}, error: {site_prefixes_ret["error"]}'
-            )
-        else:
-            ret["netbox"]["site"]["prefixes"] = site_prefixes_ret["dict"]["results"]
+        ret["netbox"]["site"]["prefixes"] = site_prefixes_ret["dict"]["results"]
     if proxy_return:
         # Attempt to add "proxy" key, based on platform API call
         try:
             # Fetch device from API
-            platform_results = salt.utils.http.query(
-                ret["netbox"]["platform"]["url"], header_dict=headers, decode=True
+            platform_results = _query(
+                ret["netbox"]["platform"]["url"], header_dict=headers
             )
-            # Check status code for API call
-            if "error" in platform_results:
-                log.info(
-                    f'API query failed for "{minion_id}": {platform_results["error"]}'
-                )
             # Assign results from API call to "proxy" key if the platform has a
             # napalm_driver defined.
             napalm_driver = platform_results["dict"].get("napalm_driver")

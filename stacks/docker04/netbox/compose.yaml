@@ -1,0 +1,129 @@
+services:
+  netbox: &netbox
+    # FFMUC: exact version, pinned by digest
+    image: docker.io/netboxcommunity/netbox:v4.7.5-5.1.1@sha256:d125fb51e8adc2c6f1987c61f3f15a6ceb9dfac983f14087c190be262c5313fb
+    depends_on:
+      - postgres
+      - redis
+      - redis-cache
+    restart: always
+    env_file: env/netbox.env
+    user: "netbox:root"
+    healthcheck:
+      test: /opt/netbox/health.sh
+      start_period: 90s
+      timeout: 3s
+      interval: 15s
+    volumes:
+      - /srv/docker/netbox/configuration:/etc/netbox/config:z,ro
+      - netbox-media-files:/opt/netbox/netbox/media:rw
+      - netbox-reports-files:/opt/netbox/netbox/reports:rw
+      - netbox-scripts-files:/opt/netbox/netbox/scripts:rw
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 3g
+  netbox-worker:
+    <<: *netbox
+    depends_on:
+      netbox:
+        condition: service_healthy
+    command:
+      - /opt/netbox/venv/bin/python
+      - /opt/netbox/netbox/manage.py
+      - rqworker
+    healthcheck:
+      test: ps -aux | grep -v grep | grep -q rqworker || exit 1
+      start_period: 20s
+      timeout: 3s
+      interval: 15s
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 1g
+
+  # postgres
+  postgres:
+    # FFMUC: keep the PostgreSQL major of the existing data directory (upstream: 18 with a new volume layout)
+    image: docker.io/postgres:18.7-alpine@sha256:b6972e1115a4ff8eba5d7f7d19184926d1e16d7d1136ae1e1a7ebf286da0f015
+    healthcheck:
+      test: pg_isready -q -t 2 -d $$POSTGRES_DB -U $$POSTGRES_USER
+      start_period: 20s
+      timeout: 30s
+      interval: 10s
+      retries: 5
+    restart: always
+    user: "70:70"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/run/postgresql
+    env_file: env/postgres.env
+    volumes:
+      - netbox-postgres18-data:/var/lib/postgresql
+
+  # redis
+  redis:
+    # FFMUC: stay on the running Valkey major for now (clean rollback); upstream: 9.1
+    image: docker.io/valkey/valkey:9.1.3-alpine@sha256:bf09d58e96d6b4524a15396b65b242bbe18beebbcc15a04d8ee75ddac62fae0b
+    command:
+      - sh
+      - -c # this is to evaluate the $REDIS_PASSWORD from the env
+      - valkey-server --appendonly yes --requirepass $$REDIS_PASSWORD ## $$ because of docker-compose
+    healthcheck: &redis-healthcheck
+      test: '[ $$(valkey-cli --pass "$${REDIS_PASSWORD}" ping) = ''PONG'' ]'
+      start_period: 5s
+      timeout: 3s
+      interval: 1s
+      retries: 5
+    restart: always
+    cap_drop:
+      - ALL
+    cap_add:
+      - DAC_OVERRIDE
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 128m
+    env_file: env/redis.env
+    volumes:
+      - netbox-redis-data:/data
+  redis-cache:
+    # FFMUC: stay on the running Valkey major for now (clean rollback); upstream: 9.1
+    image: docker.io/valkey/valkey:9.1.3-alpine@sha256:bf09d58e96d6b4524a15396b65b242bbe18beebbcc15a04d8ee75ddac62fae0b
+    command:
+      - sh
+      - -c # this is to evaluate the $REDIS_PASSWORD from the env
+      - valkey-server --requirepass $$REDIS_PASSWORD ## $$ because of docker-compose
+    healthcheck: *redis-healthcheck
+    restart: always
+    cap_drop:
+      - ALL
+    cap_add:
+      - DAC_OVERRIDE
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 128m
+    env_file: env/redis-cache.env
+    volumes:
+      - netbox-redis-cache-data:/data
+
+volumes:
+  netbox-media-files:
+    driver: local
+  netbox-postgres18-data:
+    driver: local
+  netbox-redis-cache-data:
+    driver: local
+  netbox-redis-data:
+    driver: local
+  netbox-reports-files:
+    driver: local
+  netbox-scripts-files:
+    driver: local

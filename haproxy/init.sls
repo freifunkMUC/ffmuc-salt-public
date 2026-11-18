@@ -1,4 +1,7 @@
-{% set tags = salt['pillar.get']('netbox:tag_list', []) %}
+{# NOTE: use config.get, not pillar.get, for netbox reads. Salt wraps netbox sub-dicts
+   containing a sensitive key as a MaskedDict whose redacted repr ('**********') leaks
+   through, masking sibling values (e.g. tag_list entries). config.get returns a plain copy. #}
+{% set tags = salt['config.get']('netbox:tag_list', []) %}
 {% if "haproxy" in tags %}
 
 haproxy-ppa:
@@ -22,7 +25,29 @@ update-repo:
 haproxy:
   pkg.installed:
     - name: haproxy-awslc
-    - version: 3.3.6-0+ha33+ubuntu24.04u3
+    - version: 3.4.7-0+ha34+ubuntu24.04u2
+
+{# haproxy runs chrooted and logs to /dev/log; haproxy.service bind-mounts the journal socket to
+   /var/lib/haproxy/dev/log (BindReadOnlyPaths). The package's rsyslog snippet additionally creates its own
+   socket at that path ($AddUnixListenSocket): every rsyslog restart (e.g. an unattended upgrade) recreates
+   it, which silently detaches the bind mount, so haproxy's logs no longer reach the journal. #}
+haproxy-rsyslog-conf:
+  file.managed:
+    - name: /etc/rsyslog.d/49-haproxy.conf
+    - contents: |
+        # Managed by Salt - haproxy logs via the journal; no socket in the chroot (see haproxy/init.sls)
+        :programname, startswith, "haproxy" {
+          /var/log/haproxy.log
+          stop
+        }
+
+haproxy-rsyslog:
+  service.running:
+    - name: rsyslog
+    - watch:
+      - file: haproxy-rsyslog-conf
+    - require_in:
+      - pkg: haproxy
 
 haproxy-keyring-dir:
   file.directory:
@@ -60,13 +85,80 @@ haproxy-configtest:
       - file: /etc/haproxy/maps/abuse_rooms.map
       - file: /etc/haproxy/errors/403.http
       - file: /etc/haproxy/responses/ip_response.json
+      - file: /etc/haproxy/responses/ip_lookup_response.json
       - file: /etc/haproxy/responses/ip_response.html
       - file: /etc/haproxy/responses/ip_response.txt
+{% if "packetyeeter-collector" in tags %}
+      - file: /etc/haproxy/lua/ja4.lua
+      - file: /etc/haproxy/lua/ja4h.lua
+      - file: packetyeeter-spoe-conf
+{% endif %}
+
+{% if "packetyeeter-collector" in tags %}
+{# JA4/JA4H fingerprinting (Lua) + the SPOE config that exports signals to the
+   local packetyeeter collector (127.0.0.1:9876). Fetched directly from the
+   upstream repo (same pattern as other third-party assets in this repo, e.g.
+   GeoLite mmdb) rather than vendoring a copy, to avoid transcription risk in
+   security-sensitive fingerprinting code and stay in sync with upstream. #}
+/etc/haproxy/lua:
+  file.directory:
+    - user: root
+    - group: root
+    - mode: "0755"
+    - require:
+      - pkg: haproxy
+
+{#- Take the Lua/SPOE files from the tag of the collector version running
+    next to haproxy (not main), so they only change with a deliberate bump. #}
+{%- from "packetyeeter/defaults.jinja" import default_version %}
+{%- set packetyeeter_ref = 'v' ~ salt['config.get']('netbox:config_context:packetyeeter:collector:version', default_version) %}
+/etc/haproxy/lua/ja4.lua:
+  file.managed:
+    - source: https://raw.githubusercontent.com/awlx/packetyeeter/{{ packetyeeter_ref }}/examples/ja4.lua
+    - skip_verify: True
+    - mode: "0644"
+    - require:
+      - file: /etc/haproxy/lua
+
+/etc/haproxy/lua/ja4h.lua:
+  file.managed:
+    - source: https://raw.githubusercontent.com/awlx/packetyeeter/{{ packetyeeter_ref }}/examples/ja4h.lua
+    - skip_verify: True
+    - mode: "0644"
+    - require:
+      - file: /etc/haproxy/lua
+
+/etc/haproxy/spoe:
+  file.directory:
+    - user: root
+    - group: root
+    - mode: "0755"
+    - require:
+      - pkg: haproxy
+
+{# Tighten upstream timeouts (avg ~14us/message; on-timeout ignore keeps requests safe).
+   Patched at render time so one file.managed stays idempotent. #}
+{%- set spoe_conf = salt['http.query']('https://raw.githubusercontent.com/awlx/packetyeeter/' ~ packetyeeter_ref ~ '/examples/packetyeeter.spoe.conf')['body']
+      | regex_replace('^(\\s*timeout hello\\s+).*$', '\\g<1>100ms', multiline=True)
+      | regex_replace('^(\\s*timeout processing\\s+).*$', '\\g<1>50ms', multiline=True) %}
+packetyeeter-spoe-conf:
+  file.managed:
+    - name: /etc/haproxy/spoe/packetyeeter.conf
+    - contents: {{ spoe_conf | yaml_encode }}
+    - mode: "0644"
+    - require:
+      - file: /etc/haproxy/spoe
+{% endif %}
 
 /etc/haproxy/haproxy.cfg:
   file.managed:
     - source: salt://haproxy/haproxy.cfg
     - template: jinja
+    # Holds the QUIC cluster-secret: not world-readable, and no diff in the job output.
+    - user: root
+    - group: haproxy
+    - mode: "0640"
+    - show_changes: False
     - require:
       - pkg: haproxy
 
@@ -89,6 +181,15 @@ haproxy-configtest:
 /etc/haproxy/responses/ip_response.json:
   file.managed:
     - source: salt://haproxy/files/ip_response.json
+    - user: root
+    - group: root
+    - mode: "0644"
+    - require:
+      - file: /etc/haproxy/responses
+
+/etc/haproxy/responses/ip_lookup_response.json:
+  file.managed:
+    - source: salt://haproxy/files/ip_lookup_response.json
     - user: root
     - group: root
     - mode: "0644"

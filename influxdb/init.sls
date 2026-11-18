@@ -4,7 +4,7 @@
 {%- if 'influxdb_server' in salt['pillar.get']('netbox:tag_list', []) %}
 influx-db-repo-key2:
   cmd.run:
-    - name: "curl https://repos.influxdata.com/influxdata-archive_compat.key | gpg --batch --yes --dearmor -o /usr/share/keyrings/influxdb-keyring.gpg"
+    - name: "curl -fsSL https://repos.influxdata.com/influxdata-archive.key | gpg --batch --yes --dearmor -o /usr/share/keyrings/influxdb-keyring.gpg.tmp && mv /usr/share/keyrings/influxdb-keyring.gpg.tmp /usr/share/keyrings/influxdb-keyring.gpg"
 
 influx-db-repo2:
   pkgrepo.managed:
@@ -45,6 +45,17 @@ influxdb-user:
     - template: jinja
     - require:
       - pkg: influxdb-pkg
+
+# restart influxdb when the host cert gets renewed (the config only names the path)
+influxdb-hostcert-fingerprint:
+  cmd.run:
+    - name: openssl x509 -noout -fingerprint -sha256 -in /etc/ssl/certs/{{ grains['id'] }}.cert.pem > /var/lib/influxdb/hostcert.fingerprint
+    - onlyif: test -f /etc/ssl/certs/{{ grains['id'] }}.cert.pem
+    - unless: openssl x509 -noout -fingerprint -sha256 -in /etc/ssl/certs/{{ grains['id'] }}.cert.pem | cmp -s - /var/lib/influxdb/hostcert.fingerprint
+    - require:
+      - pkg: influxdb-pkg
+    - watch_in:
+      - service: influxdb
 
 # avoid influxdb
 /etc/rsyslog.d/influxd.conf:

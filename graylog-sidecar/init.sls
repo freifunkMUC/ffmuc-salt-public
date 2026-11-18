@@ -1,17 +1,27 @@
-
-{% if grains.osfullname in 'Raspbian' %}
-graylog-sidecar-pkg:
+{#- renovate: datasource=github-releases depName=Graylog2/collector-sidecar #}
+{%- set sidecar_version = '1.5.6' %}
+{% if grains.os == 'Raspbian' %}
+{#- no armhf in the graylog and elastic repos: fixed .debs, same IDs as pkg.latest below for the requisites #}
+graylog-sidecar:
   pkg.installed:
     - sources:
-      - graylog-sidecar: https://github.com/Graylog2/collector-sidecar/releases/download/1.5.1/graylog-sidecar_1.5.1-1_armv7.deb
-      - filebeat: https://apt.ffmuc.net/filebeat-oss-8.0.0-SNAPSHOT-armhf.deb
+      - graylog-sidecar: https://github.com/Graylog2/collector-sidecar/releases/download/{{ sidecar_version }}/graylog-sidecar_{{ sidecar_version }}-1_armv7.deb
 
-{% else %}{# if grains.osfullname in 'Raspbian' #}
+filebeat:
+  pkg.installed:
+    - sources:
+      - filebeat: https://apt.ffmuc.net/filebeat-oss-9.5.6-ffmuc1-armhf.deb
+
+{% else %}{# if Raspbian #}
 
 graylog-repo-key:
-    cmd.run:
-      - name: "wget -O - -o /dev/null https://packages.graylog2.org/repo/debian/keyring.gpg | gpg --dearmor -o /usr/share/keyrings/graylog-keyring.gpg"
-      - creates: /usr/share/keyrings/graylog-keyring.gpg
+  file.managed:
+    - name: /usr/share/keyrings/graylog-keyring.gpg
+    - source: https://packages.graylog2.org/repo/debian/keyring.gpg
+    {#- the keyring with the uid of 11/2025: the old one is bound by SHA1 only, which sqv on trixie rejects;
+        a new key from Graylog means a new hash here #}
+    - source_hash: sha256=44b60fb7610344ba3174295d9dccad888b14bf95d00d892420001ea11874f591
+    - mode: "0644"
 
 graylog-repo:
     pkgrepo.managed:
@@ -20,32 +30,44 @@ graylog-repo:
     - file: /etc/apt/sources.list.d/graylog-sidecar.list
     - clean_file: True
     - require:
-      - cmd: graylog-repo-key
+      - file: graylog-repo-key
 
 elasticsearch-repo-key:
-  cmd.run:
-    - name: "wget -O - -o /dev/null https://artifacts.elastic.co/GPG-KEY-elasticsearch | gpg --dearmor -o /usr/share/keyrings/elasticsearch-keyring.gpg"
-    - creates: /usr/share/keyrings/elasticsearch-keyring.gpg
+  file.managed:
+    - name: /usr/share/keyrings/elasticsearch-keyring.asc
+    - source: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    {#- armored, apt reads .asc in signed-by; the uid self-signature of 2023-09-05 (the older one is SHA1 only,
+        rejected by sqv on trixie) #}
+    - source_hash: sha256=db52809c5f6b27f9c2bed45cb43e398c659275f3d35305653c6750a0db90f5eb
+    - mode: "0644"
+
+/usr/share/keyrings/elasticsearch-keyring.gpg:
+  file.absent:
+    - require:
+      - pkgrepo: filebeat-repo
 
 /etc/apt/sources.list.d/elastic-7.x.list:
+  file.absent
+
+/etc/apt/sources.list.d/elastic-8.x.list:
   file.absent
 
 filebeat-repo:
   pkgrepo.managed:
     - humanname: Elastic-Repo
-    - name: deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/elasticsearch-keyring.gpg] https://artifacts.elastic.co/packages/oss-8.x/apt stable main
-    - file: /etc/apt/sources.list.d/elastic-8.x.list
+    - name: deb [arch={{ grains.osarch }} signed-by=/usr/share/keyrings/elasticsearch-keyring.asc] https://artifacts.elastic.co/packages/oss-9.x/apt stable main
+    - file: /etc/apt/sources.list.d/elastic-9.x.list
     - clean_file: True
     - require:
-      - cmd: elasticsearch-repo-key
-
-{% endif %}
+      - file: elasticsearch-repo-key
 
 graylog-sidecar:
   pkg.latest
 
 filebeat:
   pkg.latest
+
+{% endif %}{# if Raspbian #}
 
 {% if not salt['file.file_exists']('/etc/systemd/system/graylog-sidecar.service') %}
 graylog-sidecar-install-service:
@@ -60,6 +82,8 @@ graylog-sidecar-config:
     - name: /etc/graylog/sidecar/sidecar.yml
     - source: salt://graylog-sidecar/sidecar.yml
     - template: jinja
+    - mode: "0600"  # contains the server API token
+    - show_changes: False
     - require:
       - pkg: graylog-sidecar
 
@@ -72,4 +96,5 @@ graylog-sidecar-service:
       - file: graylog-sidecar-config
     - watch:
       - pkg: graylog-sidecar
+      - pkg: filebeat
       - file: graylog-sidecar-config

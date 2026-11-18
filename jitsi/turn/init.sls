@@ -37,3 +37,21 @@ systemd-reload-coturn:
         # avoid turnserver logs to fill multiple files
         :programname,isequal,"turnserver"         /var/log/turnserver.log
         & stop
+
+/etc/logrotate.d/turnserver:
+  file.managed:
+    - contents: |
+        # Managed by Salt
+        /var/log/turnserver.log
+        {
+                su root syslog
+                rotate 7
+                daily
+                missingok
+                notifempty
+                compress
+                delaycompress
+                postrotate
+                        /usr/lib/rsyslog/rsyslog-rotate
+                endscript
+        }

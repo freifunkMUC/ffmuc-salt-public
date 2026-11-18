@@ -233,6 +233,9 @@ reporting-disabled = true
   # Use a separate private key location.
   https-private-key = "/etc/ssl/private/{{ grains['id'] }}.key.pem"
 
+  # Key from the certs state is 0440 root:ssl-cert; InfluxDB 1.13 refuses keys more open than 0600 otherwise.
+  https-insecure-certificate = true
+
   # The JWT auth shared secret to validate requests using JSON web tokens.
   # shared-sercret = ""
 
