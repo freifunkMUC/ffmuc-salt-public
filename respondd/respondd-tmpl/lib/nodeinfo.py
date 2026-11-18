@@ -36,11 +36,7 @@ class Nodeinfo(Respondd):
             interface = lineMatch.group(0)
 
             interfaceType = ""
-            if (
-                "fastd" in self._config and interface == self._config["fastd"]
-            ):  # keep for compatibility
-                interfaceType = "tunnel"
-            elif interface.find("l2tp") != -1:
+            if interface.find("l2tp") != -1:
                 interfaceType = "l2tp"
             elif "mesh-vpn" in self._config and interface in self._config["mesh-vpn"]:
                 interfaceType = "tunnel"
@@ -118,15 +114,6 @@ class Nodeinfo(Respondd):
             "location": {},
             "vpn": self.getVPNFlag(self._config["batman"]),
         }
-
-        #        if "mesh-vpn" in self._config and len(self._config["mesh-vpn"]) > 0:
-        #            try:
-        #                ret["software"]["fastd"] = {
-        #                    "version": lib.helper.call(["fastd", "-v"])[0].split(" ")[1],
-        #                    "enabled": True,
-        #                }
-        #            except:
-        #                pass
 
         if "nodeinfo" in self._aliasOverlay:
             return lib.helper.merge(ret, self._aliasOverlay["nodeinfo"])

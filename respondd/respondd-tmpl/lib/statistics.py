@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 
-import socket
 import re
-import sys
-import json
 import os
 
 from lib.respondd import Respondd
@@ -108,42 +105,6 @@ class Statistics(Respondd):
 
         return ret
 
-    def getFastd(self):
-        dataFastd = b""
-
-        try:
-            sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            sock.connect(self._config["fastd_socket"])
-        except socket.error as err:
-            print("socket error: ", sys.stderr, err)
-            return None
-
-        while True:
-            data = sock.recv(1024)
-            if not data:
-                break
-            dataFastd += data
-
-        sock.close()
-        return json.loads(dataFastd.decode("utf-8"))
-
-    def getMeshVPNPeers(self):
-        ret = {}
-
-        if "fastd_socket" in self._config:
-            fastd = self.getFastd()
-            for peer in fastd["peers"].values():
-                if peer["connection"]:
-                    ret[peer["name"]] = {
-                        "established": peer["connection"]["established"]
-                    }
-                else:
-                    ret[peer["name"]] = None
-
-            return ret
-        else:
-            return None
-
     def getGateway(self):
         ret = None
 
@@ -182,7 +143,7 @@ class Statistics(Respondd):
                 )
             ),
             "mesh_vpn": {  # HopGlass-Server: node.flags.uplink = parsePeerGroup(_.get(n, 'statistics.mesh_vpn'))
-                "groups": {"backbone": {"peers": self.getMeshVPNPeers()}}
+                "groups": {"backbone": {"peers": None}}
             },
         }
 
