@@ -18,6 +18,9 @@ services:
       - MEM_STARTUP=1024 #optional
       - MONGO_TLS= #optional
       - MONGO_AUTHSOURCE= #optional
+      # CVE-2026-114938 (Java4Shell) stopgap; the s6 run script has no JVM options variable.
+      # Remove when the image ships a fixed JDK.
+      - JAVA_TOOL_OPTIONS=-XX:-UseBASE64Intrinsics
     volumes:
       - /srv/docker/unifi/data:/config
     ports:

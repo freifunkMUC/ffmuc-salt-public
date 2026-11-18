@@ -40,6 +40,10 @@ services:
       GRAYLOG_DATANODE_PASSWORD_SECRET: "${GRAYLOG_PASSWORD_SECRET:?Please configure GRAYLOG_PASSWORD_SECRET in the .env file}"
       GRAYLOG_DATANODE_MONGODB_URI: "mongodb://mongodb:27017/graylog"
       GRAYLOG_DATANODE_JAVA_OPTS: "-Xms4g -Xmx4g"
+      # CVE-2026-114938 (Java4Shell) stopgap. _JAVA_OPTIONS reaches the data node JVM and the
+      # OpenSearch JVM that it starts (the data node sets OPENSEARCH_JAVA_OPTS itself and
+      # OpenSearch drops JAVA_TOOL_OPTIONS). Remove when the image ships a fixed JDK.
+      _JAVA_OPTIONS: "-XX:-UseBASE64Intrinsics"
     ulimits:
       memlock:
         hard: -1
@@ -70,7 +74,8 @@ services:
       - http.host=0.0.0.0
       - transport.host=localhost
       - network.host=0.0.0.0
-      - "OPENSEARCH_JAVA_OPTS=-Dlog4j2.formatMsgNoLookups=true -Xms16g -Xmx16g"
+      # -XX:-UseBASE64Intrinsics: CVE-2026-114938 (Java4Shell) stopgap, remove when the image ships a fixed JDK
+      - "OPENSEARCH_JAVA_OPTS=-Dlog4j2.formatMsgNoLookups=true -Xms16g -Xmx16g -XX:-UseBASE64Intrinsics"
       - bootstrap_memory_lock=true
       - "OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_INITIAL_ADMIN_PASSWORD}"
       - discovery.type=single-node
@@ -121,7 +126,9 @@ services:
       # GRAYLOG_DATANODE_PASSWORD_SECRET and GRAYLOG_PASSWORD_SECRET MUST be the same value
       GRAYLOG_PASSWORD_SECRET: "${GRAYLOG_PASSWORD_SECRET:?Please configure GRAYLOG_PASSWORD_SECRET in the .env file}"
       GRAYLOG_ROOT_PASSWORD_SHA2: "${GRAYLOG_ROOT_PASSWORD_SHA2:?Please configure GRAYLOG_ROOT_PASSWORD_SHA2 in the .env file}"
-      GRAYLOG_SERVER_JAVA_OPTS: "-Xms3g -Xmx3g" # appended to the image defaults
+      # appended to the image defaults; -XX:-UseBASE64Intrinsics: CVE-2026-114938 (Java4Shell) stopgap,
+      # remove when the image ships a fixed JDK
+      GRAYLOG_SERVER_JAVA_OPTS: "-Xms3g -Xmx3g -XX:-UseBASE64Intrinsics"
       GRAYLOG_HTTP_BIND_ADDRESS: "0.0.0.0:9000"
       GRAYLOG_HTTP_EXTERNAL_URI: "https://log.ov.ffmuc.net/"
       GRAYLOG_TRUSTED_PROXIES: "172.23.0.0/16" # Traefik on the external proxy network, for X-Forwarded-For

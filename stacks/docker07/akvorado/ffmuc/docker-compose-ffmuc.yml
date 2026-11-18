@@ -27,6 +27,8 @@ services:
     security_opt:
       - no-new-privileges:true
     mem_limit: 2g  # 1.2 GiB in use; no read_only: the entrypoint writes /opt/kafka/config
+    environment:
+      KAFKA_OPTS: -XX:-UseBASE64Intrinsics  # CVE-2026-114938 (Java4Shell) stopgap, remove when the image ships a fixed JDK
   redis:
     image: valkey/valkey:9.1.3@sha256:3add1a336a920ea54770a001ab6feb3da5fceea96a40373a3a2cd469b815f0b7
     user: "999:999"  # the entrypoint would otherwise chown /data and drop privileges itself
@@ -56,7 +58,9 @@ services:
       - no-new-privileges:true
     mem_limit: 1g  # 0.6 GiB in use
     environment:
-      JAVA_OPTS: -XX:MaxRAMPercentage=60  # default 25 % would cap the heap at 256 MiB
+      # MaxRAMPercentage: default 25 % would cap the heap at 256 MiB
+      # -XX:-UseBASE64Intrinsics: CVE-2026-114938 (Java4Shell) stopgap, remove when the image ships a fixed JDK
+      JAVA_OPTS: -XX:MaxRAMPercentage=60 -XX:-UseBASE64Intrinsics
     labels:
       - traefik.enable=false
   geoip:
