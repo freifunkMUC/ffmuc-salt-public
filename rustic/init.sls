@@ -5,7 +5,7 @@
 {% set rustic_version = "nightly" %}
 {%- if grains.osarch == 'arm64' %}
 {#- renovate: datasource=github-releases depName=rustic-rs/rustic #}
-{%- set rustic_release = "v0.11.4" %}
+{%- set rustic_release = "v0.12.0" %}
 rustic-release:
   archive.extracted:
     - name: /usr/local/lib/rustic-{{ rustic_release }}
