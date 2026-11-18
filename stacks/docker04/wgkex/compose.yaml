@@ -1,7 +1,7 @@
 ---
 services:
   broker:
-    image: ghcr.io/freifunkmuc/wgkex:v0.6.2@sha256:eff8b92298d9f7ed4dd4ad0bb8d42546ddc0ff2f94059a3be8b80475ca2a07bd
+    image: ghcr.io/freifunkmuc/wgkex:v0.6.3@sha256:30b1c329fe88c1c119af0d4bd242425ef0568ea8b5e6b1efb070ab44d79c640e
     command: broker
     restart: unless-stopped
     depends_on:
