@@ -29,7 +29,7 @@ install_rustic:
     - makedirs: True
     - contents: |
         [Service]
-        MemoryMax=1200M
+        MemoryMax=1500M
         OOMScoreAdjust=1000
     - onchanges_in:
       - cmd: systemd-reload-ffmuc-backup
