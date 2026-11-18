@@ -1,6 +1,6 @@
 # Roundcube with the club's colours and logos: Elastic compiled again with _variables.less, the skin's own hook
 # for palette changes (skins/elastic/README.md); rebuilt on every Roundcube update, so the CSS always matches.
-FROM roundcube/roundcubemail:1.7.6-apache-nonroot@sha256:8466ea7db6ec1a34f434d227d7e7e8c480f32a8bc9b7245b75920c59ddacfbe3 AS roundcube
+FROM roundcube/roundcubemail:1.7.6-apache-nonroot@sha256:552431f4eb46a6760e2353a7fde8d020d8b6c155aafc84cde8e8c77ab7b38ef6 AS roundcube
 
 FROM node:26.13.1-alpine@sha256:6bd9ab43c0ec0190ca7b2d193906cb8b7edf6e7f4afa43ddeccd6452710bffb5 AS skin
 # renovate: datasource=npm depName=less
