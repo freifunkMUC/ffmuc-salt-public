@@ -29,7 +29,7 @@ nginx-repo-key:
     - require:
       - cmd: nginx-repo-key
 
-{%- set nginx_pkg_version = salt['config.get']('netbox:config_context:nginx:version', '1.30.6-1~' ~ grains.oscodename) %}
+{%- set nginx_pkg_version = salt['config.get']('netbox:config_context:nginx:version', '1.30.7-1~' ~ grains.oscodename) %}
 nginx:
   pkg.installed:
     - name: nginx
