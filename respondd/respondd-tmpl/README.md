@@ -34,9 +34,7 @@ Copy `config.json.example` to `config.json` and change it to match your server c
 * `"mesh-wlan"` (`str[]`)
   - ad hoc batman-mesh
 * `"mesh-vpn"` (`str[]`)
-  - fastd, GRE, L2TP batman-Mesh
-* `"fastd_socket"` (`str`)
-  - needed for uplink-flag
+  - GRE, L2TP batman-Mesh
 * `"rate_limit"` (`int` / _default:_ `30`)
   - limit incoming requests per minutes
 * `"rate_limit_burst"` (`int` / _default:_ `10`)
