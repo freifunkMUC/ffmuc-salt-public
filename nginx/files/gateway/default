@@ -1,7 +1,7 @@
 # Managed by Salt (nginx.gateway). Gluon nodes poll this page.
 server {
-	listen 80 default_server;
-	listen [::]:80 default_server;
+	# Port 80 is the stream proxy in nginx.conf.
+	listen 127.0.0.1:8080 proxy_protocol default_server;
 
 	root /var/www/html;
 	index index.html index.htm index.nginx-debian.html;

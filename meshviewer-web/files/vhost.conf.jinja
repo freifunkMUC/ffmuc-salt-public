@@ -38,12 +38,19 @@ server {
     }
 }
 
+# Port 80 is the stream proxy in nginx.conf (nginx.gateway). certbot renews with the webroot below.
 server {
-    listen 80;
-    listen [::]:80;
+    listen 127.0.0.1:8080 proxy_protocol;
     server_name {{ in_name }} {{ fqdn }};
-    if ($host = {{ fqdn }}) {
-        return 301 https://$host$request_uri;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/letsencrypt;
     }
-    return 404;
+
+    location / {
+        if ($host = {{ fqdn }}) {
+            return 301 https://$host$request_uri;
+        }
+        return 404;
+    }
 }
