@@ -21,6 +21,7 @@ include:
   - .nginx
   - .yanic
   - .respondd
+  - .xpgw-counters
   - .polld
   - .meshviewer
 {% endif %}

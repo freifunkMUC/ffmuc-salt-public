@@ -118,6 +118,26 @@ class ParkerGatewayStatsTest(unittest.TestCase):
             self.assertNotIn(key[:10], lines[0])
         self.assertEqual(pgs.wireguard_lines(None, now), [])
 
+    def test_xpgw_counters(self):
+        nft_json = (
+            '{"nftables": [{"metainfo": {"version": "1.1.6"}}, '
+            '{"counter": {"family": "inet", "name": "uplink_to_partner", '
+            '"table": "parker_stats", "handle": 2, "packets": 5, "bytes": 700}}, '
+            '{"counter": {"family": "inet", "name": "partner_to_nodes", '
+            '"table": "parker_stats", "handle": 3, "packets": 7, "bytes": 900}}, '
+            '{"counter": {"family": "inet", "name": "other", '
+            '"table": "parker_stats", "handle": 4, "packets": 1, "bytes": 1}}]}'
+        )
+        self.assertEqual(
+            pgs.xpgw_lines(nft_json),
+            [
+                "parker_xpgw_traffic,direction=partner_to_nodes bytes=900i,packets=7i",
+                "parker_xpgw_traffic,direction=uplink_to_partner bytes=700i,packets=5i",
+            ],
+        )
+        self.assertEqual(pgs.xpgw_lines(None), [])
+        self.assertEqual(pgs.xpgw_lines("not json"), [])
+
     def test_escape(self):
         self.assertEqual(pgs.escape_tag("a b,c=d"), "a\\ b\\,c\\=d")
         self.assertEqual(pgs.escape_str('x"y'), '"x\\"y"')
