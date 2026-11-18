@@ -6,5 +6,6 @@ Type=oneshot
 Nice=19
 IOSchedulingClass=idle
 ExecStart=/usr/local/bin/rustic backup
-ExecStart=/usr/local/bin/rustic forget
+# forget of another host can delete a snapshot file while this one lists them (404): retry once
+ExecStart=/bin/sh -c '/usr/local/bin/rustic forget || { sleep 300; /usr/local/bin/rustic forget; }'
 ExecStartPost=/usr/bin/touch /var/lib/ffmuc-rustic-last-success
