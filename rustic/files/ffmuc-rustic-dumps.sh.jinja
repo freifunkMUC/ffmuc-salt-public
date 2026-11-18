@@ -21,11 +21,12 @@ fi
 {%- endfor %}
 {%- for name, command in salt['config.get']('netbox:config_context:backup:dump_dirs', {}).items() %}
 
-# {{ name }} (directory: the command writes into $OUT, the old directory stays until the new one is complete)
+# {{ name }} (directory: one pipeline writing into $OUT; the old directory stays until the new one is complete)
 echo "{{ name }}" >> "$D/.names"
+[ -e "$D/{{ name }}" ] || [ ! -e "$D/{{ name }}.old" ] || mv "$D/{{ name }}.old" "$D/{{ name }}"
 rm -rf "$D/{{ name }}.tmp"
 mkdir "$D/{{ name }}.tmp"
-if ( OUT="$D/{{ name }}.tmp"; {{ command }} ) && [ -n "$(ls -A "$D/{{ name }}.tmp")" ]; then
+if ( export OUT="$D/{{ name }}.tmp"; {{ command }} ) && [ -n "$(ls -A "$D/{{ name }}.tmp")" ]; then
   touch "$D/{{ name }}.tmp"
   rm -rf "$D/{{ name }}.old"
   [ ! -e "$D/{{ name }}" ] || mv "$D/{{ name }}" "$D/{{ name }}.old"

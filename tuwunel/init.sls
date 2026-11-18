@@ -20,3 +20,5 @@ ffmuc-tuwunel-backup-timer:
     - enable: True
     - require:
       - cmd: systemd-reload-ffmuc-tuwunel-backup
+    - watch:
+      - file: /etc/systemd/system/ffmuc-tuwunel-backup.timer
