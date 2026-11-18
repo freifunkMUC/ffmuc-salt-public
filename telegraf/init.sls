@@ -317,7 +317,7 @@ remove_asterisk_monitoring:
     - watch_in:
           service: telegraf
 
-{#- Parker gateway: BIRD and WireGuard counts, read only (sudo allows only the exact commands) #}
+{#- Parker gateway: BIRD, WireGuard and Jool NAT64 counts, read only (sudo allows only the exact commands) #}
 /usr/local/bin/parker_gateway_stats:
 {%- if 'parker-gateway' in role %}
   file.managed:
@@ -337,6 +337,16 @@ remove_asterisk_monitoring:
         telegraf    ALL=(root) NOPASSWD: /usr/sbin/birdc -r show bfd sessions
         telegraf    ALL=(root) NOPASSWD: /usr/bin/wg show wg-nodes latest-handshakes
         telegraf    ALL=(root) NOPASSWD: /usr/sbin/nft -j list counters table inet parker_stats
+        telegraf    ALL=(root) NOPASSWD: /usr/sbin/ip netns exec jool /usr/bin/jool -i default stats display --all --csv
+        telegraf    ALL=(root) NOPASSWD: /usr/sbin/ip netns exec jool /usr/bin/jool -i default session display --tcp --numeric --csv --no-headers
+        telegraf    ALL=(root) NOPASSWD: /usr/sbin/ip netns exec jool /usr/bin/jool -i default bib display --tcp --numeric --csv --no-headers
+        telegraf    ALL=(root) NOPASSWD: /usr/sbin/ip netns exec jool /usr/bin/jool -i default pool4 display --tcp --csv --no-headers
+        telegraf    ALL=(root) NOPASSWD: /usr/sbin/ip netns exec jool /usr/bin/jool -i default session display --udp --numeric --csv --no-headers
+        telegraf    ALL=(root) NOPASSWD: /usr/sbin/ip netns exec jool /usr/bin/jool -i default bib display --udp --numeric --csv --no-headers
+        telegraf    ALL=(root) NOPASSWD: /usr/sbin/ip netns exec jool /usr/bin/jool -i default pool4 display --udp --csv --no-headers
+        telegraf    ALL=(root) NOPASSWD: /usr/sbin/ip netns exec jool /usr/bin/jool -i default session display --icmp --numeric --csv --no-headers
+        telegraf    ALL=(root) NOPASSWD: /usr/sbin/ip netns exec jool /usr/bin/jool -i default bib display --icmp --numeric --csv --no-headers
+        telegraf    ALL=(root) NOPASSWD: /usr/sbin/ip netns exec jool /usr/bin/jool -i default pool4 display --icmp --csv --no-headers
     - mode: "0440"
     - user: root
     - check_cmd: /usr/sbin/visudo -c -f

@@ -138,6 +138,42 @@ class ParkerGatewayStatsTest(unittest.TestCase):
         self.assertEqual(pgs.xpgw_lines(None), [])
         self.assertEqual(pgs.xpgw_lines("not json"), [])
 
+    def test_jool_lines(self):
+        stats = (
+            "Stat,Value\nJSTAT_RECEIVED6,685\nJSTAT_RECEIVED4,837\nJSTAT_SUCCESS,1517\n"
+            "JSTAT_BIB_ENTRIES,294\nJSTAT_SESSIONS,300\nJSTAT_POOL4_MISMATCH,0\n"
+            "JSTAT_SESSION_NOT_FOUND,736\nJSTAT64_TTL,3\nJSTAT_PKT_TOO_BIG,35\n"
+            "JSTAT_ICMP4ERR_SUCCESS,35\nJSTAT_JOOLD_PKT_SENT,9\n"
+        )
+        # session and BIB rows include client addresses: the script must only count them
+        session = (
+            "2001:db8::1#40000,64:ff9b::c000:201#443,10.80.64.1#2001,192.0.2.1#443,ESTABLISHED,01:59:00\n"
+            * 3
+        )
+        bib = "2001:db8::1#40000,10.80.64.1#2001,0\n" * 2
+        pool4 = (
+            "0,TCP,10.80.64.1,2000,64999,1024,0\n0,TCP,10.80.64.2,2000,2999,1024,0\n"
+        )
+        lines = pgs.jool_lines(
+            stats, {"tcp": (session, bib, pool4), "udp": ("", "", None)}
+        )
+        self.assertEqual(
+            lines,
+            [
+                "jool_daemon up=1i",
+                "jool_stats received6=685i,received4=837i,success=1517i,bib_entries=294i,"
+                "sessions=300i,icmp4err_success=35i",
+                "jool_drop,reason=64_TTL packets=3i",
+                "jool_drop,reason=PKT_TOO_BIG packets=35i",
+                "jool_drop,reason=SESSION_NOT_FOUND packets=736i",
+                "jool_protocol,protocol=tcp sessions=3i,bib=2i,pool4_ports=64000i",
+                "jool_protocol,protocol=udp sessions=0i,bib=0i",
+            ],
+        )
+        for secret in ("2001:db8", "192.0.2.1", "40000", "10.80.64.1"):
+            self.assertNotIn(secret, "\n".join(lines))
+        self.assertEqual(pgs.jool_lines(None, {}), ["jool_daemon up=0i"])
+
     def test_escape(self):
         self.assertEqual(pgs.escape_tag("a b,c=d"), "a\\ b\\,c\\=d")
         self.assertEqual(pgs.escape_str('x"y'), '"x\\"y"')
