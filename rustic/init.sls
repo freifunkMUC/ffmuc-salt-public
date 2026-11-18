@@ -5,12 +5,12 @@
 {% set rustic_version = "nightly" %}
 {%- if grains.osarch == 'arm64' %}
 {#- renovate: datasource=github-releases depName=rustic-rs/rustic #}
-{%- set rustic_release = "v0.11.4" %}
+{%- set rustic_release = "v0.12.0" %}
 rustic-release:
   archive.extracted:
     - name: /usr/local/lib/rustic-{{ rustic_release }}
     - source: https://github.com/rustic-rs/rustic/releases/download/{{ rustic_release }}/rustic-{{ rustic_release }}-aarch64-unknown-linux-musl.tar.gz
-    - source_hash: sha256=35ccd40ff565b9760245dd391f9fef04c46778ce5e073d833288abe2e5eabd20
+    - source_hash: sha256=192d0701216edecba4d523b5ce0e1183b3904140791789ee4974bf70b41b483b
     - enforce_toplevel: False
     - user: root
     - group: root
