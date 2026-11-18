@@ -13,10 +13,14 @@ Output (aggregates only, no node keys, prefixes or addresses):
   bird_bfd_session,protocol=<name>,interface=<ifname>,neighbor=<router address>
       up=0|1i,state="Up",interval=<s>,timeout=<s>
   wireguard_peers,interface=<ifname> peers=,handshake_3m=,handshake_15m=,handshake_never=
+  parker_xpgw_traffic,direction=<uplink_to_partner|partner_to_nodes> bytes=,packets=
+      node traffic between the pgws of a site, from the nftables counters of
+      parker/xpgw-counters (cumulative, reset when the table is loaded again)
 
 The BFD neighbors are the other gateways of the site (router addresses, not nodes).
 """
 
+import json
 import re
 import subprocess
 import sys
@@ -25,6 +29,8 @@ import time
 BIRDC = "/usr/sbin/birdc"
 WG = "/usr/bin/wg"
 WG_INTERFACE = "wg-nodes"
+NFT = "/usr/sbin/nft"
+XPGW_COUNTERS = ("uplink_to_partner", "partner_to_nodes")
 
 TIME_TOKEN = re.compile(r"^[0-9][0-9:.T+-]*$")
 ROUTES_RE = re.compile(r"(\d+) (imported|filtered|exported|preferred)")
@@ -187,6 +193,26 @@ def wireguard_lines(handshakes_out, now):
     return [f"wireguard_peers,interface={escape_tag(WG_INTERFACE)} {fields}"]
 
 
+def xpgw_lines(nft_json):
+    """Reads the named counters of table inet parker_stats (`nft -j list counters`)."""
+    if not nft_json:
+        return []
+    try:
+        objects = json.loads(nft_json).get("nftables", [])
+    except (ValueError, AttributeError):
+        return []
+    lines = []
+    for obj in objects:
+        counter = obj.get("counter") if isinstance(obj, dict) else None
+        if not counter or counter.get("name") not in XPGW_COUNTERS:
+            continue
+        lines.append(
+            f"parker_xpgw_traffic,direction={counter['name']} "
+            f"bytes={int(counter['bytes'])}i,packets={int(counter['packets'])}i"
+        )
+    return sorted(lines)
+
+
 def main():
     lines = bird_lines(
         run([BIRDC, "-r", "show", "protocols", "all"]),
@@ -194,6 +220,9 @@ def main():
     )
     lines += wireguard_lines(
         run([WG, "show", WG_INTERFACE, "latest-handshakes"]), int(time.time())
+    )
+    lines += xpgw_lines(
+        run([NFT, "-j", "list", "counters", "table", "inet", "parker_stats"])
     )
     sys.stdout.write("".join(line + "\n" for line in lines))
     return 0

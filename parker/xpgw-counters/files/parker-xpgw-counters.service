@@ -1,0 +1,13 @@
+[Unit]
+Description=nftables counters for node traffic between the Parker gateways
+Documentation=https://github.com/freifunkMUC/ffmuc-salt-public/tree/main/parker/xpgw-counters
+After=netfilter-persistent.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/sbin/nft -f /etc/nftables-parker-xpgw-counters.nft
+ExecStop=/usr/sbin/nft delete table inet parker_stats
+
+[Install]
+WantedBy=multi-user.target

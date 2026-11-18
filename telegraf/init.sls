@@ -336,6 +336,7 @@ remove_asterisk_monitoring:
         telegraf    ALL=(root) NOPASSWD: /usr/sbin/birdc -r show protocols all
         telegraf    ALL=(root) NOPASSWD: /usr/sbin/birdc -r show bfd sessions
         telegraf    ALL=(root) NOPASSWD: /usr/bin/wg show wg-nodes latest-handshakes
+        telegraf    ALL=(root) NOPASSWD: /usr/sbin/nft -j list counters table inet parker_stats
     - mode: "0440"
     - user: root
     - check_cmd: /usr/sbin/visudo -c -f
