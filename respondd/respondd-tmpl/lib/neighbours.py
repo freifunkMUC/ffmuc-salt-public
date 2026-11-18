@@ -1,101 +1,63 @@
 #!/usr/bin/env python3
 
-import re
+import logging
+import socket
 
+from lib.batadv_netlink import (
+    BATADV_CMD_GET_NEIGHBORS,
+    list_hard_interfaces,
+    missing_attrs,
+)
 from lib.respondd import Respondd
-import lib.helper
+
+log = logging.getLogger(__name__)
+
+# Skip rows missing any of these (mirrors gluon-mesh-batman-adv's
+# respondd-neighbours.c). Without it, throughput=0 leaks through and
+# meshviewer renders the link as a dead edge.
+NEIGH_MANDATORY = (
+    "BATADV_ATTR_NEIGH_ADDRESS",
+    "BATADV_ATTR_THROUGHPUT",
+    "BATADV_ATTR_HARD_IFINDEX",
+    "BATADV_ATTR_LAST_SEEN_MSECS",
+)
 
 
 class Neighbours(Respondd):
-    def __init__(self, config):
-        Respondd.__init__(self, config)
-
-    @staticmethod
-    def getStationDump(interfaceList):
-        ret = {}
-
-        for interface in interfaceList:
-            mac = ""
-            lines = lib.helper.call(["iw", "dev", interface, "station", "dump"])
-            for line in lines:
-                # Station 32:b8:c3:86:3e:e8 (on ibss3)
-                lineMatch = re.match(
-                    r"^Station ([0-9a-f:]+) \(on ([\w\d]+)\)", line, re.I
-                )
-                if lineMatch:
-                    mac = lineMatch.group(1)
-                    ret[mac] = {}
-                else:
-                    lineMatch = re.match(r"^[\t ]+([^:]+):[\t ]+([^ ]+)", line, re.I)
-                    if lineMatch:
-                        ret[mac][lineMatch.group(1)] = lineMatch.group(2)
-        return ret
-
-    @staticmethod
-    def getMeshInterfaces(batmanInterface):
-        ret = {}
-
-        lines = lib.helper.call(["batctl", "meshif", batmanInterface, "if"])
-        for line in lines:
-            lineMatch = re.match(r"^([^:]*)", line)
-            interface = lineMatch.group(1)
-            ret[interface] = lib.helper.getInterfaceMAC(interface)
-
-        return ret
+    def __init__(self, config, batadv_nl=None):
+        Respondd.__init__(self, config, batadv_nl)
 
     def _get(self):
         ret = {"batadv": {}}
 
-        stationDump = None
+        mesh_idx = self._mesh_idx()
+        if mesh_idx is None:
+            return ret
 
-        if "mesh-wlan" in self._config:
-            ret["wifi"] = {}
-            stationDump = self.getStationDump(self._config["mesh-wlan"])
+        batadv = self._get_batadv()
+        meshInterfaces = list_hard_interfaces(batadv, mesh_idx)
+        replies = batadv.dump(BATADV_CMD_GET_NEIGHBORS, mesh_idx)
 
-        meshInterfaces = self.getMeshInterfaces(self._config["batman"])
-
-        lines = lib.helper.call(["batctl", "meshif", self._config["batman"], "o", "-n"])
-        for line in lines:
-            # * e2:ad:db:b7:66:63    2.712s   (175) be:b7:25:4f:8f:96 [mesh-vpn-l2tp-1]
-            lineMatch = re.match(
-                r"^[ \*\t]*([0-9a-f:]+)[ ]*([\d\.]*)s[ ]*\(([ ]*\d*)\)[ ]*([0-9a-f:]+)[ ]*\[[ ]*(.*)\]",
-                line,
-                re.I,
-            )
-
-            if lineMatch:
-                interface = lineMatch.group(5)
-                macOrigin = lineMatch.group(1)
-                macNexthop = lineMatch.group(4)
-                tq = lineMatch.group(3)
-                lastseen = lineMatch.group(2)
-
-                if macOrigin == macNexthop:
-                    if (
-                        "mesh-wlan" in self._config
-                        and interface in self._config["mesh-wlan"]
-                        and stationDump is not None
-                    ):
-                        if meshInterfaces[interface] not in ret["wifi"]:
-                            ret["wifi"][meshInterfaces[interface]] = {}
-                            ret["wifi"][meshInterfaces[interface]]["neighbours"] = {}
-
-                        if macOrigin in stationDump:
-                            ret["wifi"][meshInterfaces[interface]]["neighbours"][
-                                macOrigin
-                            ] = {
-                                "signal": stationDump[macOrigin]["signal"],
-                                "noise": 0,  # TODO: fehlt noch
-                                "inactive": stationDump[macOrigin]["inactive time"],
-                            }
-
-                    if interface in meshInterfaces:
-                        if meshInterfaces[interface] not in ret["batadv"]:
-                            ret["batadv"][meshInterfaces[interface]] = {}
-                            ret["batadv"][meshInterfaces[interface]]["neighbours"] = {}
-
-                        ret["batadv"][meshInterfaces[interface]]["neighbours"][
-                            macOrigin
-                        ] = {"tq": int(tq), "lastseen": float(lastseen)}
+        for reply in replies:
+            attrs = dict(reply["attrs"])
+            if missing_attrs(attrs, NEIGH_MANDATORY):
+                continue
+            try:
+                ifname = socket.if_indextoname(attrs["BATADV_ATTR_HARD_IFINDEX"])
+            except OSError:
+                continue
+            if ifname not in meshInterfaces:
+                continue
+            neighMac = attrs["BATADV_ATTR_NEIGH_ADDRESS"].lower()
+            if meshInterfaces[ifname] not in ret["batadv"]:
+                ret["batadv"][meshInterfaces[ifname]] = {"neighbours": {}}
+            ret["batadv"][meshInterfaces[ifname]]["neighbours"][neighMac] = {
+                "throughput": attrs["BATADV_ATTR_THROUGHPUT"],
+                "lastseen": attrs["BATADV_ATTR_LAST_SEEN_MSECS"] / 1000.0,
+                # Kernel doesn't set FLAG_BEST on GET_NEIGHBORS replies, so
+                # this is always False — emitted for schema parity with
+                # yanic/meshviewer.
+                "best": bool(attrs.get("BATADV_ATTR_FLAG_BEST")),
+            }
 
         return ret
