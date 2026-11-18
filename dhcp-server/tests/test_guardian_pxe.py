@@ -186,7 +186,12 @@ class PxeTemplateTest(unittest.TestCase):
         self.assertIn("startup_states: highstate", cmds)
         self.assertIn("salt-minion=3008.5 salt-common=3008.5", cmds)
         self.assertIn("tcp_keepalive_idle: 30", cmds)
-        self.assertIn("127.0.1.1 vm1.example.test vm1/", cmds)
+        # The installer can leave /etc/hosts empty, so write it in full.
+        # wgkex uses the short hostname as the worker name.
+        self.assertIn(
+            "printf '127.0.0.1 localhost\\n127.0.1.1 vm1.example.test vm1\\n", cmds
+        )
+        self.assertIn("> /target/etc/hosts", cmds)
         self.assertIn('GRUB_CMDLINE_LINUX="console=tty0 console=ttyS0,115200"', cmds)
         # networkd reads this only at start: it must be there before the
         # first boot, or a networkd reload removes the BIRD routes
@@ -207,6 +212,8 @@ class PxeTemplateTest(unittest.TestCase):
         self.assertFalse(any(c.get("path") == "/boot" for c in ai["storage"]["config"]))
         ud = ai["user-data"]
         self.assertEqual(ud["fqdn"], "vm1.example.test")
+        self.assertEqual(ud["hostname"], "vm1")
+        self.assertFalse(ud["prefer_fqdn_over_hostname"])
         self.assertEqual(ud["write_files"][0]["path"], "/root/.ssh/authorized_keys")
         self.assertFalse(ai["ssh"]["allow-pw"])
 

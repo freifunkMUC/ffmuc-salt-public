@@ -84,7 +84,7 @@
 			"printf '[Network]\\nManageForeignRoutes=no\\nManageForeignRoutingPolicyRules=no\\n' > /target/etc/systemd/networkd.conf.d/10-ffmuc.conf",
 			"printf 'id: %s\\nmaster: %s\\nstartup_states: highstate\\n' '" ~ host ~ "' '" ~ pxe.salt_master ~ "' > /target/etc/salt/minion.d/ffmuc.conf",
 			"printf 'tcp_keepalive: True\\ntcp_keepalive_idle: 30\\ntcp_keepalive_intvl: 10\\ntcp_keepalive_cnt: 3\\n' > /target/etc/salt/minion.d/tcp-keepalive.conf",
-			"sed -i 's/^127.0.1.1.*/127.0.1.1 " ~ host ~ " " ~ host.split('.')[0] ~ "/' /target/etc/hosts",
+			"printf '127.0.0.1 localhost\\n127.0.1.1 " ~ host ~ " " ~ host.split('.')[0] ~ "\\n\\n::1     ip6-localhost ip6-loopback\\nfe00::0 ip6-localnet\\nff00::0 ip6-mcastprefix\\nff02::1 ip6-allnodes\\nff02::2 ip6-allrouters\\n' > /target/etc/hosts",
 			"sed -i 's/^GRUB_CMDLINE_LINUX=.*/GRUB_CMDLINE_LINUX=\"console=tty0 console=ttyS0,115200\"/' /target/etc/default/grub",
 			'curtin in-target --target=/target -- update-grub',
 			'curl -fsSL https://packages.broadcom.com/artifactory/api/security/keypair/SaltProjectKey/public -o /target/etc/apt/keyrings/salt-archive-keyring.asc',
@@ -98,7 +98,7 @@
 		'user-data': {
 			'hostname': host.split('.')[0],
 			'fqdn': host,
-			'prefer_fqdn_over_hostname': True,
+			'prefer_fqdn_over_hostname': False,
 			'disable_root': False,
 			'ssh_pwauth': False,
 			'users': [],
