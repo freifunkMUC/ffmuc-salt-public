@@ -1,0 +1,30 @@
+#!/bin/bash
+# Result of the weekly Trivy scan (trivy state, /var/lib/ffmuc-trivy/report.json). Image names stay out of the output.
+# WARNING: an image with a fixable CRITICAL vulnerability, more than half of the scans failed, or no report for more than <days> days.
+# Usage: check_ffmuc_trivy [max report age in days]
+D=/var/lib/ffmuc-trivy
+MAX=${1:-9}
+[ -f "$D/.enabled" ] || { echo "OK - Trivy scan not enabled"; exit 0; }
+now=$(date +%s)
+if [ ! -s "$D/report.json" ]; then
+  age=$(( (now - $(stat -c %Y "$D/.enabled")) / 86400 ))
+  if [ "$age" -gt "$MAX" ]; then echo "WARNING - no Trivy report yet"; exit 1; fi
+  echo "OK - waiting for the first Trivy scan"
+  exit 0
+fi
+read -r gen err imgs crit high imgcrit < <(jq -er '[.generated, .errors, (.images | length), ([.images[].critical] | add // 0),
+  ([.images[].high] | add // 0), ([.images[] | select(.critical > 0)] | length)] | @tsv' "$D/report.json" 2>/dev/null) || { echo "UNKNOWN - report unreadable"; exit 3; }
+[ -n "${gen:-}" ] || { echo "UNKNOWN - report unreadable"; exit 3; }
+age=$(( (now - gen) / 86400 ))
+msg="$imgs images, $crit critical ($imgcrit images), $high high, report ${age}d old"
+perf="images=$imgs critical=$crit high=$high errors=$err age_days=$age"
+st=0
+[ "$imgcrit" -gt 0 ] && { st=1; msg="$msg, fixable CRITICAL"; }
+if [ "$err" -gt 0 ]; then
+  msg="$msg, $err scans failed"
+  [ $((err * 2)) -gt $((imgs + err)) ] && st=1
+fi
+[ "$age" -gt "$MAX" ] && { st=1; msg="$msg, report too old"; }
+label=(OK WARNING)
+echo "${label[$st]} - $msg | $perf"
+exit $st

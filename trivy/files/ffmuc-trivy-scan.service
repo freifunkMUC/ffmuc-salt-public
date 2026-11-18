@@ -1,0 +1,12 @@
+[Unit]
+Description=FFMuc Trivy scan of running container images
+After=docker.service
+
+[Service]
+Type=oneshot
+Nice=19
+IOSchedulingClass=idle
+CPUSchedulingPolicy=idle
+MemoryMax=2G
+TimeoutStartSec=3h
+ExecStart=/usr/local/sbin/ffmuc-trivy-scan.sh
