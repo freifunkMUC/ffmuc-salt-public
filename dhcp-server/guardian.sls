@@ -16,7 +16,8 @@ kea-dhcp4-guardian-package:
     - name: kea-dhcp4-server
 
 # check_cmd runs kea-dhcp4 -t on the new file before it replaces the old one;
-# if it fails, nothing below runs and dhcpd keeps serving.
+# if it fails, nothing below runs and dhcpd keeps serving. The temp file is in
+# /etc/kea: the Debian AppArmor profile of kea-dhcp4 does not let it read /tmp.
 /etc/kea/kea-dhcp4.conf:
   file.managed:
     - source: salt://dhcp-server/kea-dhcp4-guardian.conf.jinja
@@ -25,6 +26,7 @@ kea-dhcp4-guardian-package:
     - group: _kea
     - mode: "0640"
     - check_cmd: /usr/sbin/kea-dhcp4 -t
+    - tmp_dir: /etc/kea
     - require:
       - pkg: kea-dhcp4-guardian-package
 
