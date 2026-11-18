@@ -40,3 +40,18 @@ include:
 /srv/www/{{ fqdn }}/ffdon/meshviewer.json:
   file.symlink:
     - target: ../../../yanic/meshviewer-ffdon.json
+
+# Port 80 is a stream proxy now (nginx.gateway), so certbot's nginx authenticator cannot add its own port-80 server.
+# Renew with the webroot in the port-80 server of the vhost. reconfigure tests this with a dry run before it saves.
+/var/www/letsencrypt:
+  file.directory:
+    - makedirs: True
+
+meshviewer-web-certbot-webroot:
+  cmd.run:
+    - name: certbot reconfigure -n --cert-name {{ fqdn }} --webroot -w /var/www/letsencrypt
+    - onlyif: test -f /etc/letsencrypt/renewal/{{ fqdn }}.conf
+    - unless: grep -q '^authenticator = webroot' /etc/letsencrypt/renewal/{{ fqdn }}.conf
+    - require:
+      - file: /var/www/letsencrypt
+      - service: nginx-gateway-service
