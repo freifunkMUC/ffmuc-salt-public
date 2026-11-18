@@ -23,7 +23,8 @@ services:
       - DISABLE_INSTALL_DEMO_CONFIG=true
       - bootstrap.memory_lock=true
       - cluster.name=es-mastodon
-      - "OPENSEARCH_JAVA_OPTS=-Xms3g -Xmx3g"
+      # -XX:-UseBASE64Intrinsics: CVE-2026-114938 (Java4Shell) stopgap, remove when the image ships a fixed JDK
+      - "OPENSEARCH_JAVA_OPTS=-Xms3g -Xmx3g -XX:-UseBASE64Intrinsics"
     mem_limit: 6g
     ulimits:
       memlock: {soft: -1, hard: -1}

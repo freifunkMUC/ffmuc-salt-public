@@ -52,6 +52,9 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       KC_PROXY_TRUSTED_ADDRESSES: "10.8.0.29,10.8.0.30,10.8.0.39,10.8.0.40"  # HAProxy webfrontend03-06
       KC_FEATURES: authorization,token-exchange,docker,impersonation,scripts,web-authn,client-policies,parameterized-scopes
+      # CVE-2026-114938 (Java4Shell) stopgap: kc.sh appends this to its default JAVA_OPTS.
+      # Remove when the image ships a fixed JDK.
+      JAVA_OPTS_APPEND: "-XX:-UseBASE64Intrinsics"
     ports:
       - "10.8.0.16:8081:8080"  # Nebula only, haproxy on the webfrontends
     depends_on:

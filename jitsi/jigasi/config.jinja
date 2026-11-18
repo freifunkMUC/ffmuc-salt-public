@@ -7,4 +7,5 @@ JIGASI_OPTS="--nocomponent=true"
 JIGASI_HOSTNAME={{ jitsi.public_domain }}
 
 # adds java system props that are passed to jigasi (default are for logging config file)
-JAVA_SYS_PROPS="-Djava.util.logging.config.file=/etc/jitsi/jigasi/logging.properties"
+# -XX:-UseBASE64Intrinsics: CVE-2026-114938 (Java4Shell) stopgap, remove when the OpenJDK package is fixed
+JAVA_SYS_PROPS="-Djava.util.logging.config.file=/etc/jitsi/jigasi/logging.properties -XX:-UseBASE64Intrinsics"
