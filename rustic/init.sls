@@ -79,9 +79,9 @@ backup-script:
 
 {#- backup.dump_commands: {name: command} writes each command's output to /var/lib/ffmuc-dumps/<name> as rustic
     run-before hook with on-failure = "warn" (a local file instead of stdin_commands: rustic reads stdin on one core,
-    which was too slow for Mastodon). Icinga service ffmuc_dumps checks their age. #}
+    which was too slow for Mastodon). backup.dump_dirs: {name: command} for directory dumps, the command writes into $OUT. Icinga service ffmuc_dumps checks their age. #}
 /usr/local/sbin/ffmuc-rustic-dumps.sh:
-{%- if salt['config.get']('netbox:config_context:backup:dump_commands', {}) %}
+{%- if salt['config.get']('netbox:config_context:backup:dump_commands', {}) or salt['config.get']('netbox:config_context:backup:dump_dirs', {}) %}
   file.managed:
     - source: salt://rustic/files/ffmuc-rustic-dumps.sh.jinja
     - template: jinja

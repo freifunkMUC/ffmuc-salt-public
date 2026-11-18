@@ -1,0 +1,7 @@
+[Unit]
+Description=Tuwunel online database backup (SIGUSR2)
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/docker kill --signal=USR2 tuwunel-homeserver-1

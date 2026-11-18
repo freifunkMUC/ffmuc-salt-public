@@ -1,5 +1,5 @@
 #!/bin/bash
-# Managed by Salt (rustic): dumps from NetBox backup.dump_commands into /var/lib/ffmuc-dumps, rustic run-before hook.
+# Managed by Salt (rustic): dumps from NetBox backup.dump_commands (files) and backup.dump_dirs (directories) into /var/lib/ffmuc-dumps, rustic run-before hook.
 # A failing dump keeps its last good file and makes the script exit 1 (rustic only warns); Icinga checks the age.
 set -uo pipefail
 umask 077
@@ -16,6 +16,25 @@ if ( {{ command }} ) > "$D/{{ name }}.tmp"; then
 else
   echo "dump {{ name }} failed" >&2
   rm -f "$D/{{ name }}.tmp"
+  rc=1
+fi
+{%- endfor %}
+{%- for name, command in salt['config.get']('netbox:config_context:backup:dump_dirs', {}).items() %}
+
+# {{ name }} (directory: one pipeline writing into $OUT; the old directory stays until the new one is complete)
+echo "{{ name }}" >> "$D/.names"
+[ -e "$D/{{ name }}" ] || [ ! -e "$D/{{ name }}.old" ] || mv "$D/{{ name }}.old" "$D/{{ name }}"
+rm -rf "$D/{{ name }}.tmp"
+mkdir "$D/{{ name }}.tmp"
+if ( export OUT="$D/{{ name }}.tmp"; {{ command }} ) && [ -n "$(ls -A "$D/{{ name }}.tmp")" ]; then
+  touch "$D/{{ name }}.tmp"
+  rm -rf "$D/{{ name }}.old"
+  [ ! -e "$D/{{ name }}" ] || mv "$D/{{ name }}" "$D/{{ name }}.old"
+  mv "$D/{{ name }}.tmp" "$D/{{ name }}"
+  rm -rf "$D/{{ name }}.old"
+else
+  echo "dump {{ name }} failed" >&2
+  rm -rf "$D/{{ name }}.tmp"
   rc=1
 fi
 {%- endfor %}

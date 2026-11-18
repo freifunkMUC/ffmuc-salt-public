@@ -81,6 +81,7 @@ base:
     - akvorado
     - bgpalerter
     - keycloak
+    - tuwunel
   'gw04.in.ffmuc.net':
     - meshviewer-web
   # Parker gateways (states only with the NetBox role parker-gateway)
