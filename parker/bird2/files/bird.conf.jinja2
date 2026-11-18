@@ -5,6 +5,10 @@
 {%- set prefixes_v6 = [] %}
 {%- set ns = namespace() %}
 log syslog all;
+{%- if role == 'parker-gateway' %}
+# Fixed name: a change of the system hostname must not restart BGP on reconfigure
+hostname "{{ grains['host'] }}";
+{%- endif %}
 
 protocol device {
 }
