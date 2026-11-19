@@ -88,7 +88,7 @@ services:
   web:
     # You can uncomment the following line if you want to not use the prebuilt image, for example if you have local code changes
     # build: .
-    image: ghcr.io/mastodon/mastodon:v4.7.5@sha256:1cf98fb199f8cc1dcf4bb174095656bd5e19e99f29e935c2a838132083e1f609
+    image: ghcr.io/mastodon/mastodon:v4.7.6@sha256:8d46d6d8ac86f16f00a8944e3ba8cd8d1e3de23b33a59354c751e071b58e18a9
     restart: always
     env_file: env/mastodon.env
     command: bundle exec puma -C config/puma.rb
@@ -148,7 +148,7 @@ services:
   sidekiq-pull:
     # You can uncomment the following line if you want to not use the prebuilt image, for example if you have local code changes
     # build: .
-    image: ghcr.io/mastodon/mastodon:v4.7.5@sha256:1cf98fb199f8cc1dcf4bb174095656bd5e19e99f29e935c2a838132083e1f609
+    image: ghcr.io/mastodon/mastodon:v4.7.6@sha256:8d46d6d8ac86f16f00a8944e3ba8cd8d1e3de23b33a59354c751e071b58e18a9
     restart: always
     env_file: env/mastodon.env
     command: bundle exec sidekiq -q push -q pull -c 50
@@ -172,7 +172,7 @@ services:
     mem_limit: 2g
 
   sidekiq-ingress:
-    image: ghcr.io/mastodon/mastodon:v4.7.5@sha256:1cf98fb199f8cc1dcf4bb174095656bd5e19e99f29e935c2a838132083e1f609
+    image: ghcr.io/mastodon/mastodon:v4.7.6@sha256:8d46d6d8ac86f16f00a8944e3ba8cd8d1e3de23b33a59354c751e071b58e18a9
     restart: always
     env_file: env/mastodon.env
     environment:
@@ -196,7 +196,7 @@ services:
     mem_limit: 2g
 
   sidekiq-scheduler:
-    image: ghcr.io/mastodon/mastodon:v4.7.5@sha256:1cf98fb199f8cc1dcf4bb174095656bd5e19e99f29e935c2a838132083e1f609
+    image: ghcr.io/mastodon/mastodon:v4.7.6@sha256:8d46d6d8ac86f16f00a8944e3ba8cd8d1e3de23b33a59354c751e071b58e18a9
     restart: always
     env_file: env/mastodon.env
     environment:
@@ -221,7 +221,7 @@ services:
 
 
   sidekiq-default:
-    image: ghcr.io/mastodon/mastodon:v4.7.5@sha256:1cf98fb199f8cc1dcf4bb174095656bd5e19e99f29e935c2a838132083e1f609
+    image: ghcr.io/mastodon/mastodon:v4.7.6@sha256:8d46d6d8ac86f16f00a8944e3ba8cd8d1e3de23b33a59354c751e071b58e18a9
     restart: always
     env_file: env/mastodon.env
     environment:
