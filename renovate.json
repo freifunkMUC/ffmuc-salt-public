@@ -126,6 +126,12 @@
       "allowedVersions": "/^\\d+\\.[38](\\.|$)/"
     },
     {
+      "description": "akvorado's versions.yml is the untouched upstream tag (the FFMUC override pins valkey): stay on its 9.0 line. The 9.2 tag on Docker Hub predates the 9.2 release candidates and is not a release",
+      "matchFileNames": ["stacks/docker07/akvorado/docker/versions.yml"],
+      "matchPackageNames": ["valkey/valkey"],
+      "allowedVersions": "<9.1"
+    },
+    {
       "description": "CI tests dhcp-server in the Python of Salt's onedir (3008.3: 3.14); raise together with Salt",
       "matchManagers": ["github-actions"],
       "matchDepNames": ["python"],
