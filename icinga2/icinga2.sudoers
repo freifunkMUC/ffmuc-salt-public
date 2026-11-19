@@ -16,7 +16,6 @@ nagios	ALL=NOPASSWD:	/usr/bin/wg show all latest-handshakes
 nagios  ALL=NOPASSWD:	/usr/local/sbin/dhcpd-pool
 
 # Mail
-nagios	ALL=NOPASSWD:	/usr/lib/nagios/plugins/check_mailq
 
 nagios	ALL=NOPASSWD:	/usr/local/share/monitoring-plugins/check_ffmuc_dumps
 nagios	ALL=NOPASSWD:	/usr/local/share/monitoring-plugins/check_tuwunel_backup
