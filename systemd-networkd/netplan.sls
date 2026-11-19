@@ -14,10 +14,15 @@ disable_netplan:
 /etc/netplan/00-installer-config.yaml:
   file.absent
 
+# Mask the generator in /etc: a generator in /etc/systemd/system-generators
+# overrides the generator with the same name in /usr/lib. The netplan.io
+# package owns /usr/lib/systemd/system-generators/netplan and puts it back
+# on each upgrade.
 disable_netplan_generator:
   file.symlink:
-    - name: /usr/lib/systemd/system-generators/netplan
+    - name: /etc/systemd/system-generators/netplan
     - target: /dev/null
+    - makedirs: True
     - force: True
 
 # netplan >= 1.2 (Ubuntu 26.04) writes /run/systemd/network/10-netplan-* at
