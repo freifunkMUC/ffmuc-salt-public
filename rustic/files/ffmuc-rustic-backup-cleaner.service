@@ -4,4 +4,6 @@ Description=FFMuc rustic Backup Cleaner
 [Service]
 Nice=19
 IOSchedulingClass=idle
-ExecStart=/usr/local/bin/rustic prune
+# Sun 05:00 (+1h) must end before the Monday 03:00 backups: cap the repack, hard stop after 20h
+TimeoutStartSec=20h
+ExecStart=/usr/local/bin/rustic prune --max-repack 100GiB
