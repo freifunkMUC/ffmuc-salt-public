@@ -1,7 +1,7 @@
 ---
 services:
   whiteboard:
-    image: lovasoa/wbo:v2.18.43@sha256:3ecfefcb50ea7d7bb1a85c274211ff02770a3282edc42783ef775f3188e86999
+    image: lovasoa/wbo:v2.18.44@sha256:30affce19c25313642153c90899a418f463527331840e7b5de490f095a764486
     restart: unless-stopped
     environment:
       # nginx on the webfrontends proxies /draw/ and passes X-Forwarded-For
