@@ -132,13 +132,14 @@ ffmuc-backup-timer-enable:
     - require_in:
       - cmd: systemd-reload-ffmuc-backup
 
+# Paused: a prune running while backups write deletes packs those backups still reference.
+# Re-enable only once prune cannot overlap backups.
 ffmuc-backup-cleaner-timer-enable:
-  service.running:
+  service.dead:
     - name: ffmuc-rustic-backup-cleaner.timer
-    - enable: true
+    - enable: false
     - require:
       - file: /etc/systemd/system/ffmuc-rustic-backup-cleaner.timer
-    - full_restart: True
 
 {% endif %}{# if backup_cleaner in tags #}
 {% endif %}{# if backup in tags #}
