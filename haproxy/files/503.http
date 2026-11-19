@@ -1,0 +1,7 @@
+HTTP/1.0 503 Service Unavailable
+Cache-Control: no-cache
+Retry-After: 120
+Connection: close
+Content-Type: text/html; charset=utf-8
+
+<!doctype html><html lang=de><head><meta charset=utf-8><meta name=viewport content=width=device-width,initial-scale=1><title>Wartung / Maintenance</title><style>body{font-family:system-ui,sans-serif;max-width:36em;margin:15vh auto;padding:0 1em;line-height:1.5;color:#222}h1{font-size:1.5em}</style></head><body><h1>Wartung &middot; Maintenance</h1><p>Dieser Dienst wird gerade gewartet und ist in wenigen Minuten wieder da. Bitte lade die Seite gleich neu.</p><p lang=en>This service is under maintenance and will be back in a few minutes. Please reload shortly.</p><p>Freifunk M&uuml;nchen</p></body></html>

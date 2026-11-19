@@ -84,6 +84,7 @@ haproxy-configtest:
       - file: /etc/haproxy/maps/abuse_ips.map
       - file: /etc/haproxy/maps/abuse_rooms.map
       - file: /etc/haproxy/errors/403.http
+      - file: /etc/haproxy/errors/503.http
       - file: /etc/haproxy/responses/ip_response.json
       - file: /etc/haproxy/responses/ip_lookup_response.json
       - file: /etc/haproxy/responses/ip_response.html
@@ -235,6 +236,17 @@ packetyeeter-spoe-conf:
 /etc/haproxy/errors/403.http:
   file.managed:
     - source: salt://haproxy/files/403.http
+    - user: root
+    - group: root
+    - mode: "0644"
+    - makedirs: True
+    - require:
+      - pkg: haproxy
+
+{# Neutral maintenance page; replaces the package's 503.http, which a haproxy upgrade would otherwise restore. #}
+/etc/haproxy/errors/503.http:
+  file.managed:
+    - source: salt://haproxy/files/503.http
     - user: root
     - group: root
     - mode: "0644"
