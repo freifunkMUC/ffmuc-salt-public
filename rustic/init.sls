@@ -1,16 +1,20 @@
-{#- salt://rustic/files/rustic* are x86_64 builds; arm64 (guardians) takes the upstream release #}
+{#- Official rustic release on amd64 and arm64 #}
 {%- if 'backup' in salt['pillar.get']('netbox:tag_list', []) and grains.osarch in ['amd64', 'arm64'] -%}
 
-{% set rustic_version = "v0.11.4" %}
-{% set rustic_version = "nightly" %}
-{%- if grains.osarch == 'arm64' %}
 {#- renovate: datasource=github-releases depName=rustic-rs/rustic #}
 {%- set rustic_release = "v0.12.0" %}
+{%- if grains.osarch == 'arm64' %}
+{%- set rustic_asset = "aarch64-unknown-linux-musl" %}
+{%- set rustic_hash = "192d0701216edecba4d523b5ce0e1183b3904140791789ee4974bf70b41b483b" %}
+{%- else %}
+{%- set rustic_asset = "x86_64-unknown-linux-musl" %}
+{%- set rustic_hash = "c7dc0772bb6e81f9acdcd7c2642c076c99455b20e3a57b2dfc1b7caee0035184" %}
+{%- endif %}
 rustic-release:
   archive.extracted:
     - name: /usr/local/lib/rustic-{{ rustic_release }}
-    - source: https://github.com/rustic-rs/rustic/releases/download/{{ rustic_release }}/rustic-{{ rustic_release }}-aarch64-unknown-linux-musl.tar.gz
-    - source_hash: sha256=192d0701216edecba4d523b5ce0e1183b3904140791789ee4974bf70b41b483b
+    - source: https://github.com/rustic-rs/rustic/releases/download/{{ rustic_release }}/rustic-{{ rustic_release }}-{{ rustic_asset }}.tar.gz
+    - source_hash: sha256={{ rustic_hash }}
     - enforce_toplevel: False
     - user: root
     - group: root
@@ -22,6 +26,7 @@ install_rustic:
     - force: True
     - require:
       - archive: rustic-release
+{%- if grains.osarch == 'arm64' %}
 
 # 1.8 GB RAM and bird on the same Pi: an OOM kill takes rustic
 /etc/systemd/system/ffmuc-rustic-backup.service.d/memory.conf:
@@ -33,25 +38,6 @@ install_rustic:
         OOMScoreAdjust=1000
     - onchanges_in:
       - cmd: systemd-reload-ffmuc-backup
-{%- else %}
-install_rustic:
-  #archive.extracted:
-  #  - name: /tmp/rustic
-  #  - source: https://github.com/rustic-rs/rustic/releases/download/{{ rustic_version }}/rustic-{{ rustic_version }}-x86_64-unknown-linux-musl.tar.gz
-  #  - source_hash: "https://github.com/rustic-rs/rustic/releases/download/{{ rustic_version }}/rustic-{{ rustic_version }}-x86_64-unknown-linux-musl.tar.gz.sha256"
-  #  - cleanup: true
-  #  - creates: /usr/local/bin/rustic
-  #  - enforce_toplevel: false
-  #  - keep_source: false
-  #cmd.run:
-  #  - name: mv /tmp/rustic/rustic /usr/local/bin/rustic && chmod +x /usr/local/bin/rustic
-  #  - unless: test -f /usr/local/bin/rustic
-  file.managed:
-    - name: /usr/local/bin/rustic
-    - source:
-        - salt://rustic/files/rustic-{{ rustic_version }}
-        - salt://rustic/files/rustic
-    - mode: "0755"
 {%- endif %}
 
 backup-config:
