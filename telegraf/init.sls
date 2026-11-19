@@ -352,7 +352,7 @@ remove_asterisk_monitoring:
     - user: root
     - check_cmd: /usr/sbin/visudo -c -f
 {% else %}
-  file.absent:
+  file.absent
 {% endif %}
 
 /etc/telegraf/telegraf.d/in-parker-gateway.conf:
