@@ -96,9 +96,9 @@ services:
     deploy:
       resources:
         limits:
-          memory: 24g
-    mem_limit: 24g # must be consistent with deploy.resources.limits.memory
-    memswap_limit: 24g # if set to same value as mem_limit, swap is disabled
+          memory: 40g
+    mem_limit: 40g # must be consistent with deploy.resources.limits.memory
+    memswap_limit: 40g # if set to same value as mem_limit, swap is disabled
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "curl -sf localhost:9200/_cluster/health || exit 1"]
