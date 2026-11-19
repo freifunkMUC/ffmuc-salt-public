@@ -1,6 +1,7 @@
 #!/bin/bash
 # State of the rustic backup: CRITICAL when the backup unit failed or the last successful run is too old.
 # The service touches /var/lib/ffmuc-rustic-last-success after "backup" and "forget" (rustic state).
+# WARNING when the last run logged "not found in index" (damaged repo; rustic still exits 0): count in /var/lib/ffmuc-rustic-index-errors.
 # armhf hosts (guardians) are outside the rustic state and keep ffmuc-backup.service: its last exit counts there.
 # Usage: check_ffmuc_rustic [warning hours] [critical hours]
 M=/var/lib/ffmuc-rustic-last-success
@@ -32,6 +33,11 @@ if [ "$age" -ge "$C" ]; then
   exit 2
 elif [ "$age" -ge "$W" ]; then
   echo "WARNING - last successful backup ${age}h ago"
+  exit 1
+fi
+E=$(cat /var/lib/ffmuc-rustic-index-errors 2>/dev/null)
+if [ "${E:-0}" -gt 0 ] 2>/dev/null; then
+  echo "WARNING - last backup logged $E \"not found in index\" errors (repository damaged)"
   exit 1
 fi
 echo "OK - last successful backup ${age}h ago"
