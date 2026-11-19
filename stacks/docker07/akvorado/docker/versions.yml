@@ -4,7 +4,7 @@ services:
   kafka:
     image: apache/kafka:4.4.0@sha256:833b867a9585a141da455dc2b57431c65cbccb27f11c91f694444cca9f777e0f # \d+\.\d+\.\d+
   redis:
-    image: valkey/valkey:9.0@sha256:7e1deda01b64ece3167d370ab5be3452d29734feec22cbcbc69b3a64f6859d6d # \d+\.\d+
+    image: valkey/valkey:9.0@sha256:80def298b278d20a574e6b68d34e244c785f4600c7902fccd5f22c55743d5420 # \d+\.\d+
   clickhouse:
     image: clickhouse/clickhouse-server:26.8@sha256:6d462904f276dc6c1fa531d887cac02d4ef7a8f212d6142377d36608c2330d59 # \d+\.[38]
   clickhouse-keeper:
