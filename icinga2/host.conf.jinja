@@ -54,6 +54,10 @@ object Host "{{ node_id }}" {
 
 	vars.os = "Linux"
 
+	{%- if is_meet and not dial_in | default(true) %}
+	vars.dial_in = false
+	{%- endif %}
+
 	vars.role = "{{ role }}"
 
 	vars.tags = [
