@@ -42,7 +42,7 @@ services:
       - /srv/docker/wg-access-server/acme.sh-out:/acme.sh
       - /srv/docker/wg-access-server/haproxy-certs:/haproxy-certs
   proxyguard:
-    image: ghcr.io/freifunkmuc/proxyguard-docker:2@sha256:dcd07afad38a4542285a8385bb87e367508371f13d9824a1200987a88d450a2d
+    image: ghcr.io/freifunkmuc/proxyguard-docker:2@sha256:7d3b64112f77ae52f4779e169287baf3cb37641c403246135ae7fd9d7f3de644
     restart: always
     network_mode: host
     environment:
