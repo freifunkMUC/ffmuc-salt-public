@@ -1,0 +1,125 @@
+#!/usr/bin/python3
+#
+# Icinga plugin: health of the mail services on mail01.
+#
+# Reads the state file written by ffmuc-mailqueue-snapshot (root timer, no
+# docker access for Icinga). CRITICAL when a service is not RUNNING, a required
+# fail2ban jail is missing or many mails bounced; WARNING on rspamd, deferred,
+# bounced or banned counts; UNKNOWN when the file is missing or stale.
+#
+
+import argparse
+import sys
+import time
+
+OK, WARNING, CRITICAL, UNKNOWN = 0, 1, 2, 3
+STATUS = {OK: "OK", WARNING: "WARNING", CRITICAL: "CRITICAL", UNKNOWN: "UNKNOWN"}
+SERVICES = ("postfix", "dovecot", "rspamd", "fail2ban")
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Check the mail health state file")
+    parser.add_argument("--file", default="/var/lib/icinga2/mailhealth.state")
+    parser.add_argument("--stale", type=int, default=900,
+                        help="UNKNOWN when the file is older (seconds)")
+    parser.add_argument("--jails", default="custom,dovecot,postfix,postfix-sasl",
+                        help="comma separated fail2ban jails that must exist")
+    parser.add_argument("--bounced-warning", type=int, default=10)
+    parser.add_argument("--bounced-critical", type=int, default=30)
+    parser.add_argument("--deferred-warning", type=int, default=20)
+    parser.add_argument("--banned-warning", type=int, default=20,
+                        help="WARNING when a jail has more IPs banned")
+    return parser.parse_args()
+
+
+def finish(code, text, perf=""):
+    print(f"MAILHEALTH {STATUS[code]} - {text}" + (f" | {perf}" if perf else ""))
+    sys.exit(code)
+
+
+def number(data, key):
+    try:
+        return int(data[key])
+    except (KeyError, ValueError):
+        return None
+
+
+def main():
+    args = parse_args()
+    try:
+        with open(args.file) as fh:
+            data = dict(line.strip().split("=", 1) for line in fh if "=" in line)
+        stamp = int(data["timestamp"])
+    except (OSError, KeyError, ValueError) as err:
+        finish(UNKNOWN, f"cannot read {args.file}: {type(err).__name__}")
+
+    age = int(time.time()) - stamp
+    if age > args.stale:
+        finish(UNKNOWN, f"state file is {age // 60} min old")
+
+    critical, warning, unknown = [], [], []
+
+    for name in SERVICES:
+        state = data.get(f"svc_{name}", "UNKNOWN")
+        if state == "UNKNOWN":
+            unknown.append(f"{name} state unknown")
+        elif state != "RUNNING":
+            critical.append(f"{name} {state}")
+
+    ping = number(data, "rspamd_ping")
+    if ping is None:
+        unknown.append("rspamd ping missing")
+    elif ping != 200:
+        warning.append(f"rspamd ping {ping}")
+
+    bounced = number(data, "bounced_1h")
+    deferred = number(data, "deferred_1h")
+    if bounced is None or deferred is None:
+        unknown.append("log counts missing")
+    else:
+        if bounced >= args.bounced_critical:
+            critical.append(f"{bounced} bounced/h")
+        elif bounced >= args.bounced_warning:
+            warning.append(f"{bounced} bounced/h")
+        if deferred >= args.deferred_warning:
+            warning.append(f"{deferred} deferred/h")
+
+    present = [j for j in data.get("jails", "").split(",") if j]
+    banned = {}
+    if "jails" not in data:
+        unknown.append("jail list missing")
+    else:
+        for jail in (j for j in args.jails.split(",") if j):
+            if jail not in present:
+                critical.append(f"jail {jail} missing")
+        for jail in present:
+            count = number(data, f"jail_{jail}_banned")
+            if count is None or count < 0:
+                unknown.append(f"jail {jail} state unknown")
+                continue
+            banned[jail] = count
+            if count > args.banned_warning:
+                warning.append(f"{count} banned in {jail}")
+
+    perf = []
+    if bounced is not None:
+        perf.append(f"bounced_1h={bounced};{args.bounced_warning};{args.bounced_critical};0")
+    if deferred is not None:
+        perf.append(f"deferred_1h={deferred};{args.deferred_warning};;0")
+    for jail, count in sorted(banned.items()):
+        perf.append(f"banned_{jail}={count};{args.banned_warning};;0")
+    perf = " ".join(perf)
+
+    ok_text = (f"services running, rspamd {ping}, {bounced} bounced/h, "
+               f"{deferred} deferred/h, {sum(banned.values())} banned")
+    if critical:
+        finish(CRITICAL, ", ".join(critical + warning), perf)
+    if warning:
+        finish(WARNING, ", ".join(warning), perf)
+    if unknown:
+        finish(UNKNOWN, ", ".join(unknown), perf)
+    finish(OK, ok_text, perf)
+
+
+if __name__ == "__main__":
+    main()

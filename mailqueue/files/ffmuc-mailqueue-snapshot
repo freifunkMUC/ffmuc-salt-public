@@ -1,32 +1,51 @@
 #!/usr/bin/python3
 #
-# Writes the state of the mail queue to a file for Icinga (check_ffmuc_mailqueue).
+# Writes the state of the mail queue (check_ffmuc_mailqueue) and the health of
+# the mail services (check_ffmuc_mailhealth) to files for Icinga.
 # Runs as root from ffmuc-mailqueue.timer: docker access stays with root, the
 # file is readable by the nagios group.
 #
-# Only counts and ages are written, never addresses or subjects.
-# On any error the old file is left alone, so the check turns UNKNOWN when it
-# is older than its limit.
+# Only counts, ages and states are written, never addresses or subjects.
+# On a queue error the old queue file is left alone, so the check turns UNKNOWN
+# when it is older than its limit. The health file is written independently.
 #
 
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
 import time
+from datetime import datetime, timedelta
 
 CONTAINER = "mailserver-mailserver-1"
 OUTPUT = "/var/lib/icinga2/mailqueue.state"
+HEALTH_OUTPUT = "/var/lib/icinga2/mailhealth.state"
+SERVICES = ("postfix", "dovecot", "rspamd", "fail2ban")
+MAIL_LOG = "/var/log/mail/mail.log"
+WINDOW = 3600
 
 
-def main():
-    out = sys.argv[1] if len(sys.argv) > 1 else OUTPUT
+def docker_exec(*args, timeout=60):
+    return subprocess.run(
+        ["/usr/bin/docker", "exec", CONTAINER, *args],
+        capture_output=True, text=True, timeout=timeout,
+    )
+
+
+def write_atomic(out, content, prefix):
+    fd, tmp = tempfile.mkstemp(dir=os.path.dirname(out), prefix=prefix)
+    with os.fdopen(fd, "w") as fh:
+        fh.write(content)
+    os.chmod(tmp, 0o644)
+    os.replace(tmp, out)
+
+
+def queue_snapshot(out):
     try:
-        proc = subprocess.run(
-            ["/usr/bin/docker", "exec", CONTAINER, "postqueue", "-j"],
-            capture_output=True, text=True, timeout=60, check=True,
-        )
+        proc = docker_exec("postqueue", "-j")
+        proc.check_returncode()
     except (OSError, subprocess.SubprocessError):
         print("postqueue failed", file=sys.stderr)
         return 1
@@ -53,12 +72,111 @@ def main():
         f"deferred={deferred}\n"
         f"oldest_deferred_seconds={oldest}\n"
     )
-    fd, tmp = tempfile.mkstemp(dir=os.path.dirname(out), prefix=".mailqueue.")
-    with os.fdopen(fd, "w") as fh:
-        fh.write(content)
-    os.chmod(tmp, 0o644)
-    os.replace(tmp, out)
+    write_atomic(out, content, ".mailqueue.")
     return 0
+
+
+def service_states():
+    states = {name: "UNKNOWN" for name in SERVICES}
+    try:
+        proc = docker_exec("supervisorctl", "status")  # exit 3 if any is stopped
+    except (OSError, subprocess.SubprocessError):
+        return states
+    for line in proc.stdout.splitlines():
+        parts = line.split()
+        if len(parts) >= 2 and parts[0] in states:
+            states[parts[0]] = parts[1]
+    return states
+
+
+def rspamd_ping():
+    try:
+        proc = docker_exec(
+            "curl", "-s", "-o", "/dev/null", "-m", "5", "-w", "%{http_code}",
+            "http://localhost:11334/ping", timeout=15,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return "0"
+    return proc.stdout.strip() if re.fullmatch(r"\d{3}", proc.stdout.strip()) else "0"
+
+
+def log_counts(now):
+    """Count bounced/deferred delivery lines of the last hour (log + rotated log)."""
+    counts = {"bounced": 0, "deferred": 0}
+    try:
+        proc = docker_exec(
+            "grep", "-hsE", r" status=(bounced|deferred) ", MAIL_LOG + ".1", MAIL_LOG,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    limit = datetime.fromtimestamp(now) - timedelta(seconds=WINDOW)
+    limit = limit.astimezone()
+    for line in proc.stdout.splitlines():
+        stamp, _, rest = line.partition(" ")
+        try:
+            when = datetime.fromisoformat(stamp)
+        except ValueError:
+            continue
+        if when < limit:
+            continue
+        kind = re.search(r" status=(bounced|deferred) ", rest)
+        if kind:
+            counts[kind.group(1)] += 1
+    return counts
+
+
+def jail_states():
+    """Return {jail: banned_current}, or None if fail2ban cannot be queried."""
+    try:
+        proc = docker_exec("fail2ban-client", "status")
+        proc.check_returncode()
+    except (OSError, subprocess.SubprocessError):
+        return None
+    match = re.search(r"Jail list:\s*(.*)", proc.stdout)
+    names = [n.strip() for n in match.group(1).split(",") if n.strip()] if match else []
+    jails = {}
+    for name in names:
+        banned = -1
+        try:
+            detail = docker_exec("fail2ban-client", "status", name)
+            found = re.search(r"Currently banned:\s*(\d+)", detail.stdout)
+            if found:
+                banned = int(found.group(1))
+        except (OSError, subprocess.SubprocessError):
+            pass
+        jails[name] = banned
+    return jails
+
+
+def health_snapshot(out):
+    now = int(time.time())
+    lines = [f"timestamp={now}"]
+    for name, state in service_states().items():
+        lines.append(f"svc_{name}={state}")
+    lines.append(f"rspamd_ping={rspamd_ping()}")
+    counts = log_counts(now)
+    if counts is not None:
+        lines.append(f"bounced_1h={counts['bounced']}")
+        lines.append(f"deferred_1h={counts['deferred']}")
+    jails = jail_states()
+    if jails is not None:
+        lines.append("jails=" + ",".join(sorted(jails)))
+        for name in sorted(jails):
+            lines.append(f"jail_{name}_banned={jails[name]}")
+    write_atomic(out, "\n".join(lines) + "\n", ".mailhealth.")
+    return 0
+
+
+def main():
+    queue_out = sys.argv[1] if len(sys.argv) > 1 else OUTPUT
+    health_out = sys.argv[2] if len(sys.argv) > 2 else HEALTH_OUTPUT
+    rc = queue_snapshot(queue_out)
+    try:
+        rc |= health_snapshot(health_out)
+    except (OSError, ValueError) as err:
+        print(f"health snapshot failed: {type(err).__name__}", file=sys.stderr)
+        rc = 1
+    return rc
 
 
 if __name__ == "__main__":
