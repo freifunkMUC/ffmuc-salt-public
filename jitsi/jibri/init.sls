@@ -41,14 +41,16 @@ jibri:
       - file: /etc/systemd/system/jibri.service.d/java-options.conf
 
 # launch.sh has no JVM options variable, so JAVA_TOOL_OPTIONS is the only hook.
-# -XX:-UseBASE64Intrinsics: CVE-2026-114938 (Java4Shell) stopgap, remove when the OpenJDK package is fixed.
+# -XX:-UseBASE64Intrinsics (CVE-2026-114938) only while the JDK is not fixed, see jitsi/map.jinja.
 /etc/systemd/system/jibri.service.d/java-options.conf:
   file.managed:
     - makedirs: True
     - contents: |
         # Managed by Salt
         [Service]
-        Environment=JAVA_TOOL_OPTIONS=-XX:-UseBASE64Intrinsics
+{%- if jitsi.java_base64_flag | trim %}
+        Environment=JAVA_TOOL_OPTIONS={{ jitsi.java_base64_flag | trim }}
+{%- endif %}
 
 systemd-reload-jibri:
   cmd.run:
