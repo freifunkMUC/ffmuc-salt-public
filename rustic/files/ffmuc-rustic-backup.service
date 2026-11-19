@@ -8,4 +8,6 @@ IOSchedulingClass=idle
 ExecStart=/usr/local/bin/rustic backup
 # forget of another host can delete a snapshot file while this one lists them (404): retry once
 ExecStart=/bin/sh -c '/usr/local/bin/rustic forget || { sleep 300; /usr/local/bin/rustic forget; }'
+# rustic only warns on a damaged repo: count "not found in index" lines of this run for Icinga
+ExecStartPost=/bin/sh -c 'journalctl --sync; journalctl -q -o cat _SYSTEMD_INVOCATION_ID=$$INVOCATION_ID | grep -c "not found in index" > /var/lib/ffmuc-rustic-index-errors; chmod 644 /var/lib/ffmuc-rustic-index-errors; exit 0'
 ExecStartPost=/usr/bin/touch /var/lib/ffmuc-rustic-last-success
