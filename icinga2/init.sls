@@ -351,6 +351,8 @@ Cleanup /etc/icinga2/zones.d/master/ffmuc-conf.d/hosts/generated/:
   # Generate config file for every client known to pillar
 {%- set icinga2_clients = salt['mine.get']('netbox:tag_list:icinga2_client', 'minion_id', tgt_type='pillar').keys() | list %}
 {%- set icinga2_agentless = salt['mine.get']('netbox:tag_list:icinga2_agentless', 'minion_id', tgt_type='pillar').keys() | list %}
+{#- Hosts whose NetBox config context sets jitsi.dial_in.enabled=false (absent = enabled) #}
+{%- set dial_in_off = salt['mine.get']('netbox:config_context:jitsi:dial_in:enabled:False', 'minion_id', tgt_type='pillar').keys() | list %}
 {% for node_id in icinga2_clients %}
 /etc/icinga2/zones.d/master/ffmuc-conf.d/hosts/generated/{{ node_id }}.conf:
   file.managed:
@@ -358,6 +360,7 @@ Cleanup /etc/icinga2/zones.d/master/ffmuc-conf.d/hosts/generated/:
     - template: jinja
     - context:
         node_id: {{ node_id }}
+        dial_in: {{ node_id not in dial_in_off }}
     - require:
       - file: Create /etc/icinga2/zones.d/master/ffmuc-conf.d/hosts/generated/
     - require_in:
