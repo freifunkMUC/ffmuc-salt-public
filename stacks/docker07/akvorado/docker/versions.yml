@@ -47,7 +47,7 @@ services:
   srlinux:
     image: ghcr.io/nokia/srlinux:26.7.2@sha256:0096fe3ebcafabb7253492e2060425fe027a168e0e066766d1e85efbb0b48be8
   postgres:
-    image: postgres:18@sha256:2ea8630df176ad090ec92136dee850397c5af8781e4bcf2e4162593691c61bbc # \d+
+    image: postgres:18@sha256:e754b839f447639b7004895f4d8a4bfcb4e9dbe3a1bc035f27f646562a16fd61 # \d+
   mysql:
     image: mariadb:13@sha256:54f493ea0d60b621a5bff84e5b20100f8b86b6efa6b79158e04756c5194a5e4d # \d+
   mock-oauth2-server:
