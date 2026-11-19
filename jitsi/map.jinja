@@ -15,6 +15,14 @@
 {# some cleanups caused by documentation #}
 {% do jitsi.xmpp.pop("shard-example", None) %}
 
+{#- CVE-2026-114938 (Java4Shell) stopgap: -XX:-UseBASE64Intrinsics stays until the installed JDK is fixed (17.0.21.1 / 21.0.13.1), then it is dropped #}
+{%- set _jdk_fixed = [] %}
+{%- for _pkg, _fixed in [('openjdk-17-jre-headless', '17.0.21.1'), ('openjdk-21-jre-headless', '21.0.13.1')] %}
+{%- set _v = salt['pkg.version'](_pkg) %}
+{%- if _v and salt['pkg.version_cmp'](_v, _fixed) >= 0 %}{% do _jdk_fixed.append(_pkg) %}{% endif %}
+{%- endfor %}
+{% do jitsi.update({'java_base64_flag': '' if _jdk_fixed else ' -XX:-UseBASE64Intrinsics'}) %}
+
 {# some fallbacks #}
 {% if not jitsi.xmpp.get('muc_nickname') %}
 {% do jitsi.xmpp.update({'muc_nickname' : grains.id.split('.')[0] + "." + jitsi.xmpp.xmpp_domain }) %}
