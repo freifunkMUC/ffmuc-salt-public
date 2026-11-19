@@ -37,4 +37,18 @@ remove_netplan_runtime_files:
       - service: netplan-configure.service
     - watch_in:
       - cmd: systemd-networkd-reload
+
+# The installer netplan config uses DHCP. networkd adds a default route and
+# /32 routes to the DHCP DNS servers (RoutesToDNS). After the switch to the
+# Salt files these routes stay, because ManageForeignRoutes=no
+# (systemd-networkd.foreign-routes). A stale /32 route to a public DNS server
+# sends that traffic to the management VLAN. Remove the routes if no Salt
+# network file uses DHCP.
+remove_stale_dhcp_routes:
+  cmd.run:
+    - name: ip -4 route flush proto dhcp
+    - onlyif: ip -4 route show proto dhcp | grep -q .
+    - unless: grep -qsE '^DHCP=(yes|true|ipv4|both)' /etc/systemd/network/*.network
+    - require:
+      - cmd: systemd-networkd-reload
 {%- endif %}
