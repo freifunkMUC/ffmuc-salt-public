@@ -12,12 +12,30 @@ nginx-gateway-ubuntu-modules:
     - require_in:
       - pkg: nginx-pkg
 
+# njs for the stream server that answers the Gluon uplink check (see nginx.conf and njs/gw_uplink.js).
+# The module package must have the same nginx version as nginx-pkg.
+{%- set njs_pkg_version = salt['config.get']('netbox:config_context:nginx:njs_version', '1.30.7+1.0.2-1~' ~ grains.oscodename) %}
+nginx-module-njs:
+  pkg.installed:
+    - version: '{{ njs_pkg_version }}'
+    - require:
+      - pkg: nginx-pkg
+
+/etc/nginx/njs/gw_uplink.js:
+  file.managed:
+    - source: salt://nginx/files/gateway/njs/gw_uplink.js
+    - makedirs: True
+    - require:
+      - pkg: nginx-pkg
+
 # nginx.org's nginx.conf only includes conf.d; this one also includes sites-enabled and no modules-enabled.
 /etc/nginx/nginx.conf:
   file.managed:
     - source: salt://nginx/files/gateway/nginx.conf
     - require:
       - pkg: nginx-pkg
+      - pkg: nginx-module-njs
+      - file: /etc/nginx/njs/gw_uplink.js
 
 /etc/nginx/sites-available/default:
   file.managed:
@@ -49,6 +67,8 @@ nginx-gateway-configtest:
     - name: /usr/sbin/nginx -t
     - onchanges:
       - pkg: nginx-pkg
+      - pkg: nginx-module-njs
+      - file: /etc/nginx/njs/gw_uplink.js
       - file: /etc/nginx/nginx.conf
       - file: /etc/nginx/sites-available/default
       - file: /etc/nginx/sites-enabled/default
