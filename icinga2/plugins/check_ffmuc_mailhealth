@@ -27,8 +27,8 @@ def parse_args():
     parser.add_argument("--bounced-warning", type=int, default=10)
     parser.add_argument("--bounced-critical", type=int, default=30)
     parser.add_argument("--deferred-warning", type=int, default=20)
-    parser.add_argument("--banned-warning", type=int, default=20,
-                        help="WARNING when a jail has more IPs banned")
+    parser.add_argument("--banned-warning", type=int, default=30,
+                        help="WARNING when all jails together have more IPs banned")
     return parser.parse_args()
 
 
@@ -98,8 +98,8 @@ def main():
                 unknown.append(f"jail {jail} state unknown")
                 continue
             banned[jail] = count
-            if count > args.banned_warning:
-                warning.append(f"{count} banned in {jail}")
+        if sum(banned.values()) > args.banned_warning:
+            warning.append(f"{sum(banned.values())} banned")
 
     perf = []
     if bounced is not None:
@@ -107,7 +107,7 @@ def main():
     if deferred is not None:
         perf.append(f"deferred_1h={deferred};{args.deferred_warning};;0")
     for jail, count in sorted(banned.items()):
-        perf.append(f"banned_{jail}={count};{args.banned_warning};;0")
+        perf.append(f"banned_{jail}={count};;;0")
     perf = " ".join(perf)
 
     ok_text = (f"services running, rspamd {ping}, {bounced} bounced/h, "
