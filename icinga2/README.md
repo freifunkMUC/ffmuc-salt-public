@@ -60,7 +60,7 @@ nothing until the host has the NetBox tag `icinga2_client`.
 
 - `ffmuc_rustic` (`plugins/check_ffmuc_rustic`): CRITICAL when `ffmuc-rustic-backup.service` is failed or the last
   successful run (`/var/lib/ffmuc-rustic-last-success`, touched by the unit after `backup` and `forget`) is older than
-  54 h, WARNING after 30 h; also CRITICAL when the last run logged "not found in index" (`/var/lib/ffmuc-rustic-index-errors`, written by the unit). Hosts with the NetBox tag `backup`. `ffmuc_dumps` stays as it is.
+  54 h, WARNING after 30 h; WARNING when the last run logged "not found in index" (`/var/lib/ffmuc-rustic-index-errors`, written by the unit). Hosts with the NetBox tag `backup`. `ffmuc_dumps` stays as it is.
 - `tuwunel_backup` (`plugins/check_tuwunel_backup`): age of the newest backup in `/srv/docker/tuwunel/backups`
   (nightly `ffmuc-tuwunel-backup.timer`); WARNING after 26 h, CRITICAL after 50 h. Runs on docker07 through sudo; `docker07.in.ffmuc.net` only.
 - `ffmuc_trivy` (`plugins/check_ffmuc_trivy`): result of the weekly Trivy image scan (`trivy` state, NetBox config context
