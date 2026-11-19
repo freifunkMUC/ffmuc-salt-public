@@ -35,7 +35,7 @@ services:
   node-exporter:
     image: prom/node-exporter:v1.12.1@sha256:1b4e4438faca4dd7e001dd445d161a4a2091b0fededa84093b3a8dfeae1f1be0 # v\d+\.\d+\.\d+
   cadvisor:
-    image: ghcr.io/google/cadvisor:v0.61.0@sha256:448ca9b1ce0d3f2eb7563938030908a4b81ddfe959a3fe5e62f691fd4b2cb417 # v\d+\.\d+\.\d+
+    image: ghcr.io/google/cadvisor:v0.61.1@sha256:4929b70e82079d001d0028b85d6a4dd25ad4666b719455c9542b983489963916 # v\d+\.\d+\.\d+
   kafka-ui:
     image: kafbat/kafka-ui:v1.5.0@sha256:7cda86a33344160309fdb65146332e4da65db81a945614f2fe32e210803f6fd1 # v\d+\.\d+\.\d+
     # image: ghcr.io/kafbat/kafka-ui:v1.4.2
