@@ -120,7 +120,7 @@ services:
     mem_limit: 24g
 
   streaming:
-    image: ghcr.io/mastodon/mastodon-streaming:v4.7.5@sha256:3859d071e61a0ed2610a00e8048d89310235afb86e6923c0243bb4f9f4a31093
+    image: ghcr.io/mastodon/mastodon-streaming:v4.7.6@sha256:5b95d22c22f1d101fd2eb5dac62ad0ca2a93a5b60e410dc071ae645e98cc73e6
     restart: always
     env_file: env/mastodon.env
     environment:
