@@ -49,7 +49,7 @@ services:
 
   postgres:
     # PostgreSQL 18 layout (data in 18/docker below the mount); !override drops the base file's mount.
-    image: docker.io/postgres:18.7-alpine@sha256:b6972e1115a4ff8eba5d7f7d19184926d1e16d7d1136ae1e1a7ebf286da0f015
+    image: docker.io/postgres:18.7-alpine@sha256:ff64c9e3bdf8e2120107d3559de8db314e8305f7e38c5105903c6295876738ff
     restart: always
     environment:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
