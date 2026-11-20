@@ -47,4 +47,14 @@
     <group>web_scan,recon,</group>
   </rule>
 
+  <!-- SSH is key-only on every host (salt ssh state): guessing non-existent users cannot succeed. Dashboard only. -->
+  <rule id="100121" level="6">
+    <if_sid>5712</if_sid>
+    <description>sshd: brute force with non-existent users (key-only SSH).</description>
+    <mitre>
+      <id>T1110</id>
+    </mitre>
+    <group>authentication_failures,</group>
+  </rule>
+
 </group>
