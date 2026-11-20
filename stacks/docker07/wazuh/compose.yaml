@@ -2,7 +2,7 @@
 # Wazuh 4.14 single node (manager, indexer, dashboard), after upstream wazuh-docker v4.14.10 single-node.
 # Setup, secrets and rollback: README.md. Secrets come from Komodo, never from this directory.
 # Deviations from upstream: images by digest; certs, users and secrets are not in the repo; 1514/1515 only on the
-# Nebula address; 55000 and 9200 not published; dashboard behind noc-auth on wazuh.ov.ffmuc.net, TLS ends at Traefik.
+# Nebula address; 55000 and 9200 not published; dashboard on wazuh.ov.ffmuc.net with its own OIDC login (Keycloak noc), TLS ends at Traefik.
 x-logging: &logging
   driver: json-file
   options:
@@ -82,6 +82,8 @@ services:
       - /srv/docker/wazuh/certs/admin.pem:/usr/share/wazuh-indexer/config/certs/admin.pem:ro
       - /srv/docker/wazuh/certs/admin-key.pem:/usr/share/wazuh-indexer/config/certs/admin-key.pem:ro
       - ./config/wazuh.indexer.yml:/usr/share/wazuh-indexer/config/opensearch.yml:ro
+      - ./config/security-config.yml:/usr/share/wazuh-indexer/config/opensearch-security/config.yml:ro
+      - ./config/security-roles_mapping.yml:/usr/share/wazuh-indexer/config/opensearch-security/roles_mapping.yml:ro
       # hashes of the pillar passwords, written by the init-users service
       - /srv/docker/wazuh/internal_users.yml:/usr/share/wazuh-indexer/config/opensearch-security/internal_users.yml:ro
     healthcheck:
@@ -106,7 +108,10 @@ services:
       WAZUH_API_URL: https://wazuh.manager
       API_USERNAME: wazuh-wui
       API_PASSWORD: ${WAZUH_API_PASSWORD:?}
+      OIDC_CLIENT_SECRET: ${WAZUH_OIDC_CLIENT_SECRET:?}
+    entrypoint: ["/bin/bash", "/entrypoint-scripts/dashboard.sh"]
     volumes:
+      - ./entrypoint-scripts/dashboard.sh:/entrypoint-scripts/dashboard.sh:ro
       - /srv/docker/wazuh/certs/root-ca.pem:/usr/share/wazuh-dashboard/certs/root-ca.pem:ro
       - ./config/opensearch_dashboards.yml:/usr/share/wazuh-dashboard/config/opensearch_dashboards.yml:ro
       # wazuh.yml (API login) is generated from the environment on first start; custom assets as upstream
@@ -120,7 +125,6 @@ services:
       - traefik.docker.network=proxy
       - traefik.http.routers.wazuh.rule=Host(`wazuh.ov.ffmuc.net`)
       - traefik.http.routers.wazuh.entrypoints=https
-      - traefik.http.routers.wazuh.middlewares=noc-auth@file
       - traefik.http.routers.wazuh.tls=true
       - traefik.http.routers.wazuh.tls.certresolver=http
       - traefik.http.services.wazuh.loadbalancer.server.port=5601

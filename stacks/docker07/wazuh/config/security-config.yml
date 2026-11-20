@@ -1,0 +1,36 @@
+---
+# Upstream defaults reduced to the used domains, plus the Keycloak noc OIDC domain (README, "Login").
+_meta:
+  type: "config"
+  config_version: 2
+config:
+  dynamic:
+    http:
+      anonymous_auth_enabled: false
+      xff:
+        enabled: false
+    authc:
+      basic_internal_auth_domain:
+        description: "Internal users (break-glass admin, dashboard service user)"
+        http_enabled: true
+        transport_enabled: true
+        order: 0
+        http_authenticator:
+          type: basic
+          challenge: false
+        authentication_backend:
+          type: intern
+      openid_auth_domain:
+        description: "Keycloak realm noc"
+        http_enabled: true
+        transport_enabled: false
+        order: 1
+        http_authenticator:
+          type: openid
+          challenge: false
+          config:
+            subject_key: preferred_username
+            roles_key: roles
+            openid_connect_url: https://keycloak.ffmuc.net/realms/noc/.well-known/openid-configuration
+        authentication_backend:
+          type: noop

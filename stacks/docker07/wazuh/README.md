@@ -4,8 +4,8 @@ Single-node Wazuh 4.14 (manager, indexer, dashboard), after upstream
 [wazuh-docker](https://github.com/wazuh/wazuh-docker) v4.14.10 `single-node`.
 Agents will be rolled out by a Salt state `wazuh-agent` (follow-up PR, together with the Nebula rule).
 
-- Dashboard `https://wazuh.ov.ffmuc.net` (Nebula only), Traefik with `noc-auth@file`
-  (Keycloak realm `noc`, group Admin, TOTP), then the dashboard login (`admin`).
+- Dashboard `https://wazuh.ov.ffmuc.net` (internal only: Nebula and internal VLAN, docker07 has no public address), Traefik without `noc-auth`: the dashboard logs in itself,
+  by OIDC against Keycloak realm `noc` (group Admin, TOTP), or as `admin` (basic auth, break-glass).
 - Agents connect to `10.8.0.16:1514` and enroll on `:1515` (Nebula only; the Nebula
   firewall rule for 1514/1515 is part of the follow-up). The API (55000) and the indexer (9200) are not published.
 - Alerts of level 10 and above go to Mattermost (Wazuh's `slack` integration, incoming webhook). No active response.
@@ -52,9 +52,25 @@ Pillar, `state.apply komodo-periphery`, redeploy. The indexer users additionally
 (the API user is created from the environment at every start; `wazuh.yml` of the dashboard is written once and
 must be edited in `/srv/docker/wazuh/dashboard/config`).
 
+## Login (OIDC)
+
+Keycloak admin, realm `noc`, create:
+- Client `wazuh`: OpenID Connect, confidential (client authentication on), standard flow only, PKCE not needed.
+  Root/home URL and valid redirect URI `https://wazuh.ov.ffmuc.net/*` (the plugin uses `/auth/openid/login`), web origin `https://wazuh.ov.ffmuc.net`.
+- Mapper "User Realm Role" (or Group Membership, full path off) on the client, token claim name `roles`, add to ID token,
+  access token and userinfo, claim JSON type String, multivalued. Members of the LDAP group `Admin` must carry the
+  value `Admin` there (realm role `Admin` mapped from the group, as for `oauth2-proxy`). `Admin` maps to `all_access`
+  (`config/security-roles_mapping.yml`). Realm `noc` admits only that group, so there is no read-only role.
+- Client secret into the pillar as `WAZUH_OIDC_CLIENT_SECRET` (`komodo-secrets/docker07.sls`), `state.apply komodo-periphery`.
+
+Files: `config/security-config.yml` (`openid_auth_domain`) and `config/security-roles_mapping.yml` are mounted into the
+indexer but read only by `securityadmin` (command above, `-cd` already covers them), the dashboard settings are at the end of
+`config/opensearch_dashboards.yml`, the client secret goes into the keystore at start (`entrypoint-scripts/dashboard.sh`).
+
+Order: pillar and Keycloak client first, then merge, Resource Sync, `securityadmin`, redeploy the stack. Then test the
+OIDC login and the `admin` login in a private window. If OIDC fails, `admin` (basic auth) still works; rollback: previous
+commit and `securityadmin` (the old `config.yml` is the image default).
+
 ## Not in this directory
 
-- Dashboard login by OIDC against Keycloak `noc` (security plugin `openid` auth domain, client secret in the
-  dashboard keystore): needs a Keycloak client and a test on the running stack, follow-up. Until then `noc-auth`
-  is the gate.
 - Rollback: `docker compose -p wazuh down`, data stays.
