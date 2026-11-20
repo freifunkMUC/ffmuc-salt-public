@@ -15,7 +15,8 @@ Agents will be rolled out by a Salt state `wazuh-agent` (follow-up PR, together 
 ## First setup (admin, on docker07)
 
 1. Logical volume for the indexer, 150 GiB (sizing: 100-150 GiB for about 40 agents at 90 days), mounted at
-   `/srv/docker/wazuh/indexer`, owned by `1000:1000`. Then:
+   `/srv/docker/wazuh/indexer`, owned by `1000:1000`. Done 20.11.2026 on its own disk: LV `raid10-vms/docker07_wazuh`
+   on vm-host02, attached live as `sdb` (virtio-scsi), VG `vg_wazuh`, LV `lv_indexer`, ext4 by UUID in fstab. Then:
    `mkdir -p /srv/docker/wazuh/{certs,dashboard/config,dashboard/custom,manager}; touch /srv/docker/wazuh/indexer/.nobackup`
    and `chown 1000:1000 /srv/docker/wazuh; chown -R 1000:1000 /srv/docker/wazuh/{dashboard,indexer}; chmod 700 /srv/docker/wazuh/dashboard/config`
    (`init-users` writes as 1000 into `/srv/docker/wazuh`; `wazuh.yml` holds the API password).
