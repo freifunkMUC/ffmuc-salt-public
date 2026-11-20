@@ -4,7 +4,7 @@ Single-node Wazuh 4.14 (manager, indexer, dashboard), after upstream
 [wazuh-docker](https://github.com/wazuh/wazuh-docker) v4.14.10 `single-node`.
 Agents will be rolled out by a Salt state `wazuh-agent` (follow-up PR, together with the Nebula rule).
 
-- Dashboard `https://wazuh.ov.ffmuc.net` (Nebula only), Traefik without `noc-auth`: the dashboard logs in itself,
+- Dashboard `https://wazuh.ov.ffmuc.net` (internal only: Nebula and internal VLAN, docker07 has no public address), Traefik without `noc-auth`: the dashboard logs in itself,
   by OIDC against Keycloak realm `noc` (group Admin, TOTP), or as `admin` (basic auth, break-glass).
 - Agents connect to `10.8.0.16:1514` and enroll on `:1515` (Nebula only; the Nebula
   firewall rule for 1514/1515 is part of the follow-up). The API (55000) and the indexer (9200) are not published.
@@ -63,9 +63,8 @@ Files: `config/security-config.yml` (`openid_auth_domain`) and `config/security-
 indexer but read only by `securityadmin` (command above, `-cd` already covers them), the dashboard settings are at the end of
 `config/opensearch_dashboards.yml`, the client secret goes into the keystore at start (`entrypoint-scripts/dashboard.sh`).
 
-Order: pillar and Keycloak client first, then merge, Resource Sync, `securityadmin`, redeploy the dashboard. Test the OIDC
-login and the `admin` login in a private window while `noc-auth` is still on; dropping the label is part of this change, so
-deploy only when both work (without the middleware the dashboard's own login page is the only gate). Rollback: previous
+Order: pillar and Keycloak client first, then merge, Resource Sync, `securityadmin`, redeploy the stack. Then test the
+OIDC login and the `admin` login in a private window. If OIDC fails, `admin` (basic auth) still works; rollback: previous
 commit and `securityadmin` (the old `config.yml` is the image default).
 
 ## Not in this directory
