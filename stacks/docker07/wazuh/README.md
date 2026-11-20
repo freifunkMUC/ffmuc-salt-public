@@ -62,6 +62,12 @@ Keycloak admin, realm `noc`, create:
   value `Admin` there (realm role `Admin` mapped from the group, as for `oauth2-proxy`). `Admin` maps to `all_access`
   (`config/security-roles_mapping.yml`). Realm `noc` admits only that group, so there is no read-only role.
 - Client secret into the pillar as `WAZUH_OIDC_CLIENT_SECRET` (`komodo-secrets/docker07.sls`), `state.apply komodo-periphery`.
+- Wazuh RBAC (once, manual): the dashboard calls the API with `run_as: true` (`wazuh.yml`), so OIDC users need an API rule,
+  otherwise it shows "no agents registered". In the manager container, with a token from `POST /security/user/authenticate`
+  (API user from the container env, never on the command line): `POST /security/rules` with
+  `{"name":"noc_oidc_admin","rule":{"FIND":{"backend_roles":"Admin"}}}`, then `POST /security/roles/1/rules?rule_ids=<id>`
+  (role 1 = administrator). Stored in the volume `wazuh_api_configuration` (`rbac.db`), survives redeploys; visible under
+  Server management > Security > Roles mapping.
 
 Files: `config/security-config.yml` (`openid_auth_domain`) and `config/security-roles_mapping.yml` are mounted into the
 indexer but read only by `securityadmin` (command above, `-cd` already covers them), the dashboard settings are at the end of
