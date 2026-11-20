@@ -17,7 +17,7 @@ Agents will be rolled out by a Salt state `wazuh-agent` (follow-up PR, together 
 1. Logical volume for the indexer, 150 GiB (sizing: 100-150 GiB for about 40 agents at 90 days), mounted at
    `/srv/docker/wazuh/indexer`, owned by `1000:1000`. Done 20.11.2026 on its own disk: LV `raid10-vms/docker07_wazuh`
    on vm-host02, attached live as `sdb` (virtio-scsi), VG `vg_wazuh`, LV `lv_indexer`, ext4 by UUID in fstab. Then:
-   `mkdir -p /srv/docker/wazuh/{certs,dashboard/config,dashboard/custom,manager}; touch /srv/docker/wazuh/indexer/.nobackup`
+   `mkdir -p /srv/docker/wazuh/{certs,dashboard/config,dashboard/custom,manager,indexer/data}; touch /srv/docker/wazuh/indexer/.nobackup`
    and `chown 1000:1000 /srv/docker/wazuh; chown -R 1000:1000 /srv/docker/wazuh/{dashboard,indexer}; chmod 700 /srv/docker/wazuh/dashboard/config`
    (`init-users` writes as 1000 into `/srv/docker/wazuh`; `wazuh.yml` holds the API password).
 2. Pillar `komodo-secrets/docker07.sls`: the five names from `stacks/README.md`, then `state.apply komodo-periphery`.
@@ -36,7 +36,7 @@ Agents will be rolled out by a Salt state `wazuh-agent` (follow-up PR, together 
    needs the indexer to be healthy first (a few minutes).
 5. Retention: `RunStackService` `ism` once the indexer is up (idempotent; a rerun reports the indices that already
    have the policy and fails only on other errors).
-6. Mattermost: `docker exec <manager> /var/ossec/bin/wazuh-control status | grep integratord`, then a test alert
+6. Mattermost (channel `noc-monitoring`, webhook user name `wazuh`): `docker exec <manager> /var/ossec/bin/wazuh-control status | grep integratord`, then a test alert
    (level 10 or above, e.g. a `wazuh-logtest`-matched line written to a monitored log) must reach the channel.
 7. Agents and Nebula rule: follow-up PR.
 
