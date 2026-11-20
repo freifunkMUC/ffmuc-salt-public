@@ -1,7 +1,7 @@
 ---
 services:
   diun:
-    image: crazymax/diun:4.33.1@sha256:8cc638b4c54e8a0c47898a51b20dae73037ad43310168b5da543a311dc668f77
+    image: crazymax/diun:4.34.0@sha256:f350e8e7cc0e3b33d500e2fc462ac9273d8954327f32e2501b34b6bef5a0de3e
     hostname: docker05-diun
     restart: always
     depends_on:
