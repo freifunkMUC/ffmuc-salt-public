@@ -27,6 +27,8 @@ base:
     - tmux
     - unattended-upgrades
     - vim
+    # opt-in per host: NetBox tag wazuh-agent
+    - wazuh-agent
     - ssh
   '*.in.ffmuc.net':
     - apt
