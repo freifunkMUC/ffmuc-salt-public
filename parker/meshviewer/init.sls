@@ -2,35 +2,12 @@
 
 {%- if 'parker-gateway' in role %}
 
+{#- The map (map-parker.ffmuc.net) is on the webfrontends now (meshviewer CI deploy).
+    The pgws only supply the map data (/map/data/). Remove the old meshviewer files. #}
 {% set domain = grains['id'] | regex_replace('in\.ffmuc\.net','ext.ffmuc.net') %}
-meshviewer-directory:
-  file.directory:
+meshviewer-absent:
+  file.absent:
     - name: /srv/www/{{ domain }}/meshviewer
-    - makedirs: True
-    - user: www-data
-    - group: www-data
-    - mode: "0750"
-
-meshviewer-code:
-  archive.extracted:
-    - name: /srv/www/{{ domain }}/meshviewer
-    - source: https://github.com/freifunk/meshviewer/releases/download/v14.0.0/meshviewer-build.zip
-    - source_hash: sha256=aaeac5d0389c2e89ef0c511fac79c5b8d5cebe4ff76547e11ef47a5680d7e15b
-    - use_etag: True
-    - user: www-data
-    - group: www-data
-    - clean: True
-    - enforce_toplevel: False
-    - require:
-      - file: meshviewer-directory
-
-meshviewer-config:
-  file.managed:
-    - name: /srv/www/{{ domain }}/meshviewer/config.json
-    - source: salt://parker/meshviewer/config.json
-    - user: www-data
-    - group: www-data
-    - mode: "0640"
 
 {#- Each pgw merges the yanic data of all sites into one meshviewer.json:
     its own file, and the files of the other sites from the public map. #}
