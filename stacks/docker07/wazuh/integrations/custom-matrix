@@ -1,0 +1,15 @@
+#!/bin/sh
+# Wrapper as integratord expects it (like integrations/slack): runs custom-matrix.py with Wazuh's Python.
+WPYTHON_BIN="framework/python/bin/python3"
+SCRIPT_PATH_NAME="$0"
+DIR_NAME="$(cd "$(dirname "${SCRIPT_PATH_NAME}")" || exit; pwd -P)"
+SCRIPT_NAME="$(basename "${SCRIPT_PATH_NAME}")"
+case "${DIR_NAME}" in
+    */active-response/bin | */wodles*)
+        WAZUH_PATH="$(cd "${DIR_NAME}/../.." || exit; pwd)" ;;
+    */bin)
+        WAZUH_PATH="$(cd "${DIR_NAME}/.." || exit; pwd)" ;;
+    */integrations)
+        WAZUH_PATH="$(cd "${DIR_NAME}/.." || exit; pwd)" ;;
+esac
+exec "${WAZUH_PATH}/${WPYTHON_BIN}" "${WAZUH_PATH}/integrations/${SCRIPT_NAME}.py" "$@"

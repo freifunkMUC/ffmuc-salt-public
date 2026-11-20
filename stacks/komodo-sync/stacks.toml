@@ -769,6 +769,26 @@ SSO_CLIENT_SECRET = [[VAULTWARDEN_SSO_CLIENT_SECRET]]
 """
 
 [[stack]]
+name = "docker07-wazuh"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker07"
+project_name = "wazuh"
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker07/wazuh"
+file_paths = ["compose.yaml"]
+environment = """
+WAZUH_INDEXER_PASSWORD = [[WAZUH_INDEXER_PASSWORD]]
+WAZUH_DASHBOARD_PASSWORD = [[WAZUH_DASHBOARD_PASSWORD]]
+WAZUH_API_PASSWORD = [[WAZUH_API_PASSWORD]]
+WAZUH_AUTHD_PASS = [[WAZUH_AUTHD_PASS]]
+WAZUH_MATRIX_HOOK_URL = [[WAZUH_MATRIX_HOOK_URL]]
+WAZUH_MATRIX_TOKEN = [[WAZUH_MATRIX_TOKEN]]
+"""
+
+[[stack]]
 name = "mail01-crowdsec"
 tags = ["ffmuc"]
 deploy = false
