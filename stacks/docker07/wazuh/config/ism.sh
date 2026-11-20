@@ -14,6 +14,9 @@ else
   api -X PUT "$url/_plugins/_ism/policies/wazuh-retention" --data @/policy.json
 fi
 echo
-api -X POST "$url/_plugins/_ism/add/wazuh-alerts-*,wazuh-monitoring-*,wazuh-statistics-*" \
-  --data '{"policy_id": "wazuh-retention"}'
-echo
+# Indices that already carry a policy come back as failures; only other reasons count as errors.
+r=$(api -X POST "$url/_plugins/_ism/add/wazuh-alerts-*,wazuh-monitoring-*,wazuh-statistics-*" \
+  --data '{"policy_id": "wazuh-retention"}')
+had=$(grep -o '"reason":"[^"]*"' <<<"$r" | grep -c 'already has a policy' || true)
+echo "attached: $(sed -n 's/.*"updated_indices":\([0-9]*\).*/\1/p' <<<"$r"), already had a policy: $had"
+if grep -o '"reason":"[^"]*"' <<<"$r" | grep -v 'already has a policy'; then exit 1; fi
