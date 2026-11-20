@@ -4,6 +4,7 @@
 The room's send endpoint (without transaction id) and the bot's access token are the two lines of
 /var/ossec/etc/matrix-hook, written at container start from the stack secrets.
 """
+
 import json
 import sys
 import time
@@ -27,12 +28,17 @@ def main():
         rule.get("id", "?"),
     )
     body = json.dumps({"msgtype": "m.notice", "body": text}).encode()
-    txn = "wazuh-{}-{}".format(alert.get("id", int(time.time() * 1000)), rule.get("id", "0"))
+    txn = "wazuh-{}-{}".format(
+        alert.get("id", int(time.time() * 1000)), rule.get("id", "0")
+    )
     req = urllib.request.Request(
         "{}/{}".format(url.rstrip("/"), urllib.parse.quote(txn, safe="")),
         data=body,
         method="PUT",
-        headers={"Authorization": "Bearer " + token, "Content-Type": "application/json"},
+        headers={
+            "Authorization": "Bearer " + token,
+            "Content-Type": "application/json",
+        },
     )
     with urllib.request.urlopen(req, timeout=10) as resp:
         resp.read()

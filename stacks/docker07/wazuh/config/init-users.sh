@@ -6,7 +6,7 @@ export JAVA_HOME=/usr/share/wazuh-indexer/jdk
 hash() { /usr/share/wazuh-indexer/plugins/opensearch-security/tools/hash.sh -env "$1" 2>/dev/null | tail -n1; }
 admin_hash=$(hash ADMIN_PW)
 dash_hash=$(hash DASHBOARD_PW)
-case "$admin_hash$dash_hash" in *'$2'*'$2'*) ;; *) echo "hashing failed" >&2; exit 1 ;; esac
+case "$admin_hash$dash_hash" in *\$2*\$2*) ;; *) echo "hashing failed" >&2; exit 1 ;; esac
 umask 077
 cat > /out/internal_users.yml <<YAML
 _meta:
