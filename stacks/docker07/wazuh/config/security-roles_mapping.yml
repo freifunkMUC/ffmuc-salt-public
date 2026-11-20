@@ -15,8 +15,8 @@ all_access:
   reserved: true
   hidden: false
   backend_roles:
-  - "admin"
-  - "Admin"
+    - "admin"
+    - "Admin"
   hosts: []
   users: []
   and_backend_roles: []
@@ -28,7 +28,7 @@ own_index:
   backend_roles: []
   hosts: []
   users:
-  - "*"
+    - "*"
   and_backend_roles: []
   description: "Allow full access to an index named like the username"
 
@@ -36,7 +36,7 @@ logstash:
   reserved: false
   hidden: false
   backend_roles:
-  - "logstash"
+    - "logstash"
   hosts: []
   users: []
   and_backend_roles: []
@@ -45,7 +45,7 @@ readall:
   reserved: true
   hidden: false
   backend_roles:
-  - "readall"
+    - "readall"
   hosts: []
   users: []
   and_backend_roles: []
@@ -54,7 +54,7 @@ manage_snapshots:
   reserved: true
   hidden: false
   backend_roles:
-  - "snapshotrestore"
+    - "snapshotrestore"
   hosts: []
   users: []
   and_backend_roles: []
@@ -65,14 +65,14 @@ kibana_server:
   backend_roles: []
   hosts: []
   users:
-  - "kibanaserver"
+    - "kibanaserver"
   and_backend_roles: []
 
 kibana_user:
   reserved: false
   hidden: false
   backend_roles:
-  - "kibanauser"
+    - "kibanauser"
   hosts: []
   users: []
   and_backend_roles: []
@@ -85,5 +85,5 @@ manage_wazuh_index:
   backend_roles: []
   hosts: []
   users:
-  - "kibanaserver"
+    - "kibanaserver"
   and_backend_roles: []
