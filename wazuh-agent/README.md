@@ -16,7 +16,7 @@ Installs the Wazuh agent and enrolls it at the manager (`stacks/docker07/wazuh`,
       wazuh:
         enrollment_password: <value>
 
-  and in the pillar `top.sls`: `'not pgw*': [wazuh]`. Optional `wazuh:manager_address` overrides the manager address.
+  and in the pillar `top.sls`: `'not pgw*'` with `- match: compound` and `- wazuh` (a plain `not` target needs the compound matcher). Optional `wazuh:manager_address` overrides the manager address.
   With the tag set but the password missing the state fails with a clear message and changes nothing.
 - **Nebula:** `nebula/files/config.yml.jinja` allows TCP 1514 and 1515 from all Nebula hosts on docker07.
 
