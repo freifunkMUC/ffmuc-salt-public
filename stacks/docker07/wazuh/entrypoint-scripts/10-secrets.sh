@@ -5,9 +5,9 @@ set -eu
 etc=/var/ossec/etc
 umask 077
 printf '%s\n' "$AUTHD_PASS" > "$etc/authd.pass"
-printf '%s\n%s\n' "$MATRIX_HOOK_URL" "$MATRIX_TOKEN" > "$etc/matrix-hook"
-chown root:wazuh "$etc/authd.pass" "$etc/matrix-hook"
-chmod 640 "$etc/authd.pass" "$etc/matrix-hook"
-# integratord runs custom-matrix as wazuh
-chown root:wazuh /var/ossec/integrations/custom-matrix /var/ossec/integrations/custom-matrix.py
-chmod 750 /var/ossec/integrations/custom-matrix /var/ossec/integrations/custom-matrix.py
+chown root:wazuh "$etc/authd.pass"
+chmod 640 "$etc/authd.pass"
+# Mattermost webhook into ossec.conf (copied from the mount when the container is created; a new URL needs a recreate)
+shopt -u patsub_replacement 2>/dev/null || true  # bash 5.2: & in the URL stays literal
+conf=$(<"$etc/ossec.conf")
+printf '%s\n' "${conf//@MATTERMOST_HOOK_URL@/$MATTERMOST_HOOK_URL}" > "$etc/ossec.conf"

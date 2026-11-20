@@ -30,8 +30,7 @@ services:
       API_PASSWORD: ${WAZUH_API_PASSWORD:?}
       # read by entrypoint-scripts/10-secrets.sh
       AUTHD_PASS: ${WAZUH_AUTHD_PASS:?}
-      MATRIX_HOOK_URL: ${WAZUH_MATRIX_HOOK_URL:?}
-      MATRIX_TOKEN: ${WAZUH_MATRIX_TOKEN:?}
+      MATTERMOST_HOOK_URL: ${WAZUH_MATTERMOST_HOOK_URL:?}
     ports:
       - "10.8.0.16:1514:1514"  # agents (Nebula only)
       - "10.8.0.16:1515:1515"  # enrollment (Nebula only)
@@ -52,7 +51,6 @@ services:
       - /srv/docker/wazuh/certs/wazuh.manager-key.pem:/etc/ssl/filebeat.key:ro
       # copied over /var/ossec at every start (cont-init 0-wazuh-init, mount_files)
       - ./config/wazuh_manager.conf:/wazuh-config-mount/etc/ossec.conf:ro
-      - ./integrations:/wazuh-config-mount/integrations:ro
       - ./entrypoint-scripts:/entrypoint-scripts:ro
     mem_limit: 4g
     pids_limit: 4096
