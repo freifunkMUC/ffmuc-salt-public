@@ -19,8 +19,10 @@ Installs the Wazuh agent and enrolls it at the manager (`stacks/docker07/wazuh`,
       wazuh:
         enrollment_password: <value>
 
-  and in the pillar `top.sls`: `'not pgw*'` with `- match: compound` and `- wazuh` (a plain `not` target needs the compound matcher). Optional `wazuh:manager_address` overrides the manager address.
+  and in the pillar `top.sls`: `'not pgw*'` with `- match: compound` and `- wazuh` (a plain `not` target needs the compound matcher). Optional `wazuh:manager_address` (or NetBox context `wazuh.manager_address`) overrides the manager address; `*.meet.ffmuc.net` default to `10.111.0.118` (docker07 in `nebula-meet`), all others to `10.8.0.16`.
   With the tag set but the password missing the state fails with a clear message and changes nothing.
-- **Nebula:** `nebula/files/config.yml.jinja` allows TCP 1514 and 1515 from all Nebula hosts on docker07.
+- **Nebula:** `nebula/files/config.yml.jinja` allows TCP 1514 and 1515 from all Nebula hosts on docker07; `nebula-meet/files/config.yml.jinja` allows them from the Jitsi groups (`jvb`, `jicofo`, `jigasi`) only. The compose stack binds both ports on docker07's `nebula0` and `nebula-meet` addresses.
+
+Jitsi rollout (owner, in this order): `salt docker07.in.ffmuc.net state.apply nebula-meet test=True`, then real apply (docker07 runs `nebula-meet` but is not in `top.sls`, so only an explicit apply touches it; a firewall change rewrites the config and restarts only docker07's nebula-meet) -> Komodo redeploy `wazuh` -> tag and `state.apply wazuh-agent` on `jicofo03` -> check the agent -> the other Jitsi hosts one by one. Mind RAM on jvb12-14 (agent adds a few hundred MB).
 
 Rollout: tag one host in NetBox, `salt <host> state.apply wazuh-agent test=True`, then apply and check the agent in the dashboard.

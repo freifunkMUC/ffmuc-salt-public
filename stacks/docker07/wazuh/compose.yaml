@@ -34,6 +34,8 @@ services:
     ports:
       - "10.8.0.16:1514:1514"  # agents (Nebula only)
       - "10.8.0.16:1515:1515"  # enrollment (Nebula only)
+      - "10.111.0.118:1514:1514"  # agents (nebula-meet, Jitsi hosts)
+      - "10.111.0.118:1515:1515"  # enrollment (nebula-meet, Jitsi hosts)
     volumes:
       - /srv/docker/wazuh/manager/api_configuration:/var/ossec/api/configuration
       - /srv/docker/wazuh/manager/etc:/var/ossec/etc
