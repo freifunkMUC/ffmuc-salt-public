@@ -9,6 +9,10 @@ Agents will be rolled out by a Salt state `wazuh-agent` (follow-up PR, together 
 - Agents connect to `10.8.0.16:1514` and enroll on `:1515` (Nebula only; the Nebula
   firewall rule for 1514/1515 is part of the follow-up). The API (55000) and the indexer (9200) are not published.
 - Alerts of level 10 and above go to Mattermost (Wazuh's `slack` integration, incoming webhook). No active response.
+- `config/local_rules.xml` (copied into `etc/rules` at every start, redeploy to change): level 0 for the nagios/telegraf
+  sudo checks on the vm-hosts and gateways (`100100`/`100101`) and the nameless-uid sudo PAM session lines (`100102`/`100103`;
+  other sudo use and named users still alert), the nginx client reset on the gateways (`100110`), and 404 scanner bursts of
+  `31151` at level 6 (`100120`, dashboard only, below the Mattermost threshold). Test: `wazuh-logtest`.
 - Retention 90 days (alert, monitoring and statistics indices). Indexer data is not backed up (`.nobackup`);
   manager config, rules and agent keys in `/srv/docker/wazuh/manager/etc` are.
 

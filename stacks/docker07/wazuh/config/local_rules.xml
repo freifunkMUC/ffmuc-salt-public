@@ -1,0 +1,50 @@
+<!-- Local rules (ids 100100+). Mounted by compose.yaml; the README lists the reason for each. -->
+<group name="local,">
+
+  <!-- Monitoring helpers (nagios, telegraf) running fixed commands through sudo; other sudo use still alerts -->
+  <rule id="100100" level="0">
+    <if_sid>5402</if_sid>
+    <regex type="pcre2">^\s*nagios : .*COMMAND=(/usr/local/share/monitoring-plugins/check_(conntrack_size|ffmuc_dumps)$|/usr/sbin/birdc show protocols$|/usr/bin/wg show all latest-handshakes$)$</regex>
+    <description>sudo: monitoring check run by nagios.</description>
+  </rule>
+
+  <rule id="100101" level="0">
+    <if_sid>5402</if_sid>
+    <regex type="pcre2">^\s*telegraf : .*COMMAND=(/usr/sbin/smartctl (--scan|--info --health))</regex>
+    <description>sudo: smartctl run by telegraf.</description>
+  </rule>
+
+  <!-- sudo session close carries no user; opened by a nameless uid is what the helpers produce, named users stay -->
+  <rule id="100102" level="0">
+    <if_sid>5502</if_sid>
+    <program_name>^sudo$</program_name>
+    <match>for user root$</match>
+    <description>PAM: sudo session closed for root.</description>
+  </rule>
+
+  <rule id="100103" level="0">
+    <if_sid>5501</if_sid>
+    <program_name>^sudo$</program_name>
+    <regex type="pcre2">for user root\(uid=0\) by \(uid=\d+\)$</regex>
+    <description>PAM: sudo session opened for root by a system uid without a name.</description>
+  </rule>
+
+  <!-- Gateways: TCP :80 proxy to the local upstream :8081, client reset (HTTP/NAT64 clients) -->
+  <rule id="100110" level="0">
+    <if_sid>31301</if_sid>
+    <match>recv() failed (104: Connection reset by peer) while proxying and reading from upstream</match>
+    <description>nginx: client reset while proxying to the :8081 upstream.</description>
+  </rule>
+
+  <!-- Internet scanners probing for files: still in the dashboard, below the Mattermost threshold (10) -->
+  <rule id="100120" level="6">
+    <if_sid>31151</if_sid>
+    <id>^404$</id>
+    <description>Multiple web server 404 errors from same source ip (scanner).</description>
+    <mitre>
+      <id>T1595.002</id>
+    </mitre>
+    <group>web_scan,recon,</group>
+  </rule>
+
+</group>

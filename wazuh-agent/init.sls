@@ -86,6 +86,24 @@ wazuh-agent-config:
     - require:
       - pkg: wazuh-agent
 
+wazuh-agent-journald-filter:
+  file.replace:
+    - name: /var/ossec/etc/ossec.conf
+    - pattern: '(<location>journald</location>)(\s*)(</localfile>)'
+    - repl: '\1\2  <filter field="SYSLOG_IDENTIFIER" ignore_if_missing="yes">^(?!haproxy$)</filter>\2\3'
+    - count: 1
+    - require:
+      - pkg: wazuh-agent
+
+wazuh-agent-nginx-error-ignore:
+  file.replace:
+    - name: /var/ossec/etc/ossec.conf
+    - pattern: '(<location>/var/log/nginx/error\.log</location>)(\s*)(</localfile>)'
+    - repl: '\1\2  <ignore type="PCRE2">recv\(\) failed \(104: Connection reset by peer\) while proxying and reading from upstream</ignore>\2\3'
+    - count: 1
+    - require:
+      - pkg: wazuh-agent
+
 wazuh-agent-service:
   service.running:
     - name: wazuh-agent
@@ -94,5 +112,7 @@ wazuh-agent-service:
       - file: wazuh-agent-authd-pass
     - watch:
       - file: wazuh-agent-config
+      - file: wazuh-agent-journald-filter
+      - file: wazuh-agent-nginx-error-ignore
       - file: wazuh-agent-authd-pass
 {%- endif %}
