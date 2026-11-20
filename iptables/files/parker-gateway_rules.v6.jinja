@@ -39,8 +39,13 @@ COMMIT
 -A FORWARD -i wg-nodes -d {{ external_address6 }} -p udp -m udp --dport {{ wireguard_port }} -j REJECT --reject-with icmp6-port-unreachable -m comment --comment "Block tunnel in tunnel"
 {%- endfor %}
 
-{#- Block all traffic to internal network #}
+{#- Block all traffic to internal network, except node traffic to the other pgw of this site (iBGP routes on the mgmt VLAN) #}
+{%- set parker_range = salt['pillar.get']('netbox:config_context:network:additional_v6_prefix') %}
+{%- if not parker_range %}
+{{- raise('No network.additional_v6_prefix (the Parker /50 of the site) in the NetBox config context of ' ~ grains.id ~ '.') }}
+{%- endif %}
 {%- for internal_vlan_if in salt['pillar.get']('netbox:config_context:network:gateway') %}{# vlan1001/1002 #}
+-A FORWARD -i wg-nodes -o {{ internal_vlan_if }} -s {{ parker_range }} -d {{ parker_range }} -j ACCEPT -m comment --comment "Node traffic to the other pgw of this site"
 -A FORWARD -i wg-nodes -o {{ internal_vlan_if }} -j REJECT --reject-with icmp6-port-unreachable
 {%- endfor %}
 
