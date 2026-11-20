@@ -33,5 +33,9 @@ plugins.security.restapi.roles_enabled:
 plugins.security.system_indices.enabled: true
 plugins.security.system_indices.indices: [".opendistro-alerting-config", ".opendistro-alerting-alert*", ".opendistro-anomaly-results*", ".opendistro-anomaly-detector*", ".opendistro-anomaly-checkpoints", ".opendistro-anomaly-detection-state", ".opendistro-reports-*", ".opendistro-notifications-*", ".opendistro-notebooks", ".opensearch-observability", ".opendistro-asynchronous-search-response*", ".replication-metadata-store"]
 plugins.security.allow_default_init_securityindex: true
-# single node on a dedicated LV: no disk watermarks (as upstream), the Icinga check watches the filesystem
-cluster.routing.allocation.disk.threshold_enabled: false
+# on docker07's root filesystem (no free LVM space): absolute watermarks keep at least 70 GiB free for the
+# other stacks; at flood stage the indices turn read-only and the manager queues
+cluster.routing.allocation.disk.threshold_enabled: true
+cluster.routing.allocation.disk.watermark.low: 90gb
+cluster.routing.allocation.disk.watermark.high: 80gb
+cluster.routing.allocation.disk.watermark.flood_stage: 70gb
