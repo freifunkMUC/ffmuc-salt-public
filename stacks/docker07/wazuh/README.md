@@ -2,12 +2,12 @@
 
 Single-node Wazuh 4.14 (manager, indexer, dashboard), after upstream
 [wazuh-docker](https://github.com/wazuh/wazuh-docker) v4.14.10 `single-node`.
-Agents are rolled out by the Salt state `wazuh-agent`.
+Agents will be rolled out by a Salt state `wazuh-agent` (follow-up PR, together with the Nebula rule).
 
 - Dashboard `https://wazuh.ov.ffmuc.net` (Nebula only), Traefik with `noc-auth@file`
   (Keycloak realm `noc`, group Admin, TOTP), then the dashboard login (`admin`).
-- Agents connect to `10.8.0.16:1514` and enroll on `:1515` (Nebula only, firewall rule
-  by NetBox tag `wazuh-manager`, state `nebula`). The API (55000) and the indexer (9200) are not published.
+- Agents connect to `10.8.0.16:1514` and enroll on `:1515` (Nebula only; the Nebula
+  firewall rule for 1514/1515 is part of the follow-up). The API (55000) and the indexer (9200) are not published.
 - Alerts of level 10 and above go to the Matrix room (`integrations/custom-matrix`). No active response.
 - Retention 90 days (alert, monitoring and statistics indices). Indexer data is not backed up (`.nobackup`);
   manager config, rules and agent keys in `/srv/docker/wazuh/manager/etc` are.
@@ -17,7 +17,8 @@ Agents are rolled out by the Salt state `wazuh-agent`.
 1. Logical volume for the indexer, 150 GiB (sizing: 100-150 GiB for about 40 agents at 90 days), mounted at
    `/srv/docker/wazuh/indexer`, owned by `1000:1000`. Then:
    `mkdir -p /srv/docker/wazuh/{certs,dashboard/config,dashboard/custom,manager}; touch /srv/docker/wazuh/indexer/.nobackup`
-   and `chown -R 1000:1000 /srv/docker/wazuh/{dashboard,indexer}`.
+   and `chown 1000:1000 /srv/docker/wazuh; chown -R 1000:1000 /srv/docker/wazuh/{dashboard,indexer}; chmod 700 /srv/docker/wazuh/dashboard/config`
+   (`init-users` writes as 1000 into `/srv/docker/wazuh`; `wazuh.yml` holds the API password).
 2. Pillar `komodo-secrets/docker07.sls`: the six names from `stacks/README.md`, then `state.apply komodo-periphery`.
    Passwords: letters, digits, `.` and `-` only (filebeat and the API user take them through `sed`), with upper
    case, lower case, a digit and a symbol, 16-64 characters. `WAZUH_AUTHD_PASS` the same, and the same value as
@@ -25,19 +26,19 @@ Agents are rolled out by the Salt state `wazuh-agent`.
    transaction id: `https://matrix.ffmuc.net/_matrix/client/v3/rooms/<percent-encoded room id>/send/m.room.message`,
    `WAZUH_MATRIX_TOKEN` the access token of a bot account that is in the room. At every start the manager writes
    `WAZUH_AUTHD_PASS` to `/srv/docker/wazuh/manager/etc/authd.pass` (`root:wazuh`, 0640, `entrypoint-scripts/10-secrets.sh`).
-3. Resource Sync (the stack appears), then on docker07 from the stack's checkout directory, or as Komodo
-   `RunStackService`:
-   - `docker compose --profile certs run --rm generator` (downloads the certificate tool from packages.wazuh.com,
-     writes CA and node certificates to `/srv/docker/wazuh/certs`), then
-     `chown -R 1000:1000 /srv/docker/wazuh/certs; chmod 640 /srv/docker/wazuh/certs/*.pem`.
-   - `docker compose --profile init run --rm init-users` (writes `/srv/docker/wazuh/internal_users.yml`).
+3. Resource Sync (the stack appears), then Komodo `RunStackService` (Komodo writes `.env`, which every `${VAR:?}`
+   needs, also for these one-off services; naming a service activates its profile):
+   - `generator` (downloads the certificate tool from packages.wazuh.com, writes CA and node certificates to
+     `/srv/docker/wazuh/certs`), then `chown -R 1000:1000 /srv/docker/wazuh/certs; chmod 640 /srv/docker/wazuh/certs/*.pem`.
+   - `init-users` (writes `/srv/docker/wazuh/internal_users.yml`; must exist before the deploy, else Docker
+     creates a directory in its place).
 4. Deploy the stack in Komodo. The first start initialises the security index from `internal_users.yml`; the manager
    needs the indexer to be healthy first (a few minutes).
-5. Retention: `docker compose --profile init run --rm ism` once the indexer is up (idempotent; a rerun reports
-   the indices that already have the policy and fails only on other errors).
-6. Nebula: NetBox tag `wazuh-manager` on docker07, then `state.apply nebula test=True` (opens 1514/1515 for all
-   hosts; Nebula restarts, Keycloak and Vaultwarden on docker07 blip). Roll the Matrix integration check:
-   `docker exec <manager> /var/ossec/bin/wazuh-control status | grep integratord`.
+5. Retention: `RunStackService` `ism` once the indexer is up (idempotent; a rerun reports the indices that already
+   have the policy and fails only on other errors).
+6. Matrix: `docker exec <manager> /var/ossec/bin/wazuh-control status | grep integratord`, then a test alert
+   (level 10 or above, e.g. a `wazuh-logtest`-matched line written to a monitored log) must reach the room.
+7. Agents and Nebula rule: follow-up PR.
 
 ## Changing a password
 

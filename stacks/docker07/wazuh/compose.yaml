@@ -10,6 +10,7 @@ x-logging: &logging
     max-file: "3"
 
 services:
+  # root and default capabilities as upstream: s6 and the wazuh daemons need them
   wazuh.manager:
     image: wazuh/wazuh-manager:4.14.10@sha256:eabfa7ee4e63acb51c2130fa0583e30f843d030b091cf45a4fbd93d78fa21517
     hostname: wazuh.manager
