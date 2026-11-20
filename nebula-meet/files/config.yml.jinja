@@ -181,6 +181,17 @@ firewall:
     proto: tcp
     group: jigasi
 {%- endif %}
+{%- if "docker07.in.ffmuc.net" == grains["id"] %}
+  # Wazuh agents on the Jitsi hosts: events and enrollment (stacks/docker07/wazuh); several `group:` rules are OR
+{%- for grp in ["jvb", "jicofo", "jigasi"] %}
+  - port: 1514
+    proto: tcp
+    group: {{ grp }}
+  - port: 1515
+    proto: tcp
+    group: {{ grp }}
+{%- endfor %}
+{%- endif %}
 {%- if salt["pillar.get"]("netbox:config_context:libretranslate:enabled", False) %}
   # LibreTranslate for live translated subtitles, used by jigasi (stacks/docker07/libretranslate)
   - port: {{ salt["pillar.get"]("netbox:config_context:libretranslate:port", 5010) }}

@@ -6,7 +6,9 @@
 
 {#- Same version as the manager image in stacks/docker07/wazuh/compose.yaml #}
 {%- set wazuh_version = '4.14.10' %}
-{%- set manager = salt['pillar.get']('wazuh:manager_address', '10.8.0.16') %}
+{#- Jitsi hosts (nebula-meet only) reach the manager on its nebula-meet address; override: pillar wazuh:manager_address or NetBox context wazuh.manager_address #}
+{%- set manager = salt['pillar.get']('wazuh:manager_address', salt['pillar.get']('netbox:config_context:wazuh:manager_address',
+      '10.111.0.118' if grains.id.endswith('.meet.ffmuc.net') else '10.8.0.16')) %}
 {%- set enabled = 'wazuh-agent' in salt['pillar.get']('netbox:tag_list', [])
       and salt['pillar.get']('netbox:role:name', '') != 'parker-gateway'
       and not grains.id.startswith('pgw') %}
