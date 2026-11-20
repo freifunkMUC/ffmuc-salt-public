@@ -14,6 +14,7 @@ opensearch_security.session.ttl: 900000
 opensearch_security.session.keepalive: true
 # basic auth stays as break-glass (admin); the client secret is in the keystore (entrypoint-scripts/dashboard.sh)
 opensearch_security.auth.type: ["basicauth", "openid"]
+opensearch_security.auth.multiple_auth_enabled: true
 opensearch_security.openid.connect_url: https://keycloak.ffmuc.net/realms/noc/.well-known/openid-configuration
 opensearch_security.openid.client_id: wazuh
 opensearch_security.openid.base_redirect_url: https://wazuh.ov.ffmuc.net

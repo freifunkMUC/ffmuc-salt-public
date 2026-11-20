@@ -67,7 +67,7 @@ Files: `config/security-config.yml` (`openid_auth_domain`) and `config/security-
 indexer but read only by `securityadmin` (command above, `-cd` already covers them), the dashboard settings are at the end of
 `config/opensearch_dashboards.yml`, the client secret goes into the keystore at start (`entrypoint-scripts/dashboard.sh`).
 
-Order: pillar and Keycloak client first, then merge, Resource Sync, `securityadmin`, redeploy the stack. Then test the
+Order: pillar and Keycloak client first, then merge, Resource Sync, redeploy the stack (mounts the files into the indexer), then `securityadmin`. Then test the
 OIDC login and the `admin` login in a private window. If OIDC fails, `admin` (basic auth) still works; rollback: previous
 commit and `securityadmin` (the old `config.yml` is the image default).
 
