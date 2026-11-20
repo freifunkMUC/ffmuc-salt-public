@@ -1,0 +1,15 @@
+server.host: 0.0.0.0
+server.port: 5601
+# TLS ends at Traefik (wazuh.ov.ffmuc.net), the hop over the proxy network is plain HTTP
+server.ssl.enabled: false
+server.publicBaseUrl: https://wazuh.ov.ffmuc.net
+opensearch.hosts: https://wazuh.indexer:9200
+opensearch.ssl.verificationMode: certificate
+opensearch.ssl.certificateAuthorities: ["/usr/share/wazuh-dashboard/certs/root-ca.pem"]
+opensearch.requestHeadersWhitelist: ["securitytenant","Authorization"]
+opensearch_security.multitenancy.enabled: false
+opensearch_security.readonly_mode.roles: ["kibana_read_only"]
+uiSettings.overrides.defaultRoute: /app/wz-home
+opensearch_security.cookie.ttl: 900000
+opensearch_security.session.ttl: 900000
+opensearch_security.session.keepalive: true

@@ -1,0 +1,13 @@
+{
+  "policy": {
+    "description": "Wazuh alerts, agent monitoring and manager statistics: delete after 90 days",
+    "default_state": "hot",
+    "states": [
+      {"name": "hot", "actions": [], "transitions": [{"state_name": "delete", "conditions": {"min_index_age": "90d"}}]},
+      {"name": "delete", "actions": [{"delete": {}}], "transitions": []}
+    ],
+    "ism_template": [
+      {"index_patterns": ["wazuh-alerts-*", "wazuh-monitoring-*", "wazuh-statistics-*"], "priority": 100}
+    ]
+  }
+}

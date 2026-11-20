@@ -149,6 +149,13 @@
       "groupName": "komodo"
     },
     {
+      "description": "Wazuh manager, indexer, dashboard and the agents (wazuh-agent/init.sls) run the same 4.14.x; agents never newer than the manager. 5.0 needs a fresh install (no in-place upgrade). Update the stack first, then the state",
+      "matchPackageNames": ["wazuh/wazuh", "wazuh/wazuh-manager", "wazuh/wazuh-indexer", "wazuh/wazuh-dashboard"],
+      "groupName": "wazuh",
+      "allowedVersions": "<5",
+      "automerge": false
+    },
+    {
       "description": "Graylog server and Data Node must run the same version",
       "matchPackageNames": ["graylog/graylog", "graylog/graylog-datanode"],
       "groupName": "graylog"
