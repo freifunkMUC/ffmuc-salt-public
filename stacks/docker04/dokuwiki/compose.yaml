@@ -1,7 +1,7 @@
 ---
 services:
   dokuwiki:
-    image: dokuwiki/dokuwiki:2026-07-14c@sha256:a289deab45e2d4cbc8b6db1c228955d4dccac0d78da9dcf482adfa12e6641ed1
+    image: dokuwiki/dokuwiki:2026-07-14c@sha256:463bcf631edb06d312a7009d422ac7b1b92816c6ef279ad08dc990107f5b91a8
     user: "1000:1000"
     restart: always
     ports:
