@@ -435,6 +435,13 @@ firewall:
     group: webfrontend
 {%- endif %}
 {%- if "docker07.in.ffmuc.net" == grains["id"] %}
+  # Wazuh agents: events and enrollment (stacks/docker07/wazuh)
+  - port: 1514
+    proto: tcp
+    host: any
+  - port: 1515
+    proto: tcp
+    host: any
   # Allow connections to vaultwarden
   - port: 11001
     proto: tcp
