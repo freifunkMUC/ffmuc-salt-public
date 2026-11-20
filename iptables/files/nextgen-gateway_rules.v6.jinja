@@ -1,3 +1,4 @@
+{%- from 'nebula/map.jinja' import nebula with context %}
 # Managed with Salt
 *nat
 :PREROUTING ACCEPT
@@ -13,6 +14,35 @@ COMMIT
 {#- Block tunnel in tunnel to this gateway #}
 {%- set own_external_address6 = salt['mine.get'](grains.id,'minion_external_ip6', tgt_type='glob')[grains.id][0].split('/')[0] %}
 -A INPUT -i br+ -d {{ own_external_address6 }} -p udp -m udp -m multiport --dports 40000:40200 -j REJECT --reject-with icmp6-port-unreachable -m comment --comment "Block tunnel in tunnel"
+
+{#- INPUT: accept what the gateway serves, reject the rest (policy stays ACCEPT so a failed load does not lock us out) #}
+{%- set uplink = salt['pillar.get']('netbox:config_context:network:uplink_vlan') %}
+-A INPUT -i lo -j ACCEPT
+-A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+{#- ICMPv6 covers NDP and router advertisements #}
+-A INPUT -p ipv6-icmp -j ACCEPT
+-A INPUT -i {{ nebula.interface }} -j ACCEPT
+{%- for internal_vlan_if in salt['pillar.get']('netbox:config_context:network:gateway') %}
+-A INPUT -i {{ internal_vlan_if }} -j ACCEPT
+{%- endfor %}
+{#- Clients: DNS, NTP, respondd and yanic replies #}
+-A INPUT -i br+ -p udp -m multiport --dports 53,123,1001,45124,40311 -j ACCEPT
+-A INPUT -i br+ -p tcp -m multiport --dports 53,80 -j ACCEPT -m comment --comment "DNS, node connectivity check"
+-A INPUT -i wg-+ -p udp -m udp --dport 8472 -j ACCEPT
+-A INPUT -p udp -m multiport --dports 40000:40200 -j ACCEPT
+-A INPUT -p udp -m udp --dport {{ nebula.listen.port }} -j ACCEPT
+-A INPUT -i {{ uplink['interface'] }} -p tcp -m tcp --dport 179 -s {{ uplink['neighbor_v6'] }} -j ACCEPT
+{%- if salt['pillar.get']('netbox:config_context:iptables:dns_public', True) %}
+-A INPUT -i {{ uplink['interface'] }} -p udp -m udp --dport 53 -j ACCEPT
+-A INPUT -i {{ uplink['interface'] }} -p tcp -m tcp --dport 53 -j ACCEPT
+{%- endif %}
+{%- if salt['pillar.get']('netbox:config_context:iptables:ssh_public', False) %}
+-A INPUT -p tcp -m tcp --dport 22 -j ACCEPT
+{%- endif %}
+{%- if grains.id == 'gw04.in.ffmuc.net' %}
+-A INPUT -p tcp -m multiport --dports 80,443 -j ACCEPT
+{%- endif %}
+-A INPUT -j REJECT --reject-with icmp6-port-unreachable
 
 -A FORWARD -i br+ -o {{ uplink_iface }} -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1220
 
