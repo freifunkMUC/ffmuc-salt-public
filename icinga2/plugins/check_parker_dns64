@@ -1,0 +1,91 @@
+#!/usr/bin/python3
+#
+# Icinga plugin: the Parker site DNS64 address must be on the dummy interface
+# dns64 (parker/dns64 state), and the local recursor must answer an AAAA query
+# for an IPv4-only name on that address with an address in the NAT64 prefix.
+#
+
+import argparse
+import ipaddress
+import subprocess
+import sys
+
+OK, CRITICAL, UNKNOWN = 0, 2, 3
+
+
+def run(cmd):
+    return subprocess.run(
+        cmd, capture_output=True, text=True, timeout=20, check=True
+    ).stdout
+
+
+def site_address(dev):
+    out = run(["/sbin/ip", "-6", "-o", "addr", "show", "dev", dev, "scope", "global"])
+    for line in out.splitlines():
+        parts = line.split()
+        if "inet6" in parts:
+            return parts[parts.index("inet6") + 1].split("/")[0]
+    return None
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument("--interface", default="dns64")
+    p.add_argument("--name", default="ipv4only.arpa")
+    p.add_argument("--prefix", default="64:ff9b::/96")
+    args = p.parse_args()
+    prefix = ipaddress.IPv6Network(args.prefix)
+
+    try:
+        addr = site_address(args.interface)
+    except subprocess.CalledProcessError:
+        print(f"CRITICAL - interface {args.interface} missing")
+        return CRITICAL
+    except (OSError, subprocess.SubprocessError) as err:
+        print(f"UNKNOWN - ip addr failed: {err}")
+        return UNKNOWN
+    if not addr:
+        print(f"CRITICAL - no global IPv6 address on {args.interface}")
+        return CRITICAL
+
+    try:
+        out = run(
+            [
+                "/usr/bin/dig",
+                "+short",
+                "+time=3",
+                "+tries=2",
+                "AAAA",
+                args.name,
+                "@" + addr,
+            ]
+        )
+    except subprocess.CalledProcessError as err:
+        print(
+            f"CRITICAL - dig AAAA {args.name} @{addr} failed: {(err.stdout or err.stderr).strip()}"
+        )
+        return CRITICAL
+    except (OSError, subprocess.SubprocessError) as err:
+        print(f"UNKNOWN - dig failed: {err}")
+        return UNKNOWN
+
+    answers = []
+    for line in out.split():
+        try:
+            answers.append(ipaddress.IPv6Address(line))
+        except ValueError:
+            continue
+    good = [a for a in answers if a in prefix]
+    if good:
+        print(
+            f"OK - {addr} on {args.interface}: {args.name} AAAA {', '.join(map(str, good))}"
+        )
+        return OK
+    print(
+        f"CRITICAL - {addr} on {args.interface}: no {prefix} answer for {args.name} (got: {' '.join(out.split()) or 'nothing'})"
+    )
+    return CRITICAL
+
+
+if __name__ == "__main__":
+    sys.exit(main())

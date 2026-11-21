@@ -52,6 +52,9 @@ nothing until the host has the NetBox tag `icinga2_client`.
   hard after about 10 minutes. Roles `webserver-external`, `nextgen-gateway`, `freifunk-transit`.
 - `wireguard_handshakes` (`plugins/check_wireguard_handshakes`): CRITICAL when a peer had no handshake for 600 s,
   including peers that never had one. Role `freifunk-transit` only; the gateways' peers are wgkex nodes.
+- `parker-dns64` (`plugins/check_parker_dns64`): CRITICAL when the dummy interface `dns64` has no global IPv6
+  address, or when the recursor on that address gives no `64:ff9b::/96` AAAA answer for `ipv4only.arpa`.
+  Role `parker-gateway`.
 - Both run `birdc show protocols` / `wg show all latest-handshakes` through sudo (`icinga2.sudoers`).
 - Sessions or tunnels that are down on purpose go into `known_down.yaml` (per host, fnmatch patterns); they are
   still listed in the check output but keep the service OK.
