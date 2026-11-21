@@ -113,7 +113,7 @@ systemd-networkd-reload:
 
 {%- set gateway = salt['pillar.get']('netbox:config_context:network:gateway') %}
 {% for iface in interfaces |sort %}
-{% if "nebula" not in iface %}
+{% if "nebula" not in iface and iface != "dns64" %}{# dns64: parker/dns64 #}
 {% if 'mac_address' in interfaces[iface] and interfaces[iface]['mac_address'] is not none %}
 /etc/systemd/network/10-{{ iface }}.link:
   file.managed:
