@@ -1,0 +1,28 @@
+#!/bin/bash
+# Wazuh manager health and agent state on docker07: container running, core daemons up, agents disconnected. Runs via sudo.
+# Usage: check_wazuh [warning disconnected] [critical disconnected]
+C=wazuh-wazuh.manager-1
+W=${1:-1}
+CR=${2:-5}
+docker=/usr/bin/docker
+[ "$($docker inspect -f '{{.State.Running}}' "$C" 2>/dev/null)" = true ] || { echo "CRITICAL - container $C not running"; exit 2; }
+status=$($docker exec "$C" /var/ossec/bin/wazuh-control status 2>/dev/null)   # exit code 1 while unused daemons are stopped
+[ -n "$status" ] || { echo "UNKNOWN - wazuh-control gave no output"; exit 3; }
+down=""
+for d in wazuh-analysisd wazuh-remoted wazuh-syscheckd wazuh-modulesd wazuh-db wazuh-authd wazuh-apid wazuh-integratord wazuh-monitord wazuh-logcollector wazuh-execd; do
+  grep -q "^$d is running" <<<"$status" || down="$down $d"
+done
+[ -z "$down" ] || { echo "CRITICAL - not running:$down"; exit 2; }
+agents=$($docker exec "$C" /var/ossec/bin/agent_control -l 2>/dev/null | grep 'ID:' | grep -v 'ID: 000,') || { echo "UNKNOWN - agent_control failed"; exit 3; }
+total=$(grep -c . <<<"$agents")
+bad=$(grep -E ', (Disconnected|Never connected|Pending)$' <<<"$agents" | sed -E 's/^ *ID: [0-9]+, Name: ([^ ,]+).*/\1/' | sort)
+n=$(grep -c . <<<"$bad")
+perf="agents=$total;;;0 disconnected=$n;$W;$CR;0"
+if [ "$n" -ge "$CR" ]; then st=2
+elif [ "$n" -ge "$W" ]; then st=1
+else st=0
+fi
+label=(OK WARNING CRITICAL)
+list=$(head -5 <<<"$bad" | paste -sd, -)
+echo "${label[$st]} - $((total - n))/$total agents active${list:+, not active: $list}|$perf"
+exit $st
