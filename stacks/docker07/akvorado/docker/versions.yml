@@ -37,7 +37,7 @@ services:
   cadvisor:
     image: ghcr.io/google/cadvisor:v0.61.1@sha256:4929b70e82079d001d0028b85d6a4dd25ad4666b719455c9542b983489963916 # v\d+\.\d+\.\d+
   kafka-ui:
-    image: kafbat/kafka-ui:v1.5.0@sha256:7cda86a33344160309fdb65146332e4da65db81a945614f2fe32e210803f6fd1 # v\d+\.\d+\.\d+
+    image: kafbat/kafka-ui:v1.5.1@sha256:c0585fdfed6a9b8adedc3b0965113d4a84f292d61e58a2c7dcc603394defb7d1 # v\d+\.\d+\.\d+
     # image: ghcr.io/kafbat/kafka-ui:v1.4.2
     # image: ecr-public.aws.com/kafbat/kafka-ui:v1.4.2
   vector:
