@@ -30,7 +30,7 @@ services:
     environment:
       KAFKA_OPTS: -XX:-UseBASE64Intrinsics  # CVE-2026-114938 (Java4Shell) stopgap, remove when the image ships a fixed JDK
   redis:
-    image: valkey/valkey:9.1.4@sha256:3ab0eca823ebbf0fe352476ebac330ac9e5f14b592b9a954eab296d341e81b0e
+    image: valkey/valkey:9.2.0@sha256:1c2b25b09f354c66fe994733acdf12fcfd4bdf6f3bd92b88a93a70378d884056
     user: "999:999"  # the entrypoint would otherwise chown /data and drop privileges itself
     read_only: true
     tmpfs:
