@@ -1,4 +1,6 @@
 {% set role = salt['pillar.get']('netbox:role:name') %}
+{#- Jitsi hosts: rules by host name, applied by hand (not in top.sls) #}
+{% set jitsi_role = {'jvb': 'jvb', 'jicofo': 'jicofo', 'call': 'call'}.get(grains.id.split('.')[0].rstrip('0123456789'), '') if grains.id.endswith('.meet.ffmuc.net') else '' %}
 
 iptables_pkgs:
   pkg.installed:
@@ -6,7 +8,7 @@ iptables_pkgs:
       - iptables-persistent
       - netfilter-persistent
 
-{% if role in ('nextgen-gateway', 'guardian', 'parker-gateway') %}
+{% if role in ('nextgen-gateway', 'guardian', 'parker-gateway') or jitsi_role %}
 
 netfilter_service:
   service.enabled:
@@ -44,6 +46,24 @@ fail2ban_after_netfilter_reload:
       - cmd: netfilter_reload
 {% endif %}
 
+{% if jitsi_role %}
+{#- fail2ban on these hosts bans through its own nftables table, which the reload does not touch #}
+{% for family in ('v4', 'v6') %}
+/etc/iptables/rules.{{ family }}:
+  file.managed:
+    - source: salt://iptables/files/jitsi_rules.{{ family }}.jinja
+    - template: jinja
+    - user: root
+    - group: root
+    - mode: '0644'
+    - makedirs: True
+    - backup: '.bak'
+    - context:
+        jitsi_role: {{ jitsi_role }}
+    - require:
+      - pkg: iptables_pkgs
+{% endfor %}
+{% else %}
 {# Gather general information #}
 {% set own_location = salt['pillar.get']('netbox:site:name') %}
 
@@ -87,4 +107,5 @@ fail2ban_after_netfilter_reload:
         own_location: {{ own_location }}
     - require:
       - pkg: iptables_pkgs
+{% endif %}{# jitsi_role #}
 {% endif %}{# if role #}
