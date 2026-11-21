@@ -16,6 +16,7 @@ include:
   - iptables
   - .bird2
   - pdns-recursor
+  - .dns64
   - .plat
   - .wgkex
   - .nginx
