@@ -63,6 +63,7 @@ nothing until the host has the NetBox tag `icinga2_client`.
   54 h, WARNING after 30 h; WARNING when the last run logged "not found in index" (`/var/lib/ffmuc-rustic-index-errors`, written by the unit). Hosts with the NetBox tag `backup`. `ffmuc_dumps` stays as it is.
 - `tuwunel_backup` (`plugins/check_tuwunel_backup`): age of the newest backup in `/srv/docker/tuwunel/backups`
   (nightly `ffmuc-tuwunel-backup.timer`); WARNING after 26 h, CRITICAL after 50 h. Runs on docker07 through sudo; `docker07.in.ffmuc.net` only.
+- `wazuh` (`plugins/check_wazuh`): manager container and core daemons (CRITICAL when down), agents not active (WARNING from 1, CRITICAL from 5). Runs on docker07 through sudo; `docker07.in.ffmuc.net` only.
 - `ffmuc_trivy` (`plugins/check_ffmuc_trivy`): result of the weekly Trivy image scan (`trivy` state, NetBox config context
   `trivy.enabled`, off by default). WARNING on a fixable CRITICAL, more than half of the scans failing or a report older than 9 days. Docker hosts.
 - `zammad_index` (`plugins/check_zammad_index`): tickets, users and organizations in the Zammad database minus the
