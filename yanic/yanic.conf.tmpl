@@ -33,6 +33,23 @@ send_no_request = true
 port            = 11001
 {% endif %}
 
+# Write more respondd values to InfluxDB (one point for each matched object).
+# A capture {name} becomes a tag, so no gateway or peer name is in this config.
+# The Parker gateways forward the data unchanged (parker/yanic, database.connection.respondd).
+[respondd.metrics]
+enable = true
+
+# CLAT counters (packets, bytes) for each direction (v4_to_v6, v6_to_v4)
+[[respondd.metrics.rule]]
+path        = "statistics.clat.{direction}"
+measurement = "clat"
+
+# Mesh VPN peers: established (seconds), method (active = 1, standby = 0)
+[[respondd.metrics.rule]]
+path        = "statistics.mesh_vpn.groups.{group}.peers.{peer}"
+measurement = "mesh_vpn_peer"
+values      = { method = { active = 1, standby = 0 } }
+
 # A little build-in webserver, which statically serves a directory.
 # This is useful for testing purposes or for a little standalone installation.
 [webserver]
