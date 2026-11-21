@@ -55,7 +55,7 @@ reporting-disabled = true
 
   # Whether queries should be logged before execution. Very useful for troubleshooting, but will
   # log any sensitive data contained within a query.
-  # query-log-enabled = true
+  query-log-enabled = false
 
   # Settings for the TSM engine
 
@@ -215,7 +215,8 @@ reporting-disabled = true
   # realm = "InfluxDB"
 
   # Determines whether HTTP request logging is enable.d
-  # log-enabled = true
+  # Off: about 84k access log lines per hour filled the journal within ~10 h.
+  log-enabled = false
 
   # Determines whether detailed write logging is enabled.
   # write-tracing = false
