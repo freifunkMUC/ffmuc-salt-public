@@ -1,0 +1,4 @@
+#!/bin/sh
+# integratord starts custom-* integrations as "<name> <alert_file> <api_key> <hook_url> [options_file]"
+WAZUH_PATH="$(cd "$(dirname "$0")/.." && pwd -P)"
+exec "$WAZUH_PATH/framework/python/bin/python3" "$WAZUH_PATH/integrations/custom-digest.py" "$@"
