@@ -68,7 +68,7 @@ nothing until the host has the NetBox tag `icinga2_client`.
   (nightly `ffmuc-tuwunel-backup.timer`); WARNING after 26 h, CRITICAL after 50 h. Runs on docker07 through sudo; `docker07.in.ffmuc.net` only.
 - `wazuh` (`plugins/check_wazuh`): manager container and core daemons (CRITICAL when down), agents not active (WARNING from 1, CRITICAL from 5). Runs on docker07 through sudo; `docker07.in.ffmuc.net` only.
 - `ffmuc_trivy` (`plugins/check_ffmuc_trivy`): result of the weekly Trivy image scan (`trivy` state, NetBox config context
-  `trivy.enabled`, off by default). WARNING on a fixable CRITICAL, more than half of the scans failing or a report older than 9 days. Docker hosts.
+  `trivy.enabled`, off by default). WARNING on new fixable CRITICAL (image, CVE) pairs in the last scan, more than half of the scans failing or a report older than 9 days. Docker hosts.
 - `zammad_index` (`plugins/check_zammad_index`): tickets, users and organizations in the Zammad database minus the
   Elasticsearch document count (rows changed in the last 15 minutes ignored); WARNING from 5, CRITICAL from 20
   missing rows of any type. Runs on docker05 through sudo (`icinga2.sudoers`); `docker05.in.ffmuc.net` only.
