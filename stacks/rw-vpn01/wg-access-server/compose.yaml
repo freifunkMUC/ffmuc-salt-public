@@ -23,7 +23,7 @@ services:
       - /srv/docker/wg-access-server/config.yaml:/config.yaml
       - /lib/modules:/lib/modules:ro
   haproxy:
-    image: haproxy:3.4-alpine@sha256:50b8b7c34944e46d03067a05ccd6f721c0182322a69881bd4061328697d792ad
+    image: haproxy:3.4-alpine@sha256:8aa6458a9d22a8364a2d2ee9ce93de0cc4a2789e3cf63f0b44adc972863724d7
     restart: always
     network_mode: host
     user: root:root
