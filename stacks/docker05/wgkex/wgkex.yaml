@@ -62,12 +62,6 @@ workers:
     weight: 25
     pop: vie01
 
-# Parker v3 only (get_best_workers): keep the current pgw of a node while it has at most
-# target + tolerance% * target peers. The default 10 % is less than 2 peers with ~13 peers
-# per pgw, so the vie01 tunnel flipped between pgw03 and pgw04 on each /config poll.
-# Offline and draining pgws are never kept. Stopgap until the wgkex code fix.
-sticky_worker_tolerance: 100
-
 mqtt:
   broker_url: mqtt_cluster
   username:
