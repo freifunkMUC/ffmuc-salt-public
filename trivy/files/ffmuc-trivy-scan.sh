@@ -29,7 +29,9 @@ errors=0
 : > "$T/images.ndjson"
 # image ID and Config.Image of the running containers; one scan per image ID
 docker ps -q | xargs -r docker inspect --format '{{.Image}}|{{.Config.Image}}' > "$T/ctrs" || { echo "docker inspect failed" >&2; exit 1; }
-for id in $(cut -d'|' -f1 "$T/ctrs" | sort -u); do
+cut -d'|' -f1 "$T/ctrs" | sort -u > "$T/ids"
+# fd 3, so that docker and trivy in the loop cannot read the list
+while read -r id <&3; do
   name=$(awk -F'|' -v id="$id" '$1 == id {print $2; exit}' "$T/ctrs" | sed 's/@sha256:[0-9a-f]*$//')
   case $name in ''|sha256:*) name=$(docker image inspect --format '{{if .RepoTags}}{{index .RepoTags 0}}{{end}}' "$id" 2>/dev/null); [ -n "$name" ] || name=$id;; esac
   # one retry per image
@@ -39,7 +41,7 @@ for id in $(cut -d'|' -f1 "$T/ctrs" | sort -u); do
     [ -s "$D/report.json" ] && jq -c --arg n "$name" '.images[]? | select(.image == $n)' "$D/report.json" >> "$T/images.ndjson"
     echo "scan of $name failed: $(tail -n 1 "$T/err")" >&2
   }
-done
+done 3< "$T/ids"
 prev=$D/report.json; [ -s "$prev" ] || prev=/dev/null
 jq -s --argjson t "$(date +%s)" --argjson e "$errors" --slurpfile p "$prev" '
   def pairs: [.[] | .image as $i | .cves[]? | "\($i) \(.)"] | unique;
