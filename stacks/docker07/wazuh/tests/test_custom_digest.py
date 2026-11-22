@@ -115,6 +115,15 @@ class TestDigest(unittest.TestCase):
             self.assertEqual(len(items), 300)
             self.assertEqual(digest.take_spool(d), [])
 
+    def test_take_spool_reads_batch_left_by_dead_flusher(self):
+        with tempfile.TemporaryDirectory() as d:
+            with open(os.path.join(d, "batch.jsonl"), "w") as f:
+                f.write('{"left": 1}\n')
+            with open(os.path.join(d, "spool.jsonl"), "w") as f:
+                f.write('{"new": 1}\n')
+            self.assertEqual(digest.take_spool(d), [{"left": 1}, {"new": 1}])
+            self.assertEqual(digest.take_spool(d), [])
+
     def test_spool_append_requests_flusher_only_once(self):
         with tempfile.TemporaryDirectory() as d:
             item = digest.summarize(alert())

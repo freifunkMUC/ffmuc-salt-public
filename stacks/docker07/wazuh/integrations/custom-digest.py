@@ -98,20 +98,31 @@ def flusher_running(spool_dir):
 
 
 def take_spool(spool_dir):
-    """Atomically move the spool away and return its items."""
+    """Move the spool away under its lock and return its items.
+
+    A batch left behind by a flusher that died is read as well.
+    """
     src = os.path.join(spool_dir, "spool.jsonl")
     dst = os.path.join(spool_dir, "batch.jsonl")
+    with open(os.path.join(spool_dir, "spool.lock"), "a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        if os.path.exists(src):
+            if os.path.exists(dst):
+                with open(src) as s, open(dst, "a") as d:
+                    d.write(s.read())
+                os.unlink(src)
+            else:
+                os.rename(src, dst)
     items = []
     try:
-        os.rename(src, dst)
+        with open(dst) as f:
+            for line in f:
+                try:
+                    items.append(json.loads(line))
+                except ValueError:
+                    pass
     except FileNotFoundError:
         return items
-    with open(dst) as f:
-        for line in f:
-            try:
-                items.append(json.loads(line))
-            except ValueError:
-                pass
     os.unlink(dst)
     return items
 
@@ -238,7 +249,10 @@ def flush_loop(url, opts, spool_dir=SPOOL_DIR):
                 except FileNotFoundError:
                     pending = False
                 if not pending:
-                    return  # the flush lock is released on close, still under the spool lock
+                    # release the flush lock under the spool lock,
+                    # so the next appender starts a new flusher
+                    fcntl.flock(flush, fcntl.LOCK_UN)
+                    return
 
 
 def detach():
