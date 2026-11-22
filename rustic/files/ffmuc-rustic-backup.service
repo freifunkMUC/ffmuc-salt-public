@@ -5,6 +5,8 @@ Description=FFMuc rustic Backup
 Type=oneshot
 Nice=19
 IOSchedulingClass=idle
+# exit 3: snapshot saved, but files vanished during the scan (caches, ClickHouse parts); still forget and mark success
+SuccessExitStatus=3
 ExecStart=/usr/local/bin/rustic backup
 # forget of another host can delete a snapshot file while this one lists them (404): retry once
 ExecStart=/bin/sh -c '/usr/local/bin/rustic forget || { sleep 300; /usr/local/bin/rustic forget; }'
