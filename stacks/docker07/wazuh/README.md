@@ -8,7 +8,8 @@ Agents will be rolled out by a Salt state `wazuh-agent` (follow-up PR, together 
   by OIDC against Keycloak realm `noc` (group Admin, TOTP), or as `admin` (basic auth, break-glass).
 - Agents connect to `10.8.0.16:1514` and enroll on `:1515` (Nebula only; the Nebula
   firewall rule for 1514/1515 is part of the follow-up). The API (55000) and the indexer (9200) are not published.
-- Alerts of level 10 and above go to Mattermost (Wazuh's `slack` integration, incoming webhook). No active response.
+- Alerts of level 10 and above go to Mattermost as one grouped message per 5 minutes (`integrations/custom-digest`, incoming
+  webhook; window in `<options>`; spool in `/var/ossec/tmp/digest`, failures in `integrations.log`). Tests: `python3 -m unittest discover -s stacks/docker07/wazuh/tests`. Rollback: put `<name>slack</name>` back in `config/wazuh_manager.conf` and redeploy. No active response.
 - `config/local_rules.xml` (copied into `etc/rules` at every start, redeploy to change): level 0 for the nagios/telegraf
   sudo checks on the vm-hosts and gateways (`100100`/`100101`) and the nameless-uid sudo PAM session lines (`100102`/`100103`;
   other sudo use and named users still alert), the nginx client reset on the gateways (`100110`), and 404 scanner bursts of
@@ -41,7 +42,7 @@ Agents will be rolled out by a Salt state `wazuh-agent` (follow-up PR, together 
 5. Retention: `RunStackService` `ism` once the indexer is up (idempotent; a rerun reports the indices that already
    have the policy and fails only on other errors).
 6. Mattermost (channel `noc-monitoring`, webhook user name `wazuh`): `docker exec <manager> /var/ossec/bin/wazuh-control status | grep integratord`, then a test alert
-   (level 10 or above, e.g. a `wazuh-logtest`-matched line written to a monitored log) must reach the channel.
+   (level 10 or above, e.g. a `wazuh-logtest`-matched line written to a monitored log) must reach the channel, after one window.
 7. Agents and Nebula rule: follow-up PR.
 
 ## Changing a password

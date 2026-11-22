@@ -54,6 +54,8 @@ services:
       # copied over /var/ossec at every start (cont-init 0-wazuh-init, mount_files)
       - ./config/wazuh_manager.conf:/wazuh-config-mount/etc/ossec.conf:ro
       - ./config/local_rules.xml:/wazuh-config-mount/etc/rules/local_rules.xml:ro
+      - ./integrations/custom-digest:/var/ossec/integrations/custom-digest:ro
+      - ./integrations/custom-digest.py:/var/ossec/integrations/custom-digest.py:ro
       - ./entrypoint-scripts:/entrypoint-scripts:ro
     mem_limit: 4g
     pids_limit: 4096

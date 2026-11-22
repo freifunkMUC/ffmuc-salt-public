@@ -30,5 +30,7 @@ jobs:
         run: python3 -m unittest discover -s certs/tests -v
       - name: parker-respondd
         run: python3 -m unittest discover -s parker/respondd/tests -v
+      - name: wazuh digest
+        run: python3 -m unittest discover -s stacks/docker07/wazuh/tests -v
       - name: telegraf
         run: python3 -m unittest discover -s telegraf/tests -v
