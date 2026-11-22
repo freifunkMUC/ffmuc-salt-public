@@ -122,7 +122,9 @@ parker:
   464xlat: true
   prefixes:
     ipv4:
-      clat_subnet: 10.80.96.0/22
+      # Client IPv4 behind each node (CLAT). Node-internal, not routed. A /20 gives
+      # 4093 leases per node (needs parker8 dhcpleasemax). Keep it out of 10.80.0.0/16.
+      clat_subnet: 10.73.0.0/20
     ipv6:
       length: 63
       netbox_additional_data:
