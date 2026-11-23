@@ -1,7 +1,8 @@
 ---
 services:
   conferencemapper:
-    image: ghcr.io/krombel/conferencemapper:master@sha256:e2b7cf5a26524c78c4d7e6e83b40af086fefd47ff12b1a7db9a81d52e6bea399
+    image: ghcr.io/freifunkmuc/conferencemapper:latest@sha256:9138a4135f56824fdfc15540e217ed2014943e4814ce1f0fecf9c467ccdbf50f
+    user: "10001:10001"
     restart: unless-stopped
     ports:
       - "10.8.0.31:8001:8001"
