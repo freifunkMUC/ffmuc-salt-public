@@ -10,11 +10,11 @@ x-logging: &logging
 x-env-plain: &env-plain
   TZ: Europe/Berlin
   DEV_MODE: "False"
-  DASHBOARD_DOMAIN: openwisp.ov.ffmuc.net
-  API_DOMAIN: openwisp-api.ffmuc.net
+  DASHBOARD_DOMAIN: ${DASHBOARD_DOMAIN:-openwisp.ov.ffmuc.net}
+  API_DOMAIN: ${API_DOMAIN:-openwisp-api.ffmuc.net}
   VPN_DOMAIN: ""
   SSL_CERT_MODE: External
-  DJANGO_ALLOWED_HOSTS: openwisp.ov.ffmuc.net,openwisp-api.ffmuc.net
+  DJANGO_ALLOWED_HOSTS: ${DASHBOARD_DOMAIN:-openwisp.ov.ffmuc.net},${API_DOMAIN:-openwisp-api.ffmuc.net}
   DJANGO_LANGUAGE_CODE: en-gb
   DB_NAME: openwisp
   DB_USER: openwisp
@@ -31,6 +31,14 @@ x-env-plain: &env-plain
   USE_OPENWISP_MONITORING: "True"
   USE_OPENWISP_CELERY_FIRMWARE: "False"
   METRIC_COLLECTION: "False"
+  # The api and websocket images carry none of these defaults (upstream passes .env to every service).
+  UWSGI_PROCESSES: "2"
+  UWSGI_THREADS: "2"
+  UWSGI_LISTEN: "100"
+  DJANGO_LOG_LEVEL: INFO
+  USE_OPENWISP_CELERY_TASK_ROUTES_DEFAULTS: "True"
+  USE_OPENWISP_CELERY_NETWORK: "True"
+  USE_OPENWISP_CELERY_MONITORING: "True"
   X509_NAME_CA: FFMUC
   X509_NAME_CERT: FFMUC
   X509_COUNTRY_CODE: DE
@@ -66,6 +74,7 @@ services:
     environment:
       <<: *env
       OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:?}
+      OIDC_SERVER_URL: ${OIDC_SERVER_URL:-https://keycloak.ffmuc.net/realms/ffmuc/.well-known/openid-configuration}
     volumes:
       - *settings
       - openwisp-static:/opt/openwisp/static
@@ -104,6 +113,8 @@ services:
   websocket:
     <<: *app
     image: openwisp/openwisp-websocket:26.09.5@sha256:ba2abe513f41c98e4472489b942ea66ee6c5cd63ef52d3db22dcec797ae88921
+    read_only: true
+    tmpfs: [/tmp, "/home/openwisp/.cache:uid=1001,gid=0"]
     volumes:
       - *settings
     depends_on:
@@ -123,6 +134,14 @@ services:
       <<: *env
       MODULE_NAME: celery
     stop_grace_period: 120s
+    read_only: true
+    tmpfs: [/tmp, "/home/openwisp/.cache:uid=1001,gid=0", "/opt/openwisp/supervisor:uid=1001,gid=0"]
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A openwisp inspect ping -d celery@$$HOSTNAME -t 10"]
+      interval: 60s
+      timeout: 30s
+      retries: 3
+      start_period: 3m
     volumes:
       - *settings
       - /srv/docker/openwisp/media:/opt/openwisp/media
@@ -139,6 +158,14 @@ services:
       <<: *env
       MODULE_NAME: celery_monitoring
     stop_grace_period: 120s
+    read_only: true
+    tmpfs: [/tmp, "/home/openwisp/.cache:uid=1001,gid=0", "/opt/openwisp/supervisor:uid=1001,gid=0"]
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A openwisp inspect ping -d monitoring@$$HOSTNAME -t 10"]
+      interval: 60s
+      timeout: 30s
+      retries: 3
+      start_period: 3m
     volumes:
       - *settings
       - /srv/docker/openwisp/media:/opt/openwisp/media
@@ -157,6 +184,12 @@ services:
       - *settings
     depends_on:
       dashboard: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "celery -A openwisp beat"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 1m
     mem_limit: 384m
 
   # Internal nginx: plain HTTP on port 80, only Traefik reaches it (network proxy).
@@ -179,7 +212,7 @@ services:
     labels:
       - traefik.enable=true
       - traefik.docker.network=proxy
-      - traefik.http.routers.openwisp.rule=Host(`openwisp.ov.ffmuc.net`)
+      - traefik.http.routers.openwisp.rule=Host(`${DASHBOARD_DOMAIN:-openwisp.ov.ffmuc.net}`)
       - traefik.http.routers.openwisp.entrypoints=https
       - traefik.http.routers.openwisp.tls=true
       - traefik.http.routers.openwisp.tls.certresolver=http
@@ -190,9 +223,9 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-    # root master process: the capabilities nginx needs to start workers and bind port 80 (untested, README)
+    # Root master: chown of the cache dirs and the switch to the worker user (tested; port 80 needs no capability).
     cap_drop: [ALL]
-    cap_add: [CHOWN, DAC_OVERRIDE, SETGID, SETUID, NET_BIND_SERVICE]
+    cap_add: [CHOWN, SETGID, SETUID]
     security_opt: ["no-new-privileges:true"]
     mem_limit: 128m
     pids_limit: 256
@@ -229,6 +262,8 @@ services:
     restart: unless-stopped
     environment:
       REDIS_PASS: ${REDIS_PASS:?}
+    user: "999:1000"
+    read_only: true
     command:
       - sh
       - -c
@@ -242,7 +277,6 @@ services:
       retries: 5
       start_period: 5s
     cap_drop: [ALL]
-    cap_add: [DAC_OVERRIDE]
     security_opt: ["no-new-privileges:true"]
     mem_limit: 256m
     logging: *logging
@@ -257,6 +291,9 @@ services:
       INFLUXDB_USER_PASSWORD: ${INFLUXDB_PASS:?}
     volumes:
       - openwisp-influxdb:/var/lib/influxdb
+    read_only: true
+    tmpfs:
+      - /tmp
     healthcheck:
       test: ["CMD", "influx", "-execute", "SHOW DATABASES"]
       interval: 30s
@@ -264,7 +301,6 @@ services:
       retries: 5
       start_period: 30s
     cap_drop: [ALL]
-    cap_add: [CHOWN, DAC_OVERRIDE, SETGID, SETUID]
     security_opt: ["no-new-privileges:true"]
     mem_limit: 512m
     logging: *logging

@@ -7,7 +7,7 @@ No public name yet: the device API (`openwisp-api.ffmuc.net`, HAProxy, Nebula ru
 - Off: RADIUS, OpenVPN (management VPN, `VPN_DOMAIN` empty), postfix (mail goes to `mail01.fnmuc.net:587` as
   `no-reply@ffmuc.net`), topology, firmware upgrader. On: monitoring with InfluxDB 1.8.
 - Login: Keycloak realm `ffmuc`, client `openwisp`, only members of the group `openwisp`
-  (`config/custom_django_settings.py`, django-allauth `openid_connect`; mounted into the image, no derived image).
+  (`config/custom_django_settings.py`, django-allauth `openid_connect`; mounted into the image, no derived image needed).
   Start at `/accounts/oidc/keycloak/login/`; the login page has no provider button.
   New users have no rights: a superuser grants them an organization role.
 - Break-glass: local superuser `admin` on `/admin/login/`.
@@ -28,13 +28,40 @@ No public name yet: the device API (`openwisp-api.ffmuc.net`, HAProxy, Nebula ru
    database backup, InfluxDB is rebuildable (device data refills it).
 5. DNS: `openwisp.ov.ffmuc.net` as for the other `ov` names.
 
-## Not yet tested (phase 1 of the plan)
+## Hardening and exceptions (lab, 23.11.)
 
-- `cap_drop: ALL` per container: nginx (capability list), InfluxDB and Valkey run as root with a small `cap_add`; `read_only` and
-  `user:` for the app images (uid 1001 already) are left out until tested. Healthchecks of the Celery services are missing.
-- allauth `openid_connect` in the image (django-allauth below 65.20), callback
-  `https://openwisp.ov.ffmuc.net/accounts/oidc/keycloak/login/callback/`, creation of the user on the first login.
-- A derived image (`FROM` the pinned one) is only needed if the settings file turns out not to be enough.
+All containers: `cap_drop: ALL`, `no-new-privileges`. Exceptions:
+
+- nginx: `cap_add` CHOWN, SETUID, SETGID (root master chowns the cache dirs and drops to the worker user; port 80 needs none).
+- `read_only` with tmpfs: websocket, both Celery workers, Valkey (`user: 999:1000`), InfluxDB (root, no capability), Postgres.
+  Not possible: dashboard, api and celerybeat (the entrypoint writes `uwsgi.ini` and `celerybeat-schedule` into the code
+  directory) and nginx (the entrypoint renders `/etc/nginx`).
+- The api and websocket images carry none of the `UWSGI_*`/`USE_OPENWISP_CELERY_*` defaults upstream passes in `.env`:
+  they are set in `x-env-plain`.
+- The settings file must take `INSTALLED_APPS` and `SOCIALACCOUNT_PROVIDERS` from `openwisp.settings` (it is imported with `import *`).
+- Healthchecks: `celery inspect ping` against the own node, `pgrep` for celerybeat.
+- At start the images fetch the public suffix list and geocode.arcgis.com (egress needed, failure only logs).
+- `SESSION_COOKIE_DOMAIN`/`CSRF_COOKIE_DOMAIN` become the registered domain (`.ffmuc.net`).
+
+## Names
+
+`DASHBOARD_DOMAIN` and `API_DOMAIN` (stack environment, defaults `openwisp.ov.ffmuc.net`, `openwisp-api.ffmuc.net`) feed
+`DJANGO_ALLOWED_HOSTS`, CSRF/CORS origins, the Traefik rule and the OIDC redirect URI; `OIDC_SERVER_URL` sets the Keycloak discovery URL.
+Another dashboard name needs the redirect URI in the Keycloak client and, behind a proxy, `NGINX_TRUSTED_PROXIES`
+(real client IP from `X-Forwarded-For`) and `NGINX_ADMIN_ALLOW_NETWORK` (restricts `/admin`) on nginx.
+
+## Lab results
+
+- Fresh start with the pinned images: migrations run, `admin-password` replaces `admin`/`admin`.
+- Keycloak login (local Keycloak): `/accounts/oidc/keycloak/login/` -> callback `/accounts/oidc/keycloak/login/callback/`,
+  django-allauth 65.19.7. The first login creates a user without rights (`is_staff` false, no organization).
+  Any realm user can log in; the `groups` claim (mapper on the client) arrives in `extra_data`, a non-member gets none.
+  Access for the group `openwisp` only is enforced in Keycloak.
+- Mail reaches the SMTP server as `no-reply@ffmuc.net` through the Celery email backend.
+- Restore: `pg_dump` from step 4 into an empty PostGIS of the same image; row counts equal. The extension objects
+  PostGIS creates itself give three harmless `pg_restore` errors (`schema "topology" already exists`).
+- Idle memory (about 5 min): dashboard 190 MB, api 140 MB, websocket 165 MB, celery 380 MB, celery_monitoring 370 MB,
+  celerybeat 155 MB, Postgres 60 MB, InfluxDB 15 MB, Valkey 6 MB, nginx 4 MB.
 
 Updates: Renovate raises tag and digest of the four `openwisp/*` images and the databases; read the release notes
 (migrations) and take a dump first.

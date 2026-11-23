@@ -2,9 +2,11 @@
 # Keycloak login through django-allauth's openid_connect provider; the client secret comes from the environment.
 import os
 
-INSTALLED_APPS += ["allauth.socialaccount.providers.openid_connect"]  # noqa: F821
+# The image imports this file with `import *` while settings.py is still loading: take its lists, change them in place.
+from ..settings import INSTALLED_APPS, SOCIALACCOUNT_PROVIDERS
 
-SOCIALACCOUNT_PROVIDERS = {
+INSTALLED_APPS.append("allauth.socialaccount.providers.openid_connect")
+SOCIALACCOUNT_PROVIDERS.update({
     "openid_connect": {
         "APPS": [
             {
@@ -13,13 +15,15 @@ SOCIALACCOUNT_PROVIDERS = {
                 "client_id": "openwisp",
                 "secret": os.environ.get("OIDC_CLIENT_SECRET", ""),
                 "settings": {
-                    "server_url": "https://keycloak.ffmuc.net/realms/ffmuc/.well-known/openid-configuration",
+                    "server_url": os.environ.get(
+                        "OIDC_SERVER_URL", "https://keycloak.ffmuc.net/realms/ffmuc/.well-known/openid-configuration"
+                    ),
                     "oauth_pkce_enabled": True,
                 },
             }
         ]
     }
-}
+})
 # TLS ends at Traefik; without these allauth builds http:// redirect URIs.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https"
