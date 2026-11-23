@@ -2,12 +2,8 @@
 
 {%- if 'parker-gateway' in role %}
 
-{#- The map (map-parker.ffmuc.net) is on the webfrontends now (meshviewer CI deploy).
-    The pgws only supply the map data (/map/data/). Remove the old meshviewer files. #}
-{% set domain = grains['id'] | regex_replace('in\.ffmuc\.net','ext.ffmuc.net') %}
-meshviewer-absent:
-  file.absent:
-    - name: /srv/www/{{ domain }}/meshviewer
+{#- The map (map-parker.ffmuc.net) is on the webfrontends (meshviewer CI deploy).
+    The pgws only supply the map data (/map/data/). #}
 
 {#- Each pgw merges the yanic data of all sites into one meshviewer.json:
     its own file, and the files of the other sites from the public map. #}
