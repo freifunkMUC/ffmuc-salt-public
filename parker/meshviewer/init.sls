@@ -51,10 +51,20 @@ meshviewer-absent:
         [Install]
         WantedBy=timers.target
 
+{#- Salt reloads systemd only for the unit that it starts (the timer).
+    Reload here, so that systemd also loads a changed service file. #}
+merge-map-data-daemon-reload:
+  cmd.run:
+    - name: systemctl daemon-reload
+    - onchanges:
+      - file: /etc/systemd/system/merge-map-data.service
+      - file: /etc/systemd/system/merge-map-data.timer
+
 merge-map-data.timer:
   service.running:
     - enable: True
     - require:
+      - cmd: merge-map-data-daemon-reload
       - file: /usr/local/bin/merge-map-data.py
       - file: /srv/yanic/merged
     - watch:
