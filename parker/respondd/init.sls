@@ -30,18 +30,11 @@ parker-respondd-pkgs:
     - source: salt://parker/respondd/parker-respondd.service
     - mode: "0644"
 
-parker-respondd-daemon-reload:
-  cmd.run:
-    - name: systemctl daemon-reload
-    - onchanges:
-      - file: /etc/systemd/system/parker-respondd.service
-
 parker-respondd:
   service.running:
     - enable: True
     - require:
       - pkg: parker-respondd-pkgs
-      - cmd: parker-respondd-daemon-reload
     - watch:
       - file: /usr/local/bin/parker-respondd.py
       - file: /etc/parker-respondd.json
