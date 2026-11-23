@@ -6,24 +6,27 @@ import os
 from ..settings import INSTALLED_APPS, SOCIALACCOUNT_PROVIDERS
 
 INSTALLED_APPS.append("allauth.socialaccount.providers.openid_connect")
-SOCIALACCOUNT_PROVIDERS.update({
-    "openid_connect": {
-        "APPS": [
-            {
-                "provider_id": "keycloak",
-                "name": "FFMUC Keycloak",
-                "client_id": "openwisp",
-                "secret": os.environ.get("OIDC_CLIENT_SECRET", ""),
-                "settings": {
-                    "server_url": os.environ.get(
-                        "OIDC_SERVER_URL", "https://keycloak.ffmuc.net/realms/ffmuc/.well-known/openid-configuration"
-                    ),
-                    "oauth_pkce_enabled": True,
-                },
-            }
-        ]
+SOCIALACCOUNT_PROVIDERS.update(
+    {
+        "openid_connect": {
+            "APPS": [
+                {
+                    "provider_id": "keycloak",
+                    "name": "FFMUC Keycloak",
+                    "client_id": "openwisp",
+                    "secret": os.environ.get("OIDC_CLIENT_SECRET", ""),
+                    "settings": {
+                        "server_url": os.environ.get(
+                            "OIDC_SERVER_URL",
+                            "https://keycloak.ffmuc.net/realms/ffmuc/.well-known/openid-configuration",
+                        ),
+                        "oauth_pkce_enabled": True,
+                    },
+                }
+            ]
+        }
     }
-})
+)
 # TLS ends at Traefik; without these allauth builds http:// redirect URIs.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https"
