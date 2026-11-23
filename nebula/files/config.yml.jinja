@@ -131,9 +131,13 @@ firewall:
   {%- endfor %}
 {%- endif %}
 {%- if "yanic" in tags and role != "parker-gateway" %}
-    # Parker gateways send respondd data to the production yanic (yanic/yanic.conf.tmpl)
+    # Parker gateways send respondd data to the production yanic (yanic/yanic.conf.tmpl).
+    # Large datagrams exceed the tun MTU; later fragments have no port and need "fragment".
   {%- for forwarder in salt["pillar.get"]("netbox:config_context:yanic:parker_forwarders", salt["mine.get"]("netbox:role:name:parker-gateway", "minion_id", tgt_type="pillar") | sort) %}
   - port: 11001
+    proto: udp
+    host: {{ forwarder }}
+  - port: fragment
     proto: udp
     host: {{ forwarder }}
   {%- endfor %}
