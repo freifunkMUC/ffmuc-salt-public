@@ -2,9 +2,9 @@
 services:
   conferencemapper:
     image: ghcr.io/krombel/conferencemapper:master@sha256:e2b7cf5a26524c78c4d7e6e83b40af086fefd47ff12b1a7db9a81d52e6bea399
-    restart: always
+    restart: unless-stopped
     ports:
-      - "8001:8001"
+      - "10.8.0.31:8001:8001"
     volumes:
       - /srv/docker/conferencemapper/data:/app/data
     cap_drop:
@@ -12,6 +12,10 @@ services:
     security_opt:
       - no-new-privileges:true
     mem_limit: 128m
+    cpus: 0.5
+    read_only: true
+    tmpfs:
+      - /tmp
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8001/"]
       interval: 30s
