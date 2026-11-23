@@ -789,6 +789,27 @@ WAZUH_OIDC_CLIENT_SECRET = [[WAZUH_OIDC_CLIENT_SECRET]]
 """
 
 [[stack]]
+name = "docker07-openwisp"
+tags = ["ffmuc"]
+deploy = false
+[stack.config]
+server = "docker07"
+project_name = "openwisp"
+repo = "freifunkMUC/ffmuc-salt-public"
+branch = "main"
+run_directory = "stacks/docker07/openwisp"
+file_paths = ["compose.yaml"]
+environment = """
+DB_PASS = [[OPENWISP_DB_PASS]]
+DJANGO_SECRET_KEY = [[OPENWISP_DJANGO_SECRET_KEY]]
+REDIS_PASS = [[OPENWISP_REDIS_PASS]]
+INFLUXDB_PASS = [[OPENWISP_INFLUXDB_PASS]]
+EMAIL_HOST_PASSWORD = [[OPENWISP_SMTP_PASSWORD]]
+ADMIN_PASSWORD = [[OPENWISP_ADMIN_PASSWORD]]
+OIDC_CLIENT_SECRET = [[OPENWISP_OIDC_CLIENT_SECRET]]
+"""
+
+[[stack]]
 name = "mail01-crowdsec"
 tags = ["ffmuc"]
 deploy = false
