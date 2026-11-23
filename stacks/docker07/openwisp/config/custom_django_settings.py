@@ -29,3 +29,6 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https"
 # The login page has no provider button: /accounts/oidc/keycloak/login/ starts the flow with a plain GET.
 SOCIALACCOUNT_LOGIN_ON_GET = True
+# The image scopes both cookies to .ffmuc.net; host-only keeps the admin session away from other ffmuc.net names.
+SESSION_COOKIE_DOMAIN = None
+CSRF_COOKIE_DOMAIN = None
