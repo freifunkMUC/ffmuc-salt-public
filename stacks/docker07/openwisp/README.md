@@ -19,9 +19,9 @@ No public name yet: the device API (`openwisp-api.ffmuc.net`, HAProxy, Nebula ru
 2. Pillar `komodo-secrets/docker07.sls`, then `state.apply komodo-periphery`: `OPENWISP_DB_PASS`,
    `OPENWISP_DJANGO_SECRET_KEY`, `OPENWISP_REDIS_PASS`, `OPENWISP_INFLUXDB_PASS`, `OPENWISP_SMTP_PASSWORD`
    (same account as Mastodon's `MASTODON_SMTP_PASSWORD`), `OPENWISP_ADMIN_PASSWORD`, `OPENWISP_OIDC_CLIENT_SECRET`
-   (client secret of the Keycloak client). Values as in `stacks/README.md`.
+   (client secret of the Keycloak client). Values as in `stacks/README.md`; alphanumeric for `OPENWISP_DB_PASS` and `OPENWISP_REDIS_PASS`.
 3. Deploy; the first start migrates and creates the superuser `admin` with the password `admin`. Directly after:
-   `docker compose --profile init run --rm admin-password` sets the password from `OPENWISP_ADMIN_PASSWORD`.
+   `docker compose -p openwisp --profile init run --rm admin-password` (in the stack directory with Komodo's `.env`) sets the password from `OPENWISP_ADMIN_PASSWORD`.
 4. NetBox config context of docker07, `backup.dump_commands`:
    `"openwisp.dump": "docker exec openwisp-postgres-1 sh -c 'exec pg_dump -Fc -Z0 -U \"$POSTGRES_USER\" \"$POSTGRES_DB\"'"`.
    Postgres, Redis, InfluxDB and the static files are named volumes outside `/srv` (not in rustic): the dump is the
@@ -41,7 +41,7 @@ All containers: `cap_drop: ALL`, `no-new-privileges`. Exceptions:
 - The settings file must take `INSTALLED_APPS` and `SOCIALACCOUNT_PROVIDERS` from `openwisp.settings` (it is imported with `import *`).
 - Healthchecks: `celery inspect ping` against the own node, `pgrep` for celerybeat.
 - At start the images fetch the public suffix list and geocode.arcgis.com (egress needed, failure only logs).
-- `SESSION_COOKIE_DOMAIN`/`CSRF_COOKIE_DOMAIN` become the registered domain (`.ffmuc.net`).
+- The image scopes `SESSION_COOKIE_DOMAIN`/`CSRF_COOKIE_DOMAIN` to `.ffmuc.net`; the settings file sets them host-only.
 
 ## Names
 
