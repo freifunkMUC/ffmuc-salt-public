@@ -155,6 +155,11 @@ class TestDigest(unittest.TestCase):
         srv.shutdown()
         srv.server_close()
 
+    def test_ssl_context_verifies(self):
+        ctx = digest.ssl_context()
+        self.assertTrue(ctx.check_hostname)
+        self.assertGreater(len(ctx.get_ca_certs()), 0)
+
     def test_options_file(self):
         with tempfile.NamedTemporaryFile("w", suffix="options", delete=False) as f:
             json.dump({"window": 60, "bogus": 1}, f)

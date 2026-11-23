@@ -13,6 +13,7 @@ Options (JSON): window (seconds, default 300), max_chars (default 3500), max_age
 import fcntl
 import json
 import os
+import ssl
 import sys
 import time
 import urllib.request
@@ -204,13 +205,22 @@ def build_message(items, opts):
     return {"text": "\n\n".join(parts)}
 
 
+def ssl_context():
+    """Wazuh's bundled Python has no default CA path; use its certifi bundle."""
+    try:
+        import certifi
+    except ImportError:
+        return ssl.create_default_context()
+    return ssl.create_default_context(cafile=certifi.where())
+
+
 def post(url, payload):
     req = urllib.request.Request(
         url,
         data=json.dumps(payload).encode(),
         headers={"Content-Type": "application/json"},
     )
-    with urllib.request.urlopen(req, timeout=10) as resp:
+    with urllib.request.urlopen(req, timeout=10, context=ssl_context()) as resp:
         return resp.status
 
 
