@@ -26,13 +26,10 @@ services:
     ports:
       - 8443:8443
       - 3478:3478/udp
-      - 10001:10001/udp
       - 8080:8080
-      - 8083:8081
-      - 1900:1900/udp #optional
-      - 8843:8843 #optional
-      - 8880:8880 #optional
-      - 6789:6789 #optional
+      # guest portal (16 sites have it on): not forwarded by the webfrontends yet
+      - 8843:8843
+      - 8880:8880
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-fksS", "-o", "/dev/null", "https://127.0.0.1:8443/status"]
