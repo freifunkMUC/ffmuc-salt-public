@@ -18,7 +18,7 @@ SOCIALACCOUNT_PROVIDERS.update(
                     "settings": {
                         "server_url": os.environ.get(
                             "OIDC_SERVER_URL",
-                            "https://keycloak.ffmuc.net/realms/ffmuc/.well-known/openid-configuration",
+                            "https://keycloak.ffmuc.net/realms/chat/.well-known/openid-configuration",
                         ),
                         "oauth_pkce_enabled": True,
                     },
@@ -30,6 +30,8 @@ SOCIALACCOUNT_PROVIDERS.update(
 # TLS ends at Traefik; without these allauth builds http:// redirect URIs.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https"
+# Only members of the Keycloak group `openwisp` get in (oidc_gate.py).
+SOCIALACCOUNT_ADAPTER = "openwisp.configuration.oidc_gate.GroupGateAdapter"
 # The login page has no provider button: /accounts/oidc/keycloak/login/ starts the flow with a plain GET.
 SOCIALACCOUNT_LOGIN_ON_GET = True
 # The image scopes both cookies to .ffmuc.net; host-only keeps the admin session away from other ffmuc.net names.
