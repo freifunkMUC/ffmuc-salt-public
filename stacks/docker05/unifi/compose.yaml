@@ -27,7 +27,7 @@ services:
       - 8443:8443
       - 3478:3478/udp
       - 8080:8080
-      # guest portal (16 sites have it on): not forwarded by the webfrontends yet
+      # guest portal, forwarded by haproxy on the webfrontends
       - 8843:8843
       - 8880:8880
     restart: unless-stopped

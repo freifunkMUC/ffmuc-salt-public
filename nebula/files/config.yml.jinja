@@ -376,6 +376,13 @@ firewall:
   - port: 8080
     proto: tcp
     group: webfrontend
+  # Allow connections for unifi (guest portal)
+  - port: 8880
+    proto: tcp
+    group: webfrontend
+  - port: 8843
+    proto: tcp
+    group: webfrontend
     # Allow connections for unifi (inform)
   - port: 8585
     proto: tcp
