@@ -6,8 +6,6 @@
 {%- set web_public = cfg.get('web_public', false) %}
 {#- SIP trunk peers on call01 (everything from them is accepted) #}
 {%- set sip_peers = cfg.get('sip_peers', ['185.232.100.76']) %}
-{#- TURN on call01 (3478/3479/443/444 and the relay range) #}
-{%- set turn_public = cfg.get('turn_public', true) %}
 {%- set meet_net = '10.111.0.0/24' %}
 {%- set own_v4 = ['5.1.66.0/24', '185.150.99.0/24', '172.31.0.0/16'] %}
 {%- set own_v6 = ['2001:678:e68::/48', '2001:678:ed0::/48'] %}

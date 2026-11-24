@@ -26,7 +26,7 @@ netfilter_reload:
       - file: /etc/iptables/rules.v4
       - file: /etc/iptables/rules.v6
 
-{% if role == 'guardian' %}
+{% if role == 'guardian' or jitsi_role %}
 # The reload flushes the fail2ban chains; stop it before so actionstop does not log errors
 fail2ban_before_netfilter_reload:
   cmd.run:
@@ -47,7 +47,6 @@ fail2ban_after_netfilter_reload:
 {% endif %}
 
 {% if jitsi_role %}
-{#- fail2ban on these hosts bans through its own nftables table, which the reload does not touch #}
 {% for family in ('v4', 'v6') %}
 /etc/iptables/rules.{{ family }}:
   file.managed:
