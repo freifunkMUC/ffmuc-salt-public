@@ -1,0 +1,68 @@
+{%- from 'iptables/jitsi_map.jinja' import ssh_sources, web_public, sip_peers, meet_net, own_v4, cf_v4, nebula_dport with context %}
+# Managed with Salt
+{#- Only raw and filter: nat belongs to Docker on call01 and stays untouched #}
+
+*raw
+:PREROUTING ACCEPT
+:OUTPUT ACCEPT
+{%- if jitsi_role == 'jvb' %}
+{#- Media is stateless: no conntrack entry per client #}
+-A PREROUTING -p udp -m udp --dport 10000 -j CT --notrack
+-A OUTPUT -p udp -m udp --sport 10000 -j CT --notrack
+{%- endif %}
+COMMIT
+
+*filter
+:INPUT ACCEPT
+:FORWARD ACCEPT
+:OUTPUT ACCEPT
+
+-A INPUT -i lo -j ACCEPT
+{%- if jitsi_role == 'jvb' %}
+-A INPUT -p udp -m udp --dport 10000 -j ACCEPT
+{%- endif %}
+-A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A INPUT -p icmp -j ACCEPT
+-A INPUT -p udp -m udp --sport 67 --dport 68 -j ACCEPT
+{#- Management: ssh and mosh over the overlay and from the own prefixes and operator addresses #}
+-A INPUT -i nebula1 -p tcp -m tcp --dport 22 -j ACCEPT
+-A INPUT -i nebula1 -p udp -m udp --dport 60001:60010 -j ACCEPT
+{%- if ssh_sources %}
+{%- for src in own_v4 + ssh_sources if ':' not in src %}
+-A INPUT -s {{ src }} -p tcp -m tcp --dport 22 -j ACCEPT
+-A INPUT -s {{ src }} -p udp -m udp --dport 60001:60010 -j ACCEPT
+{%- endfor %}
+{%- else %}
+-A INPUT -p tcp -m tcp --dport 22 -j ACCEPT
+-A INPUT -p udp -m udp --dport 60001:60010 -j ACCEPT
+{%- endif %}
+{#- BGP to the site gateways (no listener on jvb33) #}
+-A INPUT -s 172.31.0.0/16 -p tcp -m tcp --dport 179 -j ACCEPT
+-A INPUT -p udp -m udp --dport {{ nebula_dport }} -j ACCEPT
+{#- Icinga agent API for icinga-vie01 #}
+-A INPUT -i nebula1 -s {{ meet_net }} -p tcp -m tcp --dport 5665 -j ACCEPT
+{%- if jitsi_role == 'jvb' %}
+{#- colibri websocket, proxied by the jicofo nginx #}
+-A INPUT -i nebula1 -s {{ meet_net }} -p tcp -m tcp --dport 9090 -j ACCEPT
+{%- elif jitsi_role == 'jicofo' %}
+-A INPUT -i nebula1 -s {{ meet_net }} -p tcp -m multiport --dports 443,5222,5280 -j ACCEPT
+{%- if web_public %}
+-A INPUT -p tcp -m multiport --dports 80,443 -j ACCEPT
+{%- else %}
+{%- for src in own_v4 + cf_v4 %}
+-A INPUT -s {{ src }} -p tcp -m multiport --dports 80,443 -j ACCEPT
+{%- endfor %}
+{%- endif %}
+{%- elif jitsi_role == 'call' %}
+-A INPUT -i docker0 -j ACCEPT
+{%- for peer in sip_peers if ':' not in peer %}
+-A INPUT -s {{ peer }} -j ACCEPT
+{%- endfor %}
+{#- jigasi media: the bridges answer from 10000 to the jigasi port #}
+{%- for src in own_v4 + [meet_net] %}
+-A INPUT -s {{ src }} -p udp -m udp --sport 10000 --dport 10020 -j ACCEPT
+{%- endfor %}
+{%- endif %}
+-A INPUT -j REJECT --reject-with icmp-port-unreachable
+
+COMMIT

@@ -1,0 +1,54 @@
+{%- from 'iptables/jitsi_map.jinja' import ssh_sources, web_public, own_v6, cf_v6, nebula_dport with context %}
+# Managed with Salt
+
+*raw
+:PREROUTING ACCEPT
+:OUTPUT ACCEPT
+{%- if jitsi_role == 'jvb' %}
+-A PREROUTING -p udp -m udp --dport 10000 -j CT --notrack
+-A OUTPUT -p udp -m udp --sport 10000 -j CT --notrack
+{%- endif %}
+COMMIT
+
+*filter
+:INPUT ACCEPT
+:FORWARD ACCEPT
+:OUTPUT ACCEPT
+
+-A INPUT -i lo -j ACCEPT
+{%- if jitsi_role == 'jvb' %}
+-A INPUT -p udp -m udp --dport 10000 -j ACCEPT
+{%- endif %}
+-A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A INPUT -p ipv6-icmp -j ACCEPT
+-A INPUT -s fe80::/10 -p udp -m udp --dport 546 -j ACCEPT
+{%- if ssh_sources %}
+{%- for src in own_v6 + ssh_sources if ':' in src %}
+-A INPUT -s {{ src }} -p tcp -m tcp --dport 22 -j ACCEPT
+-A INPUT -s {{ src }} -p udp -m udp --dport 60001:60010 -j ACCEPT
+{%- endfor %}
+{%- else %}
+-A INPUT -p tcp -m tcp --dport 22 -j ACCEPT
+-A INPUT -p udp -m udp --dport 60001:60010 -j ACCEPT
+{%- endif %}
+{#- BGP to the site gateways: underlay prefixes and link-local #}
+-A INPUT -s 2001:678:e68:fff0::/64 -p tcp -m tcp --dport 179 -j ACCEPT
+-A INPUT -s 2001:678:ed0:fff0::/64 -p tcp -m tcp --dport 179 -j ACCEPT
+-A INPUT -s fe80::/10 -p tcp -m tcp --dport 179 -j ACCEPT
+-A INPUT -p udp -m udp --dport {{ nebula_dport }} -j ACCEPT
+{%- if jitsi_role == 'jicofo' %}
+{%- if web_public %}
+-A INPUT -p tcp -m multiport --dports 80,443 -j ACCEPT
+{%- else %}
+{%- for src in own_v6 + cf_v6 %}
+-A INPUT -s {{ src }} -p tcp -m multiport --dports 80,443 -j ACCEPT
+{%- endfor %}
+{%- endif %}
+{%- elif jitsi_role == 'call' %}
+{%- for src in own_v6 %}
+-A INPUT -s {{ src }} -p udp -m udp --sport 10000 --dport 10020 -j ACCEPT
+{%- endfor %}
+{%- endif %}
+-A INPUT -j REJECT --reject-with icmp6-port-unreachable
+
+COMMIT
