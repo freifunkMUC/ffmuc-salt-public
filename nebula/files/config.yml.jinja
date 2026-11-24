@@ -450,6 +450,10 @@ firewall:
   - port: 11001
     proto: tcp
     group: webfrontend
+  # Allow connections for openwisp.ffmuc.net and openwisp-api.ffmuc.net (stacks/docker07/openwisp)
+  - port: 8098
+    proto: tcp
+    group: webfrontend
   # Allow connections to tuwunel (matrix.ffmuc.net) and Element Web (element.ffmuc.net)
   - port: 8008
     proto: tcp

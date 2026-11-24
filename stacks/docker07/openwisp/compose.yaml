@@ -1,5 +1,5 @@
 ---
-# OpenWISP controller 26.09.5 (docker-openwisp), lab: UI on openwisp.ov.ffmuc.net through Traefik, no public name.
+# OpenWISP controller 26.09.5 (docker-openwisp): public names via HAProxy (Nebula, port 8098), break-glass openwisp.ov.ffmuc.net via Traefik.
 # Without radius, openvpn, postfix, topology, firmware upgrader. Secrets come from Komodo (README.md), not from here.
 x-logging: &logging
   driver: json-file
@@ -10,11 +10,11 @@ x-logging: &logging
 x-env-plain: &env-plain
   TZ: Europe/Berlin
   DEV_MODE: "False"
-  DASHBOARD_DOMAIN: ${DASHBOARD_DOMAIN:-openwisp.ov.ffmuc.net}
+  DASHBOARD_DOMAIN: ${DASHBOARD_DOMAIN:-openwisp.ffmuc.net}
   API_DOMAIN: ${API_DOMAIN:-openwisp-api.ffmuc.net}
   VPN_DOMAIN: ""
   SSL_CERT_MODE: External
-  DJANGO_ALLOWED_HOSTS: ${DASHBOARD_DOMAIN:-openwisp.ov.ffmuc.net},${API_DOMAIN:-openwisp-api.ffmuc.net}
+  DJANGO_ALLOWED_HOSTS: ${DASHBOARD_DOMAIN:-openwisp.ffmuc.net},${API_DOMAIN:-openwisp-api.ffmuc.net},openwisp.ov.ffmuc.net
   DJANGO_LANGUAGE_CODE: en-gb
   DB_NAME: openwisp
   DB_USER: openwisp
@@ -192,11 +192,15 @@ services:
       start_period: 1m
     mem_limit: 384m
 
-  # Internal nginx: plain HTTP on port 80, only Traefik reaches it (network proxy).
+  # Internal nginx: plain HTTP on port 80. Reached by Traefik (network proxy) and, on the overlay address only, by HAProxy (8098).
   nginx:
     image: openwisp/openwisp-nginx:26.09.5@sha256:486737a76ca670a20abf252a07f7c2525880bd78e96d1feaf29eccab958f3043
     restart: unless-stopped
-    environment: *env-plain
+    environment:
+      <<: *env-plain
+      NGINX_TRUSTED_PROXIES: 10.8.0.29,10.8.0.30,10.8.0.39,10.8.0.40  # HAProxy webfrontend03-06
+    ports:
+      - "10.8.0.16:8098:80"  # Nebula only, haproxy on the webfrontends
     volumes:
       - openwisp-static:/opt/openwisp/public/static:ro
       - /srv/docker/openwisp/media:/opt/openwisp/public/media:ro
@@ -212,7 +216,7 @@ services:
     labels:
       - traefik.enable=true
       - traefik.docker.network=proxy
-      - traefik.http.routers.openwisp.rule=Host(`${DASHBOARD_DOMAIN:-openwisp.ov.ffmuc.net}`)
+      - traefik.http.routers.openwisp.rule=Host(`openwisp.ov.ffmuc.net`)
       - traefik.http.routers.openwisp.entrypoints=https
       - traefik.http.routers.openwisp.tls=true
       - traefik.http.routers.openwisp.tls.certresolver=http

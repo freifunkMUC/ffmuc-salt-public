@@ -3,7 +3,7 @@
 import os
 
 # The image imports this file with `import *` while settings.py is still loading: take its lists, change them in place.
-from ..settings import INSTALLED_APPS, SOCIALACCOUNT_PROVIDERS
+from ..settings import CSRF_TRUSTED_ORIGINS, INSTALLED_APPS, SOCIALACCOUNT_PROVIDERS
 
 INSTALLED_APPS.append("allauth.socialaccount.providers.openid_connect")
 SOCIALACCOUNT_PROVIDERS.update(
@@ -35,3 +35,6 @@ SOCIALACCOUNT_LOGIN_ON_GET = True
 # The image scopes both cookies to .ffmuc.net; host-only keeps the admin session away from other ffmuc.net names.
 SESSION_COOKIE_DOMAIN = None
 CSRF_COOKIE_DOMAIN = None
+# Break-glass login on the overlay name (Traefik); the public names come from DASHBOARD_DOMAIN/API_DOMAIN.
+# New list: the image's CSRF_TRUSTED_ORIGINS is the same object as CORS_ALLOWED_ORIGINS.
+CSRF_TRUSTED_ORIGINS = [*CSRF_TRUSTED_ORIGINS, "https://openwisp.ov.ffmuc.net"]
