@@ -85,7 +85,7 @@ services:
   zammad-elasticsearch:
     <<: *hardening
     mem_limit: 4g
-    image: elasticsearch:9.5.5@sha256:6f11b295d5099c18b8774d280a82725d1184d0d5cb08373b12785ce7cd7a9bfb
+    image: elasticsearch:9.5.5@sha256:8baa90f33c54cbe3c964401d8263c696e7ce2f2a74b12143d7e9e51d5e931168
     environment:
       # Same value as upstream plus -XX:-UseBASE64Intrinsics, also when ELASTICSEARCH_JAVA_OPTS is set.
       # CVE-2026-114938 (Java4Shell) stopgap, remove when the image ships a fixed JDK.
