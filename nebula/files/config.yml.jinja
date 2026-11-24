@@ -190,6 +190,10 @@ firewall:
   - port: 8095
     proto: tcp
     group: webfrontend
+  # packetyeeter collectors on the webfrontends (stacks/dockerNN/packetyeeter-analyzer)
+  - port: 9090
+    proto: tcp
+    group: webfrontend
    # Allow connections for http backend of broker.ffmuc.net
   - port: 8888
     proto: tcp
@@ -232,6 +236,10 @@ firewall:
     group: webfrontend
   # Allow connections for meet.ffmuc.net/reserve signer (stacks/docker0*/meet-reserve)
   - port: 8095
+    proto: tcp
+    group: webfrontend
+  # packetyeeter collectors on the webfrontends (stacks/dockerNN/packetyeeter-analyzer)
+  - port: 9090
     proto: tcp
     group: webfrontend
   # Allow connections for status.ffmuc.net (stacks/docker04/uptime-kuma)
