@@ -239,7 +239,7 @@ services:
     logging: *logging
 
   postgres:
-    image: postgis/postgis:15-3.4-alpine@sha256:d96be3a9c16d44e22d34d5c7b6e85be8875addf672672c6cd38171ea6055a94a
+    image: postgis/postgis:17-3.4-alpine@sha256:5a1dbedac34e0e6663f8b7190d393339571f1cb3ecb2ab2f724524b4f3c7956e
     restart: unless-stopped
     user: "70:70"
     environment:
