@@ -66,6 +66,7 @@ x-app: &app
   logging: *logging
 
 x-settings: &settings ./config/custom_django_settings.py:/opt/openwisp/openwisp/configuration/custom_django_settings.py:ro
+x-oidc-gate: &oidc_gate ./config/oidc_gate.py:/opt/openwisp/openwisp/configuration/oidc_gate.py:ro
 
 services:
   dashboard:
@@ -74,9 +75,10 @@ services:
     environment:
       <<: *env
       OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:?}
-      OIDC_SERVER_URL: ${OIDC_SERVER_URL:-https://keycloak.ffmuc.net/realms/ffmuc/.well-known/openid-configuration}
+      OIDC_SERVER_URL: ${OIDC_SERVER_URL:-https://keycloak.ffmuc.net/realms/chat/.well-known/openid-configuration}
     volumes:
       - *settings
+      - *oidc_gate
       - openwisp-static:/opt/openwisp/static
       - /srv/docker/openwisp/media:/opt/openwisp/media
       - /srv/docker/openwisp/private:/opt/openwisp/private
