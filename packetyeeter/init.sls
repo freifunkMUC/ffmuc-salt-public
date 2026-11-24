@@ -36,7 +36,7 @@
     {% if not ns.analyzer_addr %}
       {% set node_location = salt['mine.get'](node, 'minion_location', tgt_type='glob') %}
       {% if node_location and node_location.get(node) == own_location %}
-        {% set node_addr = salt['mine.get'](node, 'minion_address', tgt_type='glob') %}
+        {% set node_addr = salt['mine.get'](node, 'minion_overlay_address', tgt_type='glob') %}
         {% if node_addr and node_addr.get(node) %}
           {% set ns.analyzer_addr = node_addr[node].split('/')[0] ~ ':9090' %}
         {% endif %}
