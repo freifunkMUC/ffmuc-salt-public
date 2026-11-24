@@ -10,7 +10,7 @@ services:
   clickhouse-keeper:
     image: clickhouse/clickhouse-keeper:26.8@sha256:cc849b8f1b8a1963ed4c7d282f9b396377b4fc6a3bd9199006c3e883d17d4b2c # \d+\.[38]
   traefik:
-    image: traefik:v3.7@sha256:a6c0194dda77bcb804824580f36fa7edc56e315b1acfe933366c8b52844a78a4 # v\d+\.\d+
+    image: traefik:v3.7@sha256:649c6476d4c499de84572bc60f5ecf75e98e75a5b8f8a8a72010c836d8ee9f95 # v\d+\.\d+
   maxmind-geoipupdate:
     image: ghcr.io/maxmind/geoipupdate:v8@sha256:51e70dd6f16cd3e4d845ac02d09940b10772a75b9d741427d235a78570923c1d
   ipinfo-geoipupdate:
