@@ -220,6 +220,9 @@ services:
       - traefik.http.routers.openwisp.entrypoints=https
       - traefik.http.routers.openwisp.tls=true
       - traefik.http.routers.openwisp.tls.certresolver=http
+      # nginx only serves DASHBOARD_DOMAIN: the break-glass name goes in as the public one
+      - traefik.http.middlewares.openwisp-host.headers.customrequestheaders.Host=openwisp.ffmuc.net
+      - traefik.http.routers.openwisp.middlewares=openwisp-host
       - traefik.http.services.openwisp.loadbalancer.server.port=80
     healthcheck:
       test: ["CMD-SHELL", "nc -z 127.0.0.1 80"]
