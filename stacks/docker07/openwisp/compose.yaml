@@ -289,7 +289,7 @@ services:
     logging: *logging
 
   influxdb:
-    image: influxdb:1.8-alpine@sha256:2601e27d6b7eac276017d7ea48d2685d52639cea974744b5877924376283a4cd
+    image: influxdb:2.10-alpine@sha256:6df3d6c5b8530ed149ecdd66086d251f40295330aa0620ae0bfdbbf3ddab4fdc
     restart: unless-stopped
     environment:
       TZ: Europe/Berlin
