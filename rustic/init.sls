@@ -132,14 +132,23 @@ ffmuc-backup-timer-enable:
     - require_in:
       - cmd: systemd-reload-ffmuc-backup
 
-# Paused: a prune running while backups write deletes packs those backups still reference.
-# Re-enable only once prune cannot overlap backups.
+# Off unless NetBox config context backup.prune_enabled is true (paused since the 2026-11 incident).
+# Enable after measuring the scan time with `rustic prune --dry-run`.
+{% if salt['config.get']('netbox:config_context:backup:prune_enabled', False) %}
+ffmuc-backup-cleaner-timer-enable:
+  service.running:
+    - name: ffmuc-rustic-backup-cleaner.timer
+    - enable: true
+    - require:
+      - file: /etc/systemd/system/ffmuc-rustic-backup-cleaner.timer
+{% else %}
 ffmuc-backup-cleaner-timer-enable:
   service.dead:
     - name: ffmuc-rustic-backup-cleaner.timer
     - enable: false
     - require:
       - file: /etc/systemd/system/ffmuc-rustic-backup-cleaner.timer
+{% endif %}
 
 {% endif %}{# if backup_cleaner in tags #}
 {% endif %}{# if backup in tags #}
