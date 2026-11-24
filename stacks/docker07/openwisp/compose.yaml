@@ -1,0 +1,332 @@
+---
+# OpenWISP controller 26.09.5 (docker-openwisp), lab: UI on openwisp.ov.ffmuc.net through Traefik, no public name.
+# Without radius, openvpn, postfix, topology, firmware upgrader. Secrets come from Komodo (README.md), not from here.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "3"
+
+x-env-plain: &env-plain
+  TZ: Europe/Berlin
+  DEV_MODE: "False"
+  DASHBOARD_DOMAIN: ${DASHBOARD_DOMAIN:-openwisp.ov.ffmuc.net}
+  API_DOMAIN: ${API_DOMAIN:-openwisp-api.ffmuc.net}
+  VPN_DOMAIN: ""
+  SSL_CERT_MODE: External
+  DJANGO_ALLOWED_HOSTS: ${DASHBOARD_DOMAIN:-openwisp.ov.ffmuc.net},${API_DOMAIN:-openwisp-api.ffmuc.net}
+  DJANGO_LANGUAGE_CODE: en-gb
+  DB_NAME: openwisp
+  DB_USER: openwisp
+  INFLUXDB_NAME: openwisp
+  INFLUXDB_USER: openwisp
+  EMAIL_HOST: mail01.fnmuc.net
+  EMAIL_HOST_PORT: "587"
+  EMAIL_HOST_TLS: "True"
+  EMAIL_HOST_USER: no-reply@ffmuc.net
+  EMAIL_DJANGO_DEFAULT: no-reply@ffmuc.net
+  USE_OPENWISP_RADIUS: "False"
+  USE_OPENWISP_TOPOLOGY: "False"
+  USE_OPENWISP_FIRMWARE: "False"
+  USE_OPENWISP_MONITORING: "True"
+  USE_OPENWISP_CELERY_FIRMWARE: "False"
+  METRIC_COLLECTION: "False"
+  # The api and websocket images carry none of these defaults (upstream passes .env to every service).
+  UWSGI_PROCESSES: "2"
+  UWSGI_THREADS: "2"
+  UWSGI_LISTEN: "100"
+  DJANGO_LOG_LEVEL: INFO
+  USE_OPENWISP_CELERY_TASK_ROUTES_DEFAULTS: "True"
+  USE_OPENWISP_CELERY_NETWORK: "True"
+  USE_OPENWISP_CELERY_MONITORING: "True"
+  X509_NAME_CA: FFMUC
+  X509_NAME_CERT: FFMUC
+  X509_COUNTRY_CODE: DE
+  X509_STATE: Bayern
+  X509_CITY: Muenchen
+  X509_ORGANIZATION_NAME: Freifunk Muenchen
+  X509_ORGANIZATION_UNIT_NAME: Freifunk Muenchen
+  X509_EMAIL: no-reply@ffmuc.net
+  X509_COMMON_NAME: FFMUC
+
+x-env: &env
+  <<: *env-plain
+  DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?}
+  DB_PASS: ${DB_PASS:?}
+  REDIS_PASS: ${REDIS_PASS:?}
+  INFLUXDB_PASS: ${INFLUXDB_PASS:?}
+  EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:?}
+
+x-app: &app
+  restart: unless-stopped
+  environment: *env
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  pids_limit: 512
+  logging: *logging
+
+x-settings: &settings ./config/custom_django_settings.py:/opt/openwisp/openwisp/configuration/custom_django_settings.py:ro
+
+services:
+  dashboard:
+    <<: *app
+    image: openwisp/openwisp-dashboard:26.09.5@sha256:59f00a2d117ed2689ace57f6d3f1dd79dcbd12a7a5157e5475d701367b776640
+    environment:
+      <<: *env
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:?}
+      OIDC_SERVER_URL: ${OIDC_SERVER_URL:-https://keycloak.ffmuc.net/realms/ffmuc/.well-known/openid-configuration}
+    volumes:
+      - *settings
+      - openwisp-static:/opt/openwisp/static
+      - /srv/docker/openwisp/media:/opt/openwisp/media
+      - /srv/docker/openwisp/private:/opt/openwisp/private
+      - /srv/docker/openwisp/ssh:/home/openwisp/.ssh
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+      influxdb: {condition: service_started}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; socket.create_connection(('127.0.0.1', 8000), 3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 5m
+    mem_limit: 1g
+
+  api:
+    <<: *app
+    image: openwisp/openwisp-api:26.09.5@sha256:b5e5f4334d1b5610a4a4e6e153b8538cc3f4e5795d42f05f133c3395ae979f76
+    volumes:
+      - *settings
+      - /srv/docker/openwisp/media:/opt/openwisp/media
+      - /srv/docker/openwisp/private:/opt/openwisp/private
+    depends_on:
+      dashboard: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; socket.create_connection(('127.0.0.1', 8001), 3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 1m
+    mem_limit: 768m
+
+  websocket:
+    <<: *app
+    image: openwisp/openwisp-websocket:26.09.5@sha256:ba2abe513f41c98e4472489b942ea66ee6c5cd63ef52d3db22dcec797ae88921
+    read_only: true
+    tmpfs: [/tmp, "/home/openwisp/.cache:uid=1001,gid=0"]
+    volumes:
+      - *settings
+    depends_on:
+      dashboard: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; socket.create_connection(('127.0.0.1', 8002), 3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 1m
+    mem_limit: 384m
+
+  celery:
+    <<: *app
+    image: openwisp/openwisp-dashboard:26.09.5@sha256:59f00a2d117ed2689ace57f6d3f1dd79dcbd12a7a5157e5475d701367b776640
+    environment:
+      <<: *env
+      MODULE_NAME: celery
+    stop_grace_period: 120s
+    read_only: true
+    tmpfs: [/tmp, "/home/openwisp/.cache:uid=1001,gid=0", "/opt/openwisp/supervisor:uid=1001,gid=0"]
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A openwisp inspect ping -d celery@$$HOSTNAME -t 10"]
+      interval: 60s
+      timeout: 30s
+      retries: 3
+      start_period: 3m
+    volumes:
+      - *settings
+      - /srv/docker/openwisp/media:/opt/openwisp/media
+      - /srv/docker/openwisp/private:/opt/openwisp/private
+      - /srv/docker/openwisp/ssh:/home/openwisp/.ssh
+    depends_on:
+      dashboard: {condition: service_healthy}
+    mem_limit: 1g
+
+  celery_monitoring:
+    <<: *app
+    image: openwisp/openwisp-dashboard:26.09.5@sha256:59f00a2d117ed2689ace57f6d3f1dd79dcbd12a7a5157e5475d701367b776640
+    environment:
+      <<: *env
+      MODULE_NAME: celery_monitoring
+    stop_grace_period: 120s
+    read_only: true
+    tmpfs: [/tmp, "/home/openwisp/.cache:uid=1001,gid=0", "/opt/openwisp/supervisor:uid=1001,gid=0"]
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A openwisp inspect ping -d monitoring@$$HOSTNAME -t 10"]
+      interval: 60s
+      timeout: 30s
+      retries: 3
+      start_period: 3m
+    volumes:
+      - *settings
+      - /srv/docker/openwisp/media:/opt/openwisp/media
+      - /srv/docker/openwisp/private:/opt/openwisp/private
+    depends_on:
+      dashboard: {condition: service_healthy}
+    mem_limit: 768m
+
+  celerybeat:
+    <<: *app
+    image: openwisp/openwisp-dashboard:26.09.5@sha256:59f00a2d117ed2689ace57f6d3f1dd79dcbd12a7a5157e5475d701367b776640
+    environment:
+      <<: *env
+      MODULE_NAME: celerybeat
+    volumes:
+      - *settings
+    depends_on:
+      dashboard: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "celery -A openwisp beat"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 1m
+    mem_limit: 384m
+
+  # Internal nginx: plain HTTP on port 80, only Traefik reaches it (network proxy).
+  nginx:
+    image: openwisp/openwisp-nginx:26.09.5@sha256:486737a76ca670a20abf252a07f7c2525880bd78e96d1feaf29eccab958f3043
+    restart: unless-stopped
+    environment: *env-plain
+    volumes:
+      - openwisp-static:/opt/openwisp/public/static:ro
+      - /srv/docker/openwisp/media:/opt/openwisp/public/media:ro
+      - /srv/docker/openwisp/private:/opt/openwisp/public/private:ro
+    networks:
+      default:
+        aliases: [dashboard.internal, api.internal]
+      proxy: {}
+    depends_on:
+      dashboard: {condition: service_healthy}
+      api: {condition: service_healthy}
+      websocket: {condition: service_healthy}
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=proxy
+      - traefik.http.routers.openwisp.rule=Host(`${DASHBOARD_DOMAIN:-openwisp.ov.ffmuc.net}`)
+      - traefik.http.routers.openwisp.entrypoints=https
+      - traefik.http.routers.openwisp.tls=true
+      - traefik.http.routers.openwisp.tls.certresolver=http
+      - traefik.http.services.openwisp.loadbalancer.server.port=80
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 80"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    # Root master: chown of the cache dirs and the switch to the worker user (tested; port 80 needs no capability).
+    cap_drop: [ALL]
+    cap_add: [CHOWN, SETGID, SETUID]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 128m
+    pids_limit: 256
+    logging: *logging
+
+  postgres:
+    image: postgis/postgis:15-3.4-alpine@sha256:d96be3a9c16d44e22d34d5c7b6e85be8875addf672672c6cd38171ea6055a94a
+    restart: unless-stopped
+    user: "70:70"
+    environment:
+      TZ: Europe/Berlin
+      POSTGRES_DB: openwisp
+      POSTGRES_USER: openwisp
+      POSTGRES_PASSWORD: ${DB_PASS:?}
+    volumes:
+      - openwisp-postgres:/var/lib/postgresql/data
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/run/postgresql
+    healthcheck:
+      test: pg_isready -q -t 2 -d $$POSTGRES_DB -U $$POSTGRES_USER
+      interval: 10s
+      timeout: 30s
+      retries: 5
+      start_period: 20s
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 1g
+    logging: *logging
+
+  redis:
+    image: valkey/valkey:9.2.0-alpine@sha256:c8e2d17498838af5d91e12eb7c11220b3434a7b7131a333e3af52ad5e0b80882
+    restart: unless-stopped
+    environment:
+      REDIS_PASS: ${REDIS_PASS:?}
+    user: "999:1000"
+    read_only: true
+    command:
+      - sh
+      - -c
+      - exec valkey-server --appendonly yes --requirepass "$$REDIS_PASS"
+    volumes:
+      - openwisp-redis:/data
+    healthcheck:
+      test: '[ "$$(valkey-cli --pass "$$REDIS_PASS" ping 2>/dev/null)" = PONG ]'
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 256m
+    logging: *logging
+
+  influxdb:
+    image: influxdb:1.8-alpine@sha256:2601e27d6b7eac276017d7ea48d2685d52639cea974744b5877924376283a4cd
+    restart: unless-stopped
+    environment:
+      TZ: Europe/Berlin
+      INFLUXDB_DB: openwisp
+      INFLUXDB_USER: openwisp
+      INFLUXDB_USER_PASSWORD: ${INFLUXDB_PASS:?}
+    volumes:
+      - openwisp-influxdb:/var/lib/influxdb
+    read_only: true
+    tmpfs:
+      - /tmp
+    healthcheck:
+      test: ["CMD", "influx", "-execute", "SHOW DATABASES"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 512m
+    logging: *logging
+
+  # One-off (docker compose --profile init run --rm admin-password): the image creates admin/admin on first start.
+  admin-password:
+    profiles: [init]
+    image: openwisp/openwisp-dashboard:26.09.5@sha256:59f00a2d117ed2689ace57f6d3f1dd79dcbd12a7a5157e5475d701367b776640
+    environment:
+      <<: *env
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?}
+    command:
+      - python
+      - manage.py
+      - shell
+      - -c
+      - "import os; from django.contrib.auth import get_user_model as g; u = g().objects.get(username='admin'); u.set_password(os.environ['ADMIN_PASSWORD']); u.save()"
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+
+volumes:
+  openwisp-static:
+  openwisp-postgres:
+  openwisp-redis:
+  openwisp-influxdb:
+
+networks:
+  proxy:
+    external: true
