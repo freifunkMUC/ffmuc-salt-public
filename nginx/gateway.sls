@@ -14,7 +14,7 @@ nginx-gateway-ubuntu-modules:
 
 # njs for the stream server that answers the Gluon uplink check (see nginx.conf and njs/gw_uplink.js).
 # The module package must have the same nginx version as nginx-pkg.
-{%- set njs_pkg_version = salt['config.get']('netbox:config_context:nginx:njs_version', '1.30.7+1.0.2-1~' ~ grains.oscodename) %}
+{%- set njs_pkg_version = salt['config.get']('netbox:config_context:nginx:njs_version', '1.30.8+1.0.2-1~' ~ grains.oscodename) %}
 nginx-module-njs:
   pkg.installed:
     - version: '{{ njs_pkg_version }}'
