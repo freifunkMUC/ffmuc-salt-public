@@ -2,8 +2,14 @@
 Description=FFMuc rustic Backup Cleaner
 
 [Service]
+Type=oneshot
 Nice=19
 IOSchedulingClass=idle
-# Sun 05:00 (+1h) must end before the Monday 03:00 backups: cap the repack, hard stop after 20h
-TimeoutStartSec=20h
-ExecStart=/usr/local/bin/rustic prune --max-repack 100GiB
+# 12h hard stop: started Sun 05:00-12:00, it ends long before the Monday 03:00 backups; killing is safe (index is replaced last)
+TimeoutStartSec=12h
+# Persistent=true catch-up must not start a prune on a weekday: only Sun 05:00-11:59 (%u%H = 705..711), else skipped without failure
+ExecCondition=/bin/sh -c 'h=$$(date +%%u%%H); [ "$$h" -ge 705 ] && [ "$$h" -lt 712 ]'
+# --keep-delete 72h: marked packs outlive any stale scan view; never --instant-delete next to backups
+ExecStart=/usr/local/bin/rustic prune --max-repack 50GiB --max-unused 10% --keep-delete 72h
+# a failing check fails the unit (Icinga)
+ExecStart=/usr/local/bin/rustic check
