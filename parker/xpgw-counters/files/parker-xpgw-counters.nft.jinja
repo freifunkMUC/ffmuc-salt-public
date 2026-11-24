@@ -12,9 +12,9 @@
 {{- raise('parker.xpgw-counters needs the uplink VLAN, network.additional_v6_prefix and the primary IPv4 interface of ' ~ grains.id) }}
 {%- endif %}
 # Salt managed (parker/xpgw-counters).
-# Counters for node traffic between the pgws of a site. Counters only: no verdict, no log,
-# no sets. The chain runs after the iptables filter (priority filter + 10), so it counts only
-# packets that the filter lets through.
+# Counters for node traffic between the pgws of a site, and for NAT64 (Jool) traffic split by
+# source. Counters only: no verdict, no log, no sets. The chain runs after the iptables filter
+# (priority filter + 10), so it counts only packets that the filter lets through.
 # Read by telegraf: sudo nft -j list counters table inet parker_stats
 
 table inet parker_stats
@@ -27,10 +27,27 @@ table inet parker_stats {
 	# (b) node traffic from the other pgw of the site to the nodes on this pgw
 	counter partner_to_nodes {
 	}
+	# NAT64 traffic of the nodes on this pgw. Each node has a /63: the first /64 is for the
+	# clients, the second /64 is the source of the node CLAT (eBPF). Address bit 63 (the last
+	# bit of the /64 prefix) is 1 for the node CLAT and 0 for the client side.
+	# Client side = client CLAT (464XLAT) and IPv6-only apps via DNS64.
+	counter nat64_node_clat_to_nat64 {
+	}
+	counter nat64_client_to_nat64 {
+	}
+	counter nat64_node_clat_from_nat64 {
+	}
+	counter nat64_client_from_nat64 {
+	}
 
 	chain forward {
 		type filter hook forward priority filter + 10; policy accept;
 		iifname "{{ uplink_iface }}" oifname "{{ ns.mgmt_iface }}" ip6 daddr {{ parker_range }} counter name "uplink_to_partner"
 		iifname "{{ ns.mgmt_iface }}" oifname "wg-nodes" counter name "partner_to_nodes"
+		# @nh,127,1 = bit 63 of the source address, @nh,255,1 = bit 63 of the destination address
+		oifname "jool" ip6 saddr {{ parker_range }} ip6 daddr 64:ff9b::/96 @nh,127,1 1 counter name "nat64_node_clat_to_nat64"
+		oifname "jool" ip6 saddr {{ parker_range }} ip6 daddr 64:ff9b::/96 @nh,127,1 0 counter name "nat64_client_to_nat64"
+		iifname "jool" ip6 saddr 64:ff9b::/96 ip6 daddr {{ parker_range }} @nh,255,1 1 counter name "nat64_node_clat_from_nat64"
+		iifname "jool" ip6 saddr 64:ff9b::/96 ip6 daddr {{ parker_range }} @nh,255,1 0 counter name "nat64_client_from_nat64"
 	}
 }

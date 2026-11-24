@@ -128,15 +128,41 @@ class ParkerGatewayStatsTest(unittest.TestCase):
             '{"counter": {"family": "inet", "name": "other", '
             '"table": "parker_stats", "handle": 4, "packets": 1, "bytes": 1}}]}'
         )
+        counters = pgs.nft_counters(nft_json)
         self.assertEqual(
-            pgs.xpgw_lines(nft_json),
+            pgs.xpgw_lines(counters),
             [
                 "parker_xpgw_traffic,direction=partner_to_nodes bytes=900i,packets=7i",
                 "parker_xpgw_traffic,direction=uplink_to_partner bytes=700i,packets=5i",
             ],
         )
-        self.assertEqual(pgs.xpgw_lines(None), [])
-        self.assertEqual(pgs.xpgw_lines("not json"), [])
+        self.assertEqual(pgs.nat64_source_lines(counters), [])
+        self.assertEqual(pgs.nft_counters(None), {})
+        self.assertEqual(pgs.nft_counters("not json"), {})
+
+    def test_nat64_source_counters(self):
+        nft_json = (
+            '{"nftables": [{"metainfo": {"version": "1.1.6"}}, '
+            '{"counter": {"family": "inet", "name": "nat64_node_clat_to_nat64", '
+            '"table": "parker_stats", "handle": 5, "packets": 3, "bytes": 300}}, '
+            '{"counter": {"family": "inet", "name": "nat64_client_to_nat64", '
+            '"table": "parker_stats", "handle": 6, "packets": 4, "bytes": 400}}, '
+            '{"counter": {"family": "inet", "name": "nat64_node_clat_from_nat64", '
+            '"table": "parker_stats", "handle": 7, "packets": 5, "bytes": 500}}, '
+            '{"counter": {"family": "inet", "name": "nat64_client_from_nat64", '
+            '"table": "parker_stats", "handle": 8, "packets": 6, "bytes": 600}}, '
+            '{"counter": {"family": "inet", "name": "uplink_to_partner", '
+            '"table": "parker_stats", "handle": 2, "packets": 1, "bytes": 1}}]}'
+        )
+        self.assertEqual(
+            pgs.nat64_source_lines(pgs.nft_counters(nft_json)),
+            [
+                "parker_nat64_source,source=client,direction=from_nat64 bytes=600i,packets=6i",
+                "parker_nat64_source,source=client,direction=to_nat64 bytes=400i,packets=4i",
+                "parker_nat64_source,source=node_clat,direction=from_nat64 bytes=500i,packets=5i",
+                "parker_nat64_source,source=node_clat,direction=to_nat64 bytes=300i,packets=3i",
+            ],
+        )
 
     def test_jool_lines(self):
         stats = (

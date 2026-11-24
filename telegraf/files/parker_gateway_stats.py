@@ -16,6 +16,9 @@ Output (aggregates only, no node keys, prefixes or addresses):
   parker_xpgw_traffic,direction=<uplink_to_partner|partner_to_nodes> bytes=,packets=
       node traffic between the pgws of a site, from the nftables counters of
       parker/xpgw-counters (cumulative, reset when the table is loaded again)
+  parker_nat64_source,source=<node_clat|client>,direction=<to_nat64|from_nat64> bytes=,packets=
+      NAT64 (Jool) traffic of the nodes on this pgw, split by source: node CLAT (second /64
+      of the node /63) or client side (first /64). Same nftables table as above.
   jool_daemon up=0|1i
   jool_stats received6=,received4=,success=,bib_entries=,sessions=,
       icmp4err_success=,icmp6err_success=        NAT64 (Jool) packet counters
@@ -41,6 +44,12 @@ WG = "/usr/bin/wg"
 WG_INTERFACE = "wg-nodes"
 NFT = "/usr/sbin/nft"
 XPGW_COUNTERS = ("uplink_to_partner", "partner_to_nodes")
+NAT64_COUNTERS = {
+    "nat64_node_clat_to_nat64": ("node_clat", "to_nat64"),
+    "nat64_client_to_nat64": ("client", "to_nat64"),
+    "nat64_node_clat_from_nat64": ("node_clat", "from_nat64"),
+    "nat64_client_from_nat64": ("client", "from_nat64"),
+}
 JOOL = ["/usr/sbin/ip", "netns", "exec", "jool", "/usr/bin/jool", "-i", "default"]
 JOOL_PROTOCOLS = ("tcp", "udp", "icmp")
 JOOL_STATS = {
@@ -214,22 +223,47 @@ def wireguard_lines(handshakes_out, now):
     return [f"wireguard_peers,interface={escape_tag(WG_INTERFACE)} {fields}"]
 
 
-def xpgw_lines(nft_json):
-    """Reads the named counters of table inet parker_stats (`nft -j list counters`)."""
+def nft_counters(nft_json):
+    """Reads the named counters of table inet parker_stats (`nft -j list counters`).
+
+    Returns {name: (bytes, packets)}.
+    """
     if not nft_json:
-        return []
+        return {}
     try:
         objects = json.loads(nft_json).get("nftables", [])
     except (ValueError, AttributeError):
-        return []
-    lines = []
+        return {}
+    counters = {}
     for obj in objects:
         counter = obj.get("counter") if isinstance(obj, dict) else None
-        if not counter or counter.get("name") not in XPGW_COUNTERS:
+        if counter and "name" in counter:
+            counters[counter["name"]] = (int(counter["bytes"]), int(counter["packets"]))
+    return counters
+
+
+def xpgw_lines(counters):
+    lines = []
+    for name in XPGW_COUNTERS:
+        if name not in counters:
             continue
+        byte_count, packets = counters[name]
         lines.append(
-            f"parker_xpgw_traffic,direction={counter['name']} "
-            f"bytes={int(counter['bytes'])}i,packets={int(counter['packets'])}i"
+            f"parker_xpgw_traffic,direction={name} "
+            f"bytes={byte_count}i,packets={packets}i"
+        )
+    return sorted(lines)
+
+
+def nat64_source_lines(counters):
+    lines = []
+    for name, (source, direction) in NAT64_COUNTERS.items():
+        if name not in counters:
+            continue
+        byte_count, packets = counters[name]
+        lines.append(
+            f"parker_nat64_source,source={source},direction={direction} "
+            f"bytes={byte_count}i,packets={packets}i"
         )
     return sorted(lines)
 
@@ -336,9 +370,11 @@ def main():
     lines += wireguard_lines(
         run([WG, "show", WG_INTERFACE, "latest-handshakes"]), int(time.time())
     )
-    lines += xpgw_lines(
+    counters = nft_counters(
         run([NFT, "-j", "list", "counters", "table", "inet", "parker_stats"])
     )
+    lines += xpgw_lines(counters)
+    lines += nat64_source_lines(counters)
     stats_out = run([*JOOL, "stats", "display", "--all", "--csv"])
     lines += jool_lines(stats_out, jool_tables() if stats_out is not None else {})
     sys.stdout.write("".join(line + "\n" for line in lines))

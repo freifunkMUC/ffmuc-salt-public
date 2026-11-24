@@ -1,5 +1,5 @@
 [Unit]
-Description=nftables counters for node traffic between the Parker gateways
+Description=nftables counters for node traffic between the Parker gateways and NAT64 source split
 Documentation=https://github.com/freifunkMUC/ffmuc-salt-public/tree/main/parker/xpgw-counters
 After=netfilter-persistent.service
 
