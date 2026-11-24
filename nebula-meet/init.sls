@@ -100,10 +100,18 @@ nebula-meet-service:
       - pkg: nebula-pkg
     - watch:
         - file: /etc/nebula-meet/config.yml
+        - cmd: systemd-reload-nebula-meet
+
+{#- CA bundle, cert and key are re-read on SIGHUP without dropping tunnels (config.yml changes still restart) #}
+nebula-meet-reload-pki:
+  cmd.run:
+    - name: /usr/bin/nebula -test -config /etc/nebula-meet/config.yml && systemctl reload nebula-meet
+    - onchanges:
         - file: /etc/nebula-meet/ca.crt
         - file: /etc/nebula-meet/{{ cert_name }}.crt
         - file: /etc/nebula-meet/{{ cert_name }}.key
-        - cmd: systemd-reload-nebula-meet
+    - require:
+        - service: nebula-meet-service
 
 nebula-meet-restart-on-upgrade:
   cmd.run:
