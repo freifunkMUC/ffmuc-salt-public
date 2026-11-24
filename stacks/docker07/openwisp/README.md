@@ -1,8 +1,9 @@
 # OpenWISP controller (docker07)
 
-Lab stack after [docker-openwisp](https://github.com/openwisp/docker-openwisp) 26.09.5, for non-Gluon OpenWrt devices.
-UI and API at `https://openwisp.ov.ffmuc.net` (overlay only, Traefik without `noc-auth`: the app logs in itself).
-No public name yet: the device API (`openwisp-api.ffmuc.net`, HAProxy, Nebula rule) is phase 2.
+Stack after [docker-openwisp](https://github.com/openwisp/docker-openwisp) 26.09.5, for non-Gluon OpenWrt devices.
+Public: `https://openwisp.ffmuc.net` (UI) and `https://openwisp-api.ffmuc.net` (device API) through HAProxy on the
+webfrontends to nginx on `10.8.0.16:8098` (Nebula rule: webfrontend group only; `/admin/login` is 403 there, rate limit on `/accounts/`).
+Break-glass: `https://openwisp.ov.ffmuc.net` (overlay, Traefik without `noc-auth`: the app logs in itself).
 
 - Off: RADIUS, OpenVPN (management VPN, `VPN_DOMAIN` empty), postfix (mail goes to `mail01.fnmuc.net:587` as
   `no-reply@ffmuc.net`), topology, firmware upgrader. On: monitoring with InfluxDB 1.8.
@@ -10,7 +11,7 @@ No public name yet: the device API (`openwisp-api.ffmuc.net`, HAProxy, Nebula ru
   (`config/custom_django_settings.py`, django-allauth `openid_connect`; mounted into the image, no derived image needed).
   Start at `/accounts/oidc/keycloak/login/`; the login page has no provider button.
   New users have no rights: a superuser grants them an organization role.
-- Break-glass: local superuser `admin` on `/admin/login/`.
+- Break-glass: local superuser `admin` on `/admin/login/` at the overlay name.
 
 ## First setup (admin, on docker07)
 
@@ -45,10 +46,11 @@ All containers: `cap_drop: ALL`, `no-new-privileges`. Exceptions:
 
 ## Names
 
-`DASHBOARD_DOMAIN` and `API_DOMAIN` (stack environment, defaults `openwisp.ov.ffmuc.net`, `openwisp-api.ffmuc.net`) feed
-`DJANGO_ALLOWED_HOSTS`, CSRF/CORS origins, the Traefik rule and the OIDC redirect URI; `OIDC_SERVER_URL` sets the Keycloak discovery URL.
-Another dashboard name needs the redirect URI in the Keycloak client and, behind a proxy, `NGINX_TRUSTED_PROXIES`
-(real client IP from `X-Forwarded-For`) and `NGINX_ADMIN_ALLOW_NETWORK` (restricts `/admin`) on nginx.
+`DASHBOARD_DOMAIN` and `API_DOMAIN` (stack environment, defaults `openwisp.ffmuc.net`, `openwisp-api.ffmuc.net`) feed
+`DJANGO_ALLOWED_HOSTS`, CSRF/CORS origins and the OIDC redirect URI; the overlay name stays in `DJANGO_ALLOWED_HOSTS`,
+the CSRF origins (`config/custom_django_settings.py`) and the Traefik rule.
+`NGINX_TRUSTED_PROXIES` lists the webfrontends (HAProxy sets `X-Forwarded-For`); `OIDC_SERVER_URL` sets the Keycloak discovery URL.
+Another dashboard name needs the redirect URI in the Keycloak client; `NGINX_ADMIN_ALLOW_NETWORK` restricts `/admin` if needed.
 
 ## Lab results
 
