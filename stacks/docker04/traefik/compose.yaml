@@ -7,7 +7,7 @@ services:
   traefik:
     # Traefik with nsupdate for the DNS-01 hook; source in stacks/build/traefik-nsupdate, built on deploy.
     build: ../../build/traefik-nsupdate
-    image: local/traefik-nsupdate:v3.7.19
+    image: local/traefik-nsupdate:v3.7.20
     pull_policy: build
     container_name: traefik
     restart: unless-stopped
