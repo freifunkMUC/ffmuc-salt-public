@@ -7,8 +7,8 @@ Break-glass: `https://openwisp.ov.ffmuc.net` (overlay, Traefik without `noc-auth
 
 - Off: RADIUS, OpenVPN (management VPN, `VPN_DOMAIN` empty), postfix (mail goes to `mail01.fnmuc.net:587` as
   `no-reply@ffmuc.net`), topology, firmware upgrader. On: monitoring with InfluxDB 1.8.
-- Login: Keycloak realm `ffmuc`, client `openwisp`, only members of the group `openwisp`
-  (`config/custom_django_settings.py`, django-allauth `openid_connect`; mounted into the image, no derived image needed).
+- Login: Keycloak realm `chat`, client `openwisp`, only members of the group `openwisp` (`config/oidc_gate.py` checks the
+  `groups` claim and makes members staff; organization roles stay manual) (`config/custom_django_settings.py`, django-allauth `openid_connect`; mounted into the image, no derived image needed).
   Start at `/accounts/oidc/keycloak/login/`; the login page has no provider button.
   New users have no rights: a superuser grants them an organization role.
 - Break-glass: local superuser `admin` on `/admin/login/` at the overlay name.
@@ -58,7 +58,7 @@ Another dashboard name needs the redirect URI in the Keycloak client; `NGINX_ADM
 - Keycloak login (local Keycloak): `/accounts/oidc/keycloak/login/` -> callback `/accounts/oidc/keycloak/login/callback/`,
   django-allauth 65.19.7. The first login creates a user without rights (`is_staff` false, no organization).
   Any realm user can log in; the `groups` claim (mapper on the client) arrives in `extra_data`, a non-member gets none.
-  Access for the group `openwisp` only is enforced in Keycloak.
+  Access for the group `openwisp` only: `config/oidc_gate.py`.
 - Mail reaches the SMTP server as `no-reply@ffmuc.net` through the Celery email backend.
 - Restore: `pg_dump` from step 4 into an empty PostGIS of the same image; row counts equal. The extension objects
   PostGIS creates itself give three harmless `pg_restore` errors (`schema "topology" already exists`).
