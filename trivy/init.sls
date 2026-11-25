@@ -1,4 +1,4 @@
-{#- Weekly Trivy scan of the images of running containers (docker hosts).
+{#- Weekly Trivy scan (weekday and hour per host from the minion ID, see the timer) of the images of running containers (docker hosts).
     Opt in per host with the NetBox config context trivy: {enabled: true}; off by default.
     Summary in /var/lib/ffmuc-trivy/report.json, checked by the Icinga service ffmuc_trivy. #}
 {%- set role = salt['pillar.get']('netbox:role:name', '') or '' %}
@@ -59,6 +59,7 @@ trivy-jq:
 /etc/systemd/system/ffmuc-trivy-scan.timer:
   file.managed:
     - source: salt://trivy/files/ffmuc-trivy-scan.timer
+    - template: jinja
 
 systemd-reload-ffmuc-trivy:
   cmd.run:
