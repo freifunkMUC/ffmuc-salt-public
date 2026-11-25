@@ -8,10 +8,27 @@ Break-glass: `https://openwisp.ov.ffmuc.net` (overlay, Traefik without `noc-auth
 - Off: RADIUS, OpenVPN (management VPN, `VPN_DOMAIN` empty), postfix (mail goes to `mail01.fnmuc.net:587` as
   `no-reply@ffmuc.net`), topology, firmware upgrader. On: monitoring with InfluxDB 1.8.
 - Login: Keycloak realm `chat`, client `openwisp`, only members of the group `openwisp` (`config/oidc_gate.py` checks the
-  `groups` claim and makes members staff; organization roles stay manual) (`config/custom_django_settings.py`, django-allauth `openid_connect`; mounted into the image, no derived image needed).
+  `groups` claim and makes members staff and gives each one an organization, see below) (`config/custom_django_settings.py`, django-allauth `openid_connect`; mounted into the image, no derived image needed).
   Start at `/accounts/oidc/keycloak/login/`; the login page has no provider button.
-  New users have no rights: a superuser grants them an organization role.
+  New users get their own organization at the first login (below).
 - Break-glass: local superuser `admin` on `/admin/login/` at the overlay name.
+
+## Access per organization
+
+Every member of the Keycloak group `openwisp` gets an organization of their own at login (`config/oidc_gate.py`): name = username,
+slug from it (lowercase, `[a-z0-9-]`, `-2`, `-3` if taken), created once and found again by its description. The user is its admin
+and owner and in the Django group Administrator, so they manage their devices and add users to their organization. Nothing is
+migrated: existing memberships (such as in `default`) stay, and superusers are not touched. Superusers (local `admin`, FFMUC admins)
+are made by hand and create further organizations.
+
+Administrator is needed to add users to the own organization (Operator only manages devices and reads CAs and certificates). The
+group is global but the admin views show only the organizations a user manages. Administrator additionally allows adding, changing
+and deleting users, organization users, CAs, certificates, VPNs, subnets, credentials and API keys, and changing the organization
+settings, in those organizations only; whoever is admin in a shared organization such as `default` has these rights there too.
+
+A user who has left `openwisp` is refused (403) and loses both groups and every membership that is not an ownership at that
+attempt (superusers excepted); no organization is created for them, and none is deleted. Sessions that are already open run until
+they expire. Tests: `python3 -m unittest discover -s stacks/docker07/openwisp/tests`.
 
 ## First setup (admin, on docker07)
 

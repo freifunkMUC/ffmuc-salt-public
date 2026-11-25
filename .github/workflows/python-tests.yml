@@ -34,3 +34,5 @@ jobs:
         run: python3 -m unittest discover -s stacks/docker07/wazuh/tests -v
       - name: telegraf
         run: python3 -m unittest discover -s telegraf/tests -v
+      - name: openwisp gate
+        run: python3 -m unittest discover -s stacks/docker07/openwisp/tests -v
