@@ -6,26 +6,35 @@
 api:
   dashboard: true
 ping: {}
+# aliasHeadersStrategy delete: drop request headers whose name aliases another one (X_Auth_User for
+# X-Auth-User), so they cannot pass for a header an auth middleware sets.
 entryPoints:
   traefik:
     address: ":8080"
+    http:
+      aliasHeadersStrategy: delete
   http:
     address: ":80"
     http:
+      aliasHeadersStrategy: delete
       redirections:
         entryPoint:
           to: "https"
           scheme: "https"
+          permanent: true
+          # Lowest priority, so an explicit router on `http` wins over the redirect.
+          priority: 1
   https:
     address: ":443"
     http:
+      aliasHeadersStrategy: delete
       middlewares:
         - crowdsec-bouncer@file
         - default-security-headers@file
     http3:
       advertisedPort: '443'
 global:
-  checknewversion: true
+  checknewversion: false
   sendanonymoususage: false
 providers:
   docker:
@@ -63,7 +72,14 @@ certificatesResolvers:
           disableChecks: true
 log:
   level: "INFO"
+  format: json
   filePath: "/var/log/traefik/traefik.log"
+# Client addresses are personal data: the file is read by CrowdSec and rotated by logrotate.
+# Request headers are not logged.
 accessLog:
   filePath: "/var/log/traefik/access.log"
+  format: json
   bufferingSize: 100
+  fields:
+    headers:
+      defaultMode: drop

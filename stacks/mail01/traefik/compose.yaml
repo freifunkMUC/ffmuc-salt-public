@@ -65,11 +65,9 @@ services:
       - "traefik.http.routers.traefik.middlewares=noc-auth@docker,default@file"
       - "traefik.http.routers.traefik.tls=true"
       - "traefik.http.routers.traefik.tls.certresolver=ov"
-      - "traefik.http.routers.traefik-middlewares=error-pages-middleware"
       - "traefik.http.routers.traefik.service=api@internal"
       - "traefik.http.services.traefik.loadbalancer.sticky.cookie.httpOnly=true"
       - "traefik.http.services.traefik.loadbalancer.sticky.cookie.secure=true"
-      - "providers.file.filename=/dynamic_conf.yml"
       - "traefik.docker.network=proxy"
 
   # Read-only Docker API for the docker provider: version, ping, containers, events; no POST.
