@@ -121,56 +121,20 @@ addDOHLocal("[::1]:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reu
 -- listen for DoH on nebula for failover
 addDOHLocal("{{ address }}:445", nil, nil, "/dns-query", { numberOfStoredSessions=0, reusePort=true, trustForwardedForHeader=true, keepIncomingHeaders=true })
 
-if not file_exists("/var/lib/dnsdist/providerPrivate.key") then
-  infolog("Generate DNSCrypt provider keys.")
-  generateDNSCryptProviderKeys("/var/lib/dnsdist/providerPublic.cert", "/var/lib/dnsdist/providerPrivate.key")
-end
-
-local now = os.time()
-local serial = os.date('%Y%m%d', now)
-local validity = 365 * 86400  -- 1 year
-
--- XChaCha20
-if not file_exists("/run/dnsdist/resolver_xchacha.cert") then
-  infolog("Generate DNSCrypt v2 (XChaCha20) certificate.")
-  generateDNSCryptCertificate(
-    "/var/lib/dnsdist/providerPrivate.key",
-    "/run/dnsdist/resolver_xchacha.cert",
-    "/run/dnsdist/resolver_xchacha.key",
-    serial,
-    now,
-    now + validity,
-    DNSCryptExchangeVersion.VERSION2  -- X25519-XChaCha20-Poly1305
-  )
-end
-
--- Fallback XSalsa20
-if not file_exists("/run/dnsdist/resolver_xsalsa.cert") then
-  infolog("Generate DNSCrypt v1 (XSalsa20) certificate.")
-  generateDNSCryptCertificate(
-    "/var/lib/dnsdist/providerPrivate.key",
-    "/run/dnsdist/resolver_xsalsa.cert",
-    "/run/dnsdist/resolver_xsalsa.key",
-    serial,
-    now,
-    now + validity,
-    DNSCryptExchangeVersion.VERSION1  -- X25519-XSalsa20-Poly1305
-  )
-end
-
+{#- DNSCrypt: identical resolver certificates on all webfrontends (anycast), from the pillar, see dnsdist/init.sls #}
+{%- set dnscrypt_certs = salt['pillar.get']('netbox:config_context:dnsdist:dnscrypt_certs', {}) %}
+{%- if not dnscrypt_certs %}
+error("DNSCrypt certificates missing from the pillar (netbox:config_context:dnsdist:dnscrypt_certs)")
+{%- endif %}
 -- listen for DNSCrypt
-addDNSCryptBind("0.0.0.0:8443",
+{%- for addr in ['0.0.0.0:8443', '[::]:8443'] %}
+addDNSCryptBind("{{ addr }}",
   "2.dnscrypt-cert.ffmuc.net",
-  { "/run/dnsdist/resolver_xchacha.cert", "/run/dnsdist/resolver_xsalsa.cert" },
-  { "/run/dnsdist/resolver_xchacha.key",  "/run/dnsdist/resolver_xsalsa.key"  },
-  { reusePort=true }
+  { {%- for name in dnscrypt_certs | sort %}"/var/lib/dnsdist/dnscrypt/{{ name }}.cert"{{ ', ' if not loop.last }}{%- endfor %} },
+  { {%- for name in dnscrypt_certs | sort %}"/var/lib/dnsdist/dnscrypt/{{ name }}.key"{{ ', ' if not loop.last }}{%- endfor %} },
+  { reusePort=true, tcpFastOpenQueueSize=20 }
 )
-addDNSCryptBind("[::]:8443",
-  "2.dnscrypt-cert.ffmuc.net",
-  { "/run/dnsdist/resolver_xchacha.cert", "/run/dnsdist/resolver_xsalsa.cert" },
-  { "/run/dnsdist/resolver_xchacha.key",  "/run/dnsdist/resolver_xsalsa.key"  },
-  { reusePort=true }
-)
+{%- endfor %}
 {% else %}
 -- limit resolving on Port 53 to "ffmuc-domains"
 addAction(AndRule({NotRule(makeRule({"ffmuc.net"})), NotRule(makeRule({"127.0.0.1","::1","10.80.0.0/16","10.86.0.0/16","10.8.0.0/23","5.1.66.0/24","185.150.99.0/24","2001:678:e68::/48","2001:678:ed0::/48"})), DSTPortRule(53)}), DropAction(), {name="Drop-Gateway-Foreign-Source"})
