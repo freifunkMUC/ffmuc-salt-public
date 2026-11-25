@@ -1,6 +1,70 @@
 {% set role = salt['pillar.get']('netbox:role:name') %}
 {#- Jitsi hosts: rules by host name, applied by hand (not in top.sls) #}
 {% set jitsi_role = {'jvb': 'jvb', 'jicofo': 'jicofo', 'call': 'call'}.get(grains.id.split('.')[0].rstrip('0123456789'), '') if grains.id.endswith('.meet.ffmuc.net') else '' %}
+{% from 'iptables/jitsi_map.jinja' import backend with context %}
+{% set jitsi_nft = jitsi_role == 'jvb' and backend == 'nft' %}
+
+{% if jitsi_nft %}
+{#- Native nftables (no iptables-persistent: its boot restore needs the xt modules) #}
+nftables_pkg:
+  pkg.installed:
+    - name: nftables
+
+# Debian's nftables.service loads /etc/nftables.conf with `flush ruleset` (would drop this table and fail2ban's)
+nftables_service_masked:
+  service.masked:
+    - name: nftables
+    - require:
+      - pkg: nftables_pkg
+
+/etc/nftables-jitsi.nft:
+  file.managed:
+    - source: salt://iptables/files/jitsi_rules.nft.jinja
+    - template: jinja
+    - user: root
+    - group: root
+    - mode: '0644'
+    - backup: '.bak'
+    - check_cmd: /usr/sbin/nft -c -f
+    - require:
+      - pkg: nftables_pkg
+
+/etc/systemd/system/jitsi-nft.service:
+  file.managed:
+    - contents: |
+        # Managed with Salt
+        [Unit]
+        Description=Jitsi host firewall (nftables table inet jitsi)
+        DefaultDependencies=no
+        Before=network-pre.target
+        Wants=network-pre.target
+
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=/usr/sbin/nft -f /etc/nftables-jitsi.nft
+        ExecStop=-/usr/sbin/nft delete table inet jitsi
+
+        [Install]
+        WantedBy=multi-user.target
+
+jitsi_nft_service:
+  service.running:
+    - name: jitsi-nft
+    - enable: True
+    - require:
+      - file: /etc/nftables-jitsi.nft
+      - file: /etc/systemd/system/jitsi-nft.service
+
+jitsi_nft_reload:
+  cmd.run:
+    - name: /usr/sbin/nft -f /etc/nftables-jitsi.nft
+    - onchanges:
+      - file: /etc/nftables-jitsi.nft
+    - require:
+      - service: jitsi_nft_service
+
+{% else %}
 
 iptables_pkgs:
   pkg.installed:
@@ -108,3 +172,4 @@ fail2ban_after_netfilter_reload:
       - pkg: iptables_pkgs
 {% endif %}{# jitsi_role #}
 {% endif %}{# if role #}
+{% endif %}{# jitsi_nft #}
