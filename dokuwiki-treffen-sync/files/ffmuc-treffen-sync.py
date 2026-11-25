@@ -39,6 +39,9 @@ UA = {"User-Agent": "ffmuc-treffen-sync"}
 LOCK = "/run/ffmuc-treffen-sync.lock"
 BULLET = "{{:bulletpoint.png?nolink&14|Bild: Freifunk München Logo}} "
 BACKFILL_DAYS = 183
+MAX_BYTES = 500_000  # pad export
+MAX_LINKS = 40
+MAX_HOSTS = 15
 
 # DokuWiki writer: JSON list on stdin [{id, mode create|update, text, old, summary}]; no
 # single quotes in here (the script is passed as one shell argument).
@@ -66,19 +69,32 @@ MARK = re.compile(
 )
 
 
+SAFE_URL = re.compile(r"https?://[A-Za-z0-9\-._~:/?#@!$&'()*+,;=%]+")
+BAD_URL = re.compile(r"\{\{|\}\}|\[\[|\]\]|~~|<|>|\||\\\\|''|%%")
+
+
+def safe_url(u):
+    """Pads are publicly editable: only plain http(s) URLs may stay or become links."""
+    return bool(SAFE_URL.fullmatch(u)) and not BAD_URL.search(u)
+
+
+def esc_plain(p):
+    if not MARK.search(p):
+        return p
+    if "%%" in p:
+        return "<nowiki>" + p.replace("</nowiki>", "</ nowiki>") + "</nowiki>"
+    return "%%" + p + "%%"
+
+
 def esc_part(part, padmap):
-    """Plain text: URLs stay (pad links become wiki pages), wiki markup gets %%..%%."""
+    """Plain text: safe URLs stay (pad links become wiki pages), markup gets %%..%%."""
     out = []
     for p in URL.split(part):
-        if URL.fullmatch(p):
+        if URL.fullmatch(p) and safe_url(p):
             pm = PADURL.fullmatch(p)
             out.append(f"[[{padmap[pm[1]]}]]" if pm and pm[1] in padmap else p)
-        elif not MARK.search(p):
-            out.append(p)
-        elif "%%" in p:
-            out.append("<nowiki>" + p.replace("</nowiki>", "</ nowiki>") + "</nowiki>")
         else:
-            out.append("%%" + p + "%%")
+            out.append(esc_plain(p))
     return "".join(out)
 
 
@@ -185,11 +201,12 @@ class PadHtml(HTMLParser):
             self.href = self.abuf = None
             if not txt or URL.fullmatch(txt) or txt == href:
                 self.text(txt or href)
+            elif not safe_url(href):
+                self.text(txt)
             else:
                 pm = PADURL.fullmatch(href)
                 tgt = self.padmap[pm[1]] if pm and pm[1] in self.padmap else href
-                txt = txt.replace("]]", "] ]").replace("|", "¦")
-                self.emit(f"[[{tgt}|{txt}]]")
+                self.emit(f"[[{tgt}|" + esc_plain(txt.replace("|", "¦")) + "]]")
 
     def emit(self, s):
         for t in self.fmts[::-1]:
@@ -240,7 +257,7 @@ def html_to_doku(html, padmap):
 def page_text(pad, date, body, today):
     d = f"{date:%d.%m.%Y}"
     return (
-        "{{htmlmetatags>metatag-robots=(index,follow)\n"
+        "{{htmlmetatags>metatag-robots=(index,nofollow)\n"
         f"metatag-description=(Usertreffen {d} - 19:30 Uhr online via "
         "meet.ffmuc.net/ffmuctreffen)\n}}\n"
         "~~NOTOC~~\n\n/* *** Titelbalken mit ffmuc Logo *** */\n"
@@ -280,11 +297,31 @@ def fetch_pad(pad, pads_dir):
         else:
             req = urllib.request.Request(PAD_URL.format(pad=pad), headers=UA)
             with urllib.request.urlopen(req, timeout=30) as r:
-                html = r.read().decode("utf-8")
+                html = r.read(MAX_BYTES + 1).decode("utf-8")
     except (OSError, urllib.error.URLError) as e:
         log(f"{pad}: export failed ({e.__class__.__name__}), will retry next run")
         return None
     return None if "Welcome to Etherpad" in html else html
+
+
+def insane(html, body):
+    """Reason to refuse a pad (publicly editable), or None. Run on the converted body."""
+    if len(html) > MAX_BYTES:
+        return f"export larger than {MAX_BYTES} bytes"
+    urls = re.findall(r"https?://[^\s%\]|]+", body)
+    hosts = {u.split("/")[2] for u in urls}
+    if len(urls) > MAX_LINKS or len(hosts) > MAX_HOSTS:
+        return f"{len(urls)} links to {len(hosts)} hosts"
+    rest = re.sub(r"%%.*?%%|<nowiki>.*?</nowiki>", "", body, flags=re.S)
+    for m in re.finditer(r"\[\[([^\]|]*)(?:\|[^\]]*)?\]\]", rest):
+        if not re.fullmatch(r"treffen:\d{6}", m[1]) and not safe_url(m[1]):
+            return "unexpected link target"
+    rest = (
+        re.sub(r"\[\[[^\]]*\]\]", "", rest).replace("<del>", "").replace("</del>", "")
+    )
+    if re.search(r"\{\{|\}\}|<|>|~~|\[\[|\]\]", rest):
+        return "embed, HTML or control markup outside escapes"
+    return None
 
 
 def log(msg):
@@ -345,7 +382,7 @@ def main():
     newest = max(dates.values())
     padmap = {f"treffen{i}": f"treffen:{i}" for i in ids}
 
-    ops, new_start, created = [], start, []
+    ops, new_start, created, failed = [], start, [], False
     for d in candidates(newest, a.today):
         i, pad = f"{d:%y%m%d}", f"treffen{d:%y%m%d}"
         if i not in ids:
@@ -354,6 +391,11 @@ def main():
                 log(f"{pad}: no pad content, skipped")
                 continue
             body = html_to_doku(html, padmap | {pad: f"treffen:{i}"})
+            why = insane(html, body)
+            if why:
+                log(f"{pad}: REFUSED ({why}), not written")
+                failed = True
+                continue
             if not body.strip():
                 log(f"{pad}: pad is empty, skipped")
                 continue
@@ -382,7 +424,7 @@ def main():
         )
     if not ops:
         log(f"nothing to do (newest page {newest:%d.%m.%Y}, today {a.today})")
-        return 0
+        return 2 if failed else 0
     log(
         f"{len(created)} new page(s), start page "
         f"{'changed' if new_start != start else 'unchanged'}"
@@ -390,8 +432,8 @@ def main():
     if a.dry_run:
         for o in ops:
             log(f"dry run: {o['mode']} {o['id']} ({len(o['text'])} bytes)")
-        return 0
-    return wiki_write(a.docker, ops)
+        return 2 if failed else 0
+    return wiki_write(a.docker, ops) or (2 if failed else 0)
 
 
 if __name__ == "__main__":
