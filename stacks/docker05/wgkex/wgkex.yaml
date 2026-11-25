@@ -145,6 +145,12 @@ parker:
       dns64: 2001:678:e68:f064::64
       netbox_filter:
         prefix: 2001:678:e68:4000::/50
+  # Gluon domain of the node (/config query "domain") -> captive portal API URI (RFC 8908).
+  # The node sends it in DHCPv4 option 114. A domain without a URI gets no option (wgkex >= v0.6.7).
+  captive_portal_urls:
+    ffdlg_dlg: https://freifunk-dillingen-donau.de/captive
+    ffmuc_dlg: https://freifunk-dillingen-donau.de/captive
+    ffbachtal_bachtal: https://ffmuc.net/captive-bachtal
   # In-memory IPAM: NetBox is not on the request path. The snapshot is used
   # when NetBox is down at broker start.
   ipam_cache:
