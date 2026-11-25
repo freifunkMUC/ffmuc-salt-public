@@ -1,9 +1,13 @@
+{#- Fixed weekday and hour per host (hash of the minion ID), so the docker hosts do not scan at once; hours 01-05 stay clear of the highstate window. #}
+{%- set h = grains['id'] | md5 %}
+{%- set day = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][h[0:4] | int(0, 16) % 7] %}
+{%- set hour = 1 + h[4:8] | int(0, 16) % 5 %}
 [Unit]
 Description=Weekly FFMuc Trivy scan
 
 [Timer]
-OnCalendar=Sun *-*-* 02:00:00
-RandomizedDelaySec=6h
+OnCalendar={{ day }} *-*-* 0{{ hour }}:00:00
+RandomizedDelaySec=50min
 Persistent=true
 
 [Install]
