@@ -74,6 +74,8 @@ services:
       # the image entrypoint writes the PHP session handler (redis-session.ini) from REDIS_HOST_PASSWORD
       - REDIS_HOST_PASSWORD=${REDIS_PASSWORD}
       - NC_default_phone_region=DE
+      - NC_maintenance_window_start=3  # UTC, heavy background jobs run 03:00-07:00
+      - OVERWRITEPROTOCOL=https
     volumes:
       - /srv/docker/nextcloud/data:/var/www/html
       - ./config/zz-docker.conf:/usr/local/etc/php-fpm.d/zz-docker.conf
