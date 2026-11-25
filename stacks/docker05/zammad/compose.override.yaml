@@ -4,7 +4,7 @@
 # Images are pinned here. The other values that compose.yaml reads from
 # .env (POSTGRES_USER, NGINX_EXPOSE_PORT, ...) and the secret POSTGRES_PASS
 # come from the Komodo Stack environment.
-x-zammad-image: &zammad-image ghcr.io/zammad/zammad:7.2.3-0003@sha256:6669ad5070e8b0ae1820cbfb6c418debb6a59a1a7cf0922496dd9b1c0a2414ee
+x-zammad-image: &zammad-image ghcr.io/zammad/zammad:7.3.0-0001@sha256:4208261ceecd31b70ba28ce03c5c7250af75ba8dd4f04d5ba4a3958087b3bd8d
 
 x-ffmuc-app-mounts: &ffmuc-app-mounts
   - /srv/docker/zammad-backup:/var/tmp/zammad:ro
