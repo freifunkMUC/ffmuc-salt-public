@@ -33,7 +33,6 @@ services:
       start_period: 120s
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
       - /opt/containers/crowdsec/config:/etc/crowdsec
       - ./config/acquis.yaml:/etc/crowdsec/acquis.yaml:ro
       - ./config/config.yaml.local:/etc/crowdsec/config.yaml.local:ro
