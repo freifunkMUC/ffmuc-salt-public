@@ -1,0 +1,9 @@
+[Unit]
+Description=FFMuc rustic repository check (random 1 % of the data)
+
+[Service]
+Type=oneshot
+Nice=19
+IOSchedulingClass=idle
+TimeoutStartSec=12h
+ExecStart=/usr/local/bin/rustic check --read-data-subset 1%

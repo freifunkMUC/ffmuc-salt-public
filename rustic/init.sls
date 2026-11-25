@@ -150,5 +150,39 @@ ffmuc-backup-cleaner-timer-enable:
       - file: /etc/systemd/system/ffmuc-rustic-backup-cleaner.timer
 {% endif %}
 
+# Weekly read of a random 1 % of the pack data (the full structure check runs after each prune).
+# Off unless NetBox config context backup.check_enabled is true.
+/etc/systemd/system/ffmuc-rustic-check.service:
+  file.managed:
+    - source: salt://rustic/files/ffmuc-rustic-check.service
+    - require:
+      - file: backup-config
+    - require_in:
+      - cmd: systemd-reload-ffmuc-backup
+
+/etc/systemd/system/ffmuc-rustic-check.timer:
+  file.managed:
+    - source: salt://rustic/files/ffmuc-rustic-check.timer
+    - require:
+      - file: backup-config
+    - require_in:
+      - cmd: systemd-reload-ffmuc-backup
+
+{% if salt['config.get']('netbox:config_context:backup:check_enabled', False) %}
+ffmuc-rustic-check-timer-enable:
+  service.running:
+    - name: ffmuc-rustic-check.timer
+    - enable: true
+    - require:
+      - file: /etc/systemd/system/ffmuc-rustic-check.timer
+{% else %}
+ffmuc-rustic-check-timer-enable:
+  service.dead:
+    - name: ffmuc-rustic-check.timer
+    - enable: false
+    - require:
+      - file: /etc/systemd/system/ffmuc-rustic-check.timer
+{% endif %}
+
 {% endif %}{# if backup_cleaner in tags #}
 {% endif %}{# if backup in tags #}
