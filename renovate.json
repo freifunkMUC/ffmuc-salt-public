@@ -86,6 +86,26 @@
       "automerge": false
     },
     {
+      "description": "No automerge for the internet-facing proxies and authentication (Traefik, oauth2-proxy, HAProxy, Keycloak, CrowdSec and its bouncers), not even patch or digest: an update that goes wrong exposes services or locks everyone out. Seven days before the PR is opened; security alerts ignore the age. timestamp-optional: a required timestamp would keep images without one out for good. Must stay after the automerge rules above: later rules win",
+      "matchPackageNames": [
+        "/(^|/)(traefik|oauth2-proxy|haproxy|keycloak|crowdsec|traefik-crowdsec-bouncer)$/",
+        "local/traefik-nsupdate"
+      ],
+      "minimumReleaseAge": "7 days",
+      "minimumReleaseAgeBehaviour": "timestamp-optional",
+      "automerge": false
+    },
+    {
+      "description": "No automerge for the stacks of the proxies and authentication above, whatever their image is called (nightly tier included)",
+      "matchFileNames": [
+        "stacks/*/traefik/**",
+        "stacks/*/oauth2-proxy/**",
+        "stacks/*/keycloak/**",
+        "stacks/*/wg-access-server/**"
+      ],
+      "automerge": false
+    },
+    {
       "description": "Major versions of container images (databases, search, brokers) need a data migration or a matching client: Renovate lists them in the Dependency Dashboard and opens a PR only when it is ticked there",
       "matchManagers": ["docker-compose", "dockerfile"],
       "matchUpdateTypes": ["major"],
