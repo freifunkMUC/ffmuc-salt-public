@@ -64,23 +64,81 @@ dnsdist:
     - require:
       - pkg: dnsdist
 
-/var/lib/dnsdist/providerPublic.cert:
-  file.managed:
-    - source: salt://dnsdist/private/providerPublic.cert
-    - user: 1000
-    - group: 1000
-    - mode: "0644"
+{#- Temporary: the provider key is no longer on the hosts. Remove after all dnsdist hosts have applied this. #}
+{%- for old in ['providerPrivate.key', 'providerPublic.cert'] %}
+dnsdist-old-{{ old }}:
+  file.absent:
+    - name: /var/lib/dnsdist/{{ old }}
+{%- endfor %}
+
+{%- if 'webfrontend' in grains.id %}
+{#-
+  DNSCrypt resolver certificates: generated offline (dnsdist/dnscrypt-certs.sh, signed with the provider
+  key, which stays off all hosts) and identical on every webfrontend, because clients reach any node
+  behind the anycast address. Pillar netbox:config_context:dnsdist:dnscrypt_certs is a dict of
+  {<name>: {cert, key}} (base64). Never generated on the host; the state fails if the pillar is missing.
+  Rotation (12-month sets, serial rises): ~1 month before the old set expires generate a new set and
+  add it, apply; after the old one has expired remove it, apply. Clients (dnscrypt-proxy
+  refresh 4 h) pick the highest valid serial; the provider key and stamps stay unchanged.
+#}
+{%- set dnscrypt_certs = salt['pillar.get']('netbox:config_context:dnsdist:dnscrypt_certs', {}) %}
+{%- if not dnscrypt_certs %}
+dnsdist-dnscrypt-certs-missing:
+  test.fail_without_changes:
+    - name: netbox:config_context:dnsdist:dnscrypt_certs is missing, refusing to touch DNSCrypt
     - require_in:
       - service: dnsdist
-/var/lib/dnsdist/providerPrivate.key:
+{%- else %}
+dnsdist-dnscrypt-dir:
+  file.directory:
+    - name: /var/lib/dnsdist/dnscrypt
+    - user: root
+    - group: _dnsdist
+    - mode: "0750"
+    - require:
+      - file: /var/lib/dnsdist
+    - require_in:
+      - service: dnsdist
+{%- for name in dnscrypt_certs | sort %}
+{%- for ext in ['cert', 'key'] %}
+dnsdist-dnscrypt-{{ name }}-{{ ext }}:
+  file.decode:
+    - name: /var/lib/dnsdist/dnscrypt/{{ name }}.{{ ext }}
+    - contents_pillar: netbox:config_context:dnsdist:dnscrypt_certs:{{ name }}:{{ ext }}
+    - encoding_type: base64
+    - require:
+      - file: dnsdist-dnscrypt-dir
+    - watch_in:
+      - service: dnsdist
+dnsdist-dnscrypt-{{ name }}-{{ ext }}-perms:
   file.managed:
-    - source: salt://dnsdist/private/providerPrivate.key
-    - user: 1000
-    - group: 1000
-    - mode: "0644"
+    - name: /var/lib/dnsdist/dnscrypt/{{ name }}.{{ ext }}
+    - replace: False
+    - user: root
+    - group: _dnsdist
+    - mode: "0640"
     - show_changes: False
+    - require:
+      - file: dnsdist-dnscrypt-{{ name }}-{{ ext }}
     - require_in:
       - service: dnsdist
+{%- endfor %}
+{%- endfor %}
+# drop files of removed certificates (states required here are kept)
+dnsdist-dnscrypt-clean:
+  file.directory:
+    - name: /var/lib/dnsdist/dnscrypt
+    - clean: True
+    - require:
+{%- for name in dnscrypt_certs | sort %}
+{%- for ext in ['cert', 'key'] %}
+      - file: dnsdist-dnscrypt-{{ name }}-{{ ext }}-perms
+{%- endfor %}
+{%- endfor %}
+    - require_in:
+      - service: dnsdist
+{%- endif %}
+{%- endif %}{# webfrontend #}
 
 dnsdist-service-override:
   file.managed:
