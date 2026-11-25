@@ -45,7 +45,8 @@ Unattended-Upgrade::Origins-Pattern {
 };
 
 // Python regular expressions, matching packages to exclude from upgrading
-{%- set blacklist = salt['pillar.get']('unattended_upgrades:package_blacklist', ['bird', 'batman-adv-dkms']) %}
+{#- Default keeps the old list (gateways: batman-adv-dkms needs a matching kernel, libc/systemd restarts flap BGP and tunnels); narrow it per host via pillar #}
+{%- set blacklist = salt['pillar.get']('unattended_upgrades:package_blacklist', ['libc6$', 'libc6-dev$', 'libc6-i686$', 'bird', 'batman-adv-dkms', 'systemd', 'linux-image-generic']) %}
 Unattended-Upgrade::Package-Blacklist {
 {%- for pkg in blacklist %}
     "{{ pkg }}";
