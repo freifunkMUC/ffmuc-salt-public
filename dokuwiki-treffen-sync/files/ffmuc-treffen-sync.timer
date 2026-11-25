@@ -1,0 +1,11 @@
+[Unit]
+Description=Copy new Usertreffen minutes from Etherpad into DokuWiki weekly
+
+[Timer]
+OnCalendar=Thu *-*-* 06:00
+RandomizedDelaySec=30min
+Persistent=true
+Unit=ffmuc-treffen-sync.service
+
+[Install]
+WantedBy=timers.target

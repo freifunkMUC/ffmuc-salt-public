@@ -1,0 +1,9 @@
+[Unit]
+Description=Copy new Usertreffen minutes from Etherpad into DokuWiki
+After=docker.service network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+Nice=10
+ExecStart=/usr/local/sbin/ffmuc-treffen-sync

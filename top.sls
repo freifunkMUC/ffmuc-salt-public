@@ -81,6 +81,7 @@ base:
     - docker-user-firewall
   'docker04.in.ffmuc.net':
     - openldap-group-member
+    - dokuwiki-treffen-sync
   'docker05.in.ffmuc.net':
     - cryptpad
   'docker07.in.ffmuc.net':
