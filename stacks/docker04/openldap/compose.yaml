@@ -54,6 +54,10 @@ services:
       - LDAP_DOMAIN=ffmuc.net
       - LDAP_BASE_DN=dc=ffmuc,dc=net
       - LDAP_USER=cn=admin,dc=ffmuc,dc=net
+    volumes:
+      # lam.conf (hash mode LDAP_EXOP, set by ops/ffmuc-ldap-step-a.sh) survives a recreate;
+      # start.sh keeps an existing lam.conf and only rewrites its server/DN/master-password keys.
+      - lam-config:/var/lib/ldap-account-manager/config
     depends_on:
       - openldap
     labels:
@@ -77,6 +81,9 @@ services:
     security_opt:
       - no-new-privileges:true
     mem_limit: 256m
+
+volumes:
+  lam-config:
 
 networks:
   proxy:
