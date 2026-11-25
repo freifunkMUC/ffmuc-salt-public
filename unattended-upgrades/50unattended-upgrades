@@ -45,29 +45,11 @@ Unattended-Upgrade::Origins-Pattern {
 };
 
 // Python regular expressions, matching packages to exclude from upgrading
+{%- set blacklist = salt['pillar.get']('unattended_upgrades:package_blacklist', ['bird', 'batman-adv-dkms']) %}
 Unattended-Upgrade::Package-Blacklist {
-    // The following matches all packages starting with linux-
-//  "linux-";
-
-    // Use $ to explicitely define the end of a package name. Without
-    // the $, "libc6" would match all of them.
-    "libc6$";
-    "libc6-dev$";
-    "libc6-i686$";
-    "bird";
-    "batman-adv-dkms";
-    "systemd";
-    "linux-image-generic";
-
-    // Special characters need escaping
-//  "libstdc\+\+6$";
-
-    // The following matches packages like xen-system-amd64, xen-utils-4.1,
-    // xenstore-utils and libxenstore3.0
-//  "(lib)?xen(store)?";
-
-    // For more information about Python regular expressions, see
-    // https://docs.python.org/3/howto/regex.html
+{%- for pkg in blacklist %}
+    "{{ pkg }}";
+{%- endfor %}
 };
 
 // This option allows you to control if on a unclean dpkg exit
@@ -118,7 +100,8 @@ Unattended-Upgrade::Remove-Unused-Dependencies "false";
 
 // Automatically reboot *WITHOUT CONFIRMATION* if
 //  the file /var/run/reboot-required is found after the upgrade
-Unattended-Upgrade::Automatic-Reboot "false";
+Unattended-Upgrade::Automatic-Reboot "{{ 'true' if salt['pillar.get']('unattended_upgrades:automatic_reboot', False) else 'false' }}";
+Unattended-Upgrade::Automatic-Reboot-Time "{{ salt['pillar.get']('unattended_upgrades:reboot_time', '03:30') }}";
 
 // Automatically reboot even if there are users currently logged in
 // when Unattended-Upgrade::Automatic-Reboot is set to true
