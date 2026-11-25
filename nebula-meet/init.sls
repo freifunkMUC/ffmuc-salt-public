@@ -110,6 +110,8 @@ nebula-meet-reload-pki:
         - file: /etc/nebula-meet/ca.crt
         - file: /etc/nebula-meet/{{ cert_name }}.crt
         - file: /etc/nebula-meet/{{ cert_name }}.key
+    # skip right after a restart in the same run: the fresh process has read the files, and a SIGHUP during startup leaves nebula1 down
+    - unless: test $(( $(date +%s) - $(date -d "$(systemctl show nebula-meet -p ActiveEnterTimestamp --value)" +%s) )) -lt 60
     - require:
         - service: nebula-meet-service
 
