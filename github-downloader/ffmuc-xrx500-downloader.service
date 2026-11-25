@@ -1,0 +1,16 @@
+[Unit]
+Description=Install the latest xRX500 OpenWrt build into firmware.ffmuc.net/xrx500
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/xrx500-downloader latest
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=2h
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+ReadWritePaths=/srv/www/firmware.ffmuc.net
