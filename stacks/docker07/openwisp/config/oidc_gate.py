@@ -6,6 +6,7 @@
 #   /openwisp/<org-slug>/admin   same, plus user management (Django group Administrator)
 # Each login makes OrganizationUser and the two Django groups match the claim. Superusers, organization owners and organizations
 # that do not exist are left alone; organizations are created by ops/ffmuc-openwisp-site-orgs.sh, never from the claim.
+# A user who is no longer in `openwisp` loses memberships and groups when the login is refused (superusers and owners excepted).
 # The old claim format (bare group name, full.path off) still opens the gate but syncs nothing.
 import logging
 import re
@@ -69,10 +70,22 @@ def sync_user(user, orgs, admin):
                 user.groups.remove(group)
 
 
+def revoke_user(user):
+    """Rejected at login: drop organization memberships and the Operator/Administrator groups (not for superusers and owners)."""
+    from openwisp_users.models import OrganizationOwner, OrganizationUser
+
+    if user.is_superuser or OrganizationOwner.objects.filter(organization_user__user=user).exists():
+        return
+    OrganizationUser.objects.filter(user=user).delete()
+    user.groups.remove(*user.groups.filter(name__in=DJANGO_GROUPS))
+
+
 class GroupGateAdapter(DefaultSocialAccountAdapter):
     def pre_social_login(self, request, sociallogin):
         allowed, sync, orgs, admin = parse_groups(claim_groups(sociallogin.account.extra_data or {}))
         if not allowed:
+            if sociallogin.is_existing:
+                revoke_user(sociallogin.user)
             raise ImmediateHttpResponse(
                 HttpResponseForbidden(
                     "OpenWISP is for members of the group %s. Ask the FFMUC admins.\n"

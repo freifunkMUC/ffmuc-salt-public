@@ -27,6 +27,8 @@ sends full paths):
 `oidc_gate.py` makes `OrganizationUser` and the two Django groups match the claim at every login and removes memberships that are
 no longer in it. Not touched: superusers, organization owners, organizations that do not exist (created by
 `ops/ffmuc-openwisp-site-orgs.sh` in the admin repo, not from the claim), and users already logged in until their next login.
+A user who has left `openwisp` is refused (403) and loses memberships and both groups at that attempt (superusers and owners
+excepted); sessions that are already open run until they expire.
 A claim with bare group names (mapper `full.path` off) still opens the gate but syncs nothing: switch the mapper after this version runs.
 Tests: `python3 -m unittest discover -s stacks/docker07/openwisp/tests`.
 
