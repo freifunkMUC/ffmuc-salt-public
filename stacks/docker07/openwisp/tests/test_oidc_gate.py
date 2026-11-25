@@ -23,36 +23,47 @@ spec.loader.exec_module(gate)
 
 class ParseGroups(unittest.TestCase):
     def test_legacy_claim_opens_gate_without_sync(self):
-        self.assertEqual(gate.parse_groups({"openwisp"}), (True, False, {}, False))
+        self.assertEqual(gate.parse_groups({"openwisp"}), (True, False, {}))
 
     def test_other_group_is_refused(self):
         self.assertFalse(gate.parse_groups({"/other", "/other/openwisp"})[0])
         self.assertFalse(gate.parse_groups(set())[0])
 
     def test_parent_only(self):
-        self.assertEqual(gate.parse_groups({"/openwisp"}), (True, True, {}, False))
+        self.assertEqual(gate.parse_groups({"/openwisp"}), (True, True, {}))
 
     def test_subgroup_alone_opens_gate(self):
-        self.assertEqual(gate.parse_groups({"/openwisp/muc"}), (True, True, {"muc": False}, False))
+        self.assertEqual(gate.parse_groups({"/openwisp/muc"}), (True, True, {"muc": False}))
 
     def test_admin_wins_over_member(self):
         for groups in ({"/openwisp/muc", "/openwisp/muc/admin"}, {"/openwisp/muc/admin"}):
-            self.assertEqual(gate.parse_groups(groups)[2:], ({"muc": True}, True))
+            self.assertEqual(gate.parse_groups(groups)[2], {"muc": True})
 
     def test_several_orgs(self):
-        self.assertEqual(gate.parse_groups({"/openwisp/a", "/openwisp/b/admin"})[2:], ({"a": False, "b": True}, True))
+        self.assertEqual(gate.parse_groups({"/openwisp/a", "/openwisp/b/admin"})[2], {"a": False, "b": True})
 
     def test_ignores_odd_paths(self):
         groups = {"/openwisp", "/openwisp/Bad_Slug", "/openwisp/a/b", "/openwisp/a/admin/x", "/openwisp//admin", "/x/openwisp/a"}
-        self.assertEqual(gate.parse_groups(groups)[2:], ({}, False))
+        self.assertEqual(gate.parse_groups(groups)[2], {})
+
+
+class WantedGroup(unittest.TestCase):
+    def test_administrator_only_if_admin_everywhere(self):
+        self.assertEqual(gate.wanted_group({"a": True}, ["a"]), "Administrator")
+        self.assertEqual(gate.wanted_group({"a": True, "b": False}, ["a", "b"]), "Operator")
+        self.assertEqual(gate.wanted_group({"a": False}, ["a"]), "Operator")
+
+    def test_unknown_organizations_do_not_count(self):
+        self.assertEqual(gate.wanted_group({"a": True, "x": False}, ["a"]), "Administrator")
+        self.assertIsNone(gate.wanted_group({"x": True}, []))
 
 
 class Login(unittest.TestCase):
     def login(self, groups, existing=True):
         calls = []
         gate.revoke_user = lambda user: calls.append(("revoke", user))
-        gate.sync_user = lambda user, orgs, admin: calls.append(("sync", user, orgs, admin))
-        user = types.SimpleNamespace(is_staff=True)
+        gate.sync_user = lambda user, orgs: calls.append(("sync", user, orgs))
+        user = types.SimpleNamespace(is_staff=True, pk=1 if existing else None)
         account = types.SimpleNamespace(extra_data={"userinfo": {"groups": groups}})
         sociallogin = types.SimpleNamespace(account=account, user=user, is_existing=existing)
         try:
@@ -68,7 +79,10 @@ class Login(unittest.TestCase):
         self.assertEqual(self.login([], existing=False), ([], True))
 
     def test_member_is_synced(self):
-        self.assertEqual(self.login(["/openwisp/a/admin"]), ([("sync", unittest.mock.ANY, {"a": True}, True)], False))
+        self.assertEqual(self.login(["/openwisp/a/admin"]), ([("sync", unittest.mock.ANY, {"a": True})], False))
+
+    def test_new_user_is_synced_by_save_user_only(self):
+        self.assertEqual(self.login(["/openwisp/a"], existing=False), ([], False))
 
     def test_legacy_claim_is_not_synced(self):
         self.assertEqual(self.login(["openwisp"]), ([], False))

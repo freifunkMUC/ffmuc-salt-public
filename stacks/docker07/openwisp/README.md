@@ -22,7 +22,13 @@ sends full paths):
 |---|---|
 | `/openwisp` | may log in, staff, no organization |
 | `/openwisp/<org-slug>` | organization admin of `<org-slug>`, Django group Operator (device management) |
-| `/openwisp/<org-slug>/admin` | the same, Django group Administrator (also users of that organization) |
+| `/openwisp/<org-slug>/admin` | the same, Django group Administrator |
+
+Every organization membership is an organization admin (`is_admin`): OpenWISP shows a staff user only the organizations they manage, so
+without it the user would see nothing. The Django groups are global, not per organization: Administrator only for a user who is
+`/admin` in every organization they get, else Operator. Administrator on top of Operator adds adding, changing and deleting users,
+organization users, CAs, certificates, VPNs, subnets, credentials, API keys and the organization settings (Operator has
+read access to CAs, certificates, VPNs and Wi-Fi sessions and manages devices and templates), all within their organizations.
 
 `oidc_gate.py` makes `OrganizationUser` and the two Django groups match the claim at every login and removes memberships that are
 no longer in it. Not touched: superusers, organization owners, organizations that do not exist (created by
