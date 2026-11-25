@@ -348,3 +348,8 @@ prosody-smacks-h-cleanup-timer:
       - cmd: systemd-reload-prosody-smacks-h-cleanup
 
 {% endif %}{# if jitsi.prosody.enabled #}
+
+# Prosody logs (client addresses) are kept 7 days.
+/etc/logrotate.d/prosody:
+  file.managed:
+    - source: salt://jitsi/prosody/files/logrotate
