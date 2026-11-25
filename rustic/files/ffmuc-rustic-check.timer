@@ -1,0 +1,11 @@
+[Unit]
+Description=Checks a data subset of the FFmuc-rustic-backup repository every Wednesday at 5 am
+
+[Timer]
+OnCalendar=Wed *-*-* 05:00:00
+RandomizedDelaySec=1h
+Unit=ffmuc-rustic-check.service
+Persistent=true
+
+[Install]
+WantedBy=timers.target
