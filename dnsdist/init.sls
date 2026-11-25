@@ -75,8 +75,8 @@ dnsdist-old-{{ old }}:
 {#-
   DNSCrypt resolver certificates: generated offline (dnsdist/dnscrypt-certs.sh, signed with the provider
   key, which stays off all hosts) and identical on every webfrontend, because clients reach any node
-  behind the anycast address. Pillar netbox:config_context:dnsdist:dnscrypt_certs is a dict of
-  {<name>: {cert, key}} (base64). Never generated on the host; the state fails if the pillar is missing.
+  behind the anycast address. Pillar netbox:config_context:dnsdist:dnscrypt_certs maps a name to
+  cert and key (base64). Never generated on the host; the state fails if the pillar is missing.
   Rotation (12-month sets, serial rises): ~1 month before the old set expires generate a new set and
   add it, apply; after the old one has expired remove it, apply. Clients (dnscrypt-proxy
   refresh 4 h) pick the highest valid serial; the provider key and stamps stay unchanged.
