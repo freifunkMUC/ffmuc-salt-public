@@ -1,21 +1,78 @@
 # Mounted next to custom_django_settings.py (dashboard, which serves the login). Keycloak logins need the group `openwisp` in the `groups`
 # claim: in realm `chat`, logins through the member broker and self-registrations never run the client's gate flow.
-# Group members become staff (Django admin access); organization roles stay manual.
+# Group members become staff (Django admin access). Access per organization follows the group paths in the claim (full.path on):
+#   /openwisp                    may log in, no organization
+#   /openwisp/<org-slug>         manages the organization <org-slug> (Django group Operator)
+#   /openwisp/<org-slug>/admin   same, plus user management (Django group Administrator)
+# Each login makes OrganizationUser and the two Django groups match the claim. Superusers, organization owners and organizations
+# that do not exist are left alone; organizations are created by ops/ffmuc-openwisp-site-orgs.sh, never from the claim.
+# The old claim format (bare group name, full.path off) still opens the gate but syncs nothing.
+import logging
+import re
+
 from allauth.core.exceptions import ImmediateHttpResponse
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django.http import HttpResponseForbidden
 
 GROUP = "openwisp"
+DJANGO_GROUPS = ("Operator", "Administrator")  # model permissions; the organizations scope them through OrganizationUser
+SLUG = re.compile(r"^[a-z0-9][a-z0-9-]*$")
+log = logging.getLogger(__name__)
+
+
+def claim_groups(extra_data):
+    groups = set()
+    for part in ("userinfo", "id_token"):
+        claim = (extra_data.get(part) or {}).get("groups") or []
+        groups.update([claim] if isinstance(claim, str) else claim)
+    return groups
+
+
+def parse_groups(groups):
+    """-> (allowed, sync, orgs, admin); orgs: slug -> True for /openwisp/<slug>/admin; sync: the claim carries paths."""
+    sync = any(g.startswith("/") for g in groups)
+    allowed = GROUP in groups or "/" + GROUP in groups or any(g.startswith("/%s/" % GROUP) for g in groups)
+    orgs = {}
+    for g in groups:
+        parts = g.split("/")
+        if len(parts) < 3 or parts[:2] != ["", GROUP] or not SLUG.match(parts[2]):
+            continue
+        if len(parts) == 3:
+            orgs.setdefault(parts[2], False)
+        elif len(parts) == 4 and parts[3] == "admin":
+            orgs[parts[2]] = True
+    return allowed, sync, orgs, any(orgs.values())
+
+
+def sync_user(user, orgs, admin):
+    from django.contrib.auth.models import Group
+    from django.db import transaction
+    from openwisp_users.models import Organization, OrganizationUser
+
+    if user.is_superuser:
+        return
+    with transaction.atomic():
+        known = {o.slug: o for o in Organization.objects.filter(slug__in=orgs)}
+        for slug in sorted(set(orgs) - set(known)):
+            log.warning("openwisp group for unknown organization %r ignored", slug)
+        # is_admin is what lets a staff user see and change the organization's objects
+        for org in known.values():
+            OrganizationUser.objects.update_or_create(user=user, organization=org, defaults={"is_admin": True})
+        OrganizationUser.objects.filter(user=user, organizationowner__isnull=True).exclude(
+            organization__in=known.values()
+        ).delete()
+        want = ("Administrator" if admin else "Operator") if known else None
+        for group in Group.objects.filter(name__in=DJANGO_GROUPS):
+            if group.name == want:
+                user.groups.add(group)
+            else:
+                user.groups.remove(group)
 
 
 class GroupGateAdapter(DefaultSocialAccountAdapter):
     def pre_social_login(self, request, sociallogin):
-        data = sociallogin.account.extra_data or {}
-        groups = set()
-        for part in ("userinfo", "id_token"):
-            claim = (data.get(part) or {}).get("groups") or []
-            groups.update([claim] if isinstance(claim, str) else claim)
-        if GROUP not in groups:
+        allowed, sync, orgs, admin = parse_groups(claim_groups(sociallogin.account.extra_data or {}))
+        if not allowed:
             raise ImmediateHttpResponse(
                 HttpResponseForbidden(
                     "OpenWISP is for members of the group %s. Ask the FFMUC admins.\n"
@@ -24,12 +81,22 @@ class GroupGateAdapter(DefaultSocialAccountAdapter):
                 )
             )
         user = sociallogin.user
-        if sociallogin.is_existing and not user.is_staff:
-            user.is_staff = True
-            user.save(update_fields=["is_staff"])
+        if sociallogin.is_existing:
+            if not user.is_staff:
+                user.is_staff = True
+                user.save(update_fields=["is_staff"])
+            if sync:
+                sync_user(user, orgs, admin)
         super().pre_social_login(request, sociallogin)
 
     def populate_user(self, request, sociallogin, data):
         user = super().populate_user(request, sociallogin, data)
         user.is_staff = True
+        return user
+
+    def save_user(self, request, sociallogin, form=None):
+        user = super().save_user(request, sociallogin, form)
+        _, sync, orgs, admin = parse_groups(claim_groups(sociallogin.account.extra_data or {}))
+        if sync:
+            sync_user(user, orgs, admin)
         return user

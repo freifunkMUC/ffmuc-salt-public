@@ -8,10 +8,27 @@ Break-glass: `https://openwisp.ov.ffmuc.net` (overlay, Traefik without `noc-auth
 - Off: RADIUS, OpenVPN (management VPN, `VPN_DOMAIN` empty), postfix (mail goes to `mail01.fnmuc.net:587` as
   `no-reply@ffmuc.net`), topology, firmware upgrader. On: monitoring with InfluxDB 1.8.
 - Login: Keycloak realm `chat`, client `openwisp`, only members of the group `openwisp` (`config/oidc_gate.py` checks the
-  `groups` claim and makes members staff; organization roles stay manual) (`config/custom_django_settings.py`, django-allauth `openid_connect`; mounted into the image, no derived image needed).
+  `groups` claim and makes members staff and syncs organizations, see below) (`config/custom_django_settings.py`, django-allauth `openid_connect`; mounted into the image, no derived image needed).
   Start at `/accounts/oidc/keycloak/login/`; the login page has no provider button.
-  New users have no rights: a superuser grants them an organization role.
+  New users have no rights until a Keycloak subgroup gives them an organization (below).
 - Break-glass: local superuser `admin` on `/admin/login/` at the overlay name.
+
+## Access per organization
+
+One organization per site or community; rights follow Keycloak subgroups of `openwisp` in realm `chat` (the client's `groups` mapper
+sends full paths):
+
+| Group | Effect at login |
+|---|---|
+| `/openwisp` | may log in, staff, no organization |
+| `/openwisp/<org-slug>` | organization admin of `<org-slug>`, Django group Operator (device management) |
+| `/openwisp/<org-slug>/admin` | the same, Django group Administrator (also users of that organization) |
+
+`oidc_gate.py` makes `OrganizationUser` and the two Django groups match the claim at every login and removes memberships that are
+no longer in it. Not touched: superusers, organization owners, organizations that do not exist (created by
+`ops/ffmuc-openwisp-site-orgs.sh` in the admin repo, not from the claim), and users already logged in until their next login.
+A claim with bare group names (mapper `full.path` off) still opens the gate but syncs nothing: switch the mapper after this version runs.
+Tests: `python3 -m unittest discover -s stacks/docker07/openwisp/tests`.
 
 ## First setup (admin, on docker07)
 
