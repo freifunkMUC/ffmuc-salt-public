@@ -23,3 +23,27 @@ jitsi-java17:
     - unless: test "$(readlink -f /etc/alternatives/java)" = /usr/lib/jvm/java-{{ java_ver }}-openjdk-{{ grains['osarch'] }}/bin/java
     - require:
       - pkg: jitsi-java17
+
+{#- rpcbind and postfix come in with monitoring-plugins-standard and are not needed; keep them off the network #}
+jitsi-rpcbind-masked:
+  service.masked:
+    - names:
+      - rpcbind.service
+      - rpcbind.socket
+    - onlyif: test -e /lib/systemd/system/rpcbind.service -o -e /usr/lib/systemd/system/rpcbind.service
+    - require_in:
+      - service: jitsi-rpcbind-dead
+
+jitsi-rpcbind-dead:
+  service.dead:
+    - names:
+      - rpcbind.socket
+      - rpcbind.service
+    - onlyif: test -e /lib/systemd/system/rpcbind.service -o -e /usr/lib/systemd/system/rpcbind.service
+
+{#- local delivery only: no relayhost, empty queue, nothing sends mail off-host #}
+jitsi-postfix-loopback:
+  cmd.run:
+    - name: postconf -e 'inet_interfaces = loopback-only' && systemctl restart postfix
+    - onlyif: test -x /usr/sbin/postconf
+    - unless: test "$(postconf -h inet_interfaces)" = loopback-only
