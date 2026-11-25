@@ -11,8 +11,6 @@ x-peering-manager-secrets: &pm-secrets
   REDIS_CACHE_PASSWORD: ${REDIS_CACHE_PASSWORD:?}
   PEERINGDB_PASSWORD: ${PEERINGDB_PASSWORD:?}
   PEERINGDB_API_KEY: ${PEERINGDB_API_KEY:?}
-  SUPERUSER_PASSWORD: ${SUPERUSER_PASSWORD:?}
-  SUPERUSER_API_TOKEN: ${SUPERUSER_API_TOKEN:?}
 x-peering-manager-image: &pm-image docker.io/peeringmanager/peering-manager:v1.11.1-2.4.0@sha256:dbb0f83ab86299be4e9020c1780abed4cf07328ab74c505bb96752119937f152
 
 services:
