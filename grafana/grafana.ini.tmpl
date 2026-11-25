@@ -234,17 +234,26 @@ org_role = Viewer
 
 #################################### Generic OAuth ##########################
 [auth.generic_oauth]
+# Keycloak realm noc (admin tools, role Admin only); secret in the NetBox config context (grafana_oidc_secret)
+{% set oidc_secret = salt['config.get']('netbox:config_context:grafana_oidc_secret', '') %}
+{% if oidc_secret %}
+enabled = true
+name = FFMUC SSO
+allow_sign_up = true
+client_id = grafana
+client_secret = {{ oidc_secret }}
+scopes = openid profile email
+auth_url = https://keycloak.ffmuc.net/realms/noc/protocol/openid-connect/auth
+token_url = https://keycloak.ffmuc.net/realms/noc/protocol/openid-connect/token
+api_url = https://keycloak.ffmuc.net/realms/noc/protocol/openid-connect/userinfo
+use_pkce = true
+login_attribute_path = preferred_username
+role_attribute_path = contains(realm_access.roles[*], 'Admin') && 'GrafanaAdmin' || 'Viewer'
+role_attribute_strict = true
+allow_assign_grafana_admin = true
+{% else %}
 ;enabled = false
-;name = OAuth
-;allow_sign_up = true
-;client_id = some_id
-;client_secret = some_secret
-;scopes = user:email,read:org
-;auth_url = https://foo.bar/login/oauth/authorize
-;token_url = https://foo.bar/login/oauth/access_token
-;api_url = https://foo.bar/user
-;team_ids =
-;allowed_organizations =
+{% endif %}
 
 #################################### Grafana.net Auth ####################
 [auth.grafananet]
