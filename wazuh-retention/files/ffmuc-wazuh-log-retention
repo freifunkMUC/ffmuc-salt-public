@@ -1,0 +1,23 @@
+#!/bin/sh
+# Delete Wazuh manager alert/archive files older than 90 days (bind mount of the manager's logs).
+# Dry run: ffmuc-wazuh-log-retention --dry-run. Logs only counts, never file contents.
+set -eu
+base=/srv/docker/wazuh/manager/logs
+days=90
+dry=0
+[ "${1:-}" = "--dry-run" ] && dry=1
+total=0
+for d in alerts archives; do
+  [ -d "$base/$d" ] || continue
+  n=$(find "$base/$d" -type f -name 'ossec-*' -mtime +"$days" | wc -l)
+  if [ "$dry" = 0 ] && [ "$n" -gt 0 ]; then
+    find "$base/$d" -type f -name 'ossec-*' -mtime +"$days" -delete
+    find "$base/$d" -mindepth 1 -type d -empty -delete
+  fi
+  total=$((total + n))
+done
+if [ "$dry" = 1 ]; then
+  echo "wazuh log retention: dry run, $total files older than $days days would be deleted"
+else
+  echo "wazuh log retention: deleted $total files older than $days days"
+fi

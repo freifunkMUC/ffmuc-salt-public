@@ -88,6 +88,7 @@ base:
     - bgpalerter
     - keycloak
     - tuwunel
+    - wazuh-retention
   'gw04.in.ffmuc.net':
     - meshviewer-web
   # Parker gateways (states only with the NetBox role parker-gateway)
