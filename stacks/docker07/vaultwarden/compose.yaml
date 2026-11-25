@@ -10,6 +10,7 @@ services:
       DOMAIN: "https://vault.ffmuc.net"
       ROCKET_PORT: "8080"
       SIGNUPS_ALLOWED: false
+      ICON_SERVICE: duckduckgo  # clients load icons from DuckDuckGo, no server-side fetches
       ADMIN_TOKEN: ${ADMIN_TOKEN}
       SSO_ENABLED: true
       SSO_ONLY: false

@@ -51,6 +51,9 @@ All containers: `cap_drop: ALL`, `no-new-privileges`. Exceptions:
 the CSRF origins (`config/custom_django_settings.py`) and the Traefik rule.
 `NGINX_TRUSTED_PROXIES` lists the webfrontends (HAProxy sets `X-Forwarded-For`); `OIDC_SERVER_URL` sets the Keycloak discovery URL.
 Another dashboard name needs the redirect URI in the Keycloak client; `NGINX_ADMIN_ALLOW_NETWORK` restricts `/admin` if needed.
+Links in mails (password reset, notifications) take the domain of the Django Site (id 1), not `DASHBOARD_DOMAIN`:
+after a rename set it in `manage.py shell` (`Site.objects.filter(id=1).update(domain=..., name=...)`) and restart
+dashboard, api, websocket and the celery containers, each process caches it (it held the overlay name until 25.11.2026).
 
 ## Lab results
 
