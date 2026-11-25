@@ -15,3 +15,5 @@
 {#- nebula-meet listens on a random UDP port unless the context nebula-meet.listen.port fixes it #}
 {%- set nebula_port = salt['pillar.get']('netbox:config_context:nebula-meet:listen:port', 0) | int(0) %}
 {%- set nebula_dport = nebula_port if nebula_port > 0 else '32768:60999' %}
+{#- nft: native nftables table instead of iptables (LXC on a host without nft_compat/xt modules, e.g. jvb33); jvb only #}
+{%- set backend = cfg.get('backend', 'iptables') %}

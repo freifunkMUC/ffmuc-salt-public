@@ -1,0 +1,49 @@
+{%- from 'iptables/jitsi_map.jinja' import ssh_sources, own_v4, own_v6, meet_net, nebula_dport with context %}
+# Managed with Salt
+# Jitsi bridge firewall as a native nftables table (same rules as jitsi_rules.v4/v6.jinja for jvb).
+# Only this table is replaced; fail2ban keeps its own table.
+table inet jitsi
+delete table inet jitsi
+table inet jitsi {
+  # Media is stateless: no conntrack entry per client
+  chain raw_prerouting {
+    type filter hook prerouting priority raw; policy accept;
+    udp dport 10000 notrack
+  }
+  chain raw_output {
+    type filter hook output priority raw; policy accept;
+    udp sport 10000 notrack
+  }
+  chain input {
+    type filter hook input priority filter; policy accept;
+    iifname "lo" accept
+    udp dport 10000 accept
+    ct state established,related accept
+    meta l4proto { icmp, ipv6-icmp } accept
+    meta nfproto ipv4 udp sport 67 udp dport 68 accept
+    ip6 saddr fe80::/10 udp dport 546 accept
+    # Management: ssh and mosh over the overlay and from the own prefixes and operator addresses
+    iifname "nebula1" tcp dport 22 accept
+    iifname "nebula1" udp dport 60001-60010 accept
+{%- if ssh_sources %}
+{%- for src in own_v4 + ssh_sources if ':' not in src %}
+    ip saddr {{ src }} tcp dport 22 accept
+    ip saddr {{ src }} udp dport 60001-60010 accept
+{%- endfor %}
+{%- for src in own_v6 + ssh_sources if ':' in src %}
+    ip6 saddr {{ src }} tcp dport 22 accept
+    ip6 saddr {{ src }} udp dport 60001-60010 accept
+{%- endfor %}
+{%- else %}
+    tcp dport 22 accept
+    udp dport 60001-60010 accept
+{%- endif %}
+    # BGP to the site gateways
+    ip saddr 172.31.0.0/16 tcp dport 179 accept
+    ip6 saddr { 2001:678:e68:fff0::/64, 2001:678:ed0:fff0::/64, fe80::/10 } tcp dport 179 accept
+    udp dport {{ nebula_dport | string | replace(':', '-') }} accept
+    # Icinga agent API and colibri websocket (proxied by the jicofo nginx) over the overlay
+    iifname "nebula1" ip saddr {{ meet_net }} tcp dport { 5665, 9090 } accept
+    reject with icmpx type port-unreachable
+  }
+}
