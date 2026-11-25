@@ -15,7 +15,7 @@ x-mastodon-secrets: &mastodon-secrets
 
 services:
   es:
-    image: public.ecr.aws/opensearchproject/opensearch:2.19.7@sha256:d89333b6bd4a13b9a95aef7f373c0a6e73440f59bc0d8d1460f9b347289ed0ef
+    image: public.ecr.aws/opensearchproject/opensearch:2.19.8@sha256:0171f36eee4c50f5251e858458216612c4b86bbf4cba4eb28e3b0708944266cf
     restart: unless-stopped
     environment:
       - discovery.type=single-node
