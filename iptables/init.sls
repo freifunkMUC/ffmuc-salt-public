@@ -10,6 +10,13 @@ nftables_pkg:
   pkg.installed:
     - name: nftables
 
+# Debian's nftables.service loads /etc/nftables.conf with `flush ruleset` (would drop this table and fail2ban's)
+nftables_service_masked:
+  service.masked:
+    - name: nftables
+    - require:
+      - pkg: nftables_pkg
+
 /etc/nftables-jitsi.nft:
   file.managed:
     - source: salt://iptables/files/jitsi_rules.nft.jinja
@@ -19,8 +26,6 @@ nftables_pkg:
     - mode: '0644'
     - backup: '.bak'
     - check_cmd: /usr/sbin/nft -c -f
-    - context:
-        jitsi_role: {{ jitsi_role }}
     - require:
       - pkg: nftables_pkg
 
@@ -38,7 +43,7 @@ nftables_pkg:
         Type=oneshot
         RemainAfterExit=yes
         ExecStart=/usr/sbin/nft -f /etc/nftables-jitsi.nft
-        ExecStop=/usr/sbin/nft delete table inet jitsi
+        ExecStop=-/usr/sbin/nft delete table inet jitsi
 
         [Install]
         WantedBy=multi-user.target
