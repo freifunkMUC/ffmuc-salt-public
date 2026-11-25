@@ -74,8 +74,8 @@ generate_ssh_host_ed25519_key:
         - file: /etc/nebula/{{ cert_name }}.crt
         - file: /etc/nebula/{{ cert_name }}.key
 
-# restarting (not reloading) keeps a package upgrade from running the new binary
-# only after a second restart racing the first one
+# restarting (not reloading) on config.yml or package changes keeps a package upgrade from running the new binary
+# only after a second restart racing the first one; ca/cert/key changes only reload (nebula-reload-pki)
 nebula-config-test:
   cmd.run:
     - name: /usr/bin/nebula -test -config /etc/nebula/config.yml
@@ -99,10 +99,20 @@ nebula-service:
         - cmd: nebula-config-test
     - watch:
         - file: /etc/nebula/config.yml
+        - pkg: nebula-pkg
+
+{#- CA bundle, cert and key are re-read on SIGHUP without dropping tunnels (config.yml changes and package upgrades still restart) #}
+nebula-reload-pki:
+  cmd.run:
+    - name: /usr/bin/nebula -test -config /etc/nebula/config.yml && systemctl reload nebula
+    - onchanges:
         - file: /etc/nebula/ca.crt
         - file: /etc/nebula/{{ cert_name }}.crt
         - file: /etc/nebula/{{ cert_name }}.key
-        - pkg: nebula-pkg
+    # skip right after a restart in the same run: the fresh process has read the files, and a SIGHUP during startup leaves the tun down
+    - unless: test $(( $(date +%s) - $(date -d "$(systemctl show nebula -p ActiveEnterTimestamp --value)" +%s) )) -lt 60
+    - require:
+        - service: nebula-service
 
 {% else %}
 {# remove old config to allow migration to new file destination #}
