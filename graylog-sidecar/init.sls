@@ -1,19 +1,3 @@
-{#- renovate: datasource=github-releases depName=Graylog2/collector-sidecar #}
-{%- set sidecar_version = '1.5.6' %}
-{% if grains.os == 'Raspbian' %}
-{#- no armhf in the graylog and elastic repos: fixed .debs, same IDs as pkg.latest below for the requisites #}
-graylog-sidecar:
-  pkg.installed:
-    - sources:
-      - graylog-sidecar: https://github.com/Graylog2/collector-sidecar/releases/download/{{ sidecar_version }}/graylog-sidecar_{{ sidecar_version }}-1_armv7.deb
-
-filebeat:
-  pkg.installed:
-    - sources:
-      - filebeat: https://apt.ffmuc.net/filebeat-oss-9.5.6-ffmuc1-armhf.deb
-
-{% else %}{# if Raspbian #}
-
 graylog-repo-key:
   file.managed:
     - name: /usr/share/keyrings/graylog-keyring.gpg
@@ -66,8 +50,6 @@ graylog-sidecar:
 
 filebeat:
   pkg.latest
-
-{% endif %}{# if Raspbian #}
 
 {% if not salt['file.file_exists']('/etc/systemd/system/graylog-sidecar.service') %}
 graylog-sidecar-install-service:
