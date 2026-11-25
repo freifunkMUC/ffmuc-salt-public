@@ -14,7 +14,7 @@ Agents will be rolled out by a Salt state `wazuh-agent` (follow-up PR, together 
   sudo checks on the vm-hosts and gateways (`100100`/`100101`) and the nameless-uid sudo PAM session lines (`100102`/`100103`;
   other sudo use and named users still alert), the nginx client reset on the gateways (`100110`), and 404 scanner bursts of
   `31151` at level 6 (`100120`, dashboard only, below the Mattermost threshold). Test: `wazuh-logtest`.
-- Retention 90 days (alert, monitoring and statistics indices). Indexer data is not backed up (`.nobackup`);
+- Retention 90 days (alert, monitoring and statistics indices). Indexer data is not backed up (`.nobackup`); Manager alert files under `/srv/docker/wazuh/manager/logs` are removed after 90 days by the `wazuh-retention` Salt state (daily timer; `ffmuc-wazuh-log-retention --dry-run`).
   manager config, rules and agent keys in `/srv/docker/wazuh/manager/etc` are.
 
 ## First setup (admin, on docker07)

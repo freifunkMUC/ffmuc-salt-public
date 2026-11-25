@@ -1,0 +1,6 @@
+[Unit]
+Description=Delete Wazuh manager alert and archive files older than 90 days
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/ffmuc-wazuh-log-retention
