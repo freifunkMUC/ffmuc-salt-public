@@ -87,6 +87,7 @@ dnsdist-dnscrypt-certs-missing:
   test.fail_without_changes:
     - name: netbox:config_context:dnsdist:dnscrypt_certs is missing, refusing to touch DNSCrypt
     - require_in:
+      - file: /etc/dnsdist/dnsdist.conf
       - service: dnsdist
 {%- else %}
 dnsdist-dnscrypt-dir:
