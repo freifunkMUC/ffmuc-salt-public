@@ -97,6 +97,17 @@ wazuh-agent-journald-filter:
     - require:
       - pkg: wazuh-agent
 
+# rootcheck scans (12 h, on start) fill the default 5000-event buffer within seconds (rule 202/203)
+wazuh-agent-client-buffer:
+  file.replace:
+    - name: /var/ossec/etc/ossec.conf
+    - pattern: '(<client_buffer>.*?)<queue_size>\d+</queue_size>'
+    - flags: ['DOTALL']
+    - repl: '\g<1><queue_size>20000</queue_size>'
+    - count: 1
+    - require:
+      - pkg: wazuh-agent
+
 wazuh-agent-nginx-error-ignore:
   file.replace:
     - name: /var/ossec/etc/ossec.conf
@@ -116,5 +127,6 @@ wazuh-agent-service:
       - file: wazuh-agent-config
       - file: wazuh-agent-journald-filter
       - file: wazuh-agent-nginx-error-ignore
+      - file: wazuh-agent-client-buffer
       - file: wazuh-agent-authd-pass
 {%- endif %}
