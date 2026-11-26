@@ -12,7 +12,7 @@ x-logging: &logging
 services:
   # root and default capabilities as upstream: s6 and the wazuh daemons need them
   wazuh.manager:
-    image: wazuh/wazuh-manager:4.14.10@sha256:eabfa7ee4e63acb51c2130fa0583e30f843d030b091cf45a4fbd93d78fa21517
+    image: wazuh/wazuh-manager:4.14.11@sha256:3d0e5752ea98cb3b036530074cd9851dce6ab1fa01122e0d939226b766389a6d
     hostname: wazuh.manager
     restart: unless-stopped
     ulimits:
@@ -66,7 +66,7 @@ services:
         condition: service_healthy
 
   wazuh.indexer:
-    image: wazuh/wazuh-indexer:4.14.10@sha256:1d2aeadb9de88c6d17ce12030606425deca5a210cdf5c87008843da38eb629ea
+    image: wazuh/wazuh-indexer:4.14.11@sha256:6855bea0a883fda201cba1b9969a744d01559bb4ee05aa4703b937edee0c11e5
     hostname: wazuh.indexer
     restart: unless-stopped
     environment:
@@ -101,7 +101,7 @@ services:
     logging: *logging
 
   wazuh.dashboard:
-    image: wazuh/wazuh-dashboard:4.14.10@sha256:4d48be7210a291c00a2bd148cbd8bd61a25876e947b81790fd03f7d2aabda95a
+    image: wazuh/wazuh-dashboard:4.14.11@sha256:38ad3289540e4c5d42a4e434c82299f092ae8aeb1e10bc28a472fdc268ffb752
     hostname: wazuh.dashboard
     restart: unless-stopped
     environment:
@@ -150,7 +150,7 @@ services:
   # securityadmin (README).
   init-users:
     profiles: [init]
-    image: wazuh/wazuh-indexer:4.14.10@sha256:1d2aeadb9de88c6d17ce12030606425deca5a210cdf5c87008843da38eb629ea
+    image: wazuh/wazuh-indexer:4.14.11@sha256:6855bea0a883fda201cba1b9969a744d01559bb4ee05aa4703b937edee0c11e5
     entrypoint: ["bash", "/init-users.sh"]
     user: "1000:1000"
     network_mode: none
@@ -166,7 +166,7 @@ services:
   # 90 day retention for alert, monitoring and statistics indices (README, step "Retention").
   ism:
     profiles: [init]
-    image: wazuh/wazuh-indexer:4.14.10@sha256:1d2aeadb9de88c6d17ce12030606425deca5a210cdf5c87008843da38eb629ea
+    image: wazuh/wazuh-indexer:4.14.11@sha256:6855bea0a883fda201cba1b9969a744d01559bb4ee05aa4703b937edee0c11e5
     entrypoint: ["bash", "/ism.sh"]
     user: "1000:1000"
     environment:
