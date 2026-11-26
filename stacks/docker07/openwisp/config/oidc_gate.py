@@ -51,18 +51,29 @@ def ensure_personal_org(user):
     with transaction.atomic():
         org = Organization.objects.filter(description=marker).first()
         while org is None:
-            slug = free_slug(user.username, lambda s: Organization.objects.filter(slug=s).exists())
+            slug = free_slug(
+                user.username, lambda s: Organization.objects.filter(slug=s).exists()
+            )
             try:
                 with transaction.atomic():
-                    org = Organization.objects.create(name=user.username, slug=slug, description=marker)
+                    org = Organization.objects.create(
+                        name=user.username, slug=slug, description=marker
+                    )
             except IntegrityError:  # slug taken meanwhile
                 org = None
         # is_admin is what lets a staff user see the organization's objects; a signal makes the first admin owner, made sure here
-        ou, _ = OrganizationUser.objects.update_or_create(user=user, organization=org, defaults={"is_admin": True})
-        OrganizationOwner.objects.get_or_create(organization=org, defaults={"organization_user": ou})
+        ou, _ = OrganizationUser.objects.update_or_create(
+            user=user, organization=org, defaults={"is_admin": True}
+        )
+        OrganizationOwner.objects.get_or_create(
+            organization=org, defaults={"organization_user": ou}
+        )
         group = Group.objects.filter(name=PERSONAL_GROUP).first()
         if group is None:
-            log.warning("Django group %s missing: its permissions cannot be granted", PERSONAL_GROUP)
+            log.warning(
+                "Django group %s missing: its permissions cannot be granted",
+                PERSONAL_GROUP,
+            )
         else:
             user.groups.add(group)
 
@@ -90,7 +101,9 @@ class GroupGateAdapter(DefaultSocialAccountAdapter):
                 )
             )
         user = sociallogin.user
-        if user.pk:  # linked account, or an existing user matched by e-mail (allauth looked it up before this hook)
+        if (
+            user.pk
+        ):  # linked account, or an existing user matched by e-mail (allauth looked it up before this hook)
             if not user.is_staff:
                 user.is_staff = True
                 user.save(update_fields=["is_staff"])
