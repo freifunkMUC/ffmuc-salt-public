@@ -132,7 +132,7 @@
     },
     {
       "description": "EMQX 5.9 and later are BSL 1.1: free only as single nodes, and wgkex runs a four-node cluster (docker04-07). Stay on the last Apache-2.0 line until wgkex has another broker.",
-      "matchPackageNames": ["emqx/emqx"],
+      "matchPackageNames": ["emqx/emqx", "ghcr.io/freifunkmuc/emqx-docker"],
       "allowedVersions": "<5.9"
     },
     {
