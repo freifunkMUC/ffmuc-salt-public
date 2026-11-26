@@ -40,6 +40,13 @@ trivy-jq:
   file.directory:
     - mode: "0755"
 
+/var/lib/ffmuc-trivy/ignore.rego:
+  file.managed:
+    - source: salt://trivy/files/ignore.rego
+    - mode: "0644"
+    - require:
+      - file: /var/lib/ffmuc-trivy
+
 # Icinga check_ffmuc_trivy: only runs with this file; its mtime is the grace period of a fresh host
 /var/lib/ffmuc-trivy/.enabled:
   file.managed:
@@ -53,6 +60,7 @@ trivy-jq:
     - source: salt://trivy/files/ffmuc-trivy-scan.service
     - require:
       - file: /usr/local/sbin/ffmuc-trivy-scan.sh
+      - file: /var/lib/ffmuc-trivy/ignore.rego
       - file: trivy-binary
       - pkg: trivy-jq
 

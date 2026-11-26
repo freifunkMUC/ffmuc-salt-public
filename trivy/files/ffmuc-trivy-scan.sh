@@ -1,5 +1,6 @@
 #!/bin/bash
-# Scans the images of running containers for fixable HIGH/CRITICAL vulnerabilities (no secret scanning).
+# Scans the images of running containers for fixable HIGH/CRITICAL vulnerabilities (no secret scanning;
+# ignore.rego drops linux-libc-dev: kernel headers, not reachable in a container).
 # Writes /var/lib/ffmuc-trivy/report.json (counts and fixable CRITICAL CVE IDs per image, last report only);
 # check_ffmuc_trivy reads it. "new" = number of (image, CVE) pairs of fixable CRITICALs that were not in the previous
 # report (0 without a usable previous report); image = Config.Image of a container using it (digest stripped).
@@ -19,7 +20,7 @@ for o in --download-db-only --download-java-db-only; do
 done
 scan() {
   trivy image --quiet --no-progress --skip-version-check --scanners vuln --severity HIGH,CRITICAL \
-    --skip-db-update --skip-java-db-update --ignore-unfixed --format json --output "$T/r.json" "$1" 2>"$T/err" \
+    --skip-db-update --skip-java-db-update --ignore-unfixed --ignore-policy "$D/ignore.rego" --format json --output "$T/r.json" "$1" 2>"$T/err" \
     && jq -c --arg n "$2" '{image: $n,
       critical: ([.Results[]?.Vulnerabilities[]? | select(.Severity == "CRITICAL")] | length),
       cves: ([.Results[]?.Vulnerabilities[]? | select(.Severity == "CRITICAL") | .VulnerabilityID] | unique),
