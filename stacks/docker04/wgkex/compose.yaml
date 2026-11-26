@@ -40,7 +40,8 @@ services:
     mem_limit: 128m
 
   mqtt_cluster:
-    image: emqx/emqx:5.8.9@sha256:35b46f7aa7a0d51f3959e4344221ac5ec7f948b03e43099286b6c40a07bb393b
+    # emqx/emqx:5.8.9 plus Debian security updates, rebuilt daily (freifunkMUC/emqx-docker)
+    image: ghcr.io/freifunkmuc/emqx-docker:5.8.9@sha256:3ca4f8380e420b1bc8b65754fd099e9a22542890fa3f06020416982b20670d76
     container_name: mqtt_cluster
     restart: unless-stopped
     # Users from Periphery secrets (hex, no commas); EMQX imports them only while its user table is empty,
