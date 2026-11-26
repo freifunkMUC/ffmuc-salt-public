@@ -12,7 +12,7 @@ Installs the Wazuh agent and enrolls it at the manager (`stacks/docker07/wazuh`,
   tcp/1514, enrollment with `authorization_pass_path`); the agent name is the short minion id.
 - **Log noise:** the packaged `journald` localfile gets a filter that drops `haproxy` (webfrontends; the access logs are in Graylog and
   flooded the agent queue, rule 203), and nginx `error.log` ignores the client-reset line `recv() failed (104 ...) while proxying`.
-  Both are `file.replace` on the packaged blocks (no-op when the block is absent). Manager side: `stacks/docker07/wazuh/config/local_rules.xml`.
+  The agent buffer (`client_buffer` queue_size) is raised from 5000 to 20000: the 12 h rootcheck scan bursts above 500 events/s and filled it (rule 202/203). All are `file.replace` on the packaged blocks (no-op when the block is absent). Manager side: `stacks/docker07/wazuh/config/local_rules.xml`.
 - **Pillar** (master, not in Git): `wazuh:enrollment_password`, the same value as the manager's `WAZUH_AUTHD_PASS`
   (Komodo Periphery secret in `komodo-secrets/docker07.sls`). Example, `/srv/docker/salt/pillar/wazuh.sls` (`#!yaml`, 0640):
 
