@@ -11,12 +11,18 @@ for name, attrs in {
     "allauth.core": {},
     "allauth.core.exceptions": {"ImmediateHttpResponse": Exception},
     "allauth.socialaccount": {},
-    "allauth.socialaccount.adapter": {"DefaultSocialAccountAdapter": type("Base", (), {"pre_social_login": lambda self, request, sociallogin: None})},
+    "allauth.socialaccount.adapter": {
+        "DefaultSocialAccountAdapter": type(
+            "Base", (), {"pre_social_login": lambda self, request, sociallogin: None}
+        )
+    },
     "django": {},
     "django.http": {"HttpResponseForbidden": lambda *args, **kwargs: None},
 }.items():
     sys.modules.setdefault(name, types.SimpleNamespace(**attrs))
-spec = importlib.util.spec_from_file_location("oidc_gate", os.path.join(HERE, "..", "config", "oidc_gate.py"))
+spec = importlib.util.spec_from_file_location(
+    "oidc_gate", os.path.join(HERE, "..", "config", "oidc_gate.py")
+)
 gate = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(gate)
 
@@ -28,12 +34,16 @@ class Allowed(unittest.TestCase):
 
     def test_other_groups_refused(self):
         self.assertFalse(gate.allowed(set()))
-        self.assertFalse(gate.allowed({"/other", "/other/openwisp", "/openwisp/a", "openwisp2"}))
+        self.assertFalse(
+            gate.allowed({"/other", "/other/openwisp", "/openwisp/a", "openwisp2"})
+        )
 
 
 class FreeSlug(unittest.TestCase):
     def test_sanitized_and_lowercase(self):
-        self.assertEqual(gate.free_slug("Max.Muster_01", lambda s: False), "max-muster-01")
+        self.assertEqual(
+            gate.free_slug("Max.Muster_01", lambda s: False), "max-muster-01"
+        )
         self.assertEqual(gate.free_slug("--A  B--", lambda s: False), "a-b")
 
     def test_unusable_name(self):
@@ -51,7 +61,9 @@ class Login(unittest.TestCase):
         gate.ensure_personal_org = lambda user: calls.append("ensure")
         user = types.SimpleNamespace(is_staff=True, pk=1 if existing else None)
         account = types.SimpleNamespace(extra_data={"userinfo": {"groups": groups}})
-        sociallogin = types.SimpleNamespace(account=account, user=user, is_existing=existing)
+        sociallogin = types.SimpleNamespace(
+            account=account, user=user, is_existing=existing
+        )
         try:
             gate.GroupGateAdapter().pre_social_login(None, sociallogin)
             return calls, False
