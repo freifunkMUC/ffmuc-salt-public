@@ -1,6 +1,10 @@
 [DEFAULT]
-# Long bans with a few tries per week; Freifunk exit networks and the THA mail servers are never banned.
-bantime = 1w
+# A few tries per week; Freifunk exit networks and the THA mail servers are never banned.
+# First ban 1h, doubled per repeat ban up to 1w, so one wrong saved password behind a
+# CGNAT address does not lock everyone there out for a week.
+bantime = 1h
+bantime.increment = true
+bantime.maxtime = 1w
 findtime = 1w
 maxretry = 6
 ignoreip = 127.0.0.1/8, 141.82.0.0/16, 5.1.66.0/24, 46.226.127.0/24, 141.98.138.0/24, 185.150.99.0/24, 2001:678:e68::/48, 2001:678:ed0::/48
@@ -19,6 +23,7 @@ enabled = true
 [custom]
 enabled = true
 bantime = 180d
+bantime.increment = false
 port = smtp,pop3,pop3s,imap,imaps,submission,submissions,sieve
 
 # Temporary auth failures: many retries in a short window, short ban (a phone retrying during a backend outage must not get the 1w ban).
@@ -31,3 +36,4 @@ backend = %(dovecot_backend)s
 maxretry = 30
 findtime = 10m
 bantime = 1h
+bantime.increment = false

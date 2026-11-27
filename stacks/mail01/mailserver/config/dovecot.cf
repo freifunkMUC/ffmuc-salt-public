@@ -1,8 +1,8 @@
 # Dovecot 2.4 syntax (docker-mailserver 16 and 17). docker-mailserver copies this
 # file to /etc/dovecot/local.conf, which dovecot.conf includes last.
 
-# Dovecot defaults: 10 and 100.
-mail_max_userip_connections = 100
+# 20 (default 10): per user and IP, several devices behind one NAT fit; process limit default 100.
+mail_max_userip_connections = 20
 default_process_limit = 500
 
 # Mails are encrypted at rest with one global EC key pair (mail_crypt, global
