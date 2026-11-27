@@ -1,5 +1,5 @@
-# fastd is long gone from the gateways; purge the leftover package (gw06/gw07)
-# and its config-files state (gw04/gw05). /etc/fastd (old keys) stays.
+# fastd is long gone from the gateways: purge the leftover package and its
+# config (old tunnel keys in /etc/fastd, deleted on purpose 27.11.2026).
 fastd-service-dead:
   service.dead:
     - name: fastd
@@ -9,3 +9,8 @@ fastd:
   pkg.purged:
     - require:
       - service: fastd-service-dead
+
+/etc/fastd:
+  file.absent:
+    - require:
+      - pkg: fastd
