@@ -20,3 +20,14 @@ enabled = true
 enabled = true
 bantime = 180d
 port = smtp,pop3,pop3s,imap,imaps,submission,submissions,sieve
+
+# Temporary auth failures: many retries in a short window, short ban (a phone retrying during a backend outage must not get the 1w ban).
+[dovecot-tempfail]
+enabled = true
+filter = dovecot-tempfail
+port = pop3,pop3s,imap,imaps,submission,submissions,sieve
+logpath = /var/log/mail.log
+backend = %(dovecot_backend)s
+maxretry = 30
+findtime = 10m
+bantime = 1h

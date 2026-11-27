@@ -39,6 +39,7 @@ services:
       # aliases, quotas and the DKIM keys stay there).
       - ./config/dovecot.cf:/tmp/docker-mailserver/dovecot.cf:ro
       - ./config/fail2ban-jail.cf:/tmp/docker-mailserver/fail2ban-jail.cf:ro
+      - ./config/fail2ban-dovecot-tempfail.conf:/etc/fail2ban/filter.d/dovecot-tempfail.conf:ro
       - ./config/postfix-main.cf:/tmp/docker-mailserver/postfix-main.cf:ro
       - ./config/rspamd/local.d/multimap.conf:/etc/rspamd/local.d/multimap.conf
       - ./config/rspamd/local.d/groups.conf:/etc/rspamd/local.d/groups.conf
