@@ -29,7 +29,7 @@ services:
   alloy:
     image: grafana/alloy:v1.22.0@sha256:9acc2529bc1edb7f5b2bd801dd8334ebc80c158e3a9e5526ecd7c9a273d43189 # v\d+\.\d+\.\d+
   loki:
-    image: grafana/loki:3.7@sha256:b43c257ccfc925d4a50b8717cac61a3b51df8c48d01847936057e5c4075a24a7 # \d+\.\d+
+    image: grafana/loki:3.7@sha256:4c86f2ad5003304c8da84d29da2279b04eb999d716f8089c88e4fa4a44b0781e # \d+\.\d+
   prometheus:
     image: prom/prometheus:v3.16.0@sha256:e04987641b57704f408e31f6373ba4138ecf27cb4a165d24aabb6c38fddd0f06 # v\d+\.\d+\.\d+
   node-exporter:
