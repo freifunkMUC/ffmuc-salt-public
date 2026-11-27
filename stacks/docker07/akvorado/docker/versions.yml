@@ -20,7 +20,7 @@ services:
       context: .
       dockerfile: Dockerfile.ipinfo-geoipupdate
   akvorado:
-    image: quay.io/akvorado/akvorado:main@sha256:2773f598eba4cb41d80e14946fabb57d57e60fbb22d69709c62ec66c6f2c2557
+    image: quay.io/akvorado/akvorado:main@sha256:0646976a92260448b05c52282524499755abe26d6ea0c4d4bef1553dd7662930
     # image: ghcr.io/akvorado/akvorado:main
 
   # observability
