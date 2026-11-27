@@ -79,6 +79,28 @@ grafana-hostcert-fingerprint:
 #
 # Plugins
 
+# unzip is needed by archive.extracted below
+grafana-plugin-dependencies:
+  pkg.installed:
+    - name: unzip
+
+# Unsigned plugin from G-Core (CDN/DNS/FastEdge/WAAP stats), version 2.0.1,
+# from https://github.com/G-Core/gcore-stats-datasource-plugin/tree/main/release
+grafana-gcore-stats-datasource-plugin:
+  archive.extracted:
+    - name: /var/lib/grafana/plugins
+    - source: https://raw.githubusercontent.com/G-Core/gcore-stats-datasource-plugin/main/release/gcore-stats-datasource-plugin.zip
+    - source_hash: sha256=d2c5d22e20563363435833afe9da26715c8319c3d507fe318cfcf37987a4eff0
+    - archive_format: zip
+    - user: grafana
+    - group: grafana
+    - trim_output: True
+    - require:
+      - pkg: grafana
+      - pkg: grafana-plugin-dependencies
+    - watch_in:
+      - service: grafana
+
 # Grafana-Piechart-Panel
 grafana-piechart:
   cmd.run:
