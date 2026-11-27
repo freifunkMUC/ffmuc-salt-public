@@ -65,6 +65,8 @@ base:
   'gw*':
     - nginx.gateway
     - dhcp-server
+    # fastd was replaced by wgkex; drop once all gateways are cleaned up
+    - fastd.remove
     - knot-resolver.remove
     - pdns-recursor
     - radvd
