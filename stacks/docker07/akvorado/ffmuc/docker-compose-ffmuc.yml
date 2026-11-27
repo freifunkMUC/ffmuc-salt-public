@@ -41,7 +41,7 @@ services:
       - no-new-privileges:true
     mem_limit: 128m
   clickhouse:
-    image: clickhouse/clickhouse-server:26.8@sha256:7a5c190c9cc314f703631bfe7d3ccc03a2e79fddc6ca5310d54fa88dd50e6136  # one-line switch: CH_IMAGE=... in the upgrade script (default 26.8; 25.8 digest is in its header)
+    image: clickhouse/clickhouse-server:26.8@sha256:0cf7c7f1d66943f0ca17062dd6e6a0f459eb58770e16d6957823837f3fe1bf66  # one-line switch: CH_IMAGE=... in the upgrade script (default 26.8; 25.8 digest is in its header)
     user: "101:101"  # owner of the volume; no read_only (log directory)
     cap_drop:
       - ALL
