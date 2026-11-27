@@ -6,7 +6,7 @@ services:
   redis:
     image: valkey/valkey:9.0@sha256:80def298b278d20a574e6b68d34e244c785f4600c7902fccd5f22c55743d5420 # \d+\.\d+
   clickhouse:
-    image: clickhouse/clickhouse-server:26.8@sha256:7a5c190c9cc314f703631bfe7d3ccc03a2e79fddc6ca5310d54fa88dd50e6136 # \d+\.[38]
+    image: clickhouse/clickhouse-server:26.8@sha256:0cf7c7f1d66943f0ca17062dd6e6a0f459eb58770e16d6957823837f3fe1bf66 # \d+\.[38]
   clickhouse-keeper:
     image: clickhouse/clickhouse-keeper:26.8@sha256:cc849b8f1b8a1963ed4c7d282f9b396377b4fc6a3bd9199006c3e883d17d4b2c # \d+\.[38]
   traefik:
