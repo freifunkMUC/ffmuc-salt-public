@@ -1,7 +1,7 @@
 ---
 services:
   conferencemapper:
-    image: ghcr.io/freifunkmuc/conferencemapper:latest@sha256:243ab46daaac96de7813944f42f8816bfd71d25201f70b3edae49990c2ff66fa
+    image: ghcr.io/freifunkmuc/conferencemapper:latest@sha256:1b24cd9c0e9ae4668e109db1e69386f81bf41595fbdb83f011976d36ee297df5
     user: "10001:10001"
     restart: unless-stopped
     ports:
