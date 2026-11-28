@@ -66,6 +66,7 @@ x-app: &app
   logging: *logging
 
 x-settings: &settings ./config/custom_django_settings.py:/opt/openwisp/openwisp/configuration/custom_django_settings.py:ro
+x-members-admin: &members_admin ./config/members_admin.py:/opt/openwisp/openwisp/configuration/members_admin.py:ro
 x-oidc-gate: &oidc_gate ./config/oidc_gate.py:/opt/openwisp/openwisp/configuration/oidc_gate.py:ro
 
 services:
@@ -78,6 +79,7 @@ services:
       OIDC_SERVER_URL: ${OIDC_SERVER_URL:-https://keycloak.ffmuc.net/realms/chat/.well-known/openid-configuration}
     volumes:
       - *settings
+      - *members_admin
       - *oidc_gate
       - openwisp-static:/opt/openwisp/static
       - /srv/docker/openwisp/media:/opt/openwisp/media
@@ -100,6 +102,7 @@ services:
     image: openwisp/openwisp-api:26.09.5@sha256:b5e5f4334d1b5610a4a4e6e153b8538cc3f4e5795d42f05f133c3395ae979f76
     volumes:
       - *settings
+      - *members_admin
       - /srv/docker/openwisp/media:/opt/openwisp/media
       - /srv/docker/openwisp/private:/opt/openwisp/private
     depends_on:
@@ -119,6 +122,7 @@ services:
     tmpfs: [/tmp, "/home/openwisp/.cache:uid=1001,gid=0"]
     volumes:
       - *settings
+      - *members_admin
     depends_on:
       dashboard: {condition: service_healthy}
     healthcheck:
@@ -146,6 +150,7 @@ services:
       start_period: 3m
     volumes:
       - *settings
+      - *members_admin
       - /srv/docker/openwisp/media:/opt/openwisp/media
       - /srv/docker/openwisp/private:/opt/openwisp/private
       - /srv/docker/openwisp/ssh:/home/openwisp/.ssh
@@ -170,6 +175,7 @@ services:
       start_period: 3m
     volumes:
       - *settings
+      - *members_admin
       - /srv/docker/openwisp/media:/opt/openwisp/media
       - /srv/docker/openwisp/private:/opt/openwisp/private
     depends_on:
@@ -184,6 +190,7 @@ services:
       MODULE_NAME: celerybeat
     volumes:
       - *settings
+      - *members_admin
     depends_on:
       dashboard: {condition: service_healthy}
     healthcheck:
