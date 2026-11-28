@@ -108,6 +108,16 @@ wazuh-agent-client-buffer:
     - require:
       - pkg: wazuh-agent
 
+# buildx's docker-container driver keeps its cache in a volume; rootcheck reports every file in it
+wazuh-agent-rootcheck-ignore-buildkit:
+  file.replace:
+    - name: /var/ossec/etc/ossec.conf
+    - pattern: '(([ \t]*)<ignore>/var/lib/docker/overlay2</ignore>)(\s*)(</rootcheck>)'
+    - repl: '\1\n\2<ignore type="sregex">^/var/lib/docker/volumes/buildx_buildkit_</ignore>\3\4'
+    - count: 1
+    - require:
+      - pkg: wazuh-agent
+
 wazuh-agent-nginx-error-ignore:
   file.replace:
     - name: /var/ossec/etc/ossec.conf
@@ -127,6 +137,7 @@ wazuh-agent-service:
       - file: wazuh-agent-config
       - file: wazuh-agent-journald-filter
       - file: wazuh-agent-nginx-error-ignore
+      - file: wazuh-agent-rootcheck-ignore-buildkit
       - file: wazuh-agent-client-buffer
       - file: wazuh-agent-authd-pass
 {%- endif %}
