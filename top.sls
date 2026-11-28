@@ -86,6 +86,8 @@ base:
     - dokuwiki-treffen-sync
   'docker05.in.ffmuc.net':
     - cryptpad
+  'unifi-os.in.ffmuc.net':
+    - unifi-os-server
   'docker07.in.ffmuc.net':
     - akvorado
     - bgpalerter
