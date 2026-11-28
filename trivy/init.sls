@@ -1,11 +1,12 @@
-{#- Weekly Trivy scan (weekday and hour per host from the minion ID, see the timer) of the images of running containers (docker hosts).
+{#- Weekly Trivy scan (weekday and hour per host from the minion ID, see the timer) of the images of running containers (role docker or NetBox tag docker).
     Opt in per host with the NetBox config context trivy: {enabled: true}; off by default.
     Summary in /var/lib/ffmuc-trivy/report.json, checked by the Icinga service ffmuc_trivy. #}
 {%- set role = salt['pillar.get']('netbox:role:name', '') or '' %}
+{%- set tags = salt['pillar.get']('netbox:tag_list', []) %}
 {%- set enabled = salt['config.get']('netbox:config_context:trivy:enabled', False) %}
 {%- set arch = {'amd64': '64bit', 'arm64': 'ARM64'}.get(grains.osarch) %}
 
-{%- if enabled and 'docker' in role and arch %}
+{%- if enabled and ('docker' in role or 'docker' in tags) and arch %}
 {#- renovate: datasource=github-releases depName=aquasecurity/trivy extractVersion=^v(?<version>.+)$ #}
 {%- set trivy_version = "0.76.2" %}
 
