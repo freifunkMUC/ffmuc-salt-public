@@ -61,6 +61,10 @@ def public_ipv6(node):
     return out
 
 
+def clients(node):
+    return node.get("clients") or 0
+
+
 def is_classic(node):
     release = (node.get("firmware") or {}).get("release") or ""
     return release.startswith("v") and "parker" not in release
@@ -114,9 +118,9 @@ def select(data, images, listed, size):
             continue
         skipped[reason.split(" from ")[0]] += 1
 
-    # Round robin over branches, prefer models with few picks
+    # Round robin over branches, prefer models with few picks, then many clients
     pool = {b: [] for b in BRANCHES}
-    for n in sorted(eligible, key=lambda n: n["node_id"]):
+    for n in sorted(eligible, key=lambda n: (-clients(n), n["node_id"])):
         pool[n["autoupdater"]["branch"]].append(n)
     picked_models = collections.Counter()
     batch = []
@@ -148,6 +152,7 @@ def to_yaml(batch):
         out.append("    model: %s\n" % json.dumps(n.get("model", "")))
         out.append("    image_name: %s\n" % json.dumps(n["firmware"]["image_name"]))
         out.append("    branch: %s\n" % n["autoupdater"]["branch"])
+        out.append("    clients: %d\n" % clients(n))
         out.append("    addresses:\n")
         for address in public_ipv6(n):
             out.append("      - %s\n" % json.dumps(address))
@@ -180,10 +185,11 @@ def main():
     print("Batch (%d):" % len(batch))
     for n in batch:
         print(
-            "  %-12s %-13s %-30s %s"
+            "  %-12s %-13s %4d %-30s %s"
             % (
                 n["node_id"],
                 n["autoupdater"]["branch"],
+                clients(n),
                 n["firmware"]["image_name"],
                 n.get("hostname"),
             )

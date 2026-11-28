@@ -85,6 +85,17 @@ class SelectTest(unittest.TestCase):
         branches = [n["autoupdater"]["branch"] for n in batch]
         self.assertEqual(branches, ["experimental", "stable", "experimental", "stable"])
 
+    def test_most_clients_per_model(self):
+        nodes = [
+            node("a1", clients=5),
+            node("a2", clients=40),
+            node("b1", image="img-b", clients=10),
+            node("b2", image="img-b", clients=2),
+        ]
+        data = {"nodes": nodes, "links": []}
+        _, _, batch = sel.select(data, {"img-a", "img-b"}, set(), 2)
+        self.assertEqual([n["node_id"] for n in batch], ["a2", "b1"])
+
     def test_yaml(self):
         out = sel.to_yaml([node("1", hostname="a", model="M")])
         self.assertIn('  - node_id: "1"\n    hostname: "a"\n', out)
