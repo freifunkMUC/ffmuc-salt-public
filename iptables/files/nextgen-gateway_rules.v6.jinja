@@ -31,6 +31,11 @@ COMMIT
 -A INPUT -i wg-+ -p udp -m udp --dport 8472 -j ACCEPT
 -A INPUT -p udp -m multiport --dports 40000:40200 -j ACCEPT
 -A INPUT -p udp -m udp --dport {{ nebula.listen.port }} -j ACCEPT
+{#- yanic push (UDP 11001) from respondd senders outside Nebula, e.g. unified-respondd behind a Parker node;
+    /128s in the NetBox local context of the yanic gateway (yanic.push_sources) #}
+{%- for src in salt['pillar.get']('netbox:config_context:yanic:push_sources', []) %}
+-A INPUT -s {{ src }} -p udp -m udp --dport 11001 -j ACCEPT -m comment --comment "yanic push"
+{%- endfor %}
 -A INPUT -i {{ uplink['interface'] }} -p tcp -m tcp --dport 179 -s {{ uplink['neighbor_v6'] }} -j ACCEPT
 {%- if salt['pillar.get']('netbox:config_context:iptables:dns_public', True) %}
 -A INPUT -i {{ uplink['interface'] }} -p udp -m udp --dport 53 -j ACCEPT
