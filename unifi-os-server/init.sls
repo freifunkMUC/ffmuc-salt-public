@@ -84,9 +84,11 @@ unifi-os-server-installer-absent:
         # Salt (unifi-os-server): keep /etc/uosserver-realip.conf in UniFi OS's nginx (runs as uosserver)
         set -eu
         cd /tmp
+        export XDG_RUNTIME_DIR="/run/user/$(id -u)"   # rootless podman from a system unit (%U would be root's uid)
         src=/etc/uosserver-realip.conf; c=/data/unifi-core/config/http/upstream-reverse-proxy.conf
         dst=/home/uosserver/.local/share/containers/storage/volumes/uosserver_data/_data/unifi-core/config/http/upstream-reverse-proxy.conf
-        podman exec uosserver test -d /data/unifi-core/config/http || exit 0
+        podman container exists uosserver || { echo "container uosserver not found" >&2; exit 1; }
+        podman exec uosserver test -d /data/unifi-core/config/http || { echo "config dir not there yet" >&2; exit 0; }
         cmp -s "$src" "$dst" && exit 0
         cp "$src" "$dst.tmp" && mv "$dst.tmp" "$dst"
         if podman exec uosserver nginx -t 2>/dev/null; then podman exec uosserver nginx -s reload; echo "realip config installed"
@@ -101,7 +103,6 @@ unifi-os-server-installer-absent:
         [Service]
         Type=oneshot
         User=uosserver
-        Environment=XDG_RUNTIME_DIR=/run/user/%U
         ExecStart=/usr/local/sbin/uos-realip-sync
 
 /etc/systemd/system/uos-realip-sync.timer:
