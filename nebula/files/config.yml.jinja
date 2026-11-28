@@ -329,6 +329,24 @@ firewall:
     proto: tcp
     group: webfrontend
 {%- endif %}
+{%- if "unifi-os.in.ffmuc.net" == grains["id"] %}
+  # UniFi OS Server: nginx/haproxy on the webfrontends (nginx/domains/unifi.ffmuc.net.conf, haproxy unifi-portal-*)
+  - port: 8080
+    proto: tcp
+    group: webfrontend
+  - port: 11443
+    proto: tcp
+    group: webfrontend
+  - port: 3478
+    proto: udp
+    group: webfrontend
+  - port: 8880
+    proto: tcp
+    group: webfrontend
+  - port: 8444
+    proto: tcp
+    group: webfrontend
+{%- endif %}
 {%- if "docker05.in.ffmuc.net" == grains["id"] %}
   # Allow MQTT replicas
   - port: 4370
