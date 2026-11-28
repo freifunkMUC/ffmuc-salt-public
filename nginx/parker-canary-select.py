@@ -6,6 +6,12 @@ reasons and a proposed batch. With --write it appends the batch to
 nginx/parker-canary.yaml. It does not change anything else.
 
 Run: python3 nginx/parker-canary-select.py --size 25 [--write]
+         [--link-history links.json]
+
+links.json is the yanic InfluxDB answer to:
+  SELECT count(tq) FROM link WHERE time > now() - 14d
+  GROUP BY "source.id","target.id","type"
+Nodes with a mesh link in it are skipped, also when the neighbour is offline now.
 """
 
 import argparse
@@ -29,6 +35,21 @@ MIN_CLASSIC = 3
 # Canary nodes must be real routers: no VMs, no gateway or uplink nodes
 VM_TARGETS = {"x86", "armsr"}
 GATEWAY_LIKE = re.compile(r"(^|[^a-z])(gw|gateway|core|uplink)([^a-z]|$)", re.I)
+
+# OpenWrt 24.10 changed DEVICE_COMPAT_VERSION for these images. Parker
+# (Gluon v2025.1) cannot sysupgrade them from an older Gluon base.
+COMPAT_CHANGED = {
+    "linksys-e4200-v2-viper",
+    "linksys-e8450-ubi",
+    "linksys-ea4500-viper",
+    "netgear-nighthawk-x4s-r7800",
+    "ocedo-panda",
+    "tp-link-archer-c2600",
+    "ubiquiti-edgerouter-x",
+    "ubiquiti-edgerouter-x-sfp",
+    "xiaomi-redmi-router-ax6s",
+}
+NEW_BASE = re.compile(r"^gluon-v(\d{4})\.(\d+)")
 
 # Releases that nginx sends to gluon-v2025.1.x_v2023.1.x (upgrade path to Parker)
 UPGRADE_PATH = re.compile(
@@ -65,21 +86,40 @@ def clients(node):
     return node.get("clients") or 0
 
 
+def old_base(firmware):
+    m = NEW_BASE.match(firmware.get("base") or "")
+    return not m or (int(m.group(1)), int(m.group(2))) < (2025, 1)
+
+
+def mesh_links(links, gateways):
+    meshed = set()
+    for source, target, kind in links:
+        if kind == "vpn" or source in gateways or target in gateways:
+            continue
+        meshed.update((source, target))
+    return meshed
+
+
+def history_links(answer):
+    out = []
+    for series in answer["results"][0].get("series") or []:
+        tags = series["tags"]
+        out.append((tags["source.id"], tags["target.id"], tags.get("type")))
+    return out
+
+
 def is_classic(node):
     release = (node.get("firmware") or {}).get("release") or ""
     return release.startswith("v") and "parker" not in release
 
 
-def select(data, images, listed, size):
+def select(data, images, listed, size, history=()):
     nodes = data["nodes"]
     gateways = {n["node_id"] for n in nodes if n.get("is_gateway")}
-    meshed = set()
-    for link in data["links"]:
-        if link.get("type") == "vpn":
-            continue
-        if link["source"] in gateways or link["target"] in gateways:
-            continue
-        meshed.update((link["source"], link["target"]))
+    meshed = mesh_links(
+        [(l["source"], l["target"], l.get("type")) for l in data["links"]], gateways
+    )
+    meshed_before = mesh_links(history, gateways) - meshed
 
     # Online classic nodes per (image, branch), without the listed ones
     remaining = collections.Counter()
@@ -109,8 +149,12 @@ def select(data, images, listed, size):
             reason = "gateway-like hostname"
         elif firmware.get("image_name") not in images:
             reason = "no Parker image"
+        elif firmware.get("image_name") in COMPAT_CHANGED and old_base(firmware):
+            reason = "compat_version changed"
         elif n["node_id"] in meshed:
             reason = "mesh neighbours"
+        elif n["node_id"] in meshed_before:
+            reason = "mesh neighbours in history"
         elif not public_ipv6(n):
             reason = "no public IPv6"
         else:
@@ -165,6 +209,7 @@ def main():
     parser.add_argument("--write", action="store_true", help="append to " + CANARY_FILE)
     parser.add_argument("--map", default=MAP_URL)
     parser.add_argument("--manifest", default=MANIFEST_URL)
+    parser.add_argument("--link-history", help="yanic InfluxDB link answer (JSON)")
     args = parser.parse_args()
 
     with open(CANARY_FILE) as f:
@@ -173,7 +218,11 @@ def main():
     data = json.loads(fetch(args.map))
     images = parker_images(fetch(args.manifest))
 
-    eligible, skipped, batch = select(data, images, listed, args.size)
+    history = []
+    if args.link_history:
+        with open(args.link_history) as f:
+            history = history_links(json.load(f))
+    eligible, skipped, batch = select(data, images, listed, args.size, history)
     print("Eligible: %d" % len(eligible))
     print(
         "Eligible per branch: %s"

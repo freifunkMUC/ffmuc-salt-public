@@ -96,6 +96,43 @@ class SelectTest(unittest.TestCase):
         _, _, batch = sel.select(data, {"img-a", "img-b"}, set(), 2)
         self.assertEqual([n["node_id"] for n in batch], ["a2", "b1"])
 
+    def test_compat_version_changed(self):
+        nodes = [
+            node("a", image="ubiquiti-edgerouter-x"),
+            node("b", image="ubiquiti-edgerouter-x"),
+        ]
+        nodes[0]["firmware"]["base"] = "gluon-v2023.2.5+"
+        nodes[1]["firmware"]["base"] = "gluon-v2025.1.3+"
+        data = {"nodes": nodes, "links": []}
+        _, skipped, batch = sel.select(data, {"ubiquiti-edgerouter-x"}, set(), 25)
+        self.assertEqual([n["node_id"] for n in batch], ["b"])
+        self.assertEqual(skipped["compat_version changed"], 1)
+
+    def test_mesh_history(self):
+        answer = {
+            "results": [
+                {
+                    "series": [
+                        {"tags": {"source.id": "1", "target.id": "x", "type": "wifi"}},
+                        {
+                            "tags": {
+                                "source.id": "2",
+                                "target.id": "gw",
+                                "type": "other",
+                            }
+                        },
+                        {"tags": {"source.id": "3", "target.id": "y", "type": "vpn"}},
+                    ]
+                }
+            ]
+        }
+        nodes = [node("1"), node("2"), node("3"), node("gw", is_gateway=True)]
+        data = {"nodes": nodes, "links": []}
+        history = sel.history_links(answer)
+        _, skipped, batch = sel.select(data, {"img-a"}, set(), 25, history)
+        self.assertEqual([n["node_id"] for n in batch], ["2", "3"])
+        self.assertEqual(skipped["mesh neighbours in history"], 1)
+
     def test_yaml(self):
         out = sel.to_yaml([node("1", hostname="a", model="M")])
         self.assertIn('  - node_id: "1"\n    hostname: "a"\n', out)
