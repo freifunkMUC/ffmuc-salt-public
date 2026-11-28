@@ -44,6 +44,16 @@ class SelectTest(unittest.TestCase):
             node("8", branch="parker"),
             node("9", autoupdater={"enabled": False, "branch": "stable"}),
             node("10"),
+            node("11", hostname="Technopark_I_GW"),
+            node(
+                "12",
+                firmware={
+                    "release": "v2026.10.1",
+                    "image_name": "img-a",
+                    "target": "x86",
+                },
+            ),
+            node("13", hostname="ffmuc-gwangju"),
             node("gw", is_gateway=True),
         ]
         links = [
@@ -51,8 +61,10 @@ class SelectTest(unittest.TestCase):
             {"type": "vpn", "source": "1", "target": "gw"},
         ]
         eligible, skipped, batch = self.run_select(nodes, links, listed={"10"})
-        self.assertEqual([n["node_id"] for n in batch], ["1"])
-        self.assertEqual(len(eligible), 1)
+        self.assertEqual([n["node_id"] for n in batch], ["1", "13"])
+        self.assertEqual(len(eligible), 2)
+        self.assertEqual(skipped["gateway-like hostname"], 1)
+        self.assertEqual(skipped["VM image"], 1)
         self.assertEqual(skipped["mesh neighbours"], 2)
         self.assertEqual(skipped["no Parker image"], 1)
         self.assertEqual(skipped["no upgrade path"], 1)

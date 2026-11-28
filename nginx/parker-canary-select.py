@@ -26,6 +26,9 @@ CANARY_FILE = os.path.join(
 BRANCHES = ["experimental", "testing", "stable"]
 GUARDED = ["experimental", "testing"]
 MIN_CLASSIC = 3
+# Canary nodes must be real routers: no VMs, no gateway or uplink nodes
+VM_TARGETS = {"x86", "armsr"}
+GATEWAY_LIKE = re.compile(r"(^|[^a-z])(gw|gateway|core|uplink)([^a-z]|$)", re.I)
 
 # Releases that nginx sends to gluon-v2025.1.x_v2023.1.x (upgrade path to Parker)
 UPGRADE_PATH = re.compile(
@@ -96,6 +99,10 @@ def select(data, images, listed, size):
             reason = "autoupdater off"
         elif not UPGRADE_PATH.match(firmware.get("release", "")):
             reason = "no upgrade path from %s" % firmware.get("release")
+        elif firmware.get("target") in VM_TARGETS:
+            reason = "VM image"
+        elif GATEWAY_LIKE.search(n.get("hostname") or ""):
+            reason = "gateway-like hostname"
         elif firmware.get("image_name") not in images:
             reason = "no Parker image"
         elif n["node_id"] in meshed:
