@@ -13,16 +13,8 @@ unifi-os-server-packages:
       - slirp4netns
       - passt
       - uidmap
-      - qemu-guest-agent
 
-# needs the virtio port, i.e. the channel in the domain XML (present on all vm-host guests)
-qemu-guest-agent:
-  service.running:
-    - onlyif: test -e /dev/virtio-ports/org.qemu.guest_agent.0
-    - require:
-        - pkg: unifi-os-server-packages
-
-# Ubiquiti asks for 2 GB swap; the cloud image has none
+# Ubiquiti asks for 2 GB swap; the PXE install has only 1 GB (lv_swap)
 unifi-os-server-swapfile:
   cmd.run:
     - name: fallocate -l {{ swap_mb }}M /swapfile.new && chmod 600 /swapfile.new && mkswap /swapfile.new && mv /swapfile.new /swapfile
