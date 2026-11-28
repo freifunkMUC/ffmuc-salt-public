@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily Etherpad pad retention
+
+[Timer]
+OnCalendar=*-*-* 04:30:00
+RandomizedDelaySec=10min
+Persistent=true
+Unit=ffmuc-etherpad-retention.service
+
+[Install]
+WantedBy=timers.target

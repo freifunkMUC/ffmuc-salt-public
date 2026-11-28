@@ -1,0 +1,37 @@
+#!/bin/sh
+# Delete Etherpad pads whose last revision is older than 180 days (direct SQL on the MariaDB store table).
+# Dry run: ffmuc-etherpad-retention --dry-run. Logs only counts, never pad ids or contents.
+# Pad ids outside [A-Za-z0-9_.-] are skipped and counted (ids go into SQL as constants).
+set -eu
+db=etherpad-mariadb-1
+days=180
+max=${ETHERPAD_RETENTION_MAX:-3000}   # pads per run, keeps table locks short
+dry=0
+[ "${1:-}" = "--dry-run" ] && dry=1
+
+sql() { docker exec -i "$db" sh -c 'exec mariadb -uroot -p"$MYSQL_ROOT_PASSWORD" etherpad -N -B'; }
+
+# pad key -> revision at head -> its timestamp (ms)
+ids=$(printf "%s\n" "SELECT SUBSTRING(p.\`key\`, 5) FROM store p JOIN store r ON r.\`key\` = CONCAT(p.\`key\`, ':revs:', JSON_VALUE(p.value, '\$.head')) WHERE p.\`key\` REGEXP '^pad:[^:]+\$' AND CAST(JSON_VALUE(r.value, '\$.meta.timestamp') AS UNSIGNED) < (UNIX_TIMESTAMP() - $days * 86400) * 1000 ORDER BY 1 LIMIT $max;" | sql)
+
+good=$(printf '%s\n' "$ids" | grep -E '^[A-Za-z0-9_.-]+$' || true)
+n=$(printf '%s' "$good" | grep -c . || true)
+total=$(printf '%s\n' "$ids" | grep -c . || true)
+skipped=$((total - n))
+
+if [ "$dry" = 1 ]; then
+  echo "etherpad retention: dry run, $n pads (limit $max) older than $days days would be deleted, $skipped skipped (unusual id)"
+  exit 0
+fi
+
+if [ "$n" -gt 0 ]; then
+  printf '%s\n' "$good" | while IFS= read -r id; do
+    cat <<SQL
+DELETE FROM store WHERE \`key\` = CONCAT('readonly2pad:', (SELECT JSON_UNQUOTE(value) FROM (SELECT value FROM store WHERE \`key\` = 'pad2readonly:$id') x));
+DELETE FROM store WHERE \`key\` IN ('pad:$id', 'pad2readonly:$id')
+  OR (\`key\` >= 'pad:$id:revs:' AND \`key\` < 'pad:$id:revs;')
+  OR (\`key\` >= 'pad:$id:chat:' AND \`key\` < 'pad:$id:chat;');
+SQL
+  done | sql
+fi
+echo "etherpad retention: deleted $n pads older than $days days, $skipped skipped (unusual id)"

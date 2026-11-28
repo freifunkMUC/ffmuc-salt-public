@@ -1,0 +1,6 @@
+[Unit]
+Description=Delete Etherpad pads without changes for 180 days
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/ffmuc-etherpad-retention

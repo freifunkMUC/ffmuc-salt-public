@@ -82,6 +82,7 @@ base:
   'docker0[4-7].in.ffmuc.net':
     - docker-user-firewall
   'docker04.in.ffmuc.net':
+    - etherpad-retention
     - openldap-group-member
     - dokuwiki-treffen-sync
   'docker05.in.ffmuc.net':
