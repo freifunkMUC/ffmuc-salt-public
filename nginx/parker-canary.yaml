@@ -1,0 +1,231 @@
+---
+# Classic nodes that get Parker firmware from firmware.ffmuc.net (canary).
+# nginx matches the source address of the autoupdater request.
+# Only nodes with an upgrade path to Parker (Gluon v2023.1.x to v2025.1.x) move.
+# Add batches with nginx/parker-canary-select. An empty list changes nothing.
+nodes:
+  - node_id: "7cff4dd5a36a"
+    hostname: "Gauting_Willkommen_Offloader"
+    model: "AVM FRITZ!Box 4040"
+    image_name: "avm-fritz-box-4040"
+    branch: stable
+    clients: 82
+    addresses:
+      - "2001:678:ed0:10a:7eff:4dff:fed5:a36a"
+      - "2001:678:e68:10a:7eff:4dff:fed5:a36a"
+  - node_id: "deeb87904d14"
+    hostname: "welcome-berg-r2s"
+    model: "FriendlyElec NanoPi R2S"
+    image_name: "friendlyelec-nanopi-r2s"
+    branch: stable
+    clients: 44
+    addresses:
+      - "2001:678:ed0:107:dceb:87ff:fe90:4d14"
+      - "2001:678:e68:107:dceb:87ff:fe90:4d14"
+  - node_id: "6466b3dedb33"
+    hostname: "Stockdorf_Willkommen_Offloader"
+    model: "TP-Link TL-WDR4900 v1"
+    image_name: "tp-link-tl-wdr4900-v1"
+    branch: stable
+    clients: 30
+    addresses:
+      - "2001:678:e68:10a:6666:b3ff:fede:db33"
+      - "2001:678:ed0:10a:6666:b3ff:fede:db33"
+  - node_id: "823428787b28"
+    hostname: "ffDon-Viktoria_R4s_Temporaer"
+    model: "FriendlyElec NanoPi R4S"
+    image_name: "friendlyelec-nanopi-r4s"
+    branch: stable
+    clients: 28
+    addresses:
+      - "2001:678:ed0:192:8034:28ff:fe78:7b28"
+      - "2001:678:e68:192:8034:28ff:fe78:7b28"
+  - node_id: "e45f016aa517"
+    hostname: "fin-unterkunft-riedlingen"
+    model: "Raspberry Pi 4 Model B Rev 1.4"
+    image_name: "raspberrypi-4-model-b"
+    branch: stable
+    clients: 14
+    addresses:
+      - "2001:678:e68:109:e65f:1ff:fe6a:a517"
+      - "2001:678:ed0:109:e65f:1ff:fe6a:a517"
+  - node_id: "e848b8e15e88"
+    hostname: "ffmuc-SLG-Eic"
+    model: "TP-Link Archer C7 v5"
+    image_name: "tp-link-archer-c7-v5"
+    branch: stable
+    clients: 14
+    addresses:
+      - "2001:678:e68:182:ea48:b8ff:fee1:5e88"
+      - "2001:678:ed0:182:ea48:b8ff:fee1:5e88"
+  - node_id: "c2621b00c447"
+    hostname: "HotelRestaurantStraussen"
+    model: "FriendlyElec NanoPi R2S Plus"
+    image_name: "friendlyelec-nanopi-r2s-plus"
+    branch: stable
+    clients: 12
+    addresses:
+      - "2001:678:e68:190:c062:1bff:fe00:c447"
+      - "2001:678:ed0:190:c062:1bff:fe00:c447"
+  - node_id: "e894f6cd6566"
+    hostname: "Stockdorf_LifeGym_1"
+    model: "TP-Link TL-WDR4300 v1"
+    image_name: "tp-link-tl-wdr4300-v1"
+    branch: stable
+    clients: 12
+    addresses:
+      - "2001:678:ed0:10a:ea94:f6ff:fecd:6566"
+      - "2001:678:e68:10a:ea94:f6ff:fecd:6566"
+  - node_id: "a8637dc727c4"
+    hostname: "FFdon-RVB-GS30"
+    model: "D-Link COVR-X1860 A1"
+    image_name: "d-link-covr-x1860-a1"
+    branch: stable
+    clients: 10
+    addresses:
+      - "2001:678:e68:192:aa63:7dff:fec7:27c4"
+      - "2001:678:ed0:192:aa63:7dff:fec7:27c4"
+  - node_id: "ec086b7872ee"
+    hostname: "MB-tecis-Finanzberatung"
+    model: "TP-Link TL-WR1043ND v3"
+    image_name: "tp-link-tl-wr1043nd-v3"
+    branch: stable
+    clients: 10
+    addresses:
+      - "2001:678:ed0:103:ee08:6bff:fe78:72ee"
+      - "2001:678:e68:103:ee08:6bff:fe78:72ee"
+  - node_id: "c04a0040e19a"
+    hostname: "Neuoetting_Schreinerei_Ober_OG"
+    model: "TP-Link TL-WR1043ND v2"
+    image_name: "tp-link-tl-wr1043nd-v2"
+    branch: stable
+    clients: 9
+    addresses:
+      - "2001:678:e68:106:c24a:ff:fe40:e19a"
+      - "2001:678:ed0:106:c24a:ff:fe40:e19a"
+  - node_id: "9483c411d1f8"
+    hostname: "ffmuc-kq-sr-ol"
+    model: "GL.iNet GL-AR750S (NOR)"
+    image_name: "gl.inet-gl-ar750s-nor"
+    branch: stable
+    clients: 8
+    addresses:
+      - "2001:678:e68:101:9683:c4ff:fe11:d1f8"
+      - "2001:678:ed0:101:9683:c4ff:fe11:d1f8"
+  - node_id: "b0b98a4deb7c"
+    hostname: "taufkirchen-kilimanjaro-cafe"
+    model: "Netgear EX6150v2"
+    image_name: "netgear-ex6150v2"
+    branch: stable
+    clients: 7
+    addresses:
+      - "2001:678:e68:103:b2b9:8aff:fe4d:eb7c"
+      - "2001:678:ed0:103:b2b9:8aff:fe4d:eb7c"
+  - node_id: "c80e14ba22ce"
+    hostname: "ffmuc-c80e14ba22ce"
+    model: "AVM FRITZ!Box 4020"
+    image_name: "avm-fritz-box-4020"
+    branch: stable
+    clients: 7
+    addresses:
+      - "2001:678:ed0:102:ca0e:14ff:feba:22ce"
+      - "2001:678:e68:102:ca0e:14ff:feba:22ce"
+  - node_id: "d41ad11004e0"
+    hostname: "ffdon_SKM"
+    model: "Zyxel WSM20"
+    image_name: "zyxel-wsm20"
+    branch: stable
+    clients: 7
+    addresses:
+      - "2001:678:e68:192:d61a:d1ff:fe10:4e0"
+      - "2001:678:ed0:192:d61a:d1ff:fe10:4e0"
+  - node_id: "dc396f1ee0fe"
+    hostname: "ffmuc-dc396f1ee0fe"
+    model: "AVM FRITZ!Box 7530"
+    image_name: "avm-fritz-box-7530"
+    branch: stable
+    clients: 7
+    addresses:
+      - "2001:678:e68:104:de39:6fff:fe1e:e0fe"
+      - "2001:678:ed0:104:de39:6fff:fe1e:e0fe"
+  - node_id: "3ccd577303bf"
+    hostname: "Steinhoering-Abseits-Sportgaststaette"
+    model: "Xiaomi Mi Router 4A Gigabit Edition"
+    image_name: "xiaomi-mi-router-4a-gigabit-edition"
+    branch: stable
+    clients: 6
+    addresses:
+      - "2001:678:e68:106:3ecd:57ff:fe73:3bf"
+      - "2001:678:ed0:106:3ecd:57ff:fe73:3bf"
+  - node_id: "4086cb240898"
+    hostname: "OpenWrt"
+    model: "D-Link DAP-X1860 A1"
+    image_name: "d-link-dap-x1860-a1"
+    branch: stable
+    clients: 6
+    addresses:
+      - "2001:678:ed0:108:4286:cbff:fe24:898"
+      - "2001:678:e68:108:4286:cbff:fe24:898"
+  - node_id: "68d79a102127"
+    hostname: "www.ev-jugendhilfe.de-214"
+    model: "Ubiquiti UniFi AC Lite"
+    image_name: "ubiquiti-unifi-ac-lite"
+    branch: stable
+    clients: 6
+    addresses:
+      - "2001:678:ed0:109:6ad7:9aff:fe10:2127"
+      - "2001:678:e68:109:6ad7:9aff:fe10:2127"
+  - node_id: "704f57ad46a2"
+    hostname: "ffNoe-Stadt-AnDerLach"
+    model: "TP-Link CPE210 v2"
+    image_name: "tp-link-cpe210-v2"
+    branch: stable
+    clients: 6
+    addresses:
+      - "2001:678:e68:191:724f:57ff:fead:46a2"
+      - "2001:678:ed0:191:724f:57ff:fead:46a2"
+  - node_id: "e601fd4670c7"
+    hostname: "GCSchmitzhof"
+    model: "FriendlyElec NanoPi R3S"
+    image_name: "friendlyelec-nanopi-r3s"
+    branch: stable
+    clients: 6
+    addresses:
+      - "2001:678:ed0:100:e401:fdff:fe46:70c7"
+      - "2001:678:e68:100:e401:fdff:fe46:70c7"
+  - node_id: "fc9f2abdd955"
+    hostname: "Rotes Zentrum Weichenberger"
+    model: "Zyxel NWA50AX Pro"
+    image_name: "zyxel-nwa50ax-pro"
+    branch: stable
+    clients: 6
+    addresses:
+      - "2001:678:ed0:10c:fe9f:2aff:febd:d955"
+      - "2001:678:e68:10c:fe9f:2aff:febd:d955"
+  - node_id: "20a8b9c082f0"
+    hostname: "ffDon-Bahnhofstr.27/Fahrschule Schrott"
+    model: "Aruba AP-32x"
+    image_name: "aruba-ap-32x"
+    branch: stable
+    clients: 5
+    addresses:
+      - "2001:678:ed0:192:22a8:b9ff:fec0:82f0"
+      - "2001:678:e68:192:22a8:b9ff:fec0:82f0"
+  - node_id: "20b399b6027b"
+    hostname: "bwolf-08-2"
+    model: "Enterasys WS-AP3710i"
+    image_name: "enterasys-ws-ap3710i"
+    branch: stable
+    clients: 5
+    addresses:
+      - "2001:678:e68:10c:22b3:99ff:feb6:27b"
+      - "2001:678:ed0:10c:22b3:99ff:feb6:27b"
+  - node_id: "5ce931ce7ccc"
+    hostname: "Freifunk-Ferienhof-Schauer"
+    model: "TP-Link CPE210 v3"
+    image_name: "tp-link-cpe210-v3"
+    branch: stable
+    clients: 5
+    addresses:
+      - "2001:678:e68:106:5ee9:31ff:fece:7ccc"
+      - "2001:678:ed0:106:5ee9:31ff:fece:7ccc"

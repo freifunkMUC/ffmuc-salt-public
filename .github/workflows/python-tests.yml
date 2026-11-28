@@ -21,6 +21,9 @@ jobs:
       # renovate: datasource=pypi depName=jinja2
       - name: test dependencies
         run: python3 -m pip install jinja2==3.1.6
+      # renovate: datasource=pypi depName=pyyaml
+      - name: nginx test dependencies
+        run: python3 -m pip install pyyaml==6.0.3
       # renovate: datasource=pypi depName=cryptography
       - name: certs test dependencies
         run: python3 -m pip install cryptography==50.0.2
@@ -34,5 +37,9 @@ jobs:
         run: python3 -m unittest discover -s stacks/docker07/wazuh/tests -v
       - name: telegraf
         run: python3 -m unittest discover -s telegraf/tests -v
+      - name: nginx firmware redirects
+        run: |
+          sudo apt-get update -q && sudo apt-get install -y -q nginx
+          python3 -m unittest discover -s nginx/tests -v
       - name: openwisp gate
         run: python3 -m unittest discover -s stacks/docker07/openwisp/tests -v
