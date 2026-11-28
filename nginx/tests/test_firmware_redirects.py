@@ -17,9 +17,12 @@ import time
 import unittest
 
 import jinja2
+import yaml
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE = os.path.join(os.path.dirname(HERE), "domains", "firmware.ffmuc.net.conf")
+CANARY_FILE = os.path.join(os.path.dirname(HERE), "parker-canary.yaml")
+CANARY_ADDRESS = "2001:db8:109::1"
 NGINX = shutil.which("nginx") or (
     "/usr/sbin/nginx" if os.path.exists("/usr/sbin/nginx") else None
 )
@@ -29,18 +32,29 @@ BRANCHES = ["experimental", "testing", "stable"]
 CLASSIC = "gluon-v2025.1.x_v2023.1.x"
 
 
-def render(parker_canary=None):
-    pillar = {"netbox:config_context:webserver:parker_canary": parker_canary or {}}
-
-    def pillar_get(key, default=None):
-        return pillar.get(key, default)
-
-    env = jinja2.Environment(loader=jinja2.FileSystemLoader(os.path.dirname(TEMPLATE)))
-    return env.get_template(os.path.basename(TEMPLATE)).render(
-        salt={"pillar.get": pillar_get},
-        domain="firmware.ffmuc.net",
-        sslListen="SSL_LISTEN",
-        sslListen6="SSL_LISTEN6",
+def render(nodes=None):
+    """Render the template. nodes=None uses nginx/parker-canary.yaml."""
+    with open(TEMPLATE) as f:
+        text = f.read()
+    if nodes is None:
+        with open(CANARY_FILE) as f:
+            canary = yaml.safe_load(f)
+    else:
+        canary = {"nodes": nodes}
+    # Salt provides import_yaml; plain jinja2 does not
+    text = text.replace(
+        '{%- import_yaml "nginx/parker-canary.yaml" as parker_canary %}',
+        "{%- set parker_canary = canary %}",
+    )
+    return (
+        jinja2.Environment()
+        .from_string(text)
+        .render(
+            canary=canary,
+            domain="firmware.ffmuc.net",
+            sslListen="SSL_LISTEN",
+            sslListen6="SSL_LISTEN6",
+        )
     )
 
 
@@ -51,15 +65,17 @@ def free_port():
 
 
 class RenderTest(unittest.TestCase):
-    def test_default_has_no_canary(self):
-        conf = render()
-        self.assertEqual(re.findall(r"^\s*[\d.]+% 1;", conf, re.M), [])
+    def test_import_line_exists(self):
+        with open(TEMPLATE) as f:
+            self.assertIn('import_yaml "nginx/parker-canary.yaml"', f.read())
 
-    def test_canary_percent(self):
-        conf = render({"stable": 5, "testing": 12.5})
-        self.assertIn("$parkerCanary_stable {\n    5.0% 1;", conf)
-        self.assertIn("$parkerCanary_testing {\n    12.5% 1;", conf)
-        self.assertIn("$parkerCanary_experimental {\n    *", conf)
+    def test_empty_list(self):
+        conf = render([])
+        self.assertIn("geo $parkerCanary {\n    default 0;\n}", conf)
+
+    def test_nodes(self):
+        conf = render([{"hostname": "a", "addresses": ["2001:db8::1", "2001:db8::2"]}])
+        self.assertIn("    2001:db8::1 1; # a\n    2001:db8::2 1; # a\n}", conf)
 
 
 @unittest.skipUnless(NGINX, "nginx not installed")
@@ -115,10 +131,10 @@ class RedirectTest(unittest.TestCase):
         conn.close()
         return resp.status, resp.getheader("Location")
 
-    def assertTarget(self, version, directory):
+    def assertTarget(self, version, directory, client="192.0.2.1"):
         for branch in BRANCHES:
             path = "/%s/sysupgrade/%s.manifest" % (branch, branch)
-            status, location = self.get(path, version)
+            status, location = self.get(path, version, client=client)
             self.assertEqual(status, 302, (version, branch))
             self.assertEqual(
                 location,
@@ -164,48 +180,27 @@ class RedirectDefaultTest(RedirectTest):
 
 
 class RedirectCanaryTest(RedirectTest):
-    canary = {"stable": 100, "testing": 100, "experimental": 100}
+    canary = [{"hostname": "canary", "addresses": [CANARY_ADDRESS]}]
 
-    def test_classic_goes_to_parker(self):
-        self.assertTarget("v2026.11.3", "gluon-parker")
-        self.assertTarget("v2023.8.1", "gluon-parker")
-        self.assertTarget("v2024.3.1-next", "gluon-parker")
+    def test_listed_classic_goes_to_parker(self):
+        for version in ["v2026.11.3", "v2023.8.1", "v2024.3.1-next"]:
+            self.assertTarget(version, "gluon-parker", client=CANARY_ADDRESS)
 
-    def test_old_classic_stays(self):
-        self.assertTarget(None, "gluon-v2021.1.x")
-        self.assertTarget("v2022.10.1", "gluon-v2023.1.x_v2021.1.x")
-        self.assertTarget("v2026.11.3-next", "gluon-next")
-        self.assertTarget("v2026.11.3-main", "gluon-main")
+    def test_other_classic_stays(self):
+        self.assertTarget("v2026.11.3", CLASSIC)
+        self.assertTarget("v2026.11.3", CLASSIC, client="2001:db8:109::2")
 
-    def test_parker_stays(self):
-        self.assertTarget("v2026.11.2-parker11", "gluon-parker")
-        self.assertTarget("v2026.11.2-parker-next2", "gluon-parker-next")
-
-
-class RedirectPartialCanaryTest(RedirectTest):
-    canary = {"stable": 50}
-
-    def targets(self, branch, version):
-        found = set()
-        for i in range(200):
-            client = "198.51.%d.%d" % (i // 250, i % 250 + 1)
-            path = "/%s/sysupgrade/%s.manifest" % (branch, branch)
-            _, location = self.get(path, version, client=client)
-            found.add(location.split("/")[3])
-        return found
-
-    def test_stable_is_split(self):
-        self.assertEqual(
-            self.targets("stable", "v2026.11.3"), {CLASSIC, "gluon-parker"}
+    def test_listed_without_upgrade_path_stays(self):
+        self.assertTarget(None, "gluon-v2021.1.x", client=CANARY_ADDRESS)
+        self.assertTarget(
+            "v2022.10.1", "gluon-v2023.1.x_v2021.1.x", client=CANARY_ADDRESS
         )
+        self.assertTarget("v2026.11.3-next", "gluon-next", client=CANARY_ADDRESS)
+        self.assertTarget("v2026.11.3-main", "gluon-main", client=CANARY_ADDRESS)
 
-    def test_other_branches_stay(self):
-        self.assertEqual(self.targets("testing", "v2026.11.3"), {CLASSIC})
-        self.assertEqual(self.targets("experimental", "v2026.11.3"), {CLASSIC})
-
-    def test_parker_next_never_split(self):
-        self.assertEqual(
-            self.targets("stable", "v2026.11.2-parker-next2"), {"gluon-parker-next"}
+    def test_listed_parker_next_stays(self):
+        self.assertTarget(
+            "v2026.11.2-parker-next2", "gluon-parker-next", client=CANARY_ADDRESS
         )
 
 

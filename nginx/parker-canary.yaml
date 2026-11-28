@@ -1,0 +1,6 @@
+---
+# Classic nodes that get Parker firmware from firmware.ffmuc.net (canary).
+# nginx matches the source address of the autoupdater request.
+# Only nodes with an upgrade path to Parker (Gluon v2023.1.x to v2025.1.x) move.
+# Add batches with nginx/parker-canary-select. An empty list changes nothing.
+nodes: []
