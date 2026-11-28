@@ -155,11 +155,11 @@ class RedirectDefaultTest(RedirectTest):
         self.assertTarget(None, "gluon-v2021.1.x")
 
     def test_parker(self):
-        self.assertTarget("v2026.11.2-parker11", "gluon-parker")
-        self.assertTarget("v2026.11.2-parker12", "gluon-parker")
+        self.assertTarget("v2026.11.2-parker11", "gluon-v2025.1.x-parker")
+        self.assertTarget("v2026.11.2-parker12", "gluon-v2025.1.x-parker")
 
     def test_parker_next(self):
-        self.assertTarget("v2026.11.2-parker-next2", "gluon-parker-next")
+        self.assertTarget("v2026.11.2-parker-next2", "gluon-v2026.1.x_v2025.1.x-parker")
 
     def test_browser_is_not_redirected(self):
         status, _ = self.get("/stable/", "v2026.11.2-parker11", agent="curl")
@@ -184,7 +184,7 @@ class RedirectCanaryTest(RedirectTest):
 
     def test_listed_classic_goes_to_parker(self):
         for version in ["v2026.11.3", "v2023.8.1", "v2024.3.1-next"]:
-            self.assertTarget(version, "gluon-parker", client=CANARY_ADDRESS)
+            self.assertTarget(version, "gluon-v2025.1.x-parker", client=CANARY_ADDRESS)
 
     def test_other_classic_stays(self):
         self.assertTarget("v2026.11.3", CLASSIC)
@@ -200,7 +200,9 @@ class RedirectCanaryTest(RedirectTest):
 
     def test_listed_parker_next_stays(self):
         self.assertTarget(
-            "v2026.11.2-parker-next2", "gluon-parker-next", client=CANARY_ADDRESS
+            "v2026.11.2-parker-next2",
+            "gluon-v2026.1.x_v2025.1.x-parker",
+            client=CANARY_ADDRESS,
         )
 
 
