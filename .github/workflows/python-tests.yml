@@ -34,5 +34,9 @@ jobs:
         run: python3 -m unittest discover -s stacks/docker07/wazuh/tests -v
       - name: telegraf
         run: python3 -m unittest discover -s telegraf/tests -v
+      - name: nginx firmware redirects
+        run: |
+          sudo apt-get update -q && sudo apt-get install -y -q nginx
+          python3 -m unittest discover -s nginx/tests -v
       - name: openwisp gate
         run: python3 -m unittest discover -s stacks/docker07/openwisp/tests -v
