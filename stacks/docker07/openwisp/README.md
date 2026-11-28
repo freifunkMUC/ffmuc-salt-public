@@ -17,7 +17,8 @@ Break-glass: `https://openwisp.ov.ffmuc.net` (overlay, Traefik without `noc-auth
 
 Every member of the Keycloak group `openwisp` gets an organization of their own at login (`config/oidc_gate.py`): name = username,
 slug from it (lowercase, `[a-z0-9-]`, `-2`, `-3` if taken), created once and found again by its description. The user is its admin
-and owner and in the Django group Administrator, so they manage their devices and add users to their organization. Nothing is
+and owner and in the Django group Administrator, so they manage their devices and add users to their organization. Org admins can add
+any OpenWISP member (active staff, no superuser) to their organizations, not only users already in them (`config/members_admin.py`), so members are visible to org admins by username. Nothing is
 migrated: existing memberships (such as in `default`) stay, and superusers are not touched. Superusers (local `admin`, FFMUC admins)
 are made by hand and create further organizations.
 

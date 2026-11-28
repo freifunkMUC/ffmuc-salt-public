@@ -6,6 +6,8 @@ import os
 from ..settings import CSRF_TRUSTED_ORIGINS, INSTALLED_APPS, SOCIALACCOUNT_PROVIDERS
 
 INSTALLED_APPS.append("allauth.socialaccount.providers.openid_connect")
+# Last, after django.contrib.admin: members_admin.py patches the registered OrganizationUser admin in ready().
+INSTALLED_APPS.append("openwisp.configuration.members_admin.MembersAdminConfig")
 SOCIALACCOUNT_PROVIDERS.update(
     {
         "openid_connect": {
